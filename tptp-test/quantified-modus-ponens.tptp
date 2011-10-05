@@ -1,0 +1,14 @@
+
+fof(all_P_are_Q,hypothesis,(
+        ! [X] : (P(X) => Q(X)))).
+
+fof(some_P,hypothesis,(
+        ? [X] : (P(X)))).
+
+fof(some_Q,conjecture,(
+        ? [X] : (Q(X)))).
+      
+
+                
+       
+                

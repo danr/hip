@@ -1,0 +1,24 @@
+Autospec
+========
+
+Derivative of QuickSpec by Koen Claessen and Nick Smallbone, darcs
+repository at http://code.haskell.org/QuickSpec/
+
+QuickSpec finds equational properties of a Haskell module through
+testing. This project is about adding an Automated Theorem Prover (ATP)
+backend to this, and verify the equations in FOL.
+
+Folders
+-------
+
+src       : QuickSpec source
+examples  : Example modules
+docs      : Documents
+tptp-test : Some example formulas written in tptp format
+
+
+Links
+-----
+QuickSpec : http://code.haskell.org/QuickSpec/
+TPTP      : http://www.tptp.org/
+

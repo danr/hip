@@ -1,0 +1,27 @@
+
+
+fof(eq_refl,axiom,! [X] : ((X = X))).
+
+fof(eq_sym,axiom,! [X,Y] : ((X = Y)) => (Y = X)).
+
+fof(eq_trans,axiom,! [X,Y,Z] : ((X = Y) & (Y = Z)) => (X = Z)).
+
+fof(zero_not_succ,axiom,! [N] : ((~ (s(N) = zero)))).
+
+fof(succ_injective,axiom,! [N,M] : ((s(N) = s(M))) => (N = M)).
+
+fof(addition_base,axiom,! [N] : ((add(N,zero) = N))).
+
+fof(addition_ind,axiom,! [N,M] : ((add(N,s(M)) = s(add(N,M))))).
+
+fof(addition_cong,axiom,! [X1,X2,Y1,Y2] : (   ((X1 = X2) & (Y1 = Y2))
+                                           => (add(X1,Y1) = add(X2,Y2)))).
+
+fof(inst_induction_add_assoc,axiom,
+        ( (! [X,Y] : (add(X,add(Y,zero)) = add(add(X,Y),zero)))
+        & (! [X,Y,Z] : ((add(X,add(Y,Z)) = add(add(X,Y),Z))
+                       => (add(X,add(Y,s(Z))) = add(add(X,Y),s(Z))))))
+        => (! [X,Y,Z] : (add(X,add(Y,Z)) = add(add(X,Y),Z)))).
+      
+fof(add_associative,conjecture,! [X,Y,Z] : (add(X,add(Y,Z)) = add(add(X,Y),Z))).
+

@@ -1,0 +1,43 @@
+* Corecursion article:
+  fixpoint induction
+  approximation lemma
+  fusion (unfold)
+
+* Haskell -> FOL translation:
+  
+  * Extensional equality is an axiom schem
+
+    ! [f,g] : ( ( ! [X] : (f(X) = g(X))) => ( f = g ))
+
+  * Congruence rules for functions
+
+    X1 = X2 & Y1 = Y2 => add(X1,Y1) = add(X2,Y2)
+
+  * Eta expansion necessary? Use types?
+
+* QuickSpec for ATP
+
+  * For the nats example, it always gives
+
+      x + zero == x,
+
+    regardless of induction on first or second argument. The identity on the
+    side the induction is not in, is necessary for proving, e.g. commutativity.
+
+* ATP
+
+  * Which axioms for arithmetics on Integers (what to do with Int overflow)? PA?
+
+    
+
+    
+    
+    
+  
+  
+ 
+  
+
+
+
+

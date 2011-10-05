@@ -1,0 +1,7 @@
+% eprover -xAuto -tAuto --tptp3-format modus-ponens.tptp
+
+fof(p_implies_q,hypothesis,p => q).
+
+fof(p,hypothesis,p).
+
+fof(q,conjecture,q).
