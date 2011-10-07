@@ -1,0 +1,48 @@
+include('nats_lists.ax').
+
+#          
+# In Haskell:
+#
+#   approx (S n) Nil         = Nil
+#   approx (S n) (Cons x xs) = Cons x (approx n xs)
+#
+# In FOL:
+#
+#   ∀ N      → approx(S(N),Nil)        = Nil
+#   ∀ N X Xs → approx(S(N),Cons(X,Xs)) = Cons(X,approx(N,Xs))
+#   ∀ N Xs   → (approx(N,Xs)            = Bottom)
+#             ∨ ( N = S(pred(N) ∧ Xs = Nil ))
+#             ∨ ( N = S(pred(N) ∧ Xs = Cons(head(XS),tail(XS))
+
+fof(approx_case_0,axiom,
+        ! [N] : (approx(suc(N),nil) = nil)).
+
+fof(approx_case_1,axiom,
+        ! [N,X,Xs] : (approx(suc(N),cons(X,Xs)) = cons(X,approx(N,Xs)))).
+
+fof(approx_case_2,axiom,
+        ! [N,Xs] : ( (approx(N,Xs) = bottom)
+                   | ((N = suc(pred(N))) & (Xs = nil))
+                   | ((N = suc(pred(N))) & (Xs = cons(head(Xs),tail(Xs)))))).
+
+# approximation lemma                   
+
+fof(approximation_lemma,axiom,
+        ! [XS,YS] :
+          (     (XS = YS)
+            <=> (! [N] : (approx(N,XS) = approx(N,YS))))).
+
+# induction over N
+            
+fof(approximation_lemma_induction,axiom,
+        ! [Xs,Ys] :
+          (    (! [N] : (approx(N,Xs) = approx(N,Ys)))
+           <=> ( (approx(zero,Xs) = approx(zero,Ys))
+               & (! [N] : (    (approx(N,Xs) = approx(N,Ys)))
+                            => (approx(suc(N),Xs) = approx(suc(N),Ys)))))).
+
+# there is a pointer to approx                            
+#fof(approx_ptr_eq,axiom,
+#        ! [N,XS] :
+#          (app(app(approx_ptr,N),XS) = approx(N,XS))).
+

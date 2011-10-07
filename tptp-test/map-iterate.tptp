@@ -1,0 +1,105 @@
+
+#fof(map_ptr_eq,axiom,
+#        ! [F,XS] :
+#          (app(app(map_ptr,F),XS) = map(F,XS))).
+
+#fof(iterate_ptr_eq,axiom,
+#        ! [F,X] :
+#          (app(app(iterate_ptr,F),X) = iterate(F,X))).
+
+
+# app_cong -- this seems to come for free
+#fof(app_cong,axiom,! [F1,F2,X1,X2] :
+#                     (    ((F1 = F2) & (X1 = X2))
+#                       => (app(F1,X1) = app(F2,X2)))).
+
+#fof(approx_cong,axiom,
+#        ! [N1,N2,Xs1,Xs2] :
+#        (    ((N1=N2) & (Xs1=Xs2))
+#          => (approx(N1,Xs1) = approx(N2,Xs2)))).
+#
+#fof(map_cong,axiom,
+#        ! [N1,N2,Xs1,Xs2] :
+#        (    ((N1=N2) & (Xs1=Xs2))
+#          => (map(N1,Xs1) = map(N2,Xs2)))).
+#
+#fof(iterate_cong,axiom,
+#        ! [N1,N2,Xs1,Xs2] :
+#        (    ((N1=N2) & (Xs1=Xs2))
+#          => (iterate(N1,Xs1) = iterate(N2,Xs2)))).
+#          
+#fof(cons_cong,axiom,
+#        ! [N1,N2,Xs1,Xs2] :
+#        (    ((N1=N2) & (Xs1=Xs2))
+#          => (cons(N1,Xs1) = cons(N2,Xs2)))).
+# Map. need to send function pointers to map. It uses app
+#
+# ∀ F      → map(F,nil) = nil
+# ∀ F X Xs → map(F,cons(X,Xs)) = cons(app(F,X),map(F,Xs))
+# ∀ F Xs   → map(F,Xs) = Bottom
+#           ∨ (Xs = cons(head(Xs),tail(Xs)))
+#           ∨ (Xs = nil)
+
+fof(map_case_0,axiom,
+        ! [F] : (map(F,nil) = nil)).
+
+fof(map_case_1,axiom,
+        ! [F,X,Xs] : (map(F,cons(X,Xs)) = cons(app(F,X),map(F,Xs)))).
+
+fof(map_case_2,axiom,
+        ! [F,Xs] : ( (map(N,Xs) = bottom)
+                   | (Xs = nil)
+                   | (Xs = cons(head(Xs),tail(Xs))))).
+
+
+
+#fof(test_simple,conjecture,map(suc_ptr,nil) = nil).
+
+#fof(cons_cong,conjecture,
+#        ! [X,Y,Xs,Ys] :
+#          (((X = Y) & (Xs = Ys))
+#          => cons(X,Xs) = cons(Y,Ys))).
+
+#fof(test,conjecture,
+#          map(suc_ptr,cons(zero,nil))
+#        = cons(suc(zero),nil)).
+
+# Iterate, send funptrs
+#
+# ∀ F X → iterate(F,X) = cons(X,iterate(F,app(F,X)))
+#
+# iterate is not strict in any argument!!
+
+fof(iterate_case_0,axiom,
+        ! [F,X] : (iterate(F,X) = cons(X,iterate(F,app(F,X))))).
+
+#fof(map_iterate_property,conjecture,
+#        ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
+
+#fof(map_iterate_property_specialized,conjecture,
+#        ! [F,X,N] : (approx(suc(N),map(F,iterate(F,X))) = approx(suc(N),iterate(F,app(F,X))))).
+
+#fof(map_iterate_property_specialized_suc_zero,conjecture,
+#        ! [X] : ( approx(N,map(suc_ptr,iterate(suc_ptr,zero)))
+#                = approx(N,iterate(suc_ptr,app(suc_ptr,zero))))).
+
+#fof(map_iterate_property_specialized_suc_zero_base_case,conjecture,
+#        ( approx(zero,map(suc_ptr,iterate(suc_ptr,zero)))
+#        = approx(zero,iterate(suc_ptr,app(suc_ptr,zero))))).
+
+
+                
+#fof(step1,conjecture,
+#        ! [N] : ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
+#                = approx(suc(N),map(suc_ptr,cons(zero,iterate(suc_ptr,suc(zero))))))).
+
+#fof(step1and2,conjecture,
+#        ! [N] : ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
+#                = approx(suc(N),cons(suc(zero),map(suc_ptr,iterate(suc_ptr,suc(zero))))))).
+
+#fof(step1and2and3,conjecture,
+#        ! [N] : ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
+#                = cons(suc(zero),approx(N,map(suc_ptr,iterate(suc_ptr,suc(zero))))))).
+
+
+                   

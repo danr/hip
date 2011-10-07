@@ -1,0 +1,9 @@
+include('nats_lists.ax').
+
+# fof(head_test,conjecture,head(cons(zero,nil)) = zero).
+
+# fof(tail_test,conjecture,tail(cons(zero,nil)) = nil).
+
+# fof(zero_bottom,conjecture,pred(zero) = bottom).
+
+fof(tail_bottom,conjecture,tail(nil) = bottom).
