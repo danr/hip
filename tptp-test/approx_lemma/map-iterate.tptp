@@ -1,19 +1,34 @@
 
-
-
-# Eprover manages to show
-
 include('nats_lists.ax').
 include('approx_lemma.ax').
 include('map.ax').
 include('iterate.ax').
 
-# ∀ n . map succ (iterate succ n) = iterate succ (succ n)
-fof(map_iterate_property_for_suc_ptr,conjecture,
-        ! [N] : (map(suc_ptr,iterate(suc_ptr,X)) = iterate(suc_ptr,app(suc_ptr,X)))).
+# ∀ xs . map succ (map succ xs) = map (succ . succ) xs
+#fof(suc_suc_ptr_exists,axiom,! [N] : (app(suc_suc_ptr,N) = suc(suc(N)))).
+#
+#fof(map_map,conjecture,
+#        ! [Xs] : (map(suc_ptr,map(suc_ptr,Xs)) = map(suc_suc_ptr,Xs))).
+#########
 
+# ∀ n . map succ (iterate succ n) = iterate succ (succ n)
+#fof(map_iterate_property_for_suc_ptr,conjecture,
+#        ! [X] : (map(suc_ptr,iterate(suc_ptr,X)) = iterate(suc_ptr,app(suc_ptr,X)))).
+#########
+
+# approx induction step for map succ (iterate succ zero)
+#fof(map_iterate_property_for_suc_and_zeroptr_ind_step,conjecture,
+#        ! [N] : (
+#                ( approx(N,map(suc_ptr,iterate(suc_ptr,zero)))
+#                = approx(N,iterate(suc_ptr,app(suc_ptr,zero))))
+#            =>
+#                ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
+#                = approx(suc(N),iterate(suc_ptr,app(suc_ptr,zero))))
+#                )).
+        
 # ∀ f x . map f (iterate f x) = iterate f (f x)
-#fof(map_iterate_property,conjecture,
-#       ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
+fof(map_iterate_property,conjecture,
+       ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
+########
 
 # fof(check_inconsistency,conjecture,! [X] : (X != X)).

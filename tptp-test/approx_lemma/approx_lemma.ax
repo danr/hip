@@ -32,17 +32,20 @@ fof(approximation_lemma,axiom,
           (     (XS = YS)
             <=> (! [N] : (approx(N,XS) = approx(N,YS))))).
 
-# induction over N
-            
+# Induction over N in approximation lemma.
+# Notice that the basecase is missing as both sides are trivially bottom.
 fof(approximation_lemma_induction,axiom,
-        ! [Xs,Ys] :
-          ( ( (approx(zero,Xs) = approx(zero,Ys))
-               & (! [N] : (    (approx(N,Xs)      = approx(N,Ys))
-                            => (approx(suc(N),Xs) = approx(suc(N),Ys)))))
-          =>    (! [N] : (approx(N,Xs) = approx(N,Ys))))).
+        ! [Xs,Ys] : (
+            (! [N] : ((approx(N,Xs) = approx(N,Ys)) => (approx(suc(N),Xs) = approx(suc(N),Ys))))
+         => (! [N] : (approx(N,Xs) = approx(N,Ys))))).
+
+# this is trivially true          
+#fof(approx_lemma_base_case,conjecture,
+#        ! [Xs,Ys] :
+#          (approx(zero,Xs) = approx(zero,Ys))).
 
 # there is a pointer to approx                            
-fof(approx_ptr_eq,axiom,
-        ! [N,XS] :
-          (app(app(approx_ptr,N),XS) = approx(N,XS))).
+#fof(approx_ptr_eq,axiom,
+#        ! [N,XS] :
+#          (app(app(approx_ptr,N),XS) = approx(N,XS))).
 
