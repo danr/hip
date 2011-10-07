@@ -1,12 +1,6 @@
 
 fof(zero_is_nat,axiom,nat(zero)).
 
-#fof(eq_refl,axiom,! [X] : (nat(X) => (X = X))).
-
-#fof(eq_sym,axiom,! [X,Y] : ((nat(X) & nat(Y) & (X = Y)) => (Y = X))).
-
-# fof(eq_trans,axiom,! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z) & (X = Y) & (Y = Z)) => (X = Z))).
-
 fof(eq_closed_nat,axiom,! [X,Y] : ((nat(X) & (X = Y)) => nat(Y))).
 
 fof(succ_is_nat,axiom,! [N] : (nat(N) => nat(s(N)))).
@@ -19,12 +13,7 @@ fof(addition_base,axiom,! [N] : (nat(N) => (add(N,zero) = N))).
 
 fof(addition_ind,axiom,! [N,M] : ((nat(N) & nat(M)) => (add(N,s(M)) = s(add(N,M))))).
 
-fof(addition_cong,axiom,! [X1,X2,Y1,Y2] : (   (nat(X1) & nat(X2) & nat(Y1) & nat(Y2) & (X1 = X2) & (Y1 = Y2))
-                                           => (add(X1,Y1) = add(X2,Y2)))).
-
-fof(list_nil,axiom,list(nil)).
-fof(list_zero_uneq,axiom,zero != nil).
-fof(list_suc_uneq,axiom,! [N] : (nil != s(N))).
+fof(addition_is_nat,axiom,! [N,M] : ((nat(N) & nat(M)) => nat(add(N,M)))).
                                            
 # fof(one_nat,conjecture,nat(s(zero))).
 # fof(two_plus_two,conjecture,add(s(s(zero)),s(s(zero))) = s(s(s(s(zero))))).
@@ -41,9 +30,10 @@ fof(list_suc_uneq,axiom,! [N] : (nil != s(N))).
 #                                                 => (add(X,add(Y,s(Z))) = add(add(X,Y),s(Z))))))
 #        => (! [Z] : ((nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z))))))).
 #
-#
-#fof(add_associative,conjecture,! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z)))).
 
+# fof(add_associative,conjecture,! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z)))).
+
+# Assoc basecase can be proved :D
 fof(ind_assoc_basecase,conjecture,! [X,Y] : ((nat(X) & nat(Y)) => (add(X,add(Y,zero)) = add(add(X,Y),zero)))).
 
 # Eprover manages to prove this
