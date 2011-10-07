@@ -18,11 +18,11 @@ fof(addition_is_nat,axiom,! [N,M] : ((nat(N) & nat(M)) => nat(add(N,M)))).
 # fof(one_nat,conjecture,nat(s(zero))).
 # fof(two_plus_two,conjecture,add(s(s(zero)),s(s(zero))) = s(s(s(s(zero))))).
 
-#fof(inst_induction_add_assoc,axiom,
-#        ( (! [X,Y] : ((nat(X) & nat(Y)) => (add(X,add(Y,zero)) = add(add(X,Y),zero))))
-#        & (! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z) & (add(X,add(Y,Z)) = add(add(X,Y),Z)))
-#                                                 => (add(X,add(Y,s(Z))) = add(add(X,Y),s(Z))))))
-#        => (! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z))))).
+fof(inst_induction_add_assoc,axiom,
+        ( (! [X,Y] : ((nat(X) & nat(Y)) => (add(X,add(Y,zero)) = add(add(X,Y),zero))))
+        & (! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z) & (add(X,add(Y,Z)) = add(add(X,Y),Z)))
+                                                 => (add(X,add(Y,s(Z))) = add(add(X,Y),s(Z))))))
+        => (! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z))))).
 
 #fof(inst_induction_add_assoc,axiom, ! [X,Y] : ((nat(X) & nat(Y)) => 
 #        (( ((add(X,add(Y,zero)) = add(add(X,Y),zero)))
@@ -31,10 +31,12 @@ fof(addition_is_nat,axiom,! [N,M] : ((nat(N) & nat(M)) => nat(add(N,M)))).
 #        => (! [Z] : ((nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z))))))).
 #
 
-# fof(add_associative,conjecture,! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z)))).
+fof(add_associative,conjecture,! [X,Y,Z] : ((nat(X) & nat(Y) & nat(Z)) => (add(X,add(Y,Z)) = add(add(X,Y),Z)))).
 
 # Assoc basecase can be proved :D
-fof(ind_assoc_basecase,conjecture,! [X,Y] : ((nat(X) & nat(Y)) => (add(X,add(Y,zero)) = add(add(X,Y),zero)))).
+#fof(ind_assoc_basecase,conjecture,! [X,Y] : ((nat(X) & nat(Y)) => (add(X,add(Y,zero)) = add(add(X,Y),zero)))).
+
+
 
 # Eprover manages to prove this
 #fof(left_identity_ind,axiom,

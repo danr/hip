@@ -1,37 +1,4 @@
 
-#fof(map_ptr_eq,axiom,
-#        ! [F,XS] :
-#          (app(app(map_ptr,F),XS) = map(F,XS))).
-
-#fof(iterate_ptr_eq,axiom,
-#        ! [F,X] :
-#          (app(app(iterate_ptr,F),X) = iterate(F,X))).
-
-
-# app_cong -- this seems to come for free
-#fof(app_cong,axiom,! [F1,F2,X1,X2] :
-#                     (    ((F1 = F2) & (X1 = X2))
-#                       => (app(F1,X1) = app(F2,X2)))).
-
-#fof(approx_cong,axiom,
-#        ! [N1,N2,Xs1,Xs2] :
-#        (    ((N1=N2) & (Xs1=Xs2))
-#          => (approx(N1,Xs1) = approx(N2,Xs2)))).
-#
-#fof(map_cong,axiom,
-#        ! [N1,N2,Xs1,Xs2] :
-#        (    ((N1=N2) & (Xs1=Xs2))
-#          => (map(N1,Xs1) = map(N2,Xs2)))).
-#
-#fof(iterate_cong,axiom,
-#        ! [N1,N2,Xs1,Xs2] :
-#        (    ((N1=N2) & (Xs1=Xs2))
-#          => (iterate(N1,Xs1) = iterate(N2,Xs2)))).
-#          
-#fof(cons_cong,axiom,
-#        ! [N1,N2,Xs1,Xs2] :
-#        (    ((N1=N2) & (Xs1=Xs2))
-#          => (cons(N1,Xs1) = cons(N2,Xs2)))).
 # Map. need to send function pointers to map. It uses app
 #
 # ∀ F      → map(F,nil) = nil
@@ -51,18 +18,24 @@ fof(map_case_2,axiom,
                    | (Xs = nil)
                    | (Xs = cons(head(Xs),tail(Xs))))).
 
+# There is a ptr to map                   
+fof(map_ptr_eq,axiom,
+        ! [F,XS] :
+          (app(app(map_ptr,F),XS) = map(F,XS))).
 
 
-#fof(test_simple,conjecture,map(suc_ptr,nil) = nil).
+# Eprover manages to show:
+# map succ [] = []          
+# fof(map_suc_nil,conjecture,map(suc_ptr,nil) = nil).
+###########
 
-#fof(cons_cong,conjecture,
-#        ! [X,Y,Xs,Ys] :
-#          (((X = Y) & (Xs = Ys))
-#          => cons(X,Xs) = cons(Y,Ys))).
-
-#fof(test,conjecture,
+# Eprover manages to show:
+# map succ [0] = [1]
+#include('nats_lists.ax').
+#fof(tmap_suc_singleton,conjecture,
 #          map(suc_ptr,cons(zero,nil))
 #        = cons(suc(zero),nil)).
+############
 
 # Iterate, send funptrs
 #
@@ -73,33 +46,26 @@ fof(map_case_2,axiom,
 fof(iterate_case_0,axiom,
         ! [F,X] : (iterate(F,X) = cons(X,iterate(F,app(F,X))))).
 
-#fof(map_iterate_property,conjecture,
-#        ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
+# there is a ptr to iterate        
+fof(iterate_ptr_eq,axiom,
+        ! [F,X] :
+          (app(app(iterate_ptr,F),X) = iterate(F,X))).
 
-#fof(map_iterate_property_specialized,conjecture,
-#        ! [F,X,N] : (approx(suc(N),map(F,iterate(F,X))) = approx(suc(N),iterate(F,app(F,X))))).
+# Eprover manages to show
+# ∀ n . map succ (iterate succ n) = iterate succ (succ n)
+#include('nats_lists.ax').
+#include('approx_lemma.ax').
+#
+#fof(map_iterate_property_for_suc_ptr,conjecture,
+#        ! [N] : (map(suc_ptr,iterate(suc_ptr,X)) = iterate(suc_ptr,app(suc_ptr,X)))).
+##############
 
-#fof(map_iterate_property_specialized_suc_zero,conjecture,
-#        ! [X] : ( approx(N,map(suc_ptr,iterate(suc_ptr,zero)))
-#                = approx(N,iterate(suc_ptr,app(suc_ptr,zero))))).
+# Eprover manages to show
+# ∀ f x . map f (iterate f x) = iterate f (f x)
+include('nats_lists.ax').
+include('approx_lemma.ax').
 
-#fof(map_iterate_property_specialized_suc_zero_base_case,conjecture,
-#        ( approx(zero,map(suc_ptr,iterate(suc_ptr,zero)))
-#        = approx(zero,iterate(suc_ptr,app(suc_ptr,zero))))).
-
-
-                
-#fof(step1,conjecture,
-#        ! [N] : ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
-#                = approx(suc(N),map(suc_ptr,cons(zero,iterate(suc_ptr,suc(zero))))))).
-
-#fof(step1and2,conjecture,
-#        ! [N] : ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
-#                = approx(suc(N),cons(suc(zero),map(suc_ptr,iterate(suc_ptr,suc(zero))))))).
-
-#fof(step1and2and3,conjecture,
-#        ! [N] : ( approx(suc(N),map(suc_ptr,iterate(suc_ptr,zero)))
-#                = cons(suc(zero),approx(N,map(suc_ptr,iterate(suc_ptr,suc(zero))))))).
+fof(map_iterate_property,conjecture,
+        ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
 
 
-                   
