@@ -25,3 +25,4 @@ fof(inst_induction_add_assoc,axiom,
       
 fof(add_associative,conjecture,! [X,Y,Z] : (add(X,add(Y,Z)) = add(add(X,Y),Z))).
 
+# fof(ind_assoc_basecase,conjecture,! [X,Y] : ((nat(X) & nat(Y)) => (add(X,add(Y,zero)) = add(add(X,Y),zero)))).
