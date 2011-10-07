@@ -12,11 +12,12 @@ fof(suc_bottom,axiom,suc(bottom) = bottom).
 # there is a pointer to suc
 fof(suc_ptr,axiom,! [N] : (app(suc_ptr,N)=suc(N))).
 
-# head,tail
+# head, tail
 fof(cons_head,axiom,! [X,Xs] : (head(cons(X,Xs)) = X)).
 
 fof(cons_tail,axiom,! [X,Xs] : (tail(cons(X,Xs)) = Xs)).
 
 # there is a pointer to cons
 fof(cons_ptr_eq,axiom,! [X,Xs] : (app(app(cons_ptr,X),Xs) = cons(X,Xs))).
+
 

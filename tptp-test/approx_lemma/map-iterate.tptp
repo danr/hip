@@ -1,0 +1,21 @@
+
+# Eprover manages to show
+# ∀ n . map succ (iterate succ n) = iterate succ (succ n)
+#include('nats_lists.ax').
+#include('approx_lemma.ax').
+#
+#fof(map_iterate_property_for_suc_ptr,conjecture,
+#        ! [N] : (map(suc_ptr,iterate(suc_ptr,X)) = iterate(suc_ptr,app(suc_ptr,X)))).
+##############
+
+# Eprover manages to show
+# ∀ f x . map f (iterate f x) = iterate f (f x)
+include('nats_lists.ax').
+include('approx_lemma.ax').
+include('map.ax').
+include('iterate.ax').
+
+fof(map_iterate_property,conjecture,
+        ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
+
+

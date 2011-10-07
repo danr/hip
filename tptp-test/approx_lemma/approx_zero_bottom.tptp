@@ -1,0 +1,6 @@
+include('approx_lemma.ax').
+
+fof(approx_zero,conjecture,! [Xs] : (approx(zero,Xs) = bottom)).
+
+
+

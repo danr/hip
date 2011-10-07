@@ -6,4 +6,4 @@ include('nats_lists.ax').
 
 # fof(zero_bottom,conjecture,pred(zero) = bottom).
 
-fof(tail_bottom,conjecture,tail(nil) = bottom).
+fof(tail_bottom,conjecture,tail(zero) = bottom).

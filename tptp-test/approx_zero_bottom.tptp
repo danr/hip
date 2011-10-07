@@ -1,5 +1,0 @@
-include('approx_lemma.ax').
-
-# approx zero is always bottom. eprover shows this
-# fof(approx_zero,conjecture,! [Xs] : (approx(zero,Xs) = bottom)).
-
