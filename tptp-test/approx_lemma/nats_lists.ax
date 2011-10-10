@@ -10,12 +10,12 @@
 %fof(suc_ptr,axiom,! [N] : (app(suc_ptr,N)=suc(N))).
 
 % head, tail
-fof(cons_head,axiom,! [X,Xs] : (head(cons(X,Xs)) = X)).
+fof(cons_head,axiom,! [X,Xs] : (min(c_cons(X,Xs)) => head(c_cons(X,Xs)) = X)).
 
-fof(cons_tail,axiom,! [X,Xs] : (tail(cons(X,Xs)) = Xs)).
+fof(cons_tail,axiom,! [X,Xs] : (min(c_cons(X,Xs)) => tail(c_cons(X,Xs)) = Xs)).
 
 % nil /= cons
-fof(nil_cons_different,axiom,! [X,Xs] : (nil != cons(X,Xs))).
+fof(nil_cons_different,axiom,! [X,Xs,T] : (min(T) => (T != c_nil | T != c_cons(X,Xs)))).
 
 % there is a pointer to cons
 %fof(cons_ptr_eq,axiom,! [X,Xs] : (app(app(cons_ptr,X),Xs) = cons(X,Xs))).
@@ -47,9 +47,9 @@ fof(nil_cons_different,axiom,! [X,Xs] : (nil != cons(X,Xs))).
 
 
 % bottom is not zero, suc, cons, nil, or function pointers
-fof(bottom_different,axiom, (bottom != nil)
+fof(bottom_different,axiom, (![T] : (min(T) => (T != c_bottom | T != c_nil)))
                          % & (bottom != zero)
-                          & (! [X,Xs] : (bottom != cons(X,Xs)))) . % lazy constructor semantics
+                          & (! [T,X,Xs] : (min(T) => (T != c_bottom | T != c_cons(X,Xs))))) . % lazy constructor semantics
                          % & (! [N] : (bottom != suc(N))))   .       
 %                         & (bottom != suc_ptr)).
 %                          & (bottom != cons_ptr)

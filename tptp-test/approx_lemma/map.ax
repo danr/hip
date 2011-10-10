@@ -9,15 +9,19 @@
 %           ∨ (Xs = nil)
 
 fof(map_case_0,axiom,
-        ! [F] : (map(F,nil) = nil)).
+        ! [F,T] : ((min(T) & T = map(F,c_nil)) => T = c_nil)).
 
 fof(map_case_1,axiom,
-        ! [F,X,Xs] : (map(F,cons(X,Xs)) = cons(app(F,X),map(F,Xs)))).
+        ! [F,X,Xs,T] : ((min(T) & T = map(F,c_cons(X,Xs))) => T = c_cons(app(F,X),map(F,Xs)))).
 
 fof(map_case_2,axiom,
-        ! [F,Xs] : ( (map(F,Xs) = bottom)
-                   | (Xs = nil)
-                   | (Xs = cons(head(Xs),tail(Xs))))).
+        ! [F,Xs,T] : ( (min(T) & T = map(F,Xs)) =>
+                     (min(Xs) &
+                       ( T = c_bottom
+                       | (Xs = c_nil)
+                       | (Xs = c_cons(head(Xs),tail(Xs))))
+                     ) )
+).
 
 % There is a ptr to map                   
 %fof(map_ptr_eq,axiom,

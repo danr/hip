@@ -28,10 +28,23 @@ include('iterate.ax').
         
 % ∀ f x . map f (iterate f x) = iterate f (f x)
 fof(map_iterate_property,axiom,
-![F,Xs]:       app(h,map(F,iterate(F,Xs))) = app(h,iterate(F,app(F,Xs))) ).
+![F,X]:       app(h,map(F,iterate(F,X))) = app(h,iterate(F,app(F,X))) ).
 
-fof(map_iterate_conjecture,conjecture,
-![F,Xs]:       approx(h,map(F,iterate(F,Xs))) = approx(h,iterate(F,app(F,Xs))) ).
+fof(map_iterate_conjecture,axiom,
+    a_t1 = approx(h,map(f,iterate(f,a_x)))
+  & a_t2 = approx(h,iterate(f,app(f,a_x)))
+  & a_t1 != a_t2
+  & min_list(a_t1)
+  & min_list(a_t2)
+).
+
+fof(min_list,axiom,
+    ![Xs] : (min_list(Xs) => (min(Xs) & (Xs = c_cons(head(Xs),tail(Xs)) => min_list(tail(Xs)))))
+).
+
+%fof(min,axiom,
+%    ![X] : min(X)
+%).
 
 %fof(map_iterate_property,conjecture,
 %       ! [F,X] : (map(F,iterate(F,X)) = iterate(F,app(F,X)))).
