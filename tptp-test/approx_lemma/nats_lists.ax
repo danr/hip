@@ -1,65 +1,65 @@
-# pred
+% pred
 fof(suc_pred,axiom,! [N] : (pred(suc(N)) = N)).
 
-fof(zero_pred,axiom,pred(zero) = bottom).
+%fof(zero_pred,axiom,pred(zero) = bottom).
 
-# zero /= suc
+% zero /= suc
 fof(zero_suc_different,axiom,! [N] : (zero != suc(N))).
 
-# there is a pointer to suc
-fof(suc_ptr,axiom,! [N] : (app(suc_ptr,N)=suc(N))).
+% there is a pointer to suc
+%fof(suc_ptr,axiom,! [N] : (app(suc_ptr,N)=suc(N))).
 
-# head, tail
+% head, tail
 fof(cons_head,axiom,! [X,Xs] : (head(cons(X,Xs)) = X)).
 
 fof(cons_tail,axiom,! [X,Xs] : (tail(cons(X,Xs)) = Xs)).
 
-# nil /= cons
+% nil /= cons
 fof(nil_cons_different,axiom,! [X,Xs] : (nil != cons(X,Xs))).
 
-# there is a pointer to cons
-#fof(cons_ptr_eq,axiom,! [X,Xs] : (app(app(cons_ptr,X),Xs) = cons(X,Xs))).
+% there is a pointer to cons
+%fof(cons_ptr_eq,axiom,! [X,Xs] : (app(app(cons_ptr,X),Xs) = cons(X,Xs))).
 
-# Head function, here called my_head, as head is used as projection of cons
-#fof(my_head,axiom,
-#          (! [X,Xs] : (my_head(cons(X,Xs)) = X))
-#        & (! [Xs] : ( (my_head(Xs) = bottom)
-#                    | (Xs = cons(head(Xs),tail(Xs)))
-#                    )
-#          )
-#          ).
-#          
-## there is a ptr to my head
-#fof(my_head_ptr,axiom,! [Xs] : (app(my_head_ptr,Xs) = my_head(Xs))).
-#
-## Tail function, here called my_tail, as tail is used as projection of cons
-#fof(my_tail,axiom,
-#          (! [X,Xs] : (my_tail(cons(X,Xs)) = Xs))
-#        & (! [Xs] : ( (my_tail(Xs) = bottom)
-#                    | (Xs = cons(head(Xs),tail(Xs)))
-#                    )
-#          )
-#          ).
-#          
-## there is a ptr to my head
-#fof(my_tail_ptr,axiom,! [Xs] : (app(my_tail_ptr,Xs) = my_tail(Xs))).
-#
+% Head function, here called my_head, as head is used as projection of cons
+%fof(my_head,axiom,
+%          (! [X,Xs] : (my_head(cons(X,Xs)) = X))
+%        & (! [Xs] : ( (my_head(Xs) = bottom)
+%                    | (Xs = cons(head(Xs),tail(Xs)))
+%                    )
+%          )
+%          ).
+%          
+%% there is a ptr to my head
+%fof(my_head_ptr,axiom,! [Xs] : (app(my_head_ptr,Xs) = my_head(Xs))).
+%
+%% Tail function, here called my_tail, as tail is used as projection of cons
+%fof(my_tail,axiom,
+%          (! [X,Xs] : (my_tail(cons(X,Xs)) = Xs))
+%        & (! [Xs] : ( (my_tail(Xs) = bottom)
+%                    | (Xs = cons(head(Xs),tail(Xs)))
+%                    )
+%          )
+%          ).
+%          
+%% there is a ptr to my head
+%fof(my_tail_ptr,axiom,! [Xs] : (app(my_tail_ptr,Xs) = my_tail(Xs))).
+%
 
 
-# bottom is not zero, suc, cons, nil, or function pointers
+% bottom is not zero, suc, cons, nil, or function pointers
 fof(bottom_different,axiom, (bottom != nil)
                           & (bottom != zero)
-                          & (! [X,Xs] : (bottom != cons(X,Xs))) # lazy constructor semantics
-                          & (! [N] : (bottom != suc(N)))          
-                          & (bottom != suc_ptr)).
-#                          & (bottom != cons_ptr)
-#                          & (bottom != my_head_ptr)
-#                          & (bottom != my_tail_ptr)).
+                          & (! [X,Xs] : (bottom != cons(X,Xs))) % lazy constructor semantics
+                          & (! [N] : (bottom != suc(N))))   .       
+%                         & (bottom != suc_ptr)).
+%                          & (bottom != cons_ptr)
+%                          & (bottom != my_head_ptr)
+%                          & (bottom != my_tail_ptr)).
                           
-#funptrs are pairwise distinct
-#fof(ptrs_distinct,axiom,
-#        (suc_ptr != cons_ptr)
-#      & (suc_ptr != my_head_ptr) & (suc_ptr != my_tail_ptr)
-#      & (cons_ptr != my_head_ptr) & (cons_ptr != my_tail_ptr)
-#      & (my_head_ptr != my_tail_ptr)).
+%funptrs are pairwise distinct
+%fof(ptrs_distinct,axiom,
+%        (suc_ptr != cons_ptr)
+%      & (suc_ptr != my_head_ptr) & (suc_ptr != my_tail_ptr)
+%      & (cons_ptr != my_head_ptr) & (cons_ptr != my_tail_ptr)
+%      & (my_head_ptr != my_tail_ptr)).
 
