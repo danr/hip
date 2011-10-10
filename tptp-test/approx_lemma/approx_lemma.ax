@@ -15,15 +15,15 @@
 %             ∨ ( N = S(pred(N) ∧ Xs = Cons(head(XS),tail(XS))
 
 fof(approx_case_0,axiom,
-        ! [N] : (approx(suc(N),nil) = nil)).
+        ! [H] : (approx(H,nil) = nil)).
 
 fof(approx_case_1,axiom,
-        ! [N,X,Xs] : (approx(suc(N),cons(X,Xs)) = cons(X,approx(N,Xs)))).
+        ! [H,X,Xs] : (approx(H,cons(X,Xs)) = cons(X,app(H,Xs)))).
 
 fof(approx_case_2,axiom,
-        ! [N,Xs] : ( (approx(N,Xs) = bottom)
-                   | ((N = suc(pred(N))) & (Xs = nil))
-                   | ((N = suc(pred(N))) & (Xs = cons(head(Xs),tail(Xs)))))).
+        ! [H,Xs] : ( (approx(H,Xs) = bottom)
+                   | (Xs = nil)
+                   | (Xs = cons(head(Xs),tail(Xs))))).
 
 % approximation lemma                   
 

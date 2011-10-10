@@ -1,10 +1,10 @@
 % pred
-fof(suc_pred,axiom,! [N] : (pred(suc(N)) = N)).
+%fof(suc_pred,axiom,! [N] : (pred(suc(N)) = N)).
 
 %fof(zero_pred,axiom,pred(zero) = bottom).
 
 % zero /= suc
-fof(zero_suc_different,axiom,! [N] : (zero != suc(N))).
+%fof(zero_suc_different,axiom,! [N] : (zero != suc(N))).
 
 % there is a pointer to suc
 %fof(suc_ptr,axiom,! [N] : (app(suc_ptr,N)=suc(N))).
@@ -48,9 +48,9 @@ fof(nil_cons_different,axiom,! [X,Xs] : (nil != cons(X,Xs))).
 
 % bottom is not zero, suc, cons, nil, or function pointers
 fof(bottom_different,axiom, (bottom != nil)
-                          & (bottom != zero)
-                          & (! [X,Xs] : (bottom != cons(X,Xs))) % lazy constructor semantics
-                          & (! [N] : (bottom != suc(N))))   .       
+                         % & (bottom != zero)
+                          & (! [X,Xs] : (bottom != cons(X,Xs)))) . % lazy constructor semantics
+                         % & (! [N] : (bottom != suc(N))))   .       
 %                         & (bottom != suc_ptr)).
 %                          & (bottom != cons_ptr)
 %                          & (bottom != my_head_ptr)
