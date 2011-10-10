@@ -1,0 +1,39 @@
+include('nats_lists.ax').
+
+# Map. need to send function pointers to map. It uses app
+#
+# ∀ F      → map(F,nil) = nil
+# ∀ F X Xs → map(F,cons(X,Xs)) = cons(app(F,X),map(F,Xs))
+# ∀ F Xs   → map(F,Xs) = Bottom
+#           ∨ (Xs = cons(head(Xs),tail(Xs)))
+#           ∨ (Xs = nil)
+
+fof(map_case_0,axiom,
+        ! [F] : (map(F,nil) = nil)).
+
+fof(map_case_1,axiom,
+        ! [F,X,Xs] : (map(F,cons(X,Xs)) = cons(app(F,X),map(F,Xs)))).
+
+fof(map_case_2,axiom,
+        ! [F,Xs] : ( (map(N,Xs) = bottom)
+                   | (Xs = nil)
+                   | (Xs = cons(head(Xs),tail(Xs))))).
+
+# There is a ptr to map                   
+fof(map_ptr_eq,axiom,
+        ! [F,XS] :
+          (app(app(map_ptr,F),XS) = map(F,XS))).
+
+
+# Eprover manages to show:
+# map succ [] = []          
+# fof(map_suc_nil,conjecture,map(suc_ptr,nil) = nil).
+###########
+
+# Eprover manages to show:
+# map succ [0] = [1]
+#include('nats_lists.ax').
+#fof(map_suc_singleton,conjecture,
+#          map(suc_ptr,cons(zero,nil))
+#        = cons(suc(zero),nil)).
+############

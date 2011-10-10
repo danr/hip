@@ -1,0 +1,17 @@
+
+include('nats_lists.ax').
+
+# Iterate, send funptrs
+#
+# ∀ F X → iterate(F,X) = cons(X,iterate(F,app(F,X)))
+#
+# iterate is not strict in any argument!!
+
+fof(iterate_case_0,axiom,
+        ! [F,X] : (iterate(F,X) = cons(X,iterate(F,app(F,X))))).
+
+# there is a ptr to iterate        
+fof(iterate_ptr_eq,axiom,
+        ! [F,X] :
+          (app(app(iterate_ptr,F),X) = iterate(F,X))).
+
