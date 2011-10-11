@@ -1,0 +1,21 @@
+#+Title: Induction for ATPs
+#+AUTHOR: Dan Rosén danr@fripost.org
+#+DATE:      
+#+OPTIONS: toc:nil author:nil H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+
+Let's say you have a set of premises $\Gamma$, and you want to show
+
+\begin{equation}    
+\Gamma \vdash \forall n . P(n) \Rightarrow P(n^+)
+\end{equation}
+
+This is equal to showing
+
+\begin{equation}
+\Gamma , P(x) \vdash P(x^+)
+\end{equation}
+
+where $x$ is a new constant, not occuring in $\Gamma$.  
+
+This is essentially the introduction rule for $\forall$.
+   
