@@ -1,6 +1,4 @@
 
-%include('nats_lists.ax').
-
 % Iterate, send funptrs
 %
 % ∀ F X → iterate(F,X) = cons(X,iterate(F,app(F,X)))
@@ -9,9 +7,4 @@
 
 fof(iterate_case_0,axiom,
         ! [F,X,T] : ((min(T) & T = iterate(F,X)) => T = c_cons(X,iterate(F,app(F,X))))).
-
-% there is a ptr to iterate        
-%fof(iterate_ptr_eq,axiom,
-%        ! [F,X] :
-%          (app(app(iterate_ptr,F),X) = iterate(F,X))).
 

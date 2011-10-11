@@ -1,0 +1,27 @@
+%          
+% In Haskell:
+%
+%   approx (S n) Nil         = Nil
+%   approx (S n) (Cons x xs) = Cons x (approx n xs)
+%
+% In FOL:
+%
+%   ∀ N      → approx(S(N),Nil)        = Nil
+%   ∀ N X Xs → approx(S(N),Cons(X,Xs)) = Cons(X,approx(N,Xs))
+%   ∀ N Xs   → (approx(N,Xs)            = Bottom)
+%             ∨ ( N = S(pred(N) ∧ Xs = Nil ))
+%             ∨ ( N = S(pred(N) ∧ Xs = Cons(head(XS),tail(XS))
+
+fof(approx_case_0,axiom,
+        ! [H,T] : (min(T) => (T != approx(H,c_nil) | T = c_nil))).
+
+fof(approx_case_1,axiom,
+        ! [H,T,X,Xs] : (min(T) => (T != approx(H,c_cons(X,Xs)) | T = c_cons(X,app(H,Xs))))).
+
+fof(approx_case_2,axiom,
+        ! [H,T,Xs] : ( (min(T) & T = approx(H,Xs)) =>
+                   ( min(Xs) &
+                     ( T = c_bottom
+                     | (Xs = c_nil)
+                     | (Xs = c_cons(head(Xs),tail(Xs)))
+                     ) ))).

@@ -1,0 +1,18 @@
+
+% head, tail
+fof(cons_head,axiom,! [X,Xs] : (min(c_cons(X,Xs)) => head(c_cons(X,Xs)) = X)).
+
+fof(cons_tail,axiom,! [X,Xs] : (min(c_cons(X,Xs)) => tail(c_cons(X,Xs)) = Xs)).
+
+% nil /= cons
+fof(nil_cons_different,axiom,
+        ! [X,Xs,T] : (min(T) => (T != c_nil | T != c_cons(X,Xs)))).
+
+fof(bottom_different,axiom, 
+         (![T] : (min(T) => (T != c_bottom | T != c_nil)))
+       & (! [T,X,Xs] : (min(T) => (T != c_bottom | T != c_cons(X,Xs))))).
+
+% force a list to be interesting
+fof(min_list,axiom,
+    ![Xs] : (min_list(Xs) => (min(Xs) & (Xs = c_cons(head(Xs),tail(Xs)) => min_list(tail(Xs)))))
+).
