@@ -1,0 +1,21 @@
+#+Title: Skolemization
+#+AUTHOR: Dan Rosén danr@fripost.org
+#+DATE:      
+#+OPTIONS: toc:nil author:nil H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+
+Let's say you want to show
+
+\begin{equation}    
+\exists x . \forall y . \exists z . \forall u . \phi(x,y,z,u)
+\end{equation}
+
+This is equal to showing
+
+\begin{equation}
+\forall y . \forall z . \phi(c,y,f(y),u)
+\end{equation}
+
+where $c$ is a new constant and $f$ is a new function symbol.
+
+This is called skolemization.
+   
