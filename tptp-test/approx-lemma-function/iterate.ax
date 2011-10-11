@@ -1,0 +1,10 @@
+
+% Iterate, send funptrs
+%
+% ∀ F X → iterate(F,X) = cons(X,iterate(F,app(F,X)))
+%
+% iterate is not strict in any argument!!
+
+fof(iterate_case_0,axiom,
+        ! [F,X] : (iterate(F,X) = cons(X,iterate(F,app(F,X))))).
+
