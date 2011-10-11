@@ -1,0 +1,10 @@
+% pred
+fof(suc_pred,axiom,! [N] : (pred(suc(N)) = N)).
+
+% zero /= suc
+fof(zero_suc_different,axiom,! [N] : (zero != suc(N))).
+
+% bottom is not zero, suc, cons, nil, or function pointers
+fof(bottom_different,axiom, (bottom != zero)
+                          & (! [N] : (bottom != suc(N)))).       
+                          

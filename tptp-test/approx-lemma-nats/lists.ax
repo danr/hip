@@ -1,0 +1,13 @@
+% head, tail
+fof(cons_head,axiom,! [X,Xs] : (head(cons(X,Xs)) = X)).
+
+fof(cons_tail,axiom,! [X,Xs] : (tail(cons(X,Xs)) = Xs)).
+
+% nil /= cons
+fof(nil_cons_different,axiom,! [X,Xs] : (nil != cons(X,Xs))).
+
+% bottom is not zero, suc, cons, nil, or function pointers
+fof(bottom_different_list,axiom,
+         (bottom != nil)
+       & (! [X,Xs] : (bottom != cons(X,Xs)))).
+
