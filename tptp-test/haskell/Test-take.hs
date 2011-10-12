@@ -8,13 +8,13 @@ import Language.TPTP.Pretty
 {-
 
 -- The definition
-take Zero    xs          = xs
+take Zero    xs          = Nil
 take (Suc n) (Cons x xs) = Cons x (take n xs)
 take (Suc n) Nil         = Nil
 
 -- desugared to
 take' n xs = case n of
-  Zero  -> xs
+  Zero  -> Nil
   Suc n -> takeSuc n xs
   _     -> ⊥
 
@@ -24,7 +24,7 @@ takeSuc n xs = case xs of
   _         -> ⊥
 
 -- interpreted as
-take' Zero    xs = xs
+take' Zero    xs = Nil
 take' (Suc n) xs = takeSuc n xs
 take' _       xs = ⊥
 
@@ -50,7 +50,7 @@ takeSuc = binary "takeSuc"
 
 takeAxioms :: [Decl]
 takeAxioms =
-  [ axiom "take0" (forall $ \xs -> take zero xs === xs)
+  [ axiom "take0" (forall $ \xs -> take zero xs === nil)
 
   , axiom "take1" (forall $ \n xs -> take (suc n) xs === takeSuc n xs)
 
@@ -67,7 +67,18 @@ takeAxioms =
                                   \/ xs === nil)
   ]
 
-main = putStr (unlines (map pretty takeAxioms))
+one   = suc zero
+two   = suc one
+three = suc two
+
+infixr 5 `cons`
+
+takeTest :: Decl
+takeTest = conjecture "takeTest" $
+       take two (three `cons` one `cons` two `cons` three `cons` one `cons` nil)
+   ===          (three `cons` one `cons` nil)
+
+main = outputTPTP (takeAxioms ++ [takeTest])
 
 
 

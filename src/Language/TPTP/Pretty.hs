@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances, TemplateHaskell
+ #-}
 module Language.TPTP.Pretty where
 
 import Language.TPTP
@@ -54,4 +56,11 @@ instance Pretty Decl where
     pretty (Axiom      n f) = pdecl n "axiom"      f
     pretty (Conjecture n f) = pdecl n "conjecture" f
 
+instance Pretty [Decl] where
+    pretty ds = unlines (map pretty ds)
 
+writeTPTP :: Pretty a => FilePath -> a -> IO ()
+writeTPTP file a = writeFile file (pretty a)
+
+outputTPTP :: Pretty a => a -> IO ()
+outputTPTP = putStr . pretty

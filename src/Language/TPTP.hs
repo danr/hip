@@ -93,6 +93,9 @@ data Decl = Axiom      String Formula
 axiom :: String -> M Formula -> Decl
 axiom s f = Axiom s (run f)
 
+conjecture :: String -> M Formula -> Decl
+conjecture s f = Conjecture s (run f)
+
 class Quantifier t where
     quantifier
         :: ([VarName] -> Formula -> Formula) -- ^ quantifier, Forall or Exists
@@ -111,8 +114,4 @@ forall = quantifier Forall []
 
 exists :: (Quantifier t) => t -> M Formula
 exists = quantifier Exists []
-
-example :: M Formula
-example = forall $ \x y z -> x === y & y === z ==> x === z
-
 
