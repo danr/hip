@@ -57,6 +57,13 @@ diffAxioms =
                        & forall (\x xs -> cons x xs != nil))
   ]
 
+projAxioms :: [Decl]
+projAxioms =
+  [ axiom "projpred" (forall $ \n    -> pred (suc n) === n)
+  , axiom "projhead" (forall $ \x xs -> head (cons x xs) === x)
+  , axiom "projtail" (forall $ \x xs -> tail (cons x xs) === xs)
+  ]
+
 takeAxioms :: [Decl]
 takeAxioms =
   [ axiom "take0" (forall $ \xs -> take zero xs === nil)
@@ -87,7 +94,7 @@ takeTest = conjecture "takeTest" $
        take two (three `cons` one `cons` two `cons` three `cons` one `cons` nil)
    ===          (three `cons` one `cons` nil)
 
-main = outputTPTP (diffAxioms ++ takeAxioms ++ [takeTest])
+main = outputTPTP (diffAxioms ++ projAxioms ++ takeAxioms ++ [takeTest])
 
 
 
