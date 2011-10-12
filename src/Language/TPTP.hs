@@ -8,6 +8,7 @@ import Control.Monad.State
 import Control.Applicative hiding (empty)
 import Control.Arrow (first,second,(***))
 
+-- I forgot what I was going to use the Language to here
 type ST = ([VarName],Language)
 
 newtype M a = M { runM :: State ST a }
@@ -33,14 +34,19 @@ instance Show FunName where show = funName
 instance Show RelName where show = relName
 instance Show VarName where show = varName
 
-data Language = Language 
-              { functions :: Map FunName Arity
-              , relations :: Map RelName Arity
-              }
-  deriving (Show)
+type Language = (Map FunName Arity,Map RelName Arity)
 
 empty :: Language
-empty = Language M.empty M.empty
+empty = (M.empty,M.empty)
+
+constant :: String -> M Term 
+constant n = return (Fun (FunName n) [])
+
+unary :: String -> M Term -> M Term 
+unary n = liftM (Fun (FunName n) . pure)
+
+binary :: String -> M Term -> M Term -> M Term 
+binary n = liftM2 (\x y -> Fun (FunName n) [x,y])
 
 data Term = Fun FunName [Term]
           | Var VarName
@@ -80,9 +86,12 @@ infix  1 <=>
 (===) :: M Term -> M Term -> M Formula
 (===) = liftM2 (:==)
 
-data Decl = Axiom      Formula
-          | Conjecture Formula
+data Decl = Axiom      String Formula
+          | Conjecture String Formula
   deriving (Eq,Ord,Show)
+
+axiom :: String -> M Formula -> Decl
+axiom s f = Axiom s (run f)
 
 class Quantifier t where
     quantifier 
@@ -105,3 +114,5 @@ exists = quantifier Exists []
 
 example :: M Formula
 example = forall $ \x y z -> x === y & y === z ==> x === z
+
+

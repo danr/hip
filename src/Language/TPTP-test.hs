@@ -1,6 +1,6 @@
 module Main where
 
-import Prelude hiding (take)
+import Prelude hiding (take,pred,head,tail)
 
 import Language.TPTP
 
@@ -39,8 +39,8 @@ pred = unary    "pred"
 zero = constant "zero"
 nil  = constant "nil"
 cons = binary   "cons"
-head = binary   "head"
-tail = binary   "tail"
+head = unary    "head"
+tail = unary    "tail"
 
 bottom = constant "bottom"
 
@@ -55,8 +55,8 @@ take_case_2 = axiom "take_case_2"
 
 take_case_3 = axiom "take_case_3"
     (forall $ \n xs -> take n xs === bottom
-                     | n === zero
-                     | n === suc (pred n))
+                    \/ n === zero
+                    \/ n === suc (pred n))
 
 takeSuc_case_1 = axiom "takeSuc_case_1"
     (forall $ \n x xs -> takeSuc n (cons x xs) === cons x (take n xs))
@@ -66,7 +66,7 @@ takeSuc_case_2 = axiom "takeSuc_case_2"
 
 takeSuc_case_3 = axiom "takeSuc_case_3"
     (forall $ \n xs -> takeSuc n xs === bottom
-                     | xs === cons (head xs) (tail xs)
-                     | xs === nil)
+                    \/ xs === cons (head xs) (tail xs)
+                    \/ xs === nil)
                     
 
