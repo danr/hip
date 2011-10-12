@@ -5,15 +5,31 @@
 
 * Haskell -> FOL translation:
   
-  * Extensional equality is an axiom schem
+  * Extensional equality is an axiom schema
 
     ! [f,g] : ( ( ! [X] : (f(X) = g(X))) => ( f = g ))
+
+    fix:
+    
+    ! [f_ptr,g_ptr] : ((! [X] : (app(f_ptr,X) = app(g_ptr,X))) => (f_ptr = g_ptr))
 
   * Congruence rules for functions
 
     X1 = X2 & Y1 = Y2 => add(X1,Y1) = add(X2,Y2)
 
   * Eta expansion necessary? Use types?
+
+  * Typeclasses - use dictionary passing or monomorphise?  Whereas
+    Quickspec needs monomorphic types, and rely on parametricity, the
+    theorem prover backend could just as well use some abstract
+    polymorphic type.
+
+  * How to deal with builtins? Int, induction over Int.  Overflow?
+    Only accept Integers?
+
+  * Restrict to only finite structures?
+
+  * How to deal with equality? Would be nice if we could use FOL's equality.
 
 * QuickSpec for ATP
 

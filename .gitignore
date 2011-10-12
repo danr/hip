@@ -1,3 +1,9 @@
 *.o
 *.hi
 *.out
+examples/*
+!examples/*.hs
+docs/*pdf
+docs/*tex
+paper/
+src/Test/
