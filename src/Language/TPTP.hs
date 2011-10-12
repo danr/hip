@@ -1,8 +1,27 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances,GeneralizedNewtypeDeriving,TypeSynonymInstances #-}
 module Language.TPTP where
 
 import Data.Map (Map)
 import qualified Data.Map as M
+import Control.Monad
+import Control.Monad.State
+import Control.Applicative hiding (empty)
+import Control.Arrow (first,second,(***))
+
+type ST = ([VarName],Language)
+
+newtype M a = M { runM :: State ST a }
+  deriving (Monad,MonadState ST,Functor,Applicative)
+
+run :: M a -> a
+run m = evalState (runM m) (vars,empty)
+  where vars = [ VarName ("X" ++ show x) | x <- [0..] ]
+
+newVar :: M VarName
+newVar = do
+  v:vs <- gets fst
+  modify (first (const vs))
+  return v
 
 type Arity = Int
 
@@ -20,6 +39,9 @@ data Language = Language
               }
   deriving (Show)
 
+empty :: Language
+empty = Language M.empty M.empty
+
 data Term = Fun FunName [Term]
           | Var VarName
   deriving (Eq,Ord,Show)
@@ -27,15 +49,17 @@ data Term = Fun FunName [Term]
 data BinOp = (:&) | (:|) | (:=>) | (:<=>)
   deriving (Eq,Ord,Show)
 
-data Formula = Term :== Term       -- atomic
-             | Rel RelName [Term] -- atomic
+data Formula = Term :== Term      
+             | Rel RelName [Term]
              | Neg Formula
              | BinOp Formula BinOp Formula
              | Forall [VarName] Formula
              | Exists [VarName] Formula
   deriving (Eq,Ord,Show)
 
-mkBinOp op phi psi = BinOp phi op psi
+mkBinOp :: BinOp -- (Formula -> Formula -> Formula)
+        -> M Formula -> M Formula -> M Formula
+mkBinOp op = liftM2 (\f g -> BinOp f op g) 
 
 infix 4 ===
 infixr 3 &
@@ -48,12 +72,13 @@ infixl 1 :=>
 infix  1 <=>
 
 (==>) = mkBinOp (:=>)
-(&) = mkBinOp (:&)
-(/\) = mkBinOp (:&)
-(\/) = mkBinOp (:|)
+(&)   = mkBinOp (:&)
+(/\)  = mkBinOp (:&)
+(\/)  = mkBinOp (:|)
 (<=>) = mkBinOp (:<=>)
 
-(===) = (:==)
+(===) :: M Term -> M Term -> M Formula
+(===) = liftM2 (:==)
 
 data Decl = Axiom      Formula
           | Conjecture Formula
@@ -63,21 +88,20 @@ class Quantifier t where
     quantifier 
         :: ([VarName] -> Formula -> Formula) -- ^ quantifier, Forall or Exists
         -> [VarName]                         -- ^ accumulated used variables
-        -> [VarName]                         -- ^ variable pool
         -> t                                 -- ^ Formula or (Term -> t)
-        -> Formula                           -- ^ resulting formula
+        -> M Formula                         -- ^ resulting formula
  
-instance Quantifier Formula where
-    quantifier q _ acc f = q (reverse acc) f
+instance Quantifier (M Formula) where
+    quantifier q acc f = q (reverse acc) <$> f
  
-instance Quantifier r => Quantifier (Term -> r) where
-    quantifier q (v:vs) acc f = quantifier q vs (v:acc) (f (Var v))
+instance Quantifier r => Quantifier (M Term -> r) where
+    quantifier q acc f = newVar >>= \v -> quantifier q (v:acc) (f (return (Var v)))
  
-forall :: (Quantifier t) => t -> Formula
-forall = quantifier Forall [VarName ("X" ++ show x) | x <- [0..]] []
+forall :: (Quantifier t) => t -> M Formula
+forall = quantifier Forall []
 
-exists :: (Quantifier t) => t -> Formula
-exists = quantifier Exists [VarName ("X" ++ show x) | x <- [0..]] []
+exists :: (Quantifier t) => t -> M Formula
+exists = quantifier Exists []
 
-example :: Formula
+example :: M Formula
 example = forall $ \x y z -> x === y & y === z ==> x === z
