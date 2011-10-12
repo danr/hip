@@ -48,7 +48,8 @@ bottom = constant "bottom"
 take    = binary "take"
 takeSuc = binary "takeSuc"
 
-take_axioms =
+takeAxioms :: [Decl]
+takeAxioms =
   [ axiom "take0" (forall $ \xs -> take zero xs === xs)
 
   , axiom "take1" (forall $ \n xs -> take (suc n) xs === takeSuc n xs)
@@ -66,7 +67,7 @@ take_axioms =
                                   \/ xs === nil)
   ]
 
-printAxioms = putStr (unlines (map pretty take_axioms))
+main = putStr (unlines (map pretty takeAxioms))
 
 
 

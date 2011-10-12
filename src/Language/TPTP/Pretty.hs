@@ -48,10 +48,10 @@ instance Pretty Formula where
     pretty (Exists vs f)    = "? " ++ bindList vs ++ ": " ++ paren (pretty f)
 
 pdecl :: String -> String -> Formula -> String
-pdecl t n f = "fof" ++ paren (t ++ "," ++ n ++ "," ++ pretty f)
+pdecl n t f = "fof" ++ paren (n ++ "," ++ t ++ "," ++ pretty f) ++ "."
 
 instance Pretty Decl where
-    pretty (Axiom      n f) = pdecl "axiom"      n f
-    pretty (Conjecture n f) = pdecl "conjecture" n f
+    pretty (Axiom      n f) = pdecl n "axiom"      f
+    pretty (Conjecture n f) = pdecl n "conjecture" f
 
 
