@@ -39,13 +39,13 @@ type Language = (Map FunName Arity,Map RelName Arity)
 empty :: Language
 empty = (M.empty,M.empty)
 
-constant :: String -> M Term 
+constant :: String -> M Term
 constant n = return (Fun (FunName n) [])
 
-unary :: String -> M Term -> M Term 
+unary :: String -> M Term -> M Term
 unary n = liftM (Fun (FunName n) . pure)
 
-binary :: String -> M Term -> M Term -> M Term 
+binary :: String -> M Term -> M Term -> M Term
 binary n = liftM2 (\x y -> Fun (FunName n) [x,y])
 
 data Term = Fun FunName [Term]
@@ -55,7 +55,7 @@ data Term = Fun FunName [Term]
 data BinOp = (:&) | (:|) | (:=>) | (:<=>)
   deriving (Eq,Ord,Show)
 
-data Formula = Term :== Term      
+data Formula = Term :== Term
              | Rel RelName [Term]
              | Neg Formula
              | BinOp Formula BinOp Formula
@@ -63,9 +63,9 @@ data Formula = Term :== Term
              | Exists [VarName] Formula
   deriving (Eq,Ord,Show)
 
-mkBinOp :: BinOp -- (Formula -> Formula -> Formula)
+mkBinOp :: BinOp
         -> M Formula -> M Formula -> M Formula
-mkBinOp op = liftM2 (\f g -> BinOp f op g) 
+mkBinOp op = liftM2 (\f g -> BinOp f op g)
 
 infix 4 ===
 infixr 3 &
@@ -94,18 +94,18 @@ axiom :: String -> M Formula -> Decl
 axiom s f = Axiom s (run f)
 
 class Quantifier t where
-    quantifier 
+    quantifier
         :: ([VarName] -> Formula -> Formula) -- ^ quantifier, Forall or Exists
         -> [VarName]                         -- ^ accumulated used variables
         -> t                                 -- ^ Formula or (Term -> t)
         -> M Formula                         -- ^ resulting formula
- 
+
 instance Quantifier (M Formula) where
     quantifier q acc f = q (reverse acc) <$> f
- 
+
 instance Quantifier r => Quantifier (M Term -> r) where
     quantifier q acc f = newVar >>= \v -> quantifier q (v:acc) (f (return (Var v)))
- 
+
 forall :: (Quantifier t) => t -> M Formula
 forall = quantifier Forall []
 

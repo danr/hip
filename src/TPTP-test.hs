@@ -3,6 +3,7 @@ module Main where
 import Prelude hiding (take,pred,head,tail)
 
 import Language.TPTP
+import Language.TPTP.Pretty
 
 {-
 
@@ -47,26 +48,25 @@ bottom = constant "bottom"
 take    = binary "take"
 takeSuc = binary "takeSuc"
 
-take_case_1 = axiom "take_case_1"
-    (forall $ \xs -> take zero xs === xs)
-        
-take_case_2 = axiom "take_case_2"
-    (forall $ \n xs -> take (suc n) xs === takeSuc n xs)
+take_axioms =
+  [ axiom "take0" (forall $ \xs -> take zero xs === xs)
 
-take_case_3 = axiom "take_case_3"
-    (forall $ \n xs -> take n xs === bottom
-                    \/ n === zero
-                    \/ n === suc (pred n))
+  , axiom "take1" (forall $ \n xs -> take (suc n) xs === takeSuc n xs)
 
-takeSuc_case_1 = axiom "takeSuc_case_1"
-    (forall $ \n x xs -> takeSuc n (cons x xs) === cons x (take n xs))
+  , axiom "take2" (forall $ \n xs -> take n xs === bottom
+                                  \/ n === zero
+                                  \/ n === suc (pred n))
 
-takeSuc_case_2 = axiom "takeSuc_case_2"
-    (forall $ \n -> takeSuc n nil === nil)
+  , axiom "take3" (forall $ \n x xs -> takeSuc n (cons x xs) === cons x (take n xs))
 
-takeSuc_case_3 = axiom "takeSuc_case_3"
-    (forall $ \n xs -> takeSuc n xs === bottom
-                    \/ xs === cons (head xs) (tail xs)
-                    \/ xs === nil)
-                    
+  , axiom "take4" (forall $ \n -> takeSuc n nil === nil)
+
+  , axiom "take5" (forall $ \n xs -> takeSuc n xs === bottom
+                                  \/ xs === cons (head xs) (tail xs)
+                                  \/ xs === nil)
+  ]
+
+printAxioms = putStr (unlines (map pretty take_axioms))
+
+
 
