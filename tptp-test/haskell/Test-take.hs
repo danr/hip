@@ -48,6 +48,15 @@ bottom = constant "bottom"
 take    = binary "take"
 takeSuc = binary "takeSuc"
 
+diffAxioms :: [Decl]
+diffAxioms =
+  [ axiom "diffnats"   (forall $ \n    -> suc n     != zero)
+  , axiom "difflists"  (forall $ \x xs -> cons x xs != nil)
+  , axiom "diffbottom" ( zero != bottom & nil != bottom 
+                       & forall (\n -> suc n != nil)
+                       & forall (\x xs -> cons x xs != nil))
+  ]
+
 takeAxioms :: [Decl]
 takeAxioms =
   [ axiom "take0" (forall $ \xs -> take zero xs === nil)
@@ -78,7 +87,7 @@ takeTest = conjecture "takeTest" $
        take two (three `cons` one `cons` two `cons` three `cons` one `cons` nil)
    ===          (three `cons` one `cons` nil)
 
-main = outputTPTP (takeAxioms ++ [takeTest])
+main = outputTPTP (diffAxioms ++ takeAxioms ++ [takeTest])
 
 
 

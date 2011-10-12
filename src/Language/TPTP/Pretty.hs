@@ -42,7 +42,8 @@ instance Pretty BinOp where
     pretty (:<=>) = " <=> "
 
 instance Pretty Formula where
-    pretty (t1 :== t2)      = pretty t1 ++ " = " ++  pretty t2
+    pretty (EqOp t1 (:==) t2) = pretty t1 ++ " = " ++  pretty t2
+    pretty (EqOp t1 (:!=) t2) = pretty t1 ++ " != " ++  pretty t2
     pretty (Rel r args)     = pretty r ++ argList args
     pretty (Neg f)          = "~ " ++ paren (pretty f)
     pretty (BinOp f1 op f2) = paren (pretty f1) ++ pretty op ++ paren (pretty f2)

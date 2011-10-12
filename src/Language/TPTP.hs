@@ -52,10 +52,13 @@ data Term = Fun FunName [Term]
           | Var VarName
   deriving (Eq,Ord,Show)
 
+data EqOp = (:==) | (:!=)
+  deriving (Eq,Ord,Show)
+
 data BinOp = (:&) | (:|) | (:=>) | (:<=>)
   deriving (Eq,Ord,Show)
 
-data Formula = Term :== Term
+data Formula = EqOp Term EqOp Term
              | Rel RelName [Term]
              | Neg Formula
              | BinOp Formula BinOp Formula
@@ -68,6 +71,7 @@ mkBinOp :: BinOp
 mkBinOp op = liftM2 (\f g -> BinOp f op g)
 
 infix 4 ===
+infix 4 !=
 infixr 3 &
 infixr 3 :&
 infixr 3 /\
@@ -83,8 +87,9 @@ infix  1 <=>
 (\/)  = mkBinOp (:|)
 (<=>) = mkBinOp (:<=>)
 
-(===) :: M Term -> M Term -> M Formula
-(===) = liftM2 (:==)
+(===),(!=) :: M Term -> M Term -> M Formula
+(===) = liftM2 (\f g -> EqOp f (:==) g)
+(!=)  = liftM2 (\f g -> EqOp f (:!=) g)
 
 data Decl = Axiom      String Formula
           | Conjecture String Formula
