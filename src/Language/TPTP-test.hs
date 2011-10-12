@@ -1,0 +1,72 @@
+module Main where
+
+import Prelude hiding (take)
+
+import Language.TPTP
+
+{-
+
+-- The definition
+take Zero    xs          = xs
+take (Suc n) (Cons x xs) = Cons x (take n xs)
+take (Suc n) Nil         = Nil
+
+-- desugared to
+take' n xs = case n of
+  Zero  -> xs
+  Suc n -> takeSuc n xs
+  _     -> ⊥
+
+takeSuc n xs = case xs of
+  Cons x xs -> Cons x (take' n xs)
+  Nil       -> Nil
+  _         -> ⊥
+
+-- interpreted as
+take' Zero    xs = xs
+take' (Suc n) xs = takeSuc n xs
+take' _       xs = ⊥
+
+takeSuc n (Cons x xs) = Cons x (take' n xs)
+takeSuc n Nil         = Nil
+takeSuc n _           = ⊥
+
+-}
+
+-- Definitions
+suc  = unary    "suc"
+pred = unary    "pred"
+zero = constant "zero"
+nil  = constant "nil"
+cons = binary   "cons"
+head = binary   "head"
+tail = binary   "tail"
+
+bottom = constant "bottom"
+
+take    = binary "take"
+takeSuc = binary "takeSuc"
+
+take_case_1 = axiom "take_case_1"
+    (forall $ \xs -> take zero xs === xs)
+        
+take_case_2 = axiom "take_case_2"
+    (forall $ \n xs -> take (suc n) xs === takeSuc n xs)
+
+take_case_3 = axiom "take_case_3"
+    (forall $ \n xs -> take n xs === bottom
+                     | n === zero
+                     | n === suc (pred n))
+
+takeSuc_case_1 = axiom "takeSuc_case_1"
+    (forall $ \n x xs -> takeSuc n (cons x xs) === cons x (take n xs))
+
+takeSuc_case_2 = axiom "takeSuc_case_2"
+    (forall $ \n -> takeSuc n nil === nil)
+
+takeSuc_case_3 = axiom "takeSuc_case_3"
+    (forall $ \n xs -> takeSuc n xs === bottom
+                     | xs === cons (head xs) (tail xs)
+                     | xs === nil)
+                    
+
