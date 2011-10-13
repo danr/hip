@@ -1,6 +1,8 @@
+{-# LANGUAGE FlexibleInstances #-}
 module Main where
 
-import Prelude (Int,undefined,Eq,Show,Ord,return,div,($),concat,(.),map)
+import Prelude (Int,undefined,Eq,Show,Ord,return
+               ,div,($),concat,(.),map,String,(>>=))
 import qualified Prelude as P
 
 import Language.TPTP
@@ -117,15 +119,31 @@ approxDefn =
 
 h = constant "h"
 
-appendLeftIdentityConjecture :: [Decl]
-appendLeftIdentityConjecture =
-  [ axiom      "appendLeftIH" (forall $ \xs -> h @@ (xs ++ nil) === h @@ xs)
-  , conjecture "appendLeftIS" (forall $ \xs -> approx h (xs ++ nil) === approx h xs)
-  ]
+class EqualityBuilder t where
+  eqConj'
+      :: String
+      -> [VarName]
+      -> t
+      -> M [Decl]
 
-appendAssoc :: [Decl]
-appendAssoc =
-  [ conjecture "appendassoc" (forall $ \xs ys zs -> (xs ++ ys) ++ zs === xs ++ (ys ++ zs)) ]
+instance EqualityBuilder (M Term,M Term) where
+  eqConj' name vars (lhs,rhs) = do
+    ih <- h @@ lhs === h @@ rhs
+    is <- approx h lhs === approx h rhs
+    return [ Axiom      (concat [name,"IH"]) (Forall (P.reverse vars) ih)
+           , Conjecture (concat [name,"IS"]) (Forall (P.reverse vars) is)
+           ]
+
+instance EqualityBuilder r => EqualityBuilder (M Term -> r) where
+  eqConj' name vars f = newVar >>= \v -> eqConj' name (v:vars) (f (return (Var v)))
+
+eqConj name = run . eqConj' name []
+
+assocConj :: [Decl]
+assocConj = eqConj "appendAssoc" $ \xs ys zs -> ((xs ++ ys) ++ zs , xs ++ (ys ++ zs))
+
+leftIdConj :: [Decl]
+leftIdConj = eqConj "leftId" $ \xs -> (xs ++ nil,xs)
 
 reverseEquivalent :: [Decl]
 reverseEquivalent =
@@ -134,11 +152,12 @@ reverseEquivalent =
 main = outputTPTP $ concat [ diffAxioms
                            , projAxioms
                            , appendAxioms
---                           , pointAxioms
---                           , reverseAxioms
---                           , reverse2Axioms
+                           , pointAxioms
+                           , reverseAxioms
+                           , reverse2Axioms
                            , approxDefn
-                           , appendLeftIdentityConjecture
+                           , assocConj
+--                           , leftIdConj
                            ]
 
 
