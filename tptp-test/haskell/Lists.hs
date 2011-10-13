@@ -1,6 +1,6 @@
 module Main where
 
-import Prelude (Int,undefined,Eq,Show,Ord,return,div,($),concat)
+import Prelude (Int,undefined,Eq,Show,Ord,return,div,($),concat,(.),map)
 import qualified Prelude as P
 
 import Language.TPTP
@@ -11,6 +11,8 @@ cons   = binary   "cons"
 bottom = constant "bottom"
 head   = unary    "head"
 tail   = unary    "tail"
+
+infixr 6 `cons`
 
 infixr 6 ++
 (++)   = binary "append"
@@ -24,7 +26,7 @@ diffAxioms :: [Decl]
 diffAxioms =
   [ axiom "difflists"  (forall $ \x xs -> cons x xs != nil)
   , axiom "diffbottom" ( nil != bottom 
-                       & forall (\x xs -> cons x xs != nil))
+                       & forall (\x xs -> cons x xs != bottom))
   ]
 
 projAxioms :: [Decl]
@@ -92,6 +94,35 @@ reverse2Axioms =
                                            \/ isList xs)
   ]
 
+[a,b,c] = map (constant . return) "abc"
+
+tests :: [Decl]
+tests =
+  [ conjecture "tests" $ (a `cons` b `cons` nil ++ point c === a `cons` b `cons` c `cons` nil)
+                       & (reverse (a `cons` b `cons` c `cons` nil) === c `cons` b `cons` a `cons` nil)
+                       & (a `cons` b `cons` point c === reverse2 (c `cons` b `cons` point a))
+  ]
+
+infixl 9 @@
+(@@)   = binary "app"
+approx = binary "approx"
+
+approxDefn :: [Decl]
+approxDefn =
+  [ axiom "approx_0" (forall $ \h      -> approx h nil === nil)
+  , axiom "approx_1" (forall $ \h x xs -> approx h (cons x xs) === cons x (h @@ xs))
+  , axiom "approx_2" (forall $ \h xs   -> approx h xs === bottom
+                                       \/ isList xs)
+  ]
+
+h = constant "h"
+
+appendLeftIdentityConjecture :: [Decl]
+appendLeftIdentityConjecture =
+  [ axiom      "appendLeftIH" (forall $ \xs -> h @@ (xs ++ nil) === h @@ xs)
+  , conjecture "appendLeftIS" (forall $ \xs -> approx h (xs ++ nil) === approx h xs)
+  ]
+
 appendAssoc :: [Decl]
 appendAssoc =
   [ conjecture "appendassoc" (forall $ \xs ys zs -> (xs ++ ys) ++ zs === xs ++ (ys ++ zs)) ]
@@ -103,10 +134,11 @@ reverseEquivalent =
 main = outputTPTP $ concat [ diffAxioms
                            , projAxioms
                            , appendAxioms
-                           , pointAxioms
-                           , reverseAxioms 
-                           , reverse2Axioms
-                           , appendAssoc
+--                           , pointAxioms
+--                           , reverseAxioms
+--                           , reverse2Axioms
+                           , approxDefn
+                           , appendLeftIdentityConjecture
                            ]
 
 

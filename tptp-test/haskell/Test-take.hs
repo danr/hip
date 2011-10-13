@@ -51,16 +51,22 @@ takeSuc = binary "takeSuc"
 diffAxioms :: [Decl]
 diffAxioms =
   [ axiom "diffnats"   (forall $ \n    -> suc n     != zero)
+
   , axiom "difflists"  (forall $ \x xs -> cons x xs != nil)
+
   , axiom "diffbottom" ( zero != bottom & nil != bottom 
+
                        & forall (\n -> suc n != nil)
+
                        & forall (\x xs -> cons x xs != nil))
   ]
 
 projAxioms :: [Decl]
 projAxioms =
   [ axiom "projpred" (forall $ \n    -> pred (suc n) === n)
+
   , axiom "projhead" (forall $ \x xs -> head (cons x xs) === x)
+
   , axiom "projtail" (forall $ \x xs -> tail (cons x xs) === xs)
   ]
 

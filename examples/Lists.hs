@@ -26,9 +26,10 @@ reverse Nil         = Nil
 
 reverse2 :: List -> List
 reverse2 = revAcc Nil
-  where 
-    revAcc acc Nil         = acc
-    revAcc acc (Cons x xs) = revAcc (Cons x acc) xs
+
+revAcc :: List -> List -> List
+revAcc acc Nil         = acc
+revAcc acc (Cons x xs) = revAcc (Cons x acc) xs
 
 instance Arbitrary List where
   arbitrary = sized arbList
@@ -54,6 +55,7 @@ lists = describe "Lists"
                 , con "++"      (++)
                 , con "reverse"  reverse
                 , con "reverse2" reverse2
+                , con "revAcc"   revAcc
                 ]
   where
     intType   = undefined :: Int
