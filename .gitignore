@@ -6,5 +6,5 @@ examples/*
 docs/*pdf
 docs/*tex
 paper/
-src/Test/
+src/Test/QuickSpec/
 *#*
