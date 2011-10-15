@@ -1,13 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable,
-             MultiParamTypeClasses,
-             FunctionalDependencies,
-             FlexibleInstances
-             #-}          
+{-# LANGUAGE DeriveDataTypeable #-}          
 module Test.AutoSpec.Core where
 
 import Data.Data
 import Data.Generics.Uniplate.Operations
-import Data.Generics.Uniplate.Data
 
 type Name = String
 
@@ -54,11 +49,8 @@ type ExtBranch  = Branch NestedPat
 data Branch k  = Branch (Pattern k) (Expr k)
   deriving (Eq,Ord,Show,Data,Typeable)
 
-class Subst t where
-  subst :: Data k => Name -> Name -> t k -> t k
-
-instance Subst Expr where
-  subst xold xnew = transform f
-    where f (Var x)      | x == xold = Var xnew
-          f (Case x brs) | x == xold = Case xnew brs
-          f e            = e
+subst :: Data k => Name -> Name -> Expr k -> Expr k
+subst xold xnew = transform f
+  where f (Var x)      | x == xold = Var xnew
+        f (Case x brs) | x == xold = Case xnew brs
+        f e            = e
