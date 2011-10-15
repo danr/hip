@@ -6,29 +6,31 @@ import Control.Monad
 import Control.Monad.State
 import Control.Applicative
 import Control.Arrow
+import Data.Set hiding (map,filter)
 
--- Names in scope, variable supply. Scope is not yet used to generate
--- interesting variable names.
-type St = ([Name],[Name])
+-- Names in scope
+type St = Set Name
 
 newtype N a = N { runN :: State St a } 
   deriving (Functor,Applicative,Monad,MonadState St)
 
-inScope :: N a -> N a
-inScope m = do
-  v <- gets fst
-  x <- m
-  modify (first (const v))
-  return x
+inNewScope :: [Name] -> N a -> N a
+inNewScope ns m = do
+  s <- get
+  modify (\s -> foldl (flip insert) s ns)
+  r <- m
+  put s
+  return r
 
-newVar :: N Name
-newVar = do
-  (v,x:xs) <- get
-  put (v,xs)
-  return x
+newVar :: Name -> N Name
+newVar n = do
+  let ns = n : [ n ++ show x | x <- [0..] ]
+  s <- get
+  return $ head $ filter (`notMember` s) ns
+
 
 compile :: ExtExpr -> N CoreExpr
-compile (Case n brs)  = match [n] (map (\(Branch p e) -> ([p],e)) brs) Fail
+compile (Case n brs)  = inNewScope [n] $ match [n] (map (\(Branch p e) -> ([p],e)) brs) Fail
 compile (App e1 e2)   = liftM2 App (compile e1) (compile e2)
 compile (Cons n es)   = Cons n <$> mapM compile es
 compile (Var x)       = return (Var x)                        
@@ -45,14 +47,16 @@ match (u:us) pats d | all (varPat . head . fst) pats =
 -- Constructor rule
 match (u:us) pats d | all (conPat . head . fst) pats = do
   brs <- forM pats $ \(PCons c args:ps,e) -> do
-                         vs <- mapM (const newVar) args
+                         let suggest (NP (PVar v)) = v
+                             suggest _             = "_"
+                         vs <- mapM (newVar . suggest) args
                          let args' = map denest args
-                         e' <- match (vs ++ us) [(args' ++ ps,e)] d
+                         e' <- inNewScope vs $ match (vs ++ us) [(args' ++ ps,e)] d
                          return (Branch (PCons c vs) e')
   return (Case u brs)
 
 demo :: CoreExpr
-demo = evalState (runN m) ([],["_" ++ show x | x <- [0..]])
+demo = evalState (runN m) (fromList ["u1","u2","u3"])
  where
   m = match ["u1","u2","u3"]
             [([PVar "f",PCons "Nil" []                             ,PVar "ys"                                  ],Cons "A" (map Var ["f","ys"]))
