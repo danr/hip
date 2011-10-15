@@ -28,7 +28,6 @@ newVar = do
   return x
 
 compile :: ExtExpr -> N CoreExpr
-compile (Let n e1 e2) = inScope $ liftM2 (Let n) (compile e1) (compile e2)
 compile (Case n brs)  = match [n] (map (\(Branch p e) -> ([p],e)) brs) Fail
 compile (App e1 e2)   = liftM2 App (compile e1) (compile e2)
 compile (Cons n es)   = Cons n <$> mapM compile es

@@ -35,8 +35,7 @@ data Decl k    = Fun Name [Name] (Expr k)
 type CoreExpr = Expr Name
 type ExtExpr  = Expr NestedPat
 
-data Expr k    = Let  Name (Expr k) (Expr k)
-               | Case Name [Branch k]
+data Expr k    = Case Name [Branch k]
                | App  (Expr k) (Expr k)
                | Cons Name [Expr k]
                | Var  Name
