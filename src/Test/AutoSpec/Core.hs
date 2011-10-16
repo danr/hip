@@ -2,7 +2,7 @@
 module Test.AutoSpec.Core where
 
 import Data.Data
-import Data.Generics.Uniplate.Operations
+import Data.Generics.Uniplate.Data
 
 type Name = String
 
@@ -29,7 +29,7 @@ conPat = not . varPat
 type CoreDecl = Decl Name
 type ExtDecl  = Decl NestedPat
 
-data Decl k    = Fun Name [Name] (Expr k)
+data Decl k   = Fun Name [k] (Expr k)
   deriving (Eq,Ord,Show,Data,Typeable)
 
 type CoreExpr = Expr Name
