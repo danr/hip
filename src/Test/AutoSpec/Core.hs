@@ -40,6 +40,7 @@ data Expr k    = Case Name [Branch k]
                | Cons Name [Expr k]
                | Var  Name
                | Fail
+               | Expr k :| Expr k
   deriving (Eq,Ord,Show,Data,Typeable)
 
 app :: Expr k -> Expr k -> Expr k

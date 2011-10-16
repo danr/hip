@@ -11,5 +11,8 @@ main = do
   r <- parseFile file
   mapM_ (putStrLn . prettyCore) r
   putStrLn "\n---------------\n"
-  mapM_ (putStrLn . prettyCore) (compileProg r)
+  let (r',w) = compileProg r
+  mapM_ putStrLn w
+  putStrLn "\n---------------\n"
+  mapM_ (putStrLn . prettyCore) r'
 

@@ -2,8 +2,10 @@
 module Test.AutoSpec.CompileCases where
 
 import Test.AutoSpec.Core
+import Test.AutoSpec.Pretty
 import Control.Monad
 import Control.Monad.State
+import Control.Monad.Writer
 import Control.Applicative hiding (empty)
 import Control.Arrow
 import Data.List hiding (insert)
@@ -15,8 +17,8 @@ import Data.Set hiding (map,filter)
 -- Names in scope
 type St = Set Name
 
-newtype N a = N { runN :: State St a } 
-  deriving (Functor,Applicative,Monad,MonadState St)
+newtype N a = N { runN :: WriterT [String] (State St) a }
+  deriving (Functor,Applicative,Monad,MonadState St,MonadWriter [String])
 
 inNewScope :: [Name] -> N a -> N a
 inNewScope ns m = do
@@ -32,15 +34,16 @@ newVar n = do
   s <- get
   return $ head $ filter (`notMember` s) ns
 
-compileProg :: [ExtDecl] -> [CoreDecl]
-compileProg ds = flip evalState empty $ runN $ do
-  let ds' = groupSorted (\(Fun n _ _) -> n) ds
+compileProg :: [ExtDecl] -> ([CoreDecl],[String])
+compileProg ds = flip evalState empty $ runWriterT $ runN $ do
+  let ds' = sortGroupOn funName ds
   mapM compileFun ds'
 
 suggest (NP (PVar v)) = Just v
 suggest _             = Nothing
 
-makeCasevars = mapM ((\n -> inNewScope [n] (newVar n)) . fromMaybe "u" . msum . map suggest)
+makeCasevars = mapM ((\n -> inNewScope [n] (newVar n))
+                    . fromMaybe "u" . msum . map suggest)
 
 compileFun :: [ExtDecl] -> N CoreDecl
 compileFun ds@(Fun n _ _:_) = do
@@ -58,10 +61,11 @@ compile (Cons n es)   = Cons n <$> mapM compile es
 compile (Var x)       = return (Var x)                        
 compile Fail          = return Fail
 
-groupSorted :: Ord b => (a -> b) -> [a] -> [[a]]
-groupSorted f = groupBy (((== EQ) .) . (compare  `on` f)) . sortBy (comparing f)
+sortGroupOn :: Ord b => (a -> b) -> [a] -> [[a]]
+sortGroupOn f = groupBy (((== EQ) .) . (compare  `on` f)) . sortBy (comparing f)
 
 data Equation = [ExtPattern] := ExtExpr
+  deriving (Show,Eq,Ord)
 
 infix 4 :=              
 infix 8 &
@@ -77,40 +81,54 @@ lhs (_ := l) = l
 rhsHead :: Equation -> ExtPattern
 rhsHead = head . rhs
 
-match :: [Name] -> [Equation] -> ExtExpr -> N CoreExpr
+write = tell . return
+
+prettyEq (ps := e) = "[" ++ intercalate " , " (map prettyCore ps) ++ "]"
+                     ++ " := " ++ prettyCore e
+
+writeMatch ns eqs d = do
+  write ("match\t" ++ "[" ++ intercalate " , " ns ++ "]")
+  mapM_ (\e -> write $ "\t" ++ prettyEq e) (eqs)
+  write ("\t" ++ prettyCore d)
+
+match :: [Name] -> [Equation] -> CoreExpr -> N CoreExpr
 -- Empty rule
-match [] (([] := e):_) d = compile e
-match [] []         d = compile d
+match [] pats d = do
+  writeMatch [] pats d
+  write "Empty rule\n"
+  foldr (:|) d <$> mapM compile [ e | [] := e <- pats ]
 -- Variable rule
-match (u:us) pats d | all (varPat . rhsHead) pats =
+match (u:us) pats d | all (varPat . rhsHead) pats = do
+  writeMatch (u:us) pats d
+  write "Variable rule\n"
   let pats' = map (\(PVar v:ps := e) -> ps := subst v u e) pats
-  in  match us pats' d
+  match us pats' d
 -- Constructor rule
 match (u:us) pats d | all (conPat . rhsHead) pats = do
-  -- This will only preserve semantics of casing if the sorting is stable,
-  -- and it is documented that Data.List.sortBy is:
-  -- http://hackage.haskell.org/packages/archive/base/latest/doc/html/src/Data-List.html#sort
-  let groups = groupSorted (patName . rhsHead) pats
+  writeMatch (u:us) pats d
+  write "Constructor rule\n"
+  let groups = sortGroupOn (patName . rhsHead) pats
   brs <- forM groups $ \grp -> do
              let matrix = transpose (map (patArgs . rhsHead) grp)
              vs <- makeCasevars matrix
-             e' <- inNewScope vs $
-                       match (vs ++ us)
-                             (map (\(PCons _ args:ps := e) -> (map denest args ++ ps := e)) grp)
-                             d
+             let prependArgs (PCons _ args:ps := e) = map denest args ++ ps := e
+             e' <- inNewScope vs $ match (vs ++ us) (map prependArgs grp) d
              let c = patName (rhsHead (head grp))
              return (Branch (PCons c vs) e')
   return (Case u brs)
--- TODO: Mix rule
-
-{-
-demo :: CoreExpr
-demo = evalState (runN m) (fromList ["u1","u2","u3"])
+-- Mixture rule
+match us pats d = do
+  writeMatch us pats d
+  write "Mixture rule\n"
+  go pats d
  where
-  m = match ["u1","u2","u3"]
-            [([PVar "f",PCons "Nil" []                             ,PVar "ys"                                  ],Cons "A" (map Var ["f","ys"]))
-            ,([PVar "f",PCons "Cons" [NP (PVar "x"),NP (PVar "xs")],PVar "ys"                                  ],Cons "B" (map Var ["f","x","xs"]))
-            ,([PVar "f",PCons "Cons" [NP (PVar "x"),NP (PVar "xs")],PCons "Cons" [NP (PVar "y"),NP (PVar "ys")]],Cons "C" (map Var ["f","x","xs","y","ys"]))
-            ]
-            Fail
--}
+  go (p:ps) d = do d' <- go ps d
+                   write "From mixture rule:"
+                   match us [p] d'
+  go []     d = match us [] d
+
+--            foldr (\p d' -> match us p d') d pats
+
+-- Constructor rule will only preserve semantics of casing if the
+-- sorting is stable, and it is documented that Data.List.sortBy is:
+-- http://hackage.haskell.org/packages/archive/base/latest/doc/html/src/Data-List.html#sort
