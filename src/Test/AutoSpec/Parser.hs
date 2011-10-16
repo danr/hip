@@ -15,4 +15,9 @@ extParser :: String -> ParseResult Tok [ExtDecl]
 extParser = extTokParser . lex
 
 parseFile :: String -> IO [ExtDecl]
-parseFile n = either (error . show) return =<< extParser <$> readFile n
+parseFile n = do
+   s <- readFile n
+   case extParser s of
+      Right r  -> return r
+      Left err -> do mapM_ print $ zip [0..] (lex s) 
+                     error (show err)

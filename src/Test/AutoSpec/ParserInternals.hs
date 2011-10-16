@@ -24,27 +24,28 @@ extGrammar = do
     l <- rule [ L.fromTok <@> L.LIdent "" ]
     u <- rule [ L.fromTok <@> L.UIdent "" ]
 
-    p <- rule [ (NP . PVar) <@> l
-              , (NP . (`PCons` [])) <@> u
-              , (\x xs -> NP (PCons x xs)) <@ L.LPar <#> u <#> ps <# L.RPar 
-              ]
+    p <- rule [ (NP . PVar)                <@> l
+              , (NP . (`PCons` []))        <@> u
+              , (\x xs -> NP (PCons x xs)) <@  L.LPar <#> u <#> ps <# L.RPar ]
     ps <- several p
     ps0 <- several0 p
     
     d <- rule [ Fun <@> l <#> ps0 <# L.Eq <#> e <# L.Semi ]
     ds <- several d
     
-    e  <- rule [ app <@> e <#> e'
-               , id  <@> e' ]
-    e' <- rule [ Case <@ L.Case <#> l <# L.Of <# L.LBrace <#> brs <# L.RBrace
-               , (`Cons` []) <@> u
-               , Var <@> l
-               , Fail <@ L.Fail
-               , id <@ L.LPar <#> e <# L.RPar
+    e  <- rule [ Case        <@  L.Case <#> l <# L.Of <# L.LBrace <#> brs <# L.RBrace
+               , id          <@> e2
                ]
+    e2 <- rule [ app         <@> e2 <#> e3
+               , id          <@> e3
+               ]
+    e3 <- rule [ (`Cons` []) <@> u
+               , Var         <@> l
+               , Fail        <@  L.Fail
+               , id          <@  L.LPar <#> e <# L.RPar ]
 
-    br <- rule [ (Branch . denest) <@> p <# L.Arrow <#> e ]
-    brs <- severalInter L.Semi br
+    br <- rule [ (Branch . denest) <@> p <# L.Arrow <#> e2 <# L.Semi ]
+    brs <- several br
 
   return ds
 

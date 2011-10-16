@@ -20,17 +20,17 @@ $(deriveLift ''Tok)
 instance ToPat Tok where toPat = toConstrPat
 
 lex :: String -> [Tok]
-lex [] = []
-lex ('(':xs) = LPar : lex xs
-lex (')':xs) = RPar : lex xs
-lex ('{':xs) = LBrace : lex xs
-lex ('}':xs) = RBrace : lex xs
-lex ('=':xs) = Eq : lex xs
-lex ('-':'>':xs) = Arrow : lex xs
-lex (';':xs) = Semi : lex xs
-lex ('_':xs) = Under : lex xs
+lex []           = []
+lex ('(':xs)     = LPar   : lex xs
+lex (')':xs)     = RPar   : lex xs
+lex ('{':xs)     = LBrace : lex xs
+lex ('}':xs)     = RBrace : lex xs
+lex ('=':xs)     = Eq     : lex xs
+lex ('-':'>':xs) = Arrow  : lex xs
+lex (';':xs)     = Semi   : lex xs
+lex ('_':xs)     = Under  : lex xs
 lex ('c':'a':'s':'e':xs) = Case : lex xs
-lex ('o':'f':xs) = Of : lex xs
+lex ('o':'f':xs)         = Of   : lex xs
 lex ('f':'a':'i':'l':xs) = Fail : lex xs
 lex s@(x:xs)
     | isLower x = lexIdent LIdent s
