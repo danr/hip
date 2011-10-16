@@ -145,9 +145,39 @@ assocConj = eqConj "appendAssoc" $ \xs ys zs -> ((xs ++ ys) ++ zs , xs ++ (ys ++
 leftIdConj :: [Decl]
 leftIdConj = eqConj "leftId" $ \xs -> (xs ++ nil,xs)
 
-reverseEquivalent :: [Decl]
-reverseEquivalent =
-  [ conjecture "reveq" (forall $ \xs -> reverse xs === reverse2 xs) ]
+appendAssocLemma :: [Decl]
+appendAssocLemma = [ axiom "appendAssocLemma" (forall $ \xs ys zs -> (xs ++ ys) ++ zs === xs ++ (ys ++ zs)) ]
+
+leftIdLemma :: [Decl]
+leftIdLemma = [ axiom "leftIdLemma" (forall $ \xs -> xs ++ nil === xs) ]
+
+{-
+  This is not true in a setting with bottoms.
+
+  reverse (1 : undefined ++ [ 1 ]) !=
+  1 : reverse (1 : undefined)
+-}
+
+revStepConj :: [Decl]
+revStepConj = eqConj "revStepEq" $ \x xs -> (reverse (xs ++ point x),x `cons` reverse xs)
+
+rev2StepConj :: [Decl]
+rev2StepConj = eqConj "rev2StepEq" $ \x xs -> (reverse2 (x `cons` xs),reverse2 xs ++ point x)
+
+revEqConj :: [Decl]
+revEqConj = eqConj "revEq" $ \xs -> (reverse xs,reverse2 xs)
+
+revRevStepConj :: [Decl]
+revRevStepConj = eqConj "revRevStepEq" $ \x xs -> (reverse (reverse (x `cons` xs)),x `cons` reverse (reverse xs))
+
+revRevConj :: [Decl]
+revRevConj = eqConj "revRevEq" $ \xs -> (reverse (reverse xs),xs)
+
+revAppConj :: [Decl]
+revAppConj = eqConj "revAppEq" $ \xs ys -> (reverse2 (xs ++ ys),reverse2 ys ++ reverse2 xs)
+
+revAccConj :: [Decl]
+revAccConj = eqConj "revAccEq" $ \xs ys -> (revAcc ys xs,reverse2 xs ++ ys)
 
 main = outputTPTP $ concat [ diffAxioms
                            , projAxioms
@@ -155,8 +185,12 @@ main = outputTPTP $ concat [ diffAxioms
                            , pointAxioms
                            , reverseAxioms
                            , reverse2Axioms
+                           , appendAssocLemma
+                           , leftIdLemma
                            , approxDefn
-                           , assocConj
+--                           , revStepLemma
+                           , revStepConj
+--                           , assocConj
 --                           , leftIdConj
                            ]
 
