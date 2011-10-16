@@ -6,9 +6,10 @@ import Control.Monad
 import Control.Monad.State
 import Control.Applicative hiding (empty)
 import Control.Arrow
-import Data.List (groupBy,transpose)
-import Data.Function (on)
-import Data.Maybe (fromMaybe)
+import Data.List hiding (insert)
+import Data.Function 
+import Data.Maybe
+import Data.Ord
 import Data.Set hiding (map,filter)
 
 -- Names in scope
@@ -33,16 +34,18 @@ newVar n = do
 
 compileProg :: [ExtDecl] -> [CoreDecl]
 compileProg ds = flip evalState empty $ runN $ do
-  let ds' = groupBy ((==) `on` (\(Fun n _ _) -> n)) ds
+  let ds' = groupSorted (\(Fun n _ _) -> n) ds
   mapM compileFun ds'
 
 suggest (NP (PVar v)) = Just v
 suggest _             = Nothing
-  
+
+makeCasevars = mapM ((\n -> inNewScope [n] (newVar n)) . fromMaybe "u" . msum . map suggest)
+
 compileFun :: [ExtDecl] -> N CoreDecl
 compileFun ds@(Fun n _ _:_) = do
   let matrix   = transpose (map (\(Fun _ args _) -> args) ds)
-      casevars = map (fromMaybe "u" . msum . map suggest) matrix
+  casevars <- makeCasevars matrix
   e <- inNewScope (n:casevars) $
            match casevars (map (\(Fun _ args e) -> (map denest args,e)) ds) Fail
   return $ Fun n casevars e
@@ -55,6 +58,9 @@ compile (Cons n es)   = Cons n <$> mapM compile es
 compile (Var x)       = return (Var x)                        
 compile Fail          = return Fail
 
+groupSorted :: Ord b => (a -> b) -> [a] -> [[a]]
+groupSorted f = groupBy (((== EQ) .) . (compare  `on` f)) . sortBy (comparing f)
+
 match :: [Name] -> [([ExtPattern],ExtExpr)] -> ExtExpr -> N CoreExpr
 -- Empty rule
 match [] (([],e):_) d = compile e
@@ -65,13 +71,20 @@ match (u:us) pats d | all (varPat . head . fst) pats =
   in  match us pats' d
 -- Constructor rule
 match (u:us) pats d | all (conPat . head . fst) pats = do
-  brs <- forM pats $ \(PCons c args:ps,e) -> do
-                         vs <- mapM (newVar . fromMaybe "u" . suggest) args
-                         let args' = map denest args
-                         e' <- inNewScope vs $
-                                   match (vs ++ us) [(args' ++ ps,e)] d
-                         return (Branch (PCons c vs) e')
+  -- This will only preserve semantics of casing if the sorting is stable,
+  -- and it is documented that Data.List.sortBy is:
+  -- http://hackage.haskell.org/packages/archive/base/latest/doc/html/src/Data-List.html#sort
+  let groups = groupSorted (\((PCons c _):_,_) -> c) pats
+  brs <- forM groups $ \grp@((PCons c _:_,_):_) -> do
+             let matrix = transpose (map (\(PCons _ args:_,e) -> args) grp)
+             vs <- makeCasevars matrix
+             e' <- inNewScope vs $
+                       match (vs ++ us)
+                             (map (\(PCons _ args:ps,e) -> (map denest args ++ ps,e)) grp)
+                             d
+             return (Branch (PCons c vs) e')
   return (Case u brs)
+-- TODO: Mix rule
 
 demo :: CoreExpr
 demo = evalState (runN m) (fromList ["u1","u2","u3"])

@@ -10,6 +10,6 @@ main = do
   file <- head <$> getArgs
   r <- parseFile file
   mapM_ (putStrLn . prettyCore) r
-  putStrLn ""
+  putStrLn "\n---------------\n"
   mapM_ (putStrLn . prettyCore) (compileProg r)
 
