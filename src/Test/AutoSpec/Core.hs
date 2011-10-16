@@ -42,6 +42,10 @@ data Expr k    = Case Name [Branch k]
                | Fail
   deriving (Eq,Ord,Show,Data,Typeable)
 
+app :: Expr k -> Expr k -> Expr k
+app (Cons n es) e  = Cons n (es ++ [e])
+app e1          e2 = App e1 e2
+  
 type CoreBranch = Branch Name
 type ExtBranch  = Branch NestedPat
 

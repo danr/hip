@@ -14,10 +14,6 @@ parseString = parse parseDynamic . L.lex
 parseDynamic :: Parser L.Tok [ExtDecl]
 parseDynamic = mkDynamicParser constrWrapper extGrammar
 
-app :: Expr k -> Expr k -> Expr k
-app (Cons n es) e  = Cons n (es ++ [e])
-app e1          e2 = App e1 e2
-
 extGrammar :: Grammar L.Tok [ExtDecl]
 extGrammar = do
   rec
@@ -44,7 +40,7 @@ extGrammar = do
                , Fail        <@  L.Fail
                , id          <@  L.LPar <#> e <# L.RPar ]
 
-    br <- rule [ (Branch . denest) <@> p <# L.Arrow <#> e2 <# L.Semi ]
+    br <- rule [ (Branch . denest) <@> p <# L.Arrow <#> e <# L.Semi ]
     brs <- several br
 
   return ds

@@ -27,7 +27,7 @@ pexpr l (App e1 e2) = enclose (l <= 1) $ pexpr 2 e1 <+> pexpr 1 e2
 pexpr l (Cons n []) = text n
 pexpr l (Cons n es) = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
 pexpr l (Var n)     = text n
-pexpr l Fail        = text "Fail"
+pexpr l Fail        = text "fail"
 
 instance P k => P (Branch k) where
   p (Branch pat e) = p pat <+> text "->" <+> p e
