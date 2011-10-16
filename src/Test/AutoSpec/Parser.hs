@@ -14,10 +14,10 @@ extTokParser = $(mkStaticParser extGrammar [|extGrammar|])
 extParser :: String -> ParseResult Tok [ExtDecl]
 extParser = extTokParser . lex
 
-parseFile :: String -> IO () -- [ExtDecl]
+parseFile :: String -> IO [ExtDecl]
 parseFile n = do
    s <- readFile n
    case extParser s of
-      Right r  -> mapM_ (putStrLn . prettyCore) r
+      Right r  -> return r
       Left err -> do mapM_ print $ zip [0..] (lex s) 
-                     error (show err)
+                     error (n ++ " " ++ show err)

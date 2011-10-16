@@ -4,8 +4,11 @@ module Test.AutoSpec.CompileCases where
 import Test.AutoSpec.Core
 import Control.Monad
 import Control.Monad.State
-import Control.Applicative
+import Control.Applicative hiding (empty)
 import Control.Arrow
+import Data.List (groupBy,transpose)
+import Data.Function (on)
+import Data.Maybe (fromMaybe)
 import Data.Set hiding (map,filter)
 
 -- Names in scope
@@ -28,9 +31,25 @@ newVar n = do
   s <- get
   return $ head $ filter (`notMember` s) ns
 
+compileProg :: [ExtDecl] -> [CoreDecl]
+compileProg ds = flip evalState empty $ runN $ do
+  let ds' = groupBy ((==) `on` (\(Fun n _ _) -> n)) ds
+  mapM compileFun ds'
 
+suggest (NP (PVar v)) = Just v
+suggest _             = Nothing
+  
+compileFun :: [ExtDecl] -> N CoreDecl
+compileFun ds@(Fun n _ _:_) = do
+  let matrix   = transpose (map (\(Fun _ args _) -> args) ds)
+      casevars = map (fromMaybe "u" . msum . map suggest) matrix
+  e <- inNewScope (n:casevars) $
+           match casevars (map (\(Fun _ args e) -> (map denest args,e)) ds) Fail
+  return $ Fun n casevars e
+  
 compile :: ExtExpr -> N CoreExpr
-compile (Case n brs)  = inNewScope [n] $ match [n] (map (\(Branch p e) -> ([p],e)) brs) Fail
+compile (Case n brs)  = inNewScope [n] $
+                            match [n] (map (\(Branch p e) -> ([p],e)) brs) Fail
 compile (App e1 e2)   = liftM2 App (compile e1) (compile e2)
 compile (Cons n es)   = Cons n <$> mapM compile es
 compile (Var x)       = return (Var x)                        
@@ -47,11 +66,10 @@ match (u:us) pats d | all (varPat . head . fst) pats =
 -- Constructor rule
 match (u:us) pats d | all (conPat . head . fst) pats = do
   brs <- forM pats $ \(PCons c args:ps,e) -> do
-                         let suggest (NP (PVar v)) = v
-                             suggest _             = "_"
-                         vs <- mapM (newVar . suggest) args
+                         vs <- mapM (newVar . fromMaybe "u" . suggest) args
                          let args' = map denest args
-                         e' <- inNewScope vs $ match (vs ++ us) [(args' ++ ps,e)] d
+                         e' <- inNewScope vs $
+                                   match (vs ++ us) [(args' ++ ps,e)] d
                          return (Branch (PCons c vs) e')
   return (Case u brs)
 

@@ -1,6 +1,15 @@
 module Main where
 
+import Control.Applicative
 import System.Environment
 import Test.AutoSpec.Parser
+import Test.AutoSpec.Pretty
+import Test.AutoSpec.CompileCases
 
-main = mapM_ parseFile =<< getArgs 
+main = do
+  file <- head <$> getArgs
+  r <- parseFile file
+  mapM_ (putStrLn . prettyCore) r
+  putStrLn ""
+  mapM_ (putStrLn . prettyCore) (compileProg r)
+
