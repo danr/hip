@@ -3,12 +3,10 @@ module Test.AutoSpec.Parser where
 
 import Prelude hiding (lex)
 import Data.Parser.Grempa.Static
-import Control.Applicative
 import Test.AutoSpec.ParserInternals (extGrammar)
 import Test.AutoSpec.Lexer
 import Test.AutoSpec.Core
 import Test.AutoSpec.Pretty
-import Data.List (intercalate)
 
 extTokParser :: [Tok] -> ParseResult Tok [ExtDecl]
 extTokParser = $(mkStaticParser extGrammar [|extGrammar|])
