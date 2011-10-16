@@ -1,7 +1,7 @@
 rest x y b xs = case b of {
                    True  -> rmadjdups (Cons x xs) ;
                    False -> Cons y (rmadjdups (Cons x xs)) ;
-                   mystery -> Fail ;
+                   mystery -> fail ;
                    } ;
 
 rmadjdups xs = case xs of {
