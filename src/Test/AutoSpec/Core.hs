@@ -15,8 +15,8 @@ newtype NestedPat = NP { denest :: ExtPattern }
 type CorePattern = Pattern Name
 type ExtPattern  = Pattern NestedPat
 
-data Pattern k = PVar  Name 
-               | PCons Name [k]
+data Pattern k = PVar  { patName :: Name }
+               | PCons { patName :: Name , patArgs :: [k] }
   deriving (Eq,Ord,Show,Data,Typeable)
 
 varPat,conPat :: Pattern k -> Bool
@@ -29,7 +29,7 @@ conPat = not . varPat
 type CoreDecl = Decl Name
 type ExtDecl  = Decl NestedPat
 
-data Decl k   = Fun Name [k] (Expr k)
+data Decl k   = Fun { funName :: Name , funArgs :: [k] , funExpr :: Expr k }
   deriving (Eq,Ord,Show,Data,Typeable)
 
 type CoreExpr = Expr Name

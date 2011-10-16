@@ -44,15 +44,15 @@ makeCasevars = mapM ((\n -> inNewScope [n] (newVar n)) . fromMaybe "u" . msum . 
 
 compileFun :: [ExtDecl] -> N CoreDecl
 compileFun ds@(Fun n _ _:_) = do
-  let matrix   = transpose (map (\(Fun _ args _) -> args) ds)
+  let matrix   = transpose (map funArgs ds)
   casevars <- makeCasevars matrix
   e <- inNewScope (n:casevars) $
-           match casevars (map (\(Fun _ args e) -> (map denest args,e)) ds) Fail
+           match casevars (map (map denest . funArgs & funExpr) ds) Fail
   return $ Fun n casevars e
   
 compile :: ExtExpr -> N CoreExpr
 compile (Case n brs)  = inNewScope [n] $
-                            match [n] (map (\(Branch p e) -> ([p],e)) brs) Fail
+                            match [n] (map (\(Branch p e) -> [p] := e) brs) Fail
 compile (App e1 e2)   = liftM2 App (compile e1) (compile e2)
 compile (Cons n es)   = Cons n <$> mapM compile es
 compile (Var x)       = return (Var x)                        
@@ -61,31 +61,49 @@ compile Fail          = return Fail
 groupSorted :: Ord b => (a -> b) -> [a] -> [[a]]
 groupSorted f = groupBy (((== EQ) .) . (compare  `on` f)) . sortBy (comparing f)
 
-match :: [Name] -> [([ExtPattern],ExtExpr)] -> ExtExpr -> N CoreExpr
+data Equation = [ExtPattern] := ExtExpr
+
+infix 4 :=              
+infix 8 &
+     
+(f & g) x = f x := g x            
+              
+rhs :: Equation -> [ExtPattern]
+rhs (r := _) = r
+
+lhs :: Equation -> ExtExpr
+lhs (_ := l) = l
+
+rhsHead :: Equation -> ExtPattern
+rhsHead = head . rhs
+
+match :: [Name] -> [Equation] -> ExtExpr -> N CoreExpr
 -- Empty rule
-match [] (([],e):_) d = compile e
+match [] (([] := e):_) d = compile e
 match [] []         d = compile d
 -- Variable rule
-match (u:us) pats d | all (varPat . head . fst) pats =
-  let pats' = map (\(PVar v:ps,e) -> (ps,subst v u e)) pats
+match (u:us) pats d | all (varPat . rhsHead) pats =
+  let pats' = map (\(PVar v:ps := e) -> ps := subst v u e) pats
   in  match us pats' d
 -- Constructor rule
-match (u:us) pats d | all (conPat . head . fst) pats = do
+match (u:us) pats d | all (conPat . rhsHead) pats = do
   -- This will only preserve semantics of casing if the sorting is stable,
   -- and it is documented that Data.List.sortBy is:
   -- http://hackage.haskell.org/packages/archive/base/latest/doc/html/src/Data-List.html#sort
-  let groups = groupSorted (\((PCons c _):_,_) -> c) pats
-  brs <- forM groups $ \grp@((PCons c _:_,_):_) -> do
-             let matrix = transpose (map (\(PCons _ args:_,e) -> args) grp)
+  let groups = groupSorted (patName . rhsHead) pats
+  brs <- forM groups $ \grp -> do
+             let matrix = transpose (map (patArgs . rhsHead) grp)
              vs <- makeCasevars matrix
              e' <- inNewScope vs $
                        match (vs ++ us)
-                             (map (\(PCons _ args:ps,e) -> (map denest args ++ ps,e)) grp)
+                             (map (\(PCons _ args:ps := e) -> (map denest args ++ ps := e)) grp)
                              d
+             let c = patName (rhsHead (head grp))
              return (Branch (PCons c vs) e')
   return (Case u brs)
 -- TODO: Mix rule
 
+{-
 demo :: CoreExpr
 demo = evalState (runN m) (fromList ["u1","u2","u3"])
  where
@@ -95,3 +113,4 @@ demo = evalState (runN m) (fromList ["u1","u2","u3"])
             ,([PVar "f",PCons "Cons" [NP (PVar "x"),NP (PVar "xs")],PCons "Cons" [NP (PVar "y"),NP (PVar "ys")]],Cons "C" (map Var ["f","x","xs","y","ys"]))
             ]
             Fail
+-}
