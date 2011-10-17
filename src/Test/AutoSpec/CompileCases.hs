@@ -1,29 +1,80 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, MultiParamTypeClasses, FlexibleContexts #-}
 module Test.AutoSpec.CompileCases where
 
 import Test.AutoSpec.Core
 import Test.AutoSpec.Pretty
 import Control.Monad
-import Control.Monad.State
-import Control.Monad.Writer
+import Control.Monad.RWS
 import Control.Applicative hiding (empty)
-import Control.Arrow
+import Control.Arrow hiding ((|||))
 import Data.List hiding (insert)
 import Data.Function 
 import Data.Maybe
 import Data.Ord
-import Data.Set hiding (map,filter)
+import Data.Generics.Uniplate.Data
+import Data.Data
+import Data.Set (Set)
+import qualified Data.Set as S
+import Data.Map (Map)
+import qualified Data.Map as M
 
 -- Names in scope
-type St = Set Name
+type St = (Set Name)
 
-newtype N a = N { runN :: WriterT [String] (State St) a }
-  deriving (Functor,Applicative,Monad,MonadState St,MonadWriter [String])
+                 -- constructors of each type, type of each constructor
+type Datatypes = (Map Name [Name],Map Name Name)
 
+addNewDatatype :: Name -> [Name] -> Datatypes -> Datatypes
+addNewDatatype t cs (ctors,types) = (M.insert t cs ctors
+                                    ,foldl (flip (`M.insert` t)) types cs
+                                    )
+
+emptyEnv :: Datatypes
+emptyEnv = (M.empty,M.empty)
+
+exampleDatatypes :: Datatypes
+exampleDatatypes = addNewDatatype "Bool" ["True","False"]
+                 $ addNewDatatype "List" ["Nil","Cons"]
+                   emptyEnv
+
+lookupType :: MonadReader Datatypes m => Name -> m Name
+lookupType c = asks (fromMaybe (error ("constructor not registered" ++ c))
+                    . M.lookup c . snd)
+                   
+lookupCtors :: MonadReader Datatypes m => Name -> m [Name]
+lookupCtors t = asks (fromMaybe (error ("type not registered" ++ t))
+                    . M.lookup t . fst)
+                   
+newtype N a = N { runN :: RWS Datatypes [String] St a }
+  deriving (Functor,Applicative,Monad
+           ,MonadState St,MonadWriter [String],MonadReader Datatypes)
+
+subst :: (Show k,Data k) => Name -> Name -> Expr k -> N (Expr k)
+subst xold xnew = transformM f
+  where f (Var x)      | x == xold = return (Var xnew)
+        f (Case x brs) | x == xold = liftM (Case xnew) (mapM substbr brs)
+        f e            = return e
+
+        substbr (Branch p e)
+            | xold `elem` pv = return (Branch p e)
+            | otherwise      = liftM (Branch p) $ do
+                                  when (xnew `elem` pv) $
+                                     write $ "Warning: subst " ++ xnew
+                                             ++ " which is bound by "
+                                             ++ show p ++ "->" ++ show e
+                                  f e
+          where pv = patternVars p
+
+patternVars :: Data k => Pattern k -> [Name]
+patternVars p = [ v | PVar v <- universe p ]
+
+freeVars :: Data k => Expr k -> [Name]
+freeVars e = [ v | Var v <- universe e ]
+  
 inNewScope :: [Name] -> N a -> N a
 inNewScope ns m = do
   s <- get
-  modify (\s -> foldl (flip insert) s ns)
+  modify (\s -> foldl (flip S.insert) s ns)
   r <- m
   put s
   return r
@@ -32,24 +83,23 @@ newVar :: Name -> N Name
 newVar n = do
   let ns = n : [ n ++ show x | x <- [0..] ]
   s <- get
-  return $ head $ filter (`notMember` s) ns
+  return $ head $ filter (`S.notMember` s) ns
 
 compileProg :: [ExtDecl] -> ([CoreDecl],[String])
-compileProg ds = flip evalState empty $ runWriterT $ runN $ do
+compileProg ds = (\m -> evalRWS m exampleDatatypes S.empty) $ runN $ do
   let ds' = sortGroupOn funName ds
   mapM compileFun ds'
 
 suggest (NP (PVar v)) = Just v
 suggest _             = Nothing
 
-makeCasevars = mapM ((\n -> inNewScope [n] (newVar n))
-                    . fromMaybe "u" . msum . map suggest)
+makeCasevars = mapM (newVar . fromMaybe "u" . msum . map suggest)
 
 compileFun :: [ExtDecl] -> N CoreDecl
 compileFun ds@(Fun n _ _:_) = do
   let matrix   = transpose (map funArgs ds)
   casevars <- makeCasevars matrix
-  e <- inNewScope (n:casevars) $
+  e <- inNewScope (n:casevars ++ concatMap (freeVars . funExpr) ds) $
            match casevars (map (map denest . funArgs & funExpr) ds) Fail
   return $ Fun n casevars e
   
@@ -88,20 +138,38 @@ prettyEq (ps := e) = "[" ++ intercalate " , " (map prettyCore ps) ++ "]"
 
 writeMatch ns eqs d = do
   write ("match\t" ++ "[" ++ intercalate " , " ns ++ "]")
-  mapM_ (\e -> write $ "\t" ++ prettyEq e) (eqs)
-  write ("\t" ++ prettyCore d)
+  mapM_ (\e -> write $ '\t' : prettyEq e) eqs
+  write ('\t' : prettyCore d)
+
+(|||) :: CoreExpr -> CoreExpr -> CoreExpr
+Fail ||| e    = e
+e    ||| Fail = e
+e1   ||| e2   = transform f e1
+                 where f Fail = e2
+                       f x    = x
+
+mkCase :: Name -> [CoreBranch] -> N CoreExpr
+mkCase n brs = do
+  let ctors = map (patName . branchPat) brs
+  t <- lookupType (head ctors)
+  cs <- lookupCtors t
+  write $ "Type : " ++ t ++ ", Constructors : " ++ show cs
+  if S.fromList ctors == S.fromList cs
+     then return (Case n brs)
+     else do d <- newVar "d"
+             return (Case n (brs ++ [Branch (PVar d) Fail]))
 
 match :: [Name] -> [Equation] -> CoreExpr -> N CoreExpr
 -- Empty rule
 match [] pats d = do
   writeMatch [] pats d
   write "Empty rule\n"
-  foldr (:|) d <$> mapM compile [ e | [] := e <- pats ]
+  foldr1 (|||) . (++ [d]) <$> mapM compile [ e | [] := e <- pats ]
 -- Variable rule
 match (u:us) pats d | all (varPat . rhsHead) pats = do
   writeMatch (u:us) pats d
   write "Variable rule\n"
-  let pats' = map (\(PVar v:ps := e) -> ps := subst v u e) pats
+  pats' <- mapM (\(PVar v:ps := e) -> liftM (ps :=) (subst v u e)) pats
   match us pats' d
 -- Constructor rule
 match (u:us) pats d | all (conPat . rhsHead) pats = do
@@ -115,17 +183,18 @@ match (u:us) pats d | all (conPat . rhsHead) pats = do
              e' <- inNewScope vs $ match (vs ++ us) (map prependArgs grp) d
              let c = patName (rhsHead (head grp))
              return (Branch (PCons c vs) e')
-  return (Case u brs)
+  r <- mkCase u brs 
+  write "Return from constructor rule\n"
+  return (r ||| d)
 -- Mixture rule
 match us pats d = do
   writeMatch us pats d
   write "Mixture rule\n"
   go pats d
  where
-  go (p:ps) d = do d' <- go ps d
-                   write "From mixture rule:"
-                   match us [p] d'
-  go []     d = match us [] d
+  go [p]    d' = match us [p] d'
+  go (p:ps) d' = match us [p] =<< go ps d'
+
 
 --            foldr (\p d' -> match us p d') d pats
 

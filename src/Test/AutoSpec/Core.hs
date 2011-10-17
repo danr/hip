@@ -2,7 +2,6 @@
 module Test.AutoSpec.Core where
 
 import Data.Data
-import Data.Generics.Uniplate.Data
 
 type Name = String
 
@@ -50,11 +49,6 @@ app e1          e2 = App e1 e2
 type CoreBranch = Branch Name
 type ExtBranch  = Branch NestedPat
 
-data Branch k  = Branch (Pattern k) (Expr k)
+data Branch k  = Branch { branchPat :: Pattern k , branchExpr :: Expr k }
   deriving (Eq,Ord,Show,Data,Typeable)
 
-subst :: Data k => Name -> Name -> Expr k -> Expr k
-subst xold xnew = transform f
-  where f (Var x)      | x == xold = Var xnew
-        f (Case x brs) | x == xold = Case xnew brs
-        f e            = e

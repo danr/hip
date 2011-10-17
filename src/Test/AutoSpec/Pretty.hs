@@ -14,7 +14,7 @@ instance P k => P (Decl k) where
   p (Fun n args e) = text n <+> hsep (map p args) <+> equals <+> p e <+> semi
 
 instance P k => P (Expr k) where
-  p e = pexpr 3 e
+  p = pexpr 3
 
 enclose True  = parens
 enclose False = id
@@ -39,7 +39,7 @@ instance P k => P (Pattern k) where
   p (PCons n es) = parens (text n <+> hsep (map p es))
 
 instance P Name where
-  p n = text n
+  p = text
   
 instance P NestedPat where
   p (NP x) = p x

@@ -12,7 +12,7 @@ main = do
   mapM_ (putStrLn . prettyCore) r
   putStrLn "\n---------------\n"
   let (r',w) = compileProg r
-  mapM_ putStrLn w
-  putStrLn "\n---------------\n"
+--  mapM_ putStrLn w
+--  putStrLn "\n---------------\n"
   mapM_ (putStrLn . prettyCore) r'
 
