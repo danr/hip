@@ -21,27 +21,29 @@ import qualified Data.Map as M
 -- Names in scope
 type St = (Set Name)
 
-                 -- constructors of each type, type of each constructor
-type Datatypes = (Map Name [Name],Map Name Name)
+type Arity = Int
 
-addNewDatatype :: Name -> [Name] -> Datatypes -> Datatypes
+                 -- constructors of each type, type of each constructor
+type Datatypes = (Map Name [(Name,Arity)],Map Name Name)
+
+addNewDatatype :: Name -> [(Name,Arity)] -> Datatypes -> Datatypes
 addNewDatatype t cs (ctors,types) = (M.insert t cs ctors
-                                    ,foldl (flip (`M.insert` t)) types cs
+                                    ,foldl (flip (`M.insert` t)) types (map fst cs)
                                     )
 
 emptyEnv :: Datatypes
 emptyEnv = (M.empty,M.empty)
 
 exampleDatatypes :: Datatypes
-exampleDatatypes = addNewDatatype "Bool" ["True","False"]
-                 $ addNewDatatype "List" ["Nil","Cons"]
+exampleDatatypes = addNewDatatype "Bool" [("True",0),("False",0)]
+                 $ addNewDatatype "List" [("Nil",0),("Cons",2)]
                    emptyEnv
 
 lookupType :: MonadReader Datatypes m => Name -> m Name
 lookupType c = asks (fromMaybe (error ("constructor not registered" ++ c))
                     . M.lookup c . snd)
                    
-lookupCtors :: MonadReader Datatypes m => Name -> m [Name]
+lookupCtors :: MonadReader Datatypes m => Name -> m [(Name,Arity)]
 lookupCtors t = asks (fromMaybe (error ("type not registered" ++ t))
                     . M.lookup t . fst)
                    
@@ -148,18 +150,11 @@ e1   ||| e2   = transform f e1
                  where f Fail = e2
                        f x    = x
 
-mkCase :: Name -> [CoreBranch] -> N CoreExpr
-mkCase n brs = do
-  let ctors = map (patName . branchPat) brs
-  t <- lookupType (head ctors)
-  cs <- lookupCtors t
-  write $ "Type : " ++ t ++ ", Constructors : " ++ show cs
-  if S.fromList ctors == S.fromList cs
-     then return (Case n brs)
-     else do d <- newVar "d"
-             return (Case n (brs ++ [Branch (PVar d) Fail]))
-
 match :: [Name] -> [Equation] -> CoreExpr -> N CoreExpr
+-- Null rule
+match _  []   d = do
+  write "Null rule\n"
+  return d
 -- Empty rule
 match [] pats d = do
   writeMatch [] pats d
@@ -174,18 +169,24 @@ match (u:us) pats d | all (varPat . rhsHead) pats = do
 -- Constructor rule
 match (u:us) pats d | all (conPat . rhsHead) pats = do
   writeMatch (u:us) pats d
-  write "Constructor rule\n"
-  let groups = sortGroupOn (patName . rhsHead) pats
-  brs <- forM groups $ \grp -> do
-             let matrix = transpose (map (patArgs . rhsHead) grp)
-             vs <- makeCasevars matrix
+  t <- lookupType (patName (rhsHead (head pats)))
+  cs <- lookupCtors t
+  write $ "Constructor rule, type: " ++ t ++ " constructors: " ++ show cs
+--  let groups = sortGroupOn (patName . rhsHead) pats
+  brs <- forM cs $ \(c,nargs) -> do
+             let grp = filter ((== c) . patName . rhsHead) pats
+                 matrix = transpose (map (patArgs . rhsHead) grp)
+                 bonusArgs args
+                     | length args == nargs = return args
+                     | otherwise            = mapM (newVar . ('u':) . show) [1..nargs]
+             vs <- bonusArgs =<< makeCasevars matrix
              let prependArgs (PCons _ args:ps := e) = map denest args ++ ps := e
+                                                      
              e' <- inNewScope vs $ match (vs ++ us) (map prependArgs grp) d
-             let c = patName (rhsHead (head grp))
              return (Branch (PCons c vs) e')
-  r <- mkCase u brs 
-  write "Return from constructor rule\n"
-  return (r ||| d)
+  return (Case u brs)
+--  write "Return from constructor rule\n"
+--  return (r ||| d)
 -- Mixture rule
 match us pats d = do
   writeMatch us pats d
