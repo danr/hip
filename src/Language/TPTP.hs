@@ -48,6 +48,13 @@ unary n = liftM (Fun (FunName n) . pure)
 binary :: String -> M Term -> M Term -> M Term
 binary n = liftM2 (\x y -> Fun (FunName n) [x,y])
 
+predicate :: String -> M Term -> M Formula
+predicate n = liftM (Rel (RelName n) . pure)
+
+relation :: String -> M Term -> M Term -> M Formula
+relation n = liftM2 (\x y -> Rel (RelName n) [x,y])
+
+
 data Term = Fun FunName [Term]
           | Var VarName
   deriving (Eq,Ord,Show)
