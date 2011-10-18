@@ -8,7 +8,7 @@ import Language.HFOL.ArbitraryCore
 import Test.QuickCheck
 
 import System.IO.Unsafe
-                     
+
 prop_parsePretty :: Decl -> Bool
 prop_parsePretty e = unsafePerformIO $ do
 --  putStrLn $ prettyCore e

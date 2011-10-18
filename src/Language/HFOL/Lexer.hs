@@ -9,7 +9,7 @@ import Language.Haskell.TH.Lift
 
 data Tok = LPar | RPar
          | LBrace | RBrace
-         | Eq | Arrow | Semi | Under
+         | Eq | Arrow | Semi
          | Case | Of
          | UIdent { fromTok :: String }
          | LIdent { fromTok :: String }
@@ -31,11 +31,10 @@ lex ('}':xs)     = RBrace : lex xs
 lex ('=':xs)     = Eq     : lex xs
 lex ('-':'>':xs) = Arrow  : lex xs
 lex (';':xs)     = Semi   : lex xs
-lex ('_':xs)     = Under  : lex xs
 lex ('c':'a':'s':'e':xs) = Case : lex xs
 lex ('o':'f':xs)         = Of   : lex xs
 lex s@(x:xs)
-    | isLower x = lexIdent LIdent s
+    | isLower x || x == '_' = lexIdent LIdent s
     | isUpper x = lexIdent UIdent s
     | isSpace x = lex xs
     | otherwise = error $ "lex failed on unknow character " ++ [x]

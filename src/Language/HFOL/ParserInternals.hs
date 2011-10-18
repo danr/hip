@@ -20,9 +20,7 @@ extGrammar = do
     l   <- rule [ L.fromTok <@> L.lident ]
     u   <- rule [ L.fromTok <@> L.uident ]
 
-    ls0 <- several0 l
-
-    d   <- rule [ Func    <@> l <#> ls0 <# L.Eq <#> b <# L.Semi ]
+    d   <- rule [ func    <@> l <#> p2s0 <# L.Eq <#> b <# L.Semi ]
     ds  <- several d
 
     b   <- rule [ Case    <@  L.Case <#> e <# L.Of <# L.LBrace <#> brs <# L.RBrace
@@ -35,19 +33,17 @@ extGrammar = do
                 , Var     <@> l
                 , id      <@  L.LPar <#> e <# L.RPar ]
 
-    br  <- rule [ (:->)   <@> pd <# L.Arrow <#> e <# L.Semi ]
+    br  <- rule [ (:->)   <@> p <# L.Arrow <#> e <# L.Semi ]
     brs <- several br
 
-    pd  <- rule [ Default <@  L.Under
-                , id      <@> p
-                ]
-    p   <- rule [ PVar    <@> l
-                , PCon    <@> u <#> p2s
-                , id      <@  L.LPar <#> p <# L.RPar ]
+    p   <- rule [ PCon    <@> u <#> p2s
+                , id      <@> p2 ]
     p2  <- rule [ PVar    <@> l
                 , pcon0   <@> u
                 , id      <@  L.LPar <#> p <# L.RPar ]
-    p2s <- several0 p2
+    p2s <- several p2
+    p2s0 <- several0 p2
+    ps0 <- several0 p
 
 
   return ds

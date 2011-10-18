@@ -24,7 +24,7 @@ instance P Expr where
 
 enclose True  = parens
 enclose False = id
-  
+
 pexpr l (App e1 e2) = enclose (l <= 1) $ pexpr 2 e1 <+> pexpr 1 e2
 pexpr l (Con n [])  = text n
 pexpr l (Con n es)  = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
@@ -35,8 +35,7 @@ instance P Branch where
 
 instance P Pattern where
   p = ppat 2
-  
-ppat l Default     = char '_'
+
 ppat l (PVar n)    = text n
 ppat l (PCon n []) = text n
 ppat l (PCon n ps) = enclose (l <= 1) (text n <+> hsep (map (ppat 1) ps))
