@@ -7,38 +7,62 @@ import Language.HFOL.Pretty
 import Language.HFOL.ToTPTPMonad
 import qualified Language.TPTP as T
 
+import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Reader
 
 preludeEnv :: Env
-preludeEnv = flip (foldr (uncurry addProj')) (concat datatypes)
-           $ flip (foldr (addCons)) (map (map fst) datatypes)
+preludeEnv = flip (foldr addCons) datatypes
            $ emptyEnv
   where
     datatypes :: [[(Name,Int)]]
-    datatypes = [ [("Tup" ++ show x,x)] | x <- [2..4] ] ++
+    datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
                 [ [("Cons",2),("Nil",0)]
                 , [("True",0),("False",0)]
                 , [("Nothing",0),("Just",1)]
                 ]
 
---toTPTP :: [Decl] -> [T.Decl]
---toTPTP =
+toTPTP :: [Decl] -> [T.Decl]
+toTPTP ds = envStDecls env st ++ axioms
+  where
+    arities = map (funcName &&& length . funcArgs) ds
+    env = foldr (uncurry addFun) preludeEnv arities
+    (axioms,st) = (`runState` emptySt)
+                $ (`runReaderT` env)
+                $ runToTPTP (concat <$> mapM translate ds)
 
-mkFun :: Name -> [Name] -> T.Term
-mkFun n [] = T.Var (T.VarName n)
-mkFun n as = T.Fun (T.FunName n) (map (T.Var . T.VarName) as)
+
+-- Notice that this function works well on an empty argument list
+applyFun :: Name -> [T.Term] -> ToTPTP T.Term
+applyFun n as = do
+  b <- lookupVar n
+  case b of
+    Right x -> return (appFold (T.Var x) as)
+    Left fn -> do
+      arity <- lookupArity n
+      if length as < arity
+        then do -- Partial application
+                useFnPtr n
+                return $ appFold (T.Fun (makeFunPtrName fn) []) as
+        else -- Function has enough arguments, and could possibly have more,
+             -- (for functions returning functions)
+             return $ appFold (T.Fun fn (take arity as)) (drop arity as)
+
+forall :: [T.VarName] -> T.Formula -> T.Formula
+forall [] phi = phi
+forall xs phi = T.Forall xs phi
 
 translate :: Decl -> ToTPTP [T.Decl]
-translate (Func fn args (Expr e)) = do
-  lhs <- translateExpr e
-  return [T.Axiom (fn ++ "axiom") $ T.EqOp (mkFun fn args) (T.:==) lhs]
+translate (Func fn args (Expr e)) =
+  let vars = makeVarNames (length args) in bindVars args vars $ do
+    rhs <- applyFun fn (map T.Var vars)
+    lhs <- translateExpr e
+    return [T.Axiom (fn ++ "axiom") $
+                    forall vars $ T.EqOp rhs (T.:==) lhs]
   -- TODO: Case case
 
 translateExpr :: Expr -> ToTPTP T.Term
-translateExpr (Var n)    = return $ T.Var (T.VarName n)
-translateExpr (Con n []) = return $ T.Var (T.VarName n)
-translateExpr e          = T.Fun (T.FunName (exprName e))
-                                 <$> mapM translateExpr (exprArgs e)
+translateExpr (Var n) = applyFun n []
+translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
