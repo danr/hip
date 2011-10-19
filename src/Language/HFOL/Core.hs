@@ -24,7 +24,9 @@ data Expr = App Expr Expr
           | Var Name
   deriving(Eq,Ord,Show,Data,Typeable)
 
-data Branch = Pattern :-> Expr
+infix 7 :->
+
+data Branch = (:->) { brPat :: Pattern , brExpr :: Expr }
   deriving(Eq,Ord,Show,Data,Typeable)
 
 data Pattern = PVar { patName :: Name }
