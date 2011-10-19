@@ -20,7 +20,7 @@ instance Arbitrary Pattern where
 
 arbPat s = frequency
          [(5,PVar <$> arbName)
-         ,(1,return (PVar "_")
+         ,(1,return (PVar "_"))
          ,(s,do n <- choose (0,4)
                 PCon <$> arbC n <*> replicateM n (arbPat s'))
          ]

@@ -40,7 +40,7 @@ addProj c ps e = e { conProj = M.insert c ps (conProj e) }
 
 -- | Automatically make projections for a constructor of a given arity
 addProj' :: Name -> Int -> Env -> Env
-addProj' c n = addProj c [ "proj" ++ c ++ show x | x <- [0..n-1] ]
+addProj' c n = addProj c [ "proj" ++ show x ++ c | x <- [0..n-1] ]
 
 -- | Add a function's arity
 addFnArity :: Name -> Int -> Env -> Env
@@ -60,7 +60,7 @@ projDecls :: Map Name [Name] -> [T.Decl]
 projDecls = concatMap (uncurry mkDecl) . M.toList
   where
     mkDecl :: Name -> [Name] -> [T.Decl]
-    mkDecl c ps = zipWith (\x p -> T.Axiom ("proj" ++ c ++ "_" ++ p)
+    mkDecl c ps = zipWith (\x p -> T.Axiom ("axiom" ++ p)
                                  $ T.Forall xs $ T.EqOp
                                       (T.Fun (T.FunName p)
                                          [T.Fun (T.FunName c) (map T.Var xs)])

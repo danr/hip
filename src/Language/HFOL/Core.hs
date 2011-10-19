@@ -19,9 +19,9 @@ data Body = Case { scrutinee :: Expr
           | Expr Expr
   deriving(Eq,Ord,Show,Data,Typeable)
 
-data Expr = App Expr Expr
-          | Con Name [Expr]
-          | Var Name
+data Expr = App { exprName :: Name , exprArgs :: [Expr] }
+          | Con { exprName :: Name , exprArgs :: [Expr] }
+          | Var { exprName :: Name }
   deriving(Eq,Ord,Show,Data,Typeable)
 
 infix 7 :->
@@ -87,8 +87,9 @@ func n as (Case s brs) = Func n us $
 -- with an argument list. Investigate if we should do this on function
 -- application too.
 app :: Expr -> Expr -> Expr
-app (Con n es) e  = Con n (es ++ [e])
-app e1         e2 = App e1 e2
+app (App n es) e = App n (es ++ [e])
+app (Con n es) e = Con n (es ++ [e])
+app (Var n)    e = App n [e]
 
 -- Nullary constructor
 con0 :: Name -> Expr

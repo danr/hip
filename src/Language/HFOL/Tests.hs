@@ -11,7 +11,7 @@ import System.IO.Unsafe
 
 prop_parsePretty :: Decl -> Bool
 prop_parsePretty e = unsafePerformIO $ do
---  putStrLn $ prettyCore e
+  putStrLn $ prettyCore e
   return $ (either (const False) (const True) . extParser . prettyCore) e
 
 prop_parsePrettyEq :: Decl -> Bool
