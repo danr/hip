@@ -27,11 +27,9 @@ preludeEnv = flip (foldr addCons) datatypes
 toTPTP :: [Decl] -> [T.Decl]
 toTPTP ds = envStDecls env st ++ axioms
   where
-    arities = map (funcName &&& length . funcArgs) ds
-    env = foldr (uncurry addFun) preludeEnv arities
-    (axioms,st) = (`runState` emptySt)
-                $ (`runReaderT` env)
-                $ runToTPTP (concat <$> mapM translate ds)
+    funs = map (funcName &&& length . funcArgs) ds
+    env = addFuns funs preludeEnv
+    (axioms,st) = runTPTP env (concat <$> mapM translate ds)
 
 
 -- Notice that this function works well on an empty argument list
