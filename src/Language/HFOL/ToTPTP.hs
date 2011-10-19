@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, ViewPatterns #-}
 module Language.HFOL.ToTPTP where
 
 import Language.HFOL.Core
@@ -31,21 +31,22 @@ toTPTP ds = envStDecls env st ++ axioms
     env = addFuns funs preludeEnv
     (axioms,st) = runTPTP env (concat <$> mapM translate ds)
 
-
 -- Notice that this function works well on an empty argument list
 applyFun :: Name -> [T.Term] -> ToTPTP T.Term
 applyFun n as = do
   b <- lookupVar n
   case b of
-    Right x -> return (appFold (T.Var x) as)
-    Left fn -> do
+    QuantVar x          -> return (appFold (T.Var x) as)
+    b@(boundName -> fn) -> do
       arity <- lookupArity n
       if length as < arity
-        then do -- Partial application
-                useFnPtr n
-                return $ appFold (T.Fun (makeFunPtrName fn) []) as
-        else -- Function has enough arguments, and could possibly have more,
-             -- (for functions returning functions)
+        then -- Partial application
+          do useFunPtr n
+             return $ appFold (T.Fun (makeFunPtrName fn) []) as
+        else -- Function has enough arguments, and could possibly have more
+          do -- (for functions returning functions)
+             when (boundCon b && length as > arity) $ error $ "Internal error: "
+                 ++ "constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
 forall :: [T.VarName] -> T.Formula -> T.Formula
@@ -57,8 +58,7 @@ translate (Func fn args (Expr e)) =
   let vars = makeVarNames (length args) in bindVars args vars $ do
     rhs <- applyFun fn (map T.Var vars)
     lhs <- translateExpr e
-    return [T.Axiom (fn ++ "axiom") $
-                    forall vars $ T.EqOp rhs (T.:==) lhs]
+    return [T.Axiom (fn ++ "axiom") $ forall vars $ T.EqOp rhs (T.:==) lhs]
   -- TODO: Case case
 
 translateExpr :: Expr -> ToTPTP T.Term
