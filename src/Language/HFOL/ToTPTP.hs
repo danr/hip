@@ -54,8 +54,7 @@ forall [] phi = phi
 forall xs phi = T.Forall xs phi
 
 translate :: Decl -> ToTPTP [T.Decl]
-translate (Func fn args (Expr e)) =
-  let vars = makeVarNames (length args) in bindVars args vars $ do
+translate (Func fn args (Expr e)) = bindVars args $ \vars -> do
     rhs <- applyFun fn (map T.Var vars)
     lhs <- translateExpr e
     return [T.Axiom (fn ++ "axiom") $ forall vars $ T.EqOp rhs (T.:==) lhs]

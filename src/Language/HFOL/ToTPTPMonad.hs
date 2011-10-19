@@ -15,7 +15,6 @@ module Language.HFOL.ToTPTPMonad
        ,addCons
        ,useFunPtr
        ,appFold
-       ,makeVarNames
        ,envStDecls
        )
         where
@@ -96,10 +95,14 @@ lookupArity n = TM $ asks (fromMaybe (error $ "lookupArity, unbound: " ++ n)
                           . M.lookup n . arities)
 
 
--- | Bind names to variables and perform an action
-bindVars :: [Name] -> [VarName] -> ToTPTP a -> ToTPTP a
-bindVars ns vs (TM m) = TM $ flip local m $ \e -> e
-  { boundVars = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs) (boundVars e) }
+-- | Binds the names to quantified variables inside the action
+bindVars :: [Name] -> ([VarName] -> ToTPTP a) -> ToTPTP a
+bindVars ns vm = TM $ flip local m $ \e -> e
+    { boundVars = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs)
+                             (boundVars e) }
+  where
+    vs = makeVarNames (length ns)
+    TM m = vm vs
 
 -- | Make a pointer name of a name
 makePtrName :: Name -> Name
