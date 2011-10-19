@@ -8,20 +8,19 @@ import Control.Monad.State
 import Control.Applicative hiding (empty)
 import Control.Arrow (first,second,(***))
 
--- I forgot what I was going to use the Language to here
-type ST = ([VarName],Language)
+type ST = [VarName]
 
 newtype M a = M { runM :: State ST a }
   deriving (Monad,MonadState ST,Functor,Applicative)
 
 run :: M a -> a
-run m = evalState (runM m) (vars,empty)
+run m = evalState (runM m) vars
   where vars = [ VarName ("X" ++ show x) | x <- [0..] ]
 
 newVar :: M VarName
 newVar = do
-  v:vs <- gets fst
-  modify (first (const vs))
+  v:vs <- get
+  put vs
   return v
 
 type Arity = Int
@@ -33,11 +32,6 @@ newtype VarName = VarName { varName :: String } deriving (Eq,Ord)
 instance Show FunName where show = funName
 instance Show RelName where show = relName
 instance Show VarName where show = varName
-
-type Language = (Map FunName Arity,Map RelName Arity)
-
-empty :: Language
-empty = (M.empty,M.empty)
 
 constant :: String -> M Term
 constant n = return (Fun (FunName n) [])
