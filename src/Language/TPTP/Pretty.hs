@@ -1,67 +1,70 @@
 {-# LANGUAGE FlexibleInstances, TemplateHaskell
  #-}
-module Language.TPTP.Pretty where
+module Language.TPTP.Pretty (prettyTPTP,outputTPTP,writeTPTP) where
 
 import Language.TPTP
 import Data.List
 
-class Pretty p where
-    pretty :: p -> String
+class PrettyTPTP p where
+    prettyTPTP :: p -> String
 
-instance Pretty FunName where
-    pretty = show
+instance PrettyTPTP FunName where
+    prettyTPTP = show
 
-instance Pretty RelName where
-    pretty = show
+instance PrettyTPTP RelName where
+    prettyTPTP = show
 
-instance Pretty VarName where
-    pretty = show
+instance PrettyTPTP VarName where
+    prettyTPTP = show
 
-csv :: Pretty a => [a] -> String
-csv = intercalate "," . map pretty
+p :: PrettyTPTP a => a -> String
+p = prettyTPTP
 
-argList :: Pretty a => [a] -> String
+csv :: PrettyTPTP a => [a] -> String
+csv = intercalate "," . map p
+
+argList :: PrettyTPTP a => [a] -> String
 argList [] = ""
 argList xs = paren (csv xs)
 
-bindList :: Pretty a => [a] -> String
+bindList :: PrettyTPTP a => [a] -> String
 bindList [] = error "Empty bind list"
 bindList xs = "[" ++ csv xs ++ "]"
 
 paren :: String -> String
 paren s = "(" ++ s ++ ")"
 
-instance Pretty Term where
-    pretty (Fun f args) = pretty f ++ argList args
-    pretty (Var x)      = pretty x
+instance PrettyTPTP Term where
+    prettyTPTP (Fun f args) = p f ++ argList args
+    prettyTPTP (Var x)      = p x
 
-instance Pretty BinOp where
-    pretty (:&)   = " & "
-    pretty (:|)   = " | "
-    pretty (:=>)  = " => "
-    pretty (:<=>) = " <=> "
+instance PrettyTPTP BinOp where
+    prettyTPTP (:&)   = " & "
+    prettyTPTP (:|)   = " | "
+    prettyTPTP (:=>)  = " => "
+    prettyTPTP (:<=>) = " <=> "
 
-instance Pretty Formula where
-    pretty (EqOp t1 (:==) t2) = pretty t1 ++ " = " ++  pretty t2
-    pretty (EqOp t1 (:!=) t2) = pretty t1 ++ " != " ++  pretty t2
-    pretty (Rel r args)     = pretty r ++ argList args
-    pretty (Neg f)          = "~ " ++ paren (pretty f)
-    pretty (BinOp f1 op f2) = paren (pretty f1) ++ pretty op ++ paren (pretty f2)
-    pretty (Forall vs f)    = "! " ++ bindList vs ++ ": " ++ paren (pretty f)
-    pretty (Exists vs f)    = "? " ++ bindList vs ++ ": " ++ paren (pretty f)
+instance PrettyTPTP Formula where
+    prettyTPTP (EqOp t1 (:==) t2) = p t1 ++ " = "  ++ p t2
+    prettyTPTP (EqOp t1 (:!=) t2) = p t1 ++ " != " ++ p t2
+    prettyTPTP (Rel r args)       = p r ++ argList args
+    prettyTPTP (Neg f)            = "~ " ++ paren (p f)
+    prettyTPTP (BinOp f1 op f2)   = paren (p f1) ++ p op ++ paren (p f2)
+    prettyTPTP (Forall vs f)      = "! " ++ bindList vs ++ ": " ++ paren (p f)
+    prettyTPTP (Exists vs f)      = "? " ++ bindList vs ++ ": " ++ paren (p f)
 
 pdecl :: String -> String -> Formula -> String
-pdecl n t f = "fof" ++ paren (n ++ "," ++ t ++ "," ++ pretty f) ++ "."
+pdecl n t f = "fof" ++ paren (n ++ "," ++ t ++ "," ++ prettyTPTP f) ++ "."
 
-instance Pretty Decl where
-    pretty (Axiom      n f) = pdecl n "axiom"      f
-    pretty (Conjecture n f) = pdecl n "conjecture" f
+instance PrettyTPTP Decl where
+    prettyTPTP (Axiom      n f) = pdecl n "axiom"      f
+    prettyTPTP (Conjecture n f) = pdecl n "conjecture" f
 
-instance Pretty [Decl] where
-    pretty ds = unlines (map pretty ds)
+instance PrettyTPTP [Decl] where
+    prettyTPTP ds = unlines (map prettyTPTP ds)
 
-writeTPTP :: Pretty a => FilePath -> a -> IO ()
-writeTPTP file a = writeFile file (pretty a)
+writeTPTP :: PrettyTPTP a => FilePath -> a -> IO ()
+writeTPTP file a = writeFile file (prettyTPTP a)
 
-outputTPTP :: Pretty a => a -> IO ()
-outputTPTP = putStr . pretty
+outputTPTP :: PrettyTPTP a => a -> IO ()
+outputTPTP = putStr . prettyTPTP

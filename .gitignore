@@ -1,10 +1,13 @@
-*.o
-*.hi
-*.out
+*o
+*hi
+*out
+*tptp
 examples/*
-!examples/*.hs
+!examples/*hs
 docs/*pdf
 docs/*tex
+docs/*mail*
 paper/
 src/Test/QuickSpec/
+html/
 *#*

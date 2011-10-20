@@ -2,7 +2,7 @@ module Main where
 
 import Prelude hiding (take,pred,head,tail)
 
-import Language.TPTP
+import Language.TPTP.Monad
 import Language.TPTP.Pretty
 
 {-
@@ -54,7 +54,7 @@ diffAxioms =
 
   , axiom "difflists"  (forall $ \x xs -> cons x xs != nil)
 
-  , axiom "diffbottom" ( zero != bottom & nil != bottom 
+  , axiom "diffbottom" ( zero != bottom & nil != bottom
 
                        & forall (\n -> suc n != nil)
 

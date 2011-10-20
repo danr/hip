@@ -5,7 +5,7 @@ import Prelude (Int,undefined,Eq,Show,Ord,return
                ,div,($),concat,(.),map,String,(>>=))
 import qualified Prelude as P
 
-import Language.TPTP
+import Language.TPTP.Monad
 import Language.TPTP.Pretty
 
 nil    = constant "nil"
@@ -27,7 +27,7 @@ revAcc   = binary "revAcc"
 diffAxioms :: [Decl]
 diffAxioms =
   [ axiom "difflists"  (forall $ \x xs -> cons x xs != nil)
-  , axiom "diffbottom" ( nil != bottom 
+  , axiom "diffbottom" ( nil != bottom
                        & forall (\x xs -> cons x xs != bottom))
   ]
 
@@ -37,7 +37,7 @@ projAxioms =
   , axiom "projtail" (forall $ \x xs -> tail (cons x xs) === xs)
   ]
 
-{- 
+{-
     (++) :: List -> List -> List
     Cons x xs ++ ys = Cons x (xs ++ ys)
     Nil       ++ ys = ys
@@ -58,7 +58,7 @@ appendAxioms =
 {-
     point :: Int -> List
     point x = Cons x Nil
-    
+
     not strict in any argument, never bottom
 -}
 
@@ -70,7 +70,7 @@ pointAxioms = [ axiom "point_0" (forall $ \x -> point x === cons x nil) ]
     reverse (Cons x xs) = reverse xs ++ point x
     reverse Nil         = Nil
 -}
-    
+
 reverseAxioms :: [Decl]
 reverseAxioms =
   [ axiom "reverse_0" (forall $ \x xs -> reverse (cons x xs) === reverse xs ++ point x)
@@ -82,7 +82,7 @@ reverseAxioms =
 {-
 reverse2 :: List -> List
 reverse2 = revAcc Nil
-  where 
+  where
     revAcc acc Nil         = acc
     revAcc acc (Cons x xs) = revAcc (Cons x acc) xs
 -}
