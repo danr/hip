@@ -104,11 +104,13 @@ lookupProj n = TM $ asks ( map FunName
 -- | Binds the names to quantified variables inside the action
 bindNames :: [Name] -> ([VarName] -> ToTPTP a) -> ToTPTP a
 bindNames ns vm = TM $ do
-    let n = length ns
+    bnames <- asks boundNames
+    let ns' = filter (`M.notMember` bnames) ns
+        n = length ns'
     vs <- asks (take n . namesupply)
     let TM m = vm vs
     flip local m $ \e -> e
-         { boundNames = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs)
+         { boundNames = insertMany (zipWith (\n v -> (n,QuantVar v)) ns' vs)
                                    (boundNames e)
          , namesupply = drop n (namesupply e) }
 

@@ -1,7 +1,7 @@
 
 if b t f = case b of {
    True  -> t ;
-   False -> f ;
+   False -> f  ;
    };
 
 filter p xs = case xs of {
@@ -36,6 +36,22 @@ mix a b c = case Tup3 a b c of {
                  Tup3 x    y    z -> b;
                  };
 
+not b = if b False True;
+
 or n m = if n True m;
 
 and n m = if n m False;
+
+le n m = or (eq n m) (le n m);
+
+gt n m = not (le n m);
+
+append xs ys = case xs of {
+   Cons z zs -> Cons z (append zs ys);
+   Nil       -> ys;
+   };
+
+qsort xs = case xs of {
+      Cons x ys -> append (qsort (filter (le x) ys)) (Cons x (qsort (filter (gt x) ys)));
+      Nil       -> Nil;
+      };

@@ -91,7 +91,7 @@ translate (Func fn args (Case ec brs)) = bindNames args $ \vars -> do
        ]
 
 
-translateBranch :: T.Term             -- ^ The function term
+translateBranch :: T.Term           -- ^ The function term
                 -> T.Term           -- ^ The case scrutinee term
                 -> Pattern          -- ^ The current pattern
                 -> Expr             -- ^ The current rhs expr of pattern
@@ -106,13 +106,12 @@ translateBranch lhs t p e prev =
           makeConstraints (t === p' ==> lhs === rhs) constraints
 
 makeConstraints :: T.Formula -> [[(Name,Pattern)]] -> ToTPTP T.Formula
-makeConstraints t css = foldr (\/) t <$> mapM makeConstraint css
+makeConstraints t css = foldl (\/) t <$> mapM makeConstraint css
 
 makeConstraint :: [(Name,Pattern)] -> ToTPTP T.Formula
 makeConstraint [] = error "empty constraint?!"
-makeConstraint cs = foldr1 (/\) <$> mapM constraint cs
+makeConstraint cs = foldl1 (/\) <$> mapM constraint cs
 
--- Note that this constraint is negated
 constraint :: (Name,Pattern) -> ToTPTP T.Formula
 constraint (n,p) = do
   QuantVar x <- lookupName n
