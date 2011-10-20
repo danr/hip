@@ -9,4 +9,4 @@ import System.Environment
 main = do
   file:_ <- getArgs
   ds <- parseFile file
-  putStrLn (pretty (toTPTP ds))
+  putStrLn (prettyTPTP (toTPTP ds))

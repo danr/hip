@@ -5,6 +5,7 @@ import Language.HFOL.Core
 import Language.HFOL.FixBranches
 import Language.HFOL.Pretty
 import Language.HFOL.ToTPTPMonad
+import Language.TPTP hiding (Decl,Var)
 import qualified Language.TPTP as T
 
 import Control.Arrow ((&&&))
@@ -34,7 +35,7 @@ toTPTP ds = envStDecls env st ++ axioms
     (axioms,st) = runTPTP env (concat <$> mapM translate ds)
 
 -- Notice that this function works well on an empty argument list
-applyFun :: Name -> [T.Term] -> ToTPTP T.Term
+applyFun :: Name -> [Term] -> ToTPTP Term
 applyFun n as = do
   b <- lookupName n
   case b of
@@ -51,30 +52,17 @@ applyFun n as = do
                  ++ "constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
-translateExpr :: Expr -> ToTPTP T.Term
+translateExpr :: Expr -> ToTPTP Term
 translateExpr (Var n) = applyFun n []
 translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
 
-translatePattern :: Pattern -> ToTPTP T.Term
+translatePattern :: Pattern -> ToTPTP Term
 translatePattern (PVar n)    = applyFun n []
 translatePattern (PCon c as) = applyFun c =<< mapM translatePattern as
-
-forall :: [T.VarName] -> T.Formula -> T.Formula
-forall [] phi = phi
-forall xs phi = T.Forall xs phi
 
 withPrevious :: [a] -> [(a,[a])]
 withPrevious [] = []
 withPrevious (x:xs) = (x,xs) : [(y,x:ys) | (y,ys) <- withPrevious xs]
-
-infix 4 ===
-infixr 3 /\
-infixr 2 \/
-infixl 1 ==>
-t1 === t2 = T.EqOp t1 (T.:==) t2
-f1 ==> f2 = T.BinOp f1 (T.:=>) f2
-f1 /\  f2 = T.BinOp f1 (T.:&) f2
-f1 \/  f2 = T.BinOp f1 (T.:|) f2
 
 translate :: Decl -> ToTPTP [T.Decl]
 translate (Func fn args (Expr e)) = bindNames args $ \vars -> do
@@ -91,12 +79,12 @@ translate (Func fn args (Case ec brs)) = bindNames args $ \vars -> do
        ]
 
 
-translateBranch :: T.Term           -- ^ The function term
-                -> T.Term           -- ^ The case scrutinee term
+translateBranch :: Term           -- ^ The function term
+                -> Term           -- ^ The case scrutinee term
                 -> Pattern          -- ^ The current pattern
                 -> Expr             -- ^ The current rhs expr of pattern
                 -> [Pattern]        -- ^ The previous patterns
-                -> ToTPTP T.Formula -- ^ The resulting declaration for this branch
+                -> ToTPTP Formula -- ^ The resulting declaration for this branch
 translateBranch lhs t p e prev =
   let constraints :: [[(Name,Pattern)]]
       constraints = moreSpecificPatterns p prev
@@ -105,14 +93,14 @@ translateBranch lhs t p e prev =
           p'  <- translatePattern p
           makeConstraints (t === p' ==> lhs === rhs) constraints
 
-makeConstraints :: T.Formula -> [[(Name,Pattern)]] -> ToTPTP T.Formula
+makeConstraints :: Formula -> [[(Name,Pattern)]] -> ToTPTP Formula
 makeConstraints t css = foldl (\/) t <$> mapM makeConstraint css
 
-makeConstraint :: [(Name,Pattern)] -> ToTPTP T.Formula
+makeConstraint :: [(Name,Pattern)] -> ToTPTP Formula
 makeConstraint [] = error "empty constraint?!"
 makeConstraint cs = foldl1 (/\) <$> mapM constraint cs
 
-constraint :: (Name,Pattern) -> ToTPTP T.Formula
+constraint :: (Name,Pattern) -> ToTPTP Formula
 constraint (n,p) = do
   QuantVar x <- lookupName n
   (T.Var x ===) <$> invertPattern p (T.Var x)
@@ -121,7 +109,7 @@ constraint (n,p) = do
 --
 -- > invertPattern (C (E a b) c) x =
 -- >     C (E (projE1 (projC1 x)) (projE2 (projC1 x))) (projC2 x)
-invertPattern :: Pattern -> T.Term -> ToTPTP (T.Term)
+invertPattern :: Pattern -> Term -> ToTPTP (Term)
 invertPattern (PVar _)      x = return x
 invertPattern (PCon n pats) x = do
   projs <- lookupProj n

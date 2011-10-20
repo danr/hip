@@ -55,3 +55,11 @@ infix  1 <=>
 data Decl = Axiom      String Formula
           | Conjecture String Formula
   deriving (Eq,Ord,Show)
+
+forall :: [VarName] -> Formula -> Formula
+forall [] phi = phi
+forall xs phi = Forall xs phi
+
+exists :: [VarName] -> Formula -> Formula
+exists [] phi = phi
+exists xs phi = Forall xs phi
