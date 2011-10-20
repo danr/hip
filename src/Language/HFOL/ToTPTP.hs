@@ -2,7 +2,7 @@
 module Language.HFOL.ToTPTP where
 
 import Language.HFOL.Core
-import Language.HFOL.RemoveOverlap
+import Language.HFOL.FixBranches
 import Language.HFOL.Pretty
 import Language.HFOL.ToTPTPMonad
 import qualified Language.TPTP as T
@@ -34,7 +34,7 @@ toTPTP ds = envStDecls env st ++ axioms
 -- Notice that this function works well on an empty argument list
 applyFun :: Name -> [T.Term] -> ToTPTP T.Term
 applyFun n as = do
-  b <- lookupVar n
+  b <- lookupName n
   case b of
     QuantVar x          -> return (appFold (T.Var x) as)
     b@(boundName -> fn) -> do
@@ -54,7 +54,7 @@ forall [] phi = phi
 forall xs phi = T.Forall xs phi
 
 translate :: Decl -> ToTPTP [T.Decl]
-translate (Func fn args (Expr e)) = bindVars args $ \vars -> do
+translate (Func fn args (Expr e)) = bindNames args $ \vars -> do
     rhs <- applyFun fn (map T.Var vars)
     lhs <- translateExpr e
     return [T.Axiom (fn ++ "axiom") $ forall vars $ T.EqOp rhs (T.:==) lhs]
@@ -63,3 +63,15 @@ translate (Func fn args (Expr e)) = bindVars args $ \vars -> do
 translateExpr :: Expr -> ToTPTP T.Term
 translateExpr (Var n) = applyFun n []
 translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
+
+-- | Inverts a pattern into projections
+--
+-- > invertPattern (C (E a b) c) x =
+-- >     C (E (projE1 (projC1 x)) (projE2 (projC1 x))) (projC2 x)
+invertPattern :: Pattern -> T.Term -> ToTPTP (T.Term)
+invertPattern (PVar _)      x = return x
+invertPattern (PCon n pats) x = do
+  projs <- lookupProj n
+  ConVar c <- lookupName n
+  T.Fun c <$> sequence
+    (zipWith (\pat proj -> invertPattern pat (T.Fun proj [x])) pats projs)

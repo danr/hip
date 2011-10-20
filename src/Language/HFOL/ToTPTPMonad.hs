@@ -7,9 +7,10 @@ module Language.HFOL.ToTPTPMonad
        ,St
        ,Bound(..)
        ,boundCon
-       ,lookupVar
+       ,lookupName
        ,lookupArity
-       ,bindVars
+       ,lookupProj
+       ,bindNames
        ,makeFunPtrName
        ,addFuns
        ,addCons
@@ -48,13 +49,13 @@ newtype ToTPTP a = TM { unToTPTP :: ReaderT Env (State St) a }
 runTPTP :: Env -> ToTPTP a -> (a,St)
 runTPTP env m = runState (runReaderT (unToTPTP m) env) emptySt
 
-data Env = Env { arities   :: Map Name Int
+data Env = Env { arities    :: Map Name Int
                  -- ^ Arity of functions and constructors
-               , boundVars :: Map Name Bound
+               , boundNames :: Map Name Bound
                  -- ^ TPTP name of functions and constructors and quantified variables
-               , conProj   :: Map Name [Name]
+               , conProj    :: Map Name [Name]
                  -- ^ Projection functions for constructors
-               , conFam    :: Map Name [Name]
+               , conFam     :: Map Name [Name]
                  -- ^ The other constructors for a given constructor
                }
 
@@ -85,21 +86,26 @@ insertMany :: Ord k => [(k,v)] -> Map k v -> Map k v
 insertMany kvs m = foldr (uncurry M.insert) m kvs
 
 -- | Looks up if a name is a variable or a function/constructor
-lookupVar :: Name -> ToTPTP Bound
-lookupVar n = TM $ asks (fromMaybe (error $ "lookupVar, unbound: " ++ n)
-                        . M.lookup n . boundVars)
+lookupName :: Name -> ToTPTP Bound
+lookupName n = TM $ asks (fromMaybe (error $ "lookupName, unbound: " ++ n)
+                        . M.lookup n . boundNames)
 
 -- | Looks up an arity of a function or constructor
 lookupArity :: Name -> ToTPTP Int
 lookupArity n = TM $ asks (fromMaybe (error $ "lookupArity, unbound: " ++ n)
                           . M.lookup n . arities)
 
+-- | Looks up the projections for a constructor
+lookupProj :: Name -> ToTPTP [FunName]
+lookupProj n = TM $ asks ( map FunName
+                         . fromMaybe (error $ "lookupProj, unbound: " ++ n)
+                         . M.lookup n . conProj)
 
 -- | Binds the names to quantified variables inside the action
-bindVars :: [Name] -> ([VarName] -> ToTPTP a) -> ToTPTP a
-bindVars ns vm = TM $ flip local m $ \e -> e
-    { boundVars = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs)
-                             (boundVars e) }
+bindNames :: [Name] -> ([VarName] -> ToTPTP a) -> ToTPTP a
+bindNames ns vm = TM $ flip local m $ \e -> e
+    { boundNames = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs)
+                              (boundNames e) }
   where
     vs = makeVarNames (length ns)
     TM m = vm vs
@@ -115,7 +121,7 @@ makeFunPtrName = FunName . makePtrName . funName
 -- | Bind names that are functions or constructors
 bindFunVars :: [Name] -> (FunName -> Bound) -> Env -> Env
 bindFunVars ns mk e = e
-   { boundVars = insertMany [(n,mk (FunName n))| n <- ns] (boundVars e) }
+   { boundNames = insertMany [(n,mk (FunName n))| n <- ns] (boundNames e) }
 
 addArities :: [(Name,Int)] -> Env -> Env
 addArities funs e = e { arities = insertMany funs (arities e) }
