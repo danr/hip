@@ -11,17 +11,16 @@ module Language.HFOL.ToTPTPMonad
        ,lookupArity
        ,lookupProj
        ,bindNames
+       ,bindPattern
        ,makeFunPtrName
        ,addFuns
        ,addCons
        ,useFunPtr
        ,appFold
        ,envStDecls
-       )
-        where
+       ) where
 
 import Language.HFOL.Core
-import Language.HFOL.RemoveOverlap
 import qualified Language.TPTP as T
 import Language.TPTP
 import Language.TPTP.Pretty
@@ -57,6 +56,7 @@ data Env = Env { arities    :: Map Name Int
                  -- ^ Projection functions for constructors
                , conFam     :: Map Name [Name]
                  -- ^ The other constructors for a given constructor
+               , namesupply :: [VarName]
                }
 
 data St = St { usedFunPtrs :: Set Name
@@ -73,15 +73,15 @@ boundCon _          = False
 
 -- | The empty environment
 emptyEnv :: Env
-emptyEnv = Env M.empty M.empty M.empty M.empty
+emptyEnv = Env M.empty M.empty M.empty M.empty [ T.VarName ('X' : show x) | x <- [0..] ]
 
 -- | The empty state
 emptySt :: St
 emptySt = St S.empty
 
--- | Insert /n/ elements to a map
+-- | Insert /n/ elements to a map of /m/ elements
 --
--- /O(n * log(n))/
+--   /O(n * log(m+n))/
 insertMany :: Ord k => [(k,v)] -> Map k v -> Map k v
 insertMany kvs m = foldr (uncurry M.insert) m kvs
 
@@ -103,12 +103,21 @@ lookupProj n = TM $ asks ( map FunName
 
 -- | Binds the names to quantified variables inside the action
 bindNames :: [Name] -> ([VarName] -> ToTPTP a) -> ToTPTP a
-bindNames ns vm = TM $ flip local m $ \e -> e
-    { boundNames = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs)
-                              (boundNames e) }
+bindNames ns vm = TM $ do
+    let n = length ns
+    vs <- asks (take n . namesupply)
+    let TM m = vm vs
+    flip local m $ \e -> e
+         { boundNames = insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs)
+                                   (boundNames e)
+         , namesupply = drop n (namesupply e) }
+
+-- | Bind all variables in a pattern
+bindPattern :: Pattern -> ([VarName] -> ToTPTP a) -> ToTPTP a
+bindPattern p m = bindNames (fv p) m
   where
-    vs = makeVarNames (length ns)
-    TM m = vm vs
+    fv (PVar x)    = return x
+    fv (PCon c xs) = concatMap fv xs
 
 -- | Make a pointer name of a name
 makePtrName :: Name -> Name
