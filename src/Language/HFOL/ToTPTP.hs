@@ -24,7 +24,7 @@ preludeEnv = flip (foldr addCons) datatypes
                 , [("True",0),("False",0)]
                 , [("Nothing",0),("Just",1)]
                 , [("Zero",0),("Succ",1)]
-                , [(".Bottom",0)]
+                , [(bottomName,0)]
                 ]
 
 toTPTP :: [Decl] -> [T.Decl]

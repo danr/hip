@@ -44,6 +44,10 @@ varPat (PVar _) = True
 varPat _        = False
 conPat          = not . varPat
 
+con0Pat :: Pattern -> Bool
+con0Pat (PCon _ []) = True
+con0Pat _           = False
+
 {-
  Given a function name and the matrix of patterns and expressions,
  returns a function which cases on the arguments and branches

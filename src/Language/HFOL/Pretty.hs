@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances #-}
-module Language.HFOL.Pretty where
+module Language.HFOL.Pretty (prettyCore) where
 
 import Language.HFOL.Core
 import Text.PrettyPrint.HughesPJ
@@ -15,7 +15,7 @@ instance P Decl where
 
 instance P Body where
   p (Case e brs) = text "case" <+> p e <+> text "of" <+> lbrace
-                   $$ nest 4 (vcat (map ((<> semi) . p) brs))
+                   $$ nest 4 (vcat (punctuate semi (map p brs)))
                    $$ rbrace
   p (Expr e)     = p e
 
@@ -42,3 +42,10 @@ ppat l (PCon n ps) = enclose (l <= 1) (text n <+> hsep (map (ppat 1) ps))
 
 instance P Name where
   p = text
+
+-- Orphan instances
+instance Show Decl where show = prettyCore
+instance Show Body where show = prettyCore
+instance Show Expr where show = prettyCore
+instance Show Branch where show = prettyCore
+instance Show Pattern where show = prettyCore

@@ -3,18 +3,21 @@
    fixBranches : Remove overlapping branches + Insert bottoms
 
    moreSpecificPatterns : Get the least more specific patterns than a pattern
-
-   This code is only tested by hand.
-   TODO: Make robust test cases for these
+                          This function needs more testing
 
 -}
 
-module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns) where
+module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName) where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
+import Language.HFOL.ParserInternals
 import Data.List (nubBy)
 import Data.Function (on)
+import Data.Maybe (listToMaybe,fromMaybe)
+
+import Language.HFOL.ArbitraryCore
+import Test.QuickCheck
 
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
@@ -58,12 +61,14 @@ wild ps = [ PVar "_" | _ <- ps ]
 --
 --   TODO: Tidy this up, make it more efficient
 --
+--   TODO: Make tests
+--
 -- > moreSpecificPatterns (x:xs) [(x:y:ys),_] = [(xs,_:_)]
 moreSpecificPatterns :: Pattern -> [Pattern] -> [[(Name,Pattern)]]
 moreSpecificPatterns p ps = msp p (map brPat $ removeOverlap $ reverse
                                              $ map (:-> undefined) ps)
 
-msp (PVar x)    ps = map (return . (,) x) $ nubBy ((==) `on` patName)
+nmsp (PVar x)    ps = map (return . (,) x) $ nubBy ((==) `on` patName)
                      [ PCon c (wild as) | PCon c as <- ps]
 msp (PCon c as) ps = filter (not . null)
                      [ cc $ zipWith (\a a' -> msp a [a']) as as'
@@ -82,21 +87,25 @@ spectest = [ PCon "A" [pcon0 "X",PVar  "_",PVar  "_"]
 
 -- | A small test :)
 test1 :: [Branch]
-test1 = [PCon "C"    [PVar "x"]                                  :-> Var "e1"
-        ,PCon "C"    [PCon "C" [PVar "x"]]                       :-> Var "e2"
-        ,PCon "A"    [pcon0 "D",pcon0 "J"]                       :-> Var "e3"
-        ,PCon "A"    [pcon0 "D",PVar  "z"]                       :-> Var "e4"
-        ,PCon "A"    [PVar  "y",pcon0 "E"]                       :-> Var "e5"
-        ,PCon "Cons" [PVar "x",PCon "Cons" [PVar "y",PVar "ys"]] :-> Var "elist"
-        ,PVar "x"                                                :-> Var "e6"
-        ,PVar "_"                                                :-> Var "e7"
+test1 = map parseBranch
+        ["C x                -> e1"
+        ,"C (C x)            -> e2"
+        ,"A D J              -> e3"
+        ,"A D z              -> e4"
+        ,"A y E              -> e5"
+        ,"Cons x (Cons y ys) -> elist"
+        ,"x                  -> e6"
+        ,"_                  -> e7"
         ]
 
+bottomName :: Name
+bottomName = "⊥"
+
 bottomP :: Pattern
-bottomP = pcon0 ".Bottom"
+bottomP = pcon0 bottomName
 
 bottom :: Expr
-bottom = con0 ".Bottom"
+bottom = con0 bottomName
 
 selections :: [a] -> [([a],a,[a])]
 selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
@@ -106,7 +115,19 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 --   remove overlaps afterwards
 addBottoms :: [Branch] -> [Branch]
 addBottoms = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)))
-           . (++ [bottomP :-> bottom])
+           . (++ [PVar "_" :-> bottom])
+
+-- | What are the bottom patterns for
+--
+-- > A (B C) (D E) ?
+--
+-- They are be
+--
+-- > ⊥
+-- > A ⊥     _
+-- > A _     ⊥
+-- > A (B ⊥) _
+-- > A _     (D ⊥)
 
 addBottom :: Pattern -> [Pattern]
 addBottom (PVar _)    = []
@@ -116,3 +137,67 @@ addBottom (PCon c ps) = bottomP : fails
               | (l,p,r) <- selections ps, fp <- addBottom p
               ]
 
+--------------------------------------------------------------------------------
+-- Testing without bottoms
+
+pat = parsePattern "C2 B0 b"
+brs = map parseBranch ["C2 Z0 (Z1 (Y1 (B2 (C1 y) _))) -> z","z -> a"]
+
+pickBranch :: Pattern -> [Branch] -> Maybe Expr
+pickBranch p = fmap brExpr . listToMaybe . filter (matches p . brPat)
+
+bottomless :: Pattern -> Bool
+bottomless (PCon c as) = c /= bottomName && all bottomless as
+bottomless _           = True
+
+matches :: Pattern -> Pattern -> Bool
+PCon c as `matches` PCon c' as' = and ((c == c') : zipWith matches as as')
+_         `matches` c@(PCon{})  = bottomless c
+_         `matches` _           = True
+
+prop_removeOverlap :: Pattern -> [Branch] -> Bool
+prop_removeOverlap p brs = pickBranch p brs == pickBranch p (removeOverlap brs)
+
+prop_addBottoms :: Pattern -> [Branch] -> Bool
+prop_addBottoms p brs =    Just (fromMaybe bottom (pickBranch p brs))
+                        == pickBranch p (addBottoms brs)
+
+prop_fixBranches :: Pattern -> [Branch] -> Bool
+prop_fixBranches p brs =    Just (fromMaybe bottom (pickBranch p brs))
+                         == pickBranch p (fixBranches brs)
+
+-- Testing with bottoms
+
+data Match = Mismatch | Match | Bottom deriving (Eq,Ord,Show)
+
+allBottom :: [Match] -> Match
+allBottom (Bottom:_)  = Bottom
+allBottom (Match:xs) = allBottom xs
+allBottom (Mismatch:xs) | allBottom xs == Bottom = Bottom
+                        | otherwise              = Mismatch
+
+allBottom [] = Match
+
+matchesBottom :: Pattern -> Pattern -> Match
+PCon c as `matchesBottom` PCon c' as' | c == bottomName = Bottom
+                                      | c == c'         = allBottom (zipWith matchesBottom as as')
+                                      | otherwise       = Mismatch
+_         `matchesBottom` _           = Match
+
+pickBranchBottom :: Pattern -> [Branch] -> Expr
+pickBranchBottom p brs = case [ (match,p' :-> e) | p' :-> e <- brs
+                                                 , let match = p `matchesBottom` p'
+                                                 , match /= Mismatch] of
+                               []                 -> bottom
+                               (Bottom,_      ):_ -> bottom
+                               (Match ,_ :-> e):_ -> e
+
+prop_addBottoms' :: BottomPattern -> [Branch] -> Bool
+prop_addBottoms' (BP p) brs = case pickBranch p (addBottoms brs) of
+                                        Nothing -> False
+                                        Just e  -> e == pickBranchBottom p brs
+
+prop_fixBranches' :: BottomPattern -> [Branch] -> Bool
+prop_fixBranches' (BP p) brs = case pickBranch p (fixBranches brs) of
+                                        Nothing -> False
+                                        Just e  -> e == pickBranchBottom p brs
