@@ -2,11 +2,14 @@
 module Language.HFOL.Monad
        (TM()
        ,runTM
+       ,locally
        ,Bound(..)
        ,boundCon
        ,lookupName
        ,lookupArity
        ,lookupProj
+       ,popQuantified
+       ,addIndirection
        ,bindNames
        ,bindPattern
        ,makeFunPtrName
@@ -18,6 +21,7 @@ module Language.HFOL.Monad
        ) where
 
 import Language.HFOL.Core
+import Language.HFOL.Pretty
 import qualified Language.TPTP as T
 import Language.TPTP
 import Language.TPTP.Pretty
@@ -63,9 +67,18 @@ data St = St { usedFunPtrs :: Set Name
                -- ^ Supply of variables
              }
 
-data Bound = QuantVar { quantVar  :: VarName }
-           | FunVar   { boundName :: FunName }
-           | ConVar   { boundName :: FunName }
+data Bound = QuantVar    { quantVar  :: VarName }
+           | FunVar      { boundName :: FunName }
+           | ConVar      { boundName :: FunName }
+           | Indirection { indExpr   :: Expr    }
+  deriving(Eq,Ord,Show)
+
+locally :: TM a -> TM a
+locally (TM m) = TM $ do
+  boundNames' <- gets boundNames
+  r <- m
+  modify $ \s -> s { boundNames = boundNames' , quantified = S.empty }
+  return r
 
 boundCon :: Bound -> Bool
 boundCon (ConVar _) = True
@@ -96,6 +109,10 @@ lookupName n = TM $ do
         modify $ \s -> s { boundNames = M.insert n q (boundNames s)
                          , namesupply = tail (namesupply s) }
         return q
+
+addIndirection :: Name -> Expr -> TM ()
+addIndirection n e = TM $ modify $ \s -> s
+    { boundNames = M.insert n (Indirection e) (boundNames s) }
 
 popQuantified :: TM [VarName]
 popQuantified = TM $ do

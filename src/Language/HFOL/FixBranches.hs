@@ -85,7 +85,7 @@ addBottoms = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)))
 --
 -- > A (B C) (D E) ?
 --
--- They are be
+-- They are
 --
 -- > ⊥
 -- > A ⊥     _
