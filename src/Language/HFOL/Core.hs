@@ -11,27 +11,30 @@ data Decl = Func { funcName :: Name
                  , funcArgs :: [Name]
                  , funcBody :: Body
                  }
-  deriving(Eq,Ord,Show,Data,Typeable)
+  deriving(Eq,Ord,Data,Typeable)
 
 data Body = Case { scrutinee :: Expr
                  , branches :: [Branch]
                  }
           | Expr Expr
-  deriving(Eq,Ord,Show,Data,Typeable)
+  deriving(Eq,Ord,Data,Typeable)
 
 data Expr = App { exprName :: Name , exprArgs :: [Expr] }
           | Con { exprName :: Name , exprArgs :: [Expr] }
           | Var { exprName :: Name }
-  deriving(Eq,Ord,Show,Data,Typeable)
+  deriving(Eq,Ord,Data,Typeable)
+
+
 
 infix 7 :->
 
 data Branch = (:->) { brPat :: Pattern , brExpr :: Expr }
-  deriving(Eq,Ord,Show,Data,Typeable)
+  deriving(Eq,Ord,Data,Typeable)
+
 
 data Pattern = PVar { patName :: Name }
              | PCon { patName :: Name, patArgs :: [Pattern] }
-  deriving(Eq,Ord,Show,Data,Typeable)
+  deriving(Eq,Ord,Data,Typeable)
 
 -- Auxiliary functions
 

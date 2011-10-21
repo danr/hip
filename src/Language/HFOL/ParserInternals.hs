@@ -1,30 +1,47 @@
 {-# LANGUAGE DoRec #-}
-module Language.HFOL.ParserInternals where
+module Language.HFOL.ParserInternals
+       (declsGrammar
+       ,parseDecls
+       ,parseBranch
+       ,parsePattern
+       ,parseExpr
+       )
+       where
 
 import Control.Applicative
 import Data.Parser.Grempa.Grammar
 import Data.Parser.Grempa.Dynamic
+import Data.Data
 
 import qualified Language.HFOL.Lexer as L
 import Language.HFOL.Core
 
-parseString :: String -> [Decl]
-parseString = parse parseDynamic . L.lex
+parseFromGrammar :: Data e => Grammar L.Tok e -> String -> e
+parseFromGrammar g = parse (mkDynamicParser constrWrapper g) . L.lex
 
-parseDynamic :: Parser L.Tok [Decl]
-parseDynamic = mkDynamicParser constrWrapper extGrammar
+parseDecls :: String -> [Decl]
+parseDecls = parseFromGrammar declsGrammar
 
-extGrammar :: Grammar L.Tok [Decl]
-extGrammar = do
+parseBranch :: String -> Branch
+parseBranch = parseFromGrammar branchGrammar
+
+parsePattern :: String -> Pattern
+parsePattern = parseFromGrammar (patternGrammar False)
+
+parseExpr :: String -> Expr
+parseExpr = parseFromGrammar exprGrammar
+
+lg :: Grammar L.Tok Name
+lg = rule [ L.fromTok <@> L.lident ]
+
+ug :: Grammar L.Tok Name
+ug = rule [ L.fromTok <@> L.uident ]
+
+exprGrammar :: Grammar L.Tok Expr
+exprGrammar = do
   rec
-    l   <- rule [ L.fromTok <@> L.lident ]
-    u   <- rule [ L.fromTok <@> L.uident ]
-
-    d   <- rule [ func    <@> l <#> p2s0 <# L.Eq <#> b <# L.Semi ]
-    ds  <- several d
-
-    b   <- rule [ Case    <@  L.Case <#> e <# L.Of <# L.LBrace <#> brs <# L.RBrace
-                , Expr    <@> e]
+    l   <- lg
+    u   <- ug
 
     e   <- rule [ app     <@> e <#> e2
                 , id      <@> e2
@@ -32,9 +49,13 @@ extGrammar = do
     e2  <- rule [ con0    <@> u
                 , Var     <@> l
                 , id      <@  L.LPar <#> e <# L.RPar ]
+  return e
 
-    br  <- rule [ (:->)   <@> p <# L.Arrow <#> e <# L.Semi ]
-    brs <- several br
+patternGrammar :: Bool -> Grammar L.Tok Pattern
+patternGrammar parens = do
+  rec
+    l   <- lg
+    u   <- ug
 
     p   <- rule [ PCon    <@> u <#> p2s
                 , id      <@> p2 ]
@@ -42,9 +63,38 @@ extGrammar = do
                 , pcon0   <@> u
                 , id      <@  L.LPar <#> p <# L.RPar ]
     p2s <- several p2
-    p2s0 <- several0 p2
-    ps0 <- several0 p
 
+  if parens then return p2
+            else return p
+
+branchGrammar :: Grammar L.Tok Branch
+branchGrammar = do
+  rec
+    p   <- patternGrammar False
+    e   <- exprGrammar
+    br  <- rule [ (:->)   <@> p <# L.Arrow <#> e ]
+
+  return br
+
+declsGrammar :: Grammar L.Tok [Decl]
+declsGrammar = do
+  rec
+    l   <- lg
+    u   <- ug
+
+    pp   <- patternGrammar True
+    pps0 <- several0 pp
+
+    d   <- rule [ func    <@> l <#> pps0 <# L.Eq <#> b <# L.Semi ]
+    ds  <- several d
+
+    b   <- rule [ Case    <@  L.Case <#> e <# L.Of <# L.LBrace <#> brs <# L.RBrace
+                , Expr    <@> e]
+
+    e   <- exprGrammar
+
+    br  <- branchGrammar
+    brs <- severalInter L.Semi br
 
   return ds
 

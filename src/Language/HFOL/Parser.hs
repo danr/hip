@@ -3,13 +3,13 @@ module Language.HFOL.Parser where
 
 import Prelude hiding (lex)
 import Data.Parser.Grempa.Static
-import Language.HFOL.ParserInternals (extGrammar)
+import Language.HFOL.ParserInternals (declsGrammar)
 import Language.HFOL.Lexer
 import Language.HFOL.Core
 import Language.HFOL.Pretty
 
 extTokParser :: [Tok] -> ParseResult Tok [Decl]
-extTokParser = $(mkStaticParser extGrammar [|extGrammar|])
+extTokParser = $(mkStaticParser declsGrammar [|declsGrammar|])
 
 extParser :: String -> ParseResult Tok [Decl]
 extParser = extTokParser . lex

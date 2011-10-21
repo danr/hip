@@ -17,11 +17,14 @@ arbC n = elements (map ((++ show n) . map toUpper) names)
 
 instance Arbitrary Pattern where
     arbitrary = sized arbPat
+    shrink (PVar _) = []
+    shrink (PCon c as) = as ++ [PCon c as' | as' <- sequence (map shrink as)]
+
 
 arbPat s = frequency
          [(5,PVar <$> arbName)
          ,(1,return (PVar "_"))
-         ,(s,do n <- choose (0,4)
+         ,(s,do n <- choose (0,2)
                 PCon <$> arbC n <*> replicateM n (arbPat s'))
          ]
   where s' = s `div` 2
@@ -46,5 +49,8 @@ arbExpr s = frequency
                  Con <$> arbC n <*> replicateM n (arbExpr s'))
           ]
   where s' = s `div` 2
+
+instance Arbitrary Branch where
+  arbitrary = (:->) <$> arbitrary <*> (Var <$> arbName)
 
 arbBranch s = (:->) <$> arbPat s <*> arbExpr s
