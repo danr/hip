@@ -19,10 +19,24 @@ import Data.Maybe (listToMaybe,fromMaybe)
 import Language.HFOL.ArbitraryCore
 import Test.QuickCheck
 
+-- The name for bottom
+
+bottomName :: Name
+bottomName = "⊥"
+
+bottomP :: Pattern
+bottomP = pcon0 bottomName
+
+bottom :: Expr
+bottom = con0 bottomName
+
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
 fixBranches :: [Branch] -> [Branch]
 fixBranches = removeOverlap . addBottoms
+
+--------------------------------------------------------------------------------
+-- Remove overlapping branches
 
 {-| Removes overlapping branches:
 
@@ -53,63 +67,13 @@ PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
 wild :: [Pattern] -> [Pattern]
 wild ps = [ PVar "_" | _ <- ps ]
 
--- | Gets the more specific patterns, and blanks the arguments
---
---   Now we can removeOverlap on the reverse because we're looking "upwards"
---   the case tree. This enables us to remove duplicate and more specific
---   results.
---
---   TODO: Tidy this up, make it more efficient
---
---   TODO: Make tests
---
--- > moreSpecificPatterns (x:xs) [(x:y:ys),_] = [(xs,_:_)]
-moreSpecificPatterns :: Pattern -> [Pattern] -> [[(Name,Pattern)]]
-moreSpecificPatterns p ps = msp p (map brPat $ removeOverlap $ reverse
-                                             $ map (:-> undefined) ps)
-
-nmsp (PVar x)    ps = map (return . (,) x) $ nubBy ((==) `on` patName)
-                     [ PCon c (wild as) | PCon c as <- ps]
-msp (PCon c as) ps = filter (not . null)
-                     [ cc $ zipWith (\a a' -> msp a [a']) as as'
-                     | PCon c' as' <- ps , c == c']
-  where cc = concat . concat
-
-testThis p ps = mapM_ (putStrLn . concatMap (\(v,p) -> v ++ ":" ++ prettyCore p ++ ","))
-              $ moreSpecificPatterns p ps
-
-spectest :: [Pattern]
-spectest = [ PCon "A" [pcon0 "X",PVar  "_",PVar  "_"]
-           , PCon "A" [PVar  "_",PVar  "_",pcon0 "Z"]
-           , PCon "A" [pcon0 "U",pcon0 "Y",PVar  "_"]
---           , PCon "A" [pcon0 "U",PVar  "_",PVar  "_"]
-           ]
-
--- | A small test :)
-test1 :: [Branch]
-test1 = map parseBranch
-        ["C x                -> e1"
-        ,"C (C x)            -> e2"
-        ,"A D J              -> e3"
-        ,"A D z              -> e4"
-        ,"A y E              -> e5"
-        ,"Cons x (Cons y ys) -> elist"
-        ,"x                  -> e6"
-        ,"_                  -> e7"
-        ]
-
-bottomName :: Name
-bottomName = "⊥"
-
-bottomP :: Pattern
-bottomP = pcon0 bottomName
-
-bottom :: Expr
-bottom = con0 bottomName
 
 selections :: [a] -> [([a],a,[a])]
 selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
   where fromSplit (as,b:bs) = (as,b,bs)
+
+--------------------------------------------------------------------------------
+-- Add bottoms
 
 -- | Adds bottoms. Not in the most efficient way, since we
 --   remove overlaps afterwards
@@ -136,6 +100,28 @@ addBottom (PCon c ps) = bottomP : fails
     fails   = [ PCon c (wild l ++ [fp] ++ wild r)
               | (l,p,r) <- selections ps, fp <- addBottom p
               ]
+
+-- | Gets the more specific patterns, and blanks the arguments
+--
+--   Now we can removeOverlap on the reverse because we're looking "upwards"
+--   the case tree. This enables us to remove duplicate and more specific
+--   results.
+--
+--   TODO: Tidy this up, make it more efficient
+--
+--   TODO: Make tests
+--
+-- > moreSpecificPatterns (x:xs) [(x:y:ys),_] = [(xs,_:_)]
+moreSpecificPatterns :: Pattern -> [Pattern] -> [[(Name,Pattern)]]
+moreSpecificPatterns p ps = msp p (map brPat $ removeOverlap $ reverse
+                                             $ map (:-> undefined) ps)
+
+msp (PVar x)    ps = map (return . (,) x) $ nubBy ((==) `on` patName)
+                     [ PCon c (wild as) | PCon c as <- ps]
+msp (PCon c as) ps = filter (not . null)
+                     [ cc $ zipWith (\a a' -> msp a [a']) as as'
+                     | PCon c' as' <- ps , c == c']
+  where cc = concat . concat
 
 --------------------------------------------------------------------------------
 -- Testing without bottoms
@@ -170,25 +156,26 @@ prop_fixBranches p brs =    Just (fromMaybe bottom (pickBranch p brs))
 
 data Match = Mismatch | Match | Bottom deriving (Eq,Ord,Show)
 
-allBottom :: [Match] -> Match
-allBottom (Bottom:_)  = Bottom
-allBottom (Match:xs) = allBottom xs
-allBottom (Mismatch:xs) | allBottom xs == Bottom = Bottom
-                        | otherwise              = Mismatch
-
-allBottom [] = Match
+-- If all matches, return match
+-- if any is bottom, return bottom
+-- otherwise return bottom
+foldMatches :: [Match] -> Match
+foldMatches ms | any (== Bottom) ms = Bottom
+               | all (== Match)  ms = Match
+               | otherwise          = Mismatch
 
 matchesBottom :: Pattern -> Pattern -> Match
-PCon c as `matchesBottom` PCon c' as' | c == bottomName = Bottom
-                                      | c == c'         = allBottom (zipWith matchesBottom as as')
-                                      | otherwise       = Mismatch
+PCon c as `matchesBottom` PCon c' as'
+     | c == bottomName = Bottom
+     | c == c'         = foldMatches (zipWith matchesBottom as as')
+     | otherwise       = Mismatch
 _         `matchesBottom` _           = Match
 
 pickBranchBottom :: Pattern -> [Branch] -> Expr
 pickBranchBottom p brs = case [ (match,p' :-> e) | p' :-> e <- brs
                                                  , let match = p `matchesBottom` p'
                                                  , match /= Mismatch] of
-                               []                 -> bottom
+                               []                 -> bottom      -- non-exhaustive patterns
                                (Bottom,_      ):_ -> bottom
                                (Match ,_ :-> e):_ -> e
 
@@ -201,3 +188,30 @@ prop_fixBranches' :: BottomPattern -> [Branch] -> Bool
 prop_fixBranches' (BP p) brs = case pickBranch p (fixBranches brs) of
                                         Nothing -> False
                                         Just e  -> e == pickBranchBottom p brs
+
+
+--------------------------------------------------------------------------------
+-- For manual testing
+
+spectest :: [Pattern]
+spectest = [ PCon "A" [pcon0 "X",PVar  "_",PVar  "_"]
+           , PCon "A" [PVar  "_",PVar  "_",pcon0 "Z"]
+           , PCon "A" [pcon0 "U",pcon0 "Y",PVar  "_"]
+--           , PCon "A" [pcon0 "U",PVar  "_",PVar  "_"]
+           ]
+
+-- | A small test :)
+test1 :: [Branch]
+test1 = map parseBranch
+        ["C x                -> e1"
+        ,"C (C x)            -> e2"
+        ,"A D J              -> e3"
+        ,"A D z              -> e4"
+        ,"A y E              -> e5"
+        ,"Cons x (Cons y ys) -> e6"
+        ,"J (K L) (M N)      -> e7"
+        ,"J (K L) (M O)      -> e8"
+        ,"J (K r) (M z)      -> e9"
+        ,"x                  -> e0"
+        ,"_                  -> e9"
+        ]

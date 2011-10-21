@@ -1,10 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Language.HFOL.ToTPTPMonad
-       (ToTPTP
-       ,runTPTP
-       ,Env
-       ,emptyEnv
-       ,St
+module Language.HFOL.Monad
+       (TM()
+       ,runTM
        ,Bound(..)
        ,boundCon
        ,lookupName
@@ -37,30 +34,33 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 
--- | The ToTPTP monad.
+-- | The TM monad.
 --
 --   The reader and state capabilities are kept abstract
-newtype ToTPTP a = TM { unToTPTP :: ReaderT Env (State St) a }
+newtype TM a = TM { unTM :: ReaderT Env (State St) a }
   deriving (Functor,Applicative,Monad)
 
--- | Runs a computation in an environment, with an empty state.
+-- | Runs a computation in an empty environment, with an empty state.
 --   The computation's result is returned with the updated state.
-runTPTP :: Env -> ToTPTP a -> (a,St)
-runTPTP env m = runState (runReaderT (unToTPTP m) env) emptySt
+runTM :: TM a -> a
+runTM m = evalState (runReaderT (unTM m) emptyEnv) emptySt
 
 data Env = Env { arities    :: Map Name Int
                  -- ^ Arity of functions and constructors
-               , boundNames :: Map Name Bound
-                 -- ^ TPTP name of functions and constructors and quantified variables
                , conProj    :: Map Name [Name]
                  -- ^ Projection functions for constructors
                , conFam     :: Map Name [Name]
                  -- ^ The other constructors for a given constructor
-               , namesupply :: [VarName]
                }
 
 data St = St { usedFunPtrs :: Set Name
                -- ^ Which functions we need to produce ptr conversions for
+             , boundNames :: Map Name Bound
+               -- ^ TPTP name of functions and constructors and quantified variables
+             , quantified :: Set VarName
+               -- ^ Variables to quantify over
+             , namesupply :: [VarName]
+               -- ^ Supply of variables
              }
 
 data Bound = QuantVar { quantVar  :: VarName }
@@ -73,11 +73,11 @@ boundCon _          = False
 
 -- | The empty environment
 emptyEnv :: Env
-emptyEnv = Env M.empty M.empty M.empty M.empty [ T.VarName ('X' : show x) | x <- [0..] ]
+emptyEnv = Env M.empty M.empty M.empty
 
 -- | The empty state
 emptySt :: St
-emptySt = St S.empty
+emptySt = St S.empty M.empty S.empty [ T.VarName ('X' : show x) | x <- [0..] ]
 
 -- | Insert /n/ elements to a map of /m/ elements
 --
@@ -86,36 +86,55 @@ insertMany :: Ord k => [(k,v)] -> Map k v -> Map k v
 insertMany kvs m = foldr (uncurry M.insert) m kvs
 
 -- | Looks up if a name is a variable or a function/constructor
-lookupName :: Name -> ToTPTP Bound
-lookupName n = TM $ asks (fromMaybe (error $ "lookupName, unbound: " ++ n)
-                        . M.lookup n . boundNames)
+lookupName :: Name -> TM Bound
+lookupName n = TM $ do
+    mn <- gets (M.lookup n . boundNames)
+    case mn of
+      Just b  -> return b
+      Nothing -> do -- Variable is unbound, quantify over it
+        q <- QuantVar <$> gets (head . namesupply)
+        modify $ \s -> s { boundNames = M.insert n q (boundNames s)
+                         , namesupply = tail (namesupply s) }
+        return q
+
+popQuantified :: TM [VarName]
+popQuantified = TM $ do
+  qs <- gets (S.toList . quantified)
+  modify $ \s -> s { quantified = S.empty }
+  return qs
 
 -- | Looks up an arity of a function or constructor
-lookupArity :: Name -> ToTPTP Int
+lookupArity :: Name -> TM Int
 lookupArity n = TM $ asks (fromMaybe (error $ "lookupArity, unbound: " ++ n)
                           . M.lookup n . arities)
 
 -- | Looks up the projections for a constructor
-lookupProj :: Name -> ToTPTP [FunName]
+lookupProj :: Name -> TM [FunName]
 lookupProj n = TM $ asks ( map FunName
                          . fromMaybe (error $ "lookupProj, unbound: " ++ n)
                          . M.lookup n . conProj)
 
 -- | Binds the names to quantified variables inside the action
-bindNames :: [Name] -> ([VarName] -> ToTPTP a) -> ToTPTP a
+bindNames :: [Name] -> ([VarName] -> TM a) -> TM a
 bindNames ns vm = TM $ do
-    bnames <- asks boundNames
+    bnames <- gets boundNames
     let ns' = filter (`M.notMember` bnames) ns
         n = length ns'
-    vs <- asks (take n . namesupply)
-    let TM m = vm vs
-    flip local m $ \e -> e
-         { boundNames = insertMany (zipWith (\n v -> (n,QuantVar v)) ns' vs)
-                                   (boundNames e)
-         , namesupply = drop n (namesupply e) }
+    namesupply' <- gets namesupply
+    let vs   = take n (namesupply')
+        TM m = vm vs
+    boundNames' <- gets boundNames
+    modify $ \s -> s { boundNames =
+                          insertMany (zipWith (\n v -> (n,QuantVar v)) ns' vs)
+                                     boundNames'
+                     , namesupply = drop n namesupply' }
+    r <- m
+    modify $ \s -> s { boundNames = boundNames'
+                     , namesupply = namesupply'}
+    return r
 
 -- | Bind all variables in a pattern
-bindPattern :: Pattern -> ([VarName] -> ToTPTP a) -> ToTPTP a
+bindPattern :: Pattern -> ([VarName] -> TM a) -> TM a
 bindPattern p m = bindNames (fv p) m
   where
     fv (PVar x)    = return x
@@ -130,31 +149,37 @@ makeFunPtrName :: FunName -> FunName
 makeFunPtrName = FunName . makePtrName . funName
 
 -- | Bind names that are functions or constructors
-bindFunVars :: [Name] -> (FunName -> Bound) -> Env -> Env
-bindFunVars ns mk e = e
-   { boundNames = insertMany [(n,mk (FunName n))| n <- ns] (boundNames e) }
+bindFunVars :: [Name] -> (FunName -> Bound) -> TM ()
+bindFunVars ns mk = TM $ modify $ \s -> s
+   { boundNames = insertMany [(n,mk (FunName n))| n <- ns] (boundNames s) }
 
-addArities :: [(Name,Int)] -> Env -> Env
-addArities funs e = e { arities = insertMany funs (arities e) }
+addArities :: [(Name,Int)] -> TM a -> TM a
+addArities funs (TM m) = TM $ flip local m $ \e -> e
+                                       { arities = insertMany funs (arities e) }
 
 -- | Add functions arities and name. This also works for constructors
-addFuns :: [(Name,Int)] -> Env -> Env
-addFuns funs = bindFunVars (map fst funs) FunVar
-             . addArities funs
+addFuns :: [(Name,Int)] -> TM a -> TM a
+addFuns funs m = do bindFunVars (map fst funs) FunVar
+                    addArities funs m
 
 -- | Add a datatype's constructor given the arities
 --   Projections are also generated
-addCons :: [(Name,Int)] -> Env -> Env
-addCons cs e = bindFunVars (map fst cs) ConVar $ addArities cs
-             $ e { conFam  = insertMany [(c,cs') | c <- cs'] (conFam e)
-                 , conProj = insertMany (map projName cs) (conProj e) }
+addCons :: [[(Name,Int)]] -> TM a -> TM a
+addCons css (TM m) = do
+  bindFunVars cons ConVar
+  addArities (concat css) $ TM $ flip local m $ \e -> e
+      { conFam  = insertMany fams  (conFam e)
+      , conProj = insertMany projs (conProj e) }
   where
-    cs' = map fst cs
+    cons  = [ c          | cs <- css, (c,_) <- cs ]
+    fams  = [ (c,cs')    | cs <- css, let cs' = map fst cs, c <- cs']
+    projs = [ projName c | cs <- css, c <- cs]
+
     projName :: (Name,Int) -> (Name,[Name])
     projName (c,n) = (c,["proj" ++ show x ++ c | x <- [0..n-1]])
 
 -- | Mark a pointer as used
-useFunPtr :: Name -> ToTPTP ()
+useFunPtr :: Name -> TM ()
 useFunPtr fn = TM $ modify $ \s -> s { usedFunPtrs = S.insert fn (usedFunPtrs s) }
 
 -- | Make a number of new variable names
@@ -169,8 +194,11 @@ appFold :: T.Term -> [T.Term] -> T.Term
 appFold = foldl (\f x -> T.Fun (T.FunName "app") [f,x])
 
 -- | All FOL declarations from an environment and state
-envStDecls :: Env -> St -> [T.Decl]
-envStDecls e s = projDecls (conProj e) ++ ptrDecls (arities e) (usedFunPtrs s)
+envStDecls :: TM [T.Decl]
+envStDecls = TM $ do
+  e <- ask
+  s <- get
+  return (projDecls (conProj e) ++ ptrDecls (arities e) (usedFunPtrs s))
 
 -- | Make projection declarations
 projDecls :: Map Name [Name] -> [T.Decl]
