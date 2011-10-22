@@ -25,7 +25,7 @@ datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
             , [(bottomName,0)]
             ]
 
-toTPTP :: [Decl] -> [T.Decl]
+toTPTP :: [Decl] -> ([T.Decl],[String])
 toTPTP ds = runTM $ addFuns funs $ addCons datatypes $ do
                faxioms <- concat <$> mapM translate ds
                extra   <- envStDecls
@@ -76,6 +76,9 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
     ]
   where
     translateBranch pattern expr prev num = do
+      write $ "translateBranch " ++ fname ++ " " ++ unwords args ++ " ="
+              ++ "\n\t" ++ "case " ++ prettyCore scrutinee ++ " of"
+              ++ "\n\t" ++ prettyCore (pattern :-> expr)
       d <- scrutinee ~~ pattern
       case d of
         Nothing -> return Nothing
@@ -83,7 +86,8 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
           lhs <- translateExpr (App fname (map Var args))
           rhs <- translateExpr expr
           formula <- (lhs === rhs) `withConditions` conds
-          formula' <- formula `withConstraints` (moreSpecificPatterns pattern prev)
+          let constr = moreSpecificPatterns pattern prev
+          formula' <- formula `withConstraints` constr
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ "axiom" ++ show num)
                                   (forall qs formula')
@@ -94,15 +98,26 @@ type Condition = (Expr,Pattern)
 -- Unify the scrutinee expression with the pattern,
 -- returning just the conditions for this branch,
 -- or nothing if this branch is unreachable
-(~~) :: Expr -> Pattern -> TM (Maybe [Condition])
-Con c as ~~ PCon c' ps | c == c'   = concatMaybe <$> zipWithM (~~) as ps
-                       | otherwise = return Nothing
-e        ~~ PVar n     = addIndirection n e >> noConditions
-Var n    ~~ p          = addIndirection n (toExpr p) >> noConditions
-App f as ~~ PCon c ps  = return $ return $ return (App f as,PCon c ps)
+(~~),(~~~) :: Expr -> Pattern -> TM (Maybe [Condition])
+e ~~ p = do write $ "[" ++ prettyCore e ++ " ~ " ++ prettyCore p ++ "]"
+            e ~~~ p
+
+Con c as ~~~ PCon c' ps | c == c'   = concatMaybe <$> zipWithM (~~) as ps
+                        | otherwise = unreachable
+e        ~~~ PVar n     = addIndirection n e          >> noConditions
+Var n    ~~~ p          = addIndirection n (toExpr p) >> noConditions
+App f as ~~~ PCon c ps  = condition (App f as,PCon c ps)
 
 noConditions :: TM (Maybe [Condition])
 noConditions = return (return [])
+
+unreachable :: TM (Maybe [Condition])
+unreachable = write "unreachable" >> return Nothing
+
+condition :: Condition -> TM (Maybe [Condition])
+condition (e,p) = do
+  write $ "condition: " ++ prettyCore e ++ " = " ++ prettyCore p
+  return . return . return $ (e,p)
 
 concatMaybe :: [Maybe [a]] -> Maybe [a]
 concatMaybe ms | any isNothing ms = Nothing
@@ -121,7 +136,8 @@ translateCond (expr,pat) = liftM2 (===) (translateExpr expr)
 type Constraint = (Name,Pattern)
 
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
-withConstraints t css = foldl (\/) t <$> mapM conj css
+withConstraints t css = do write $ "withConstraints: " ++ show css
+                           foldl (\/) t <$> mapM conj css
   where
     conj :: [Constraint] -> TM Formula
     conj [] = error "empty constraint?!"
@@ -130,10 +146,11 @@ withConstraints t css = foldl (\/) t <$> mapM conj css
     disj :: Constraint -> TM Formula
     disj (n,p) = do
         b <- lookupName n
-        x <- case b of
-                 QuantVar x -> return x
-                 _          -> error $ "disj : " ++ n ++ "," ++ show p ++ "," ++ show b
-        (T.Var x ===) <$> invertPattern p (T.Var x)
+        t <- case b of
+                 QuantVar x    -> return (T.Var x)
+                 Indirection e -> translateExpr e
+                 _             -> error $ "disj : " ++ n ++ "," ++ show p ++ "," ++ show b
+        (t ===) <$> invertPattern p t
 
 -- | Inverts a pattern into projections
 --

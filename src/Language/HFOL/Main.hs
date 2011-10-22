@@ -4,9 +4,14 @@ import Language.TPTP.Pretty
 import Language.HFOL.Parser
 import Language.HFOL.ToTPTP
 
+import Control.Monad
+
 import System.Environment
 
+
 main = do
-  file:_ <- getArgs
+  file:rest <- getArgs
   ds <- parseFile file
-  putStrLn (prettyTPTP (toTPTP ds))
+  let (formulas,debug) = toTPTP ds
+  when ("-v" `elem` rest) (mapM_ putStrLn debug)
+  putStrLn (prettyTPTP formulas)

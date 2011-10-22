@@ -109,3 +109,4 @@ pcon0 n = PCon n []
 toExpr :: Pattern -> Expr
 toExpr (PVar n)    = Var n
 toExpr (PCon n as) = Con n (map toExpr as)
+

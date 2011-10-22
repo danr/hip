@@ -2,6 +2,7 @@
 module Language.HFOL.Monad
        (TM()
        ,runTM
+       ,write
        ,locally
        ,Bound(..)
        ,boundCon
@@ -28,8 +29,7 @@ import Language.TPTP.Pretty
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.State
-import Control.Monad.Reader
+import Control.Monad.RWS
 
 import Data.Maybe
 
@@ -41,13 +41,17 @@ import qualified Data.Set as S
 -- | The TM monad.
 --
 --   The reader and state capabilities are kept abstract
-newtype TM a = TM { unTM :: ReaderT Env (State St) a }
+newtype TM a = TM { unTM :: RWS Env [String] St a }
   deriving (Functor,Applicative,Monad)
 
 -- | Runs a computation in an empty environment, with an empty state.
 --   The computation's result is returned with the updated state.
-runTM :: TM a -> a
-runTM m = evalState (runReaderT (unTM m) emptyEnv) emptySt
+runTM :: TM a -> (a,[String])
+runTM (TM m) = evalRWS m emptyEnv emptySt
+
+-- | Writes a debug message
+write :: String -> TM ()
+write = TM . tell . return
 
 data Env = Env { arities    :: Map Name Int
                  -- ^ Arity of functions and constructors
@@ -111,8 +115,10 @@ lookupName n = TM $ do
         return q
 
 addIndirection :: Name -> Expr -> TM ()
-addIndirection n e = TM $ modify $ \s -> s
-    { boundNames = M.insert n (Indirection e) (boundNames s) }
+addIndirection n e = do
+    write $ "indirection: " ++ n ++ " := " ++ prettyCore e
+    TM $ modify $ \s -> s
+          { boundNames = M.insert n (Indirection e) (boundNames s) }
 
 popQuantified :: TM [VarName]
 popQuantified = TM $ do

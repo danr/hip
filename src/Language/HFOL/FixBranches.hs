@@ -18,6 +18,7 @@ import Data.Maybe (listToMaybe,fromMaybe)
 
 import Language.HFOL.ArbitraryCore
 import Test.QuickCheck
+import Test.QuickCheck.Arbitrary
 
 -- The name for bottom
 
