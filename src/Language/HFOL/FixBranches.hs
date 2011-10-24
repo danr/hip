@@ -138,19 +138,16 @@ addBottom scrut (PCon c ps)         =  bottomP : fails
 --
 --   TODO: Make tests
 --
--- > moreSpecificPatterns (x:xs) [(x:y:ys),_] = [(xs,_:_)]
-moreSpecificPatterns :: Pattern -> [Pattern] -> [[(Name,Pattern)]]
-moreSpecificPatterns p ps = msp p (removeOverlappingPatterns (reverse ps))
+-- > moreSpecificPatterns (x:f x) [(x:y:ys),_] = [(f x,_:_)]
+moreSpecificPatterns :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
+moreSpecificPatterns e ps = msp e (removeOverlappingPatterns (reverse ps))
 
-msp (PVar x)    ps = map (return . (,) x) $ ps
---                     [ PCon c (wild as) | PCon c as <- ps]
-msp (PCon c as) ps = filter (not . null)
-                     [ cc $ zipWith (\a a' -> msp a [a']) as as'
-                     | PCon c' as' <- ps , c == c']
+msp (Con c as) ps = filter (not . null)
+                    [ cc $ zipWith (\a a' -> msp a [a']) as ps'
+                    | PCon c' ps' <- ps , c == c']
   where cc = concat . concat
+msp e          ps = [ [(e,p)] | p <- ps ]
 
-testPat = parsePattern "x"
-testPatterns = map parsePattern ["Tup2 Zero _","x"]
 
 -- All wilds need to be namen to use moreSpecificPatterns
 nameWilds :: Pattern -> Pattern

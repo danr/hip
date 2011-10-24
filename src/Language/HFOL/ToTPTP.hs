@@ -81,15 +81,31 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
           lhs <- translateExpr (App fname (map Var args))
           rhs <- translateExpr expr
           formula <- (lhs === rhs) `withConditions` conds
-          let constr = moreSpecificPatterns pattern prev
-          write $ "moreSpecificPatterns of " ++ prettyCore pattern ++ " are:\n" ++
-                  unlines [ unwords [ "\t" ++ n ++ " = " ++ prettyCore p | (n,p) <- cons ]
-                          | cons <- constr ]
-          write $ "previous patterns are\n" ++ unlines [ "\t" ++ prettyCore p | p <- prev ]
+          patExpr <- followExpr (patternToExpr pattern)
+          let constr = moreSpecificPatterns patExpr prev
+          write $ "moreSpecificPatterns of " ++ prettyCore pattern ++
+                  " followed to " ++ prettyCore patExpr ++ " are:\n" ++
+                  unlines [ unwords [ "\t" ++ prettyCore n ++ " = " ++ prettyCore p | (n,p) <- cons ]
+                          | cons <- constr ] ++
+                  "previous patterns are\n" ++ unlines [ "\t" ++ prettyCore p | p <- prev ]
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ "axiom" ++ show num)
                                   (forall qs formula')
+
+
+patternToExpr :: Pattern -> Expr
+patternToExpr (PVar x)    = Var x
+patternToExpr (PCon p ps) = Con p (map patternToExpr ps)
+
+followExpr :: Expr -> TM Expr
+followExpr (Var x) = do
+  b <- lookupName x
+  case b of
+    Indirection e -> followExpr e
+    _             -> return (Var x)
+followExpr (Con c as) = Con c <$> mapM followExpr as
+followExpr e          = return e
 
 type Condition = (Expr,Pattern)
 
@@ -132,7 +148,7 @@ translateCond :: Condition -> TM Formula
 translateCond (expr,pat) = liftM2 (===) (translateExpr expr)
                                         (translateExpr (toExpr pat))
 
-type Constraint = (Name,Pattern)
+type Constraint = (Expr,Pattern)
 
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
 withConstraints f css = do write $ "withConstraints: " ++ show css
@@ -140,18 +156,14 @@ withConstraints f css = do write $ "withConstraints: " ++ show css
   where
     conj :: [Constraint] -> TM Formula
     conj [] = error "empty constraint?!"
-    conj cs = foldl1 (/\) <$> mapM disj cs
+    conj cs = foldl1 (/\) . catMaybes <$> mapM disj cs
 
-    disj :: Constraint -> TM Formula
-    disj (n,p) = do
-        b <- lookupName n
-        t <- case b of
-                 QuantVar x    -> return (T.Var x)
-                 Indirection e -> do
-                     write $ "disj : indirection " ++ n ++ " to " ++ prettyCore e
-                     translateExpr e
-                 _ -> error $ "disj : " ++ n ++ "," ++ show p ++ "," ++ show b
-        (t ===) <$> invertPattern p t
+    disj :: Constraint -> TM (Maybe Formula)
+    disj (e,p) = do
+        t <- translateExpr e
+        r <- invertPattern p t
+        if t == r then return Nothing
+                  else return (Just (t === r))
 
 -- | Inverts a pattern into projections
 --
