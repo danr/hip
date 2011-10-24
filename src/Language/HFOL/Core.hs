@@ -13,8 +13,8 @@ data Decl = Func { funcName :: Name
                  }
   deriving(Eq,Ord,Data,Typeable)
 
-data Body = Case { scrutinee :: Expr
-                 , branches :: [Branch]
+data Body = Case { caseScrutinee :: Expr
+                 , caseBranches :: [Branch]
                  }
           | Expr Expr
   deriving(Eq,Ord,Data,Typeable)

@@ -7,12 +7,13 @@
 
 -}
 
-module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName) where
+module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName,nameWilds) where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
 import Control.Applicative
+import Control.Monad.State
 import Data.List (nubBy)
 import Data.Function (on)
 import Data.Maybe (listToMaybe,fromMaybe)
@@ -128,6 +129,16 @@ msp (PCon c as) ps = filter (not . null)
                      [ cc $ zipWith (\a a' -> msp a [a']) as as'
                      | PCon c' as' <- ps , c == c']
   where cc = concat . concat
+
+-- All wilds need to be namen to use moreSpecificPatterns
+nameWilds :: Pattern -> Pattern
+nameWilds p = evalState (go p) 0
+  where
+    go :: Pattern -> State Int Pattern
+    go PWild       = do { x <- get; modify succ; return (PVar ('_':show x)) }
+    go (PCon c ps) = PCon c <$> mapM go ps
+    go p           = return p
+
 
 --------------------------------------------------------------------------------
 -- Testing without bottoms

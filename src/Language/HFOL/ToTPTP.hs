@@ -11,8 +11,6 @@ import qualified Language.TPTP as T
 import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
-import Control.Monad.State
-import Control.Monad.Reader
 
 import Data.Maybe (catMaybes,isNothing)
 
@@ -41,7 +39,7 @@ applyFun n as = do
     QuantVar x          -> return (appFold (T.Var x) as)
     Indirection e       -> do t <- translateExpr e
                               return (appFold t as)
-    b@(boundName -> fn) -> do
+    (boundName -> fn) -> do
       arity <- lookupArity n
       if length as < arity
         then -- Partial application
@@ -57,10 +55,6 @@ translateExpr :: Expr -> TM Term
 translateExpr (Var n) = applyFun n []
 translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
 
-translatePattern :: Pattern -> TM Term
-translatePattern (PVar n)    = applyFun n []
-translatePattern (PCon c as) = applyFun c =<< mapM translatePattern as
-
 withPrevious :: [a] -> [(a,[a])]
 withPrevious [] = []
 withPrevious (x:xs) = (x,xs) : [(y,x:ys) | (y,ys) <- withPrevious xs]
@@ -71,10 +65,11 @@ translate (Func fname args (Expr e)) = bindNames args $ \vars -> do
     lhs <- translateExpr e
     return [T.Axiom (fname ++ "axiom") $ forall vars $ rhs === lhs]
 translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
-    [ locally (translateBranch p e (map brPat prevbrs) num)
-    | ((p :-> e,prevbrs),num) <- zip (withPrevious (fixBranches brs)) [0..]
+    [ locally (translateBranch (nameWilds p) e (map brPat prevbrs) num)
+    | ((p :-> e,prevbrs),num) <- zip (withPrevious (fixBranches scrutinee brs)) [0..]
     ]
   where
+    translateBranch :: Pattern -> Expr -> [Pattern] -> Int -> TM (Maybe T.Decl)
     translateBranch pattern expr prev num = do
       write $ "translateBranch " ++ fname ++ " " ++ unwords args ++ " ="
               ++ "\n\t" ++ "case " ++ prettyCore scrutinee ++ " of"
@@ -107,6 +102,7 @@ Con c as ~~~ PCon c' ps | c == c'   = concatMaybe <$> zipWithM (~~) as ps
 e        ~~~ PVar n     = addIndirection n e          >> noConditions
 Var n    ~~~ p          = addIndirection n (toExpr p) >> noConditions
 App f as ~~~ PCon c ps  = condition (App f as,PCon c ps)
+_        ~~~ PWild      = noConditions
 
 noConditions :: TM (Maybe [Condition])
 noConditions = return (return [])
@@ -136,8 +132,8 @@ translateCond (expr,pat) = liftM2 (===) (translateExpr expr)
 type Constraint = (Name,Pattern)
 
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
-withConstraints t css = do write $ "withConstraints: " ++ show css
-                           foldl (\/) t <$> mapM conj css
+withConstraints f css = do write $ "withConstraints: " ++ show css
+                           foldl (\/) f <$> mapM conj css
   where
     conj :: [Constraint] -> TM Formula
     conj [] = error "empty constraint?!"
@@ -158,6 +154,7 @@ withConstraints t css = do write $ "withConstraints: " ++ show css
 -- >     C (E (projE1 (projC1 x)) (projE2 (projC1 x))) (projC2 x)
 invertPattern :: Pattern -> Term -> TM (Term)
 invertPattern (PVar _)      x = return x
+invertPattern PWild         x = return x
 invertPattern (PCon n pats) x = do
   projs <- lookupProj n
   ConVar c <- lookupName n
