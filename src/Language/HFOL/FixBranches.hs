@@ -125,6 +125,10 @@ addBottom scrut (PCon c ps)         =  bottomP : fails
 --   TODO: Make tests
 --
 -- > moreSpecificPatterns (x:f x) [(x:y:ys),_] = [(f x,_:_)]
+testPs = map parsePattern ["Tup2 _ Zero","Tup2 _ bottom"]
+testExpr = parseExpr "Tup2 Zero x"
+
+
 moreSpecificPatterns :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
 moreSpecificPatterns e ps = msp e (removeOverlappingPatterns (reverse ps))
 
