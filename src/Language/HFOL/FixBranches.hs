@@ -12,6 +12,7 @@ module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName) w
 import Language.HFOL.Core
 import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
+import Control.Applicative
 import Data.List (nubBy)
 import Data.Function (on)
 import Data.Maybe (listToMaybe,fromMaybe)
@@ -33,8 +34,8 @@ bottom = con0 bottomName
 
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
-fixBranches :: [Branch] -> [Branch]
-fixBranches = removeOverlap . addBottoms
+fixBranches :: Expr -> [Branch] -> [Branch]
+fixBranches scrut = removeOverlap . (addBottoms scrut)
 
 --------------------------------------------------------------------------------
 -- Remove overlapping branches
@@ -59,14 +60,13 @@ removeOverlap = reverse . foldl f []
 
 -- | Less specific than or equal specificity as
 (<=?) :: Pattern -> Pattern -> Bool
-PVar _      <=? PCon _ _    = True
-PVar _      <=? PVar _      = True
-PCon _ _    <=? PVar _      = False
 PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
+PCon _ _    <=? _           = False
+_           <=? _           = True
 
 -- | Makes a list of patterns into a list of wild patterns
 wild :: [Pattern] -> [Pattern]
-wild ps = [ PVar "_" | _ <- ps ]
+wild ps = [ PWild | _ <- ps ]
 
 
 selections :: [a] -> [([a],a,[a])]
@@ -78,9 +78,13 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 
 -- | Adds bottoms. Not in the most efficient way, since we
 --   remove overlaps afterwards
-addBottoms :: [Branch] -> [Branch]
-addBottoms = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)))
-           . (++ [PVar "_" :-> bottom])
+addBottoms :: Expr -> [Branch] -> [Branch]
+addBottoms scrut = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)))
+                 . (++ [matchscrut scrut :-> bottom])
+  where matchscrut (Con a as) = PCon a (map matchscrut as)
+        matchscrut _          = PWild
+
+
 
 -- | What are the bottom patterns for
 --
@@ -95,6 +99,7 @@ addBottoms = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)))
 -- > A _     (D ⊥)
 
 addBottom :: Pattern -> [Pattern]
+addBottom PWild       = []
 addBottom (PVar _)    = []
 addBottom (PCon c ps) = bottomP : fails
   where
@@ -145,13 +150,19 @@ _         `matches` _           = True
 prop_removeOverlap :: Pattern -> [Branch] -> Bool
 prop_removeOverlap p brs = pickBranch p brs == pickBranch p (removeOverlap brs)
 
-prop_addBottoms :: Pattern -> [Branch] -> Bool
-prop_addBottoms p brs =    Just (fromMaybe bottom (pickBranch p brs))
-                        == pickBranch p (addBottoms brs)
+patternFromScrut :: Expr -> Gen Pattern
+patternFromScrut (Con c as) = PCon c <$> mapM patternFromScrut as
+patternFromScrut _          = arbitrary
 
-prop_fixBranches :: Pattern -> [Branch] -> Bool
-prop_fixBranches p brs =    Just (fromMaybe bottom (pickBranch p brs))
-                         == pickBranch p (fixBranches brs)
+prop_addBottoms :: Expr -> [Branch] -> Property
+prop_addBottoms scrut brs = forAll (patternFromScrut scrut) $ \p ->
+                            Just (fromMaybe bottom (pickBranch p brs))
+                         == pickBranch p (addBottoms scrut brs)
+
+prop_fixBranches :: Expr -> [Branch] -> Property
+prop_fixBranches scrut brs = forAll (patternFromScrut scrut) $ \p ->
+                             Just (fromMaybe bottom (pickBranch p brs))
+                          == pickBranch p (fixBranches scrut brs)
 
 -- Testing with bottoms
 
@@ -180,26 +191,26 @@ pickBranchBottom p brs = case [ (match,p' :-> e) | p' :-> e <- brs
                                (Bottom,_      ):_ -> bottom
                                (Match ,_ :-> e):_ -> e
 
-prop_addBottoms' :: BottomPattern -> [Branch] -> Bool
-prop_addBottoms' (BP p) brs = case pickBranch p (addBottoms brs) of
+botpatFromScrut :: Expr -> Gen Pattern
+botpatFromScrut (Con c as) = PCon c <$> mapM botpatFromScrut as
+botpatFromScrut _          = unBP <$> arbitrary
+
+
+prop_addBottoms' :: Expr -> [Branch] -> Property
+prop_addBottoms' scrut brs = forAll (botpatFromScrut scrut) $ \p ->
+                             case pickBranch p (addBottoms scrut brs) of
                                         Nothing -> False
                                         Just e  -> e == pickBranchBottom p brs
 
-prop_fixBranches' :: BottomPattern -> [Branch] -> Bool
-prop_fixBranches' (BP p) brs = case pickBranch p (fixBranches brs) of
+
+prop_fixBranches' :: Expr -> [Branch] -> Property
+prop_fixBranches' scrut brs = forAll (botpatFromScrut scrut) $ \p ->
+                             case pickBranch p (fixBranches scrut brs) of
                                         Nothing -> False
                                         Just e  -> e == pickBranchBottom p brs
-
 
 --------------------------------------------------------------------------------
 -- For manual testing
-
-spectest :: [Pattern]
-spectest = [ PCon "A" [pcon0 "X",PVar  "_",PVar  "_"]
-           , PCon "A" [PVar  "_",PVar  "_",pcon0 "Z"]
-           , PCon "A" [pcon0 "U",pcon0 "Y",PVar  "_"]
---           , PCon "A" [pcon0 "U",PVar  "_",PVar  "_"]
-           ]
 
 -- | A small test :)
 test1 :: [Branch]

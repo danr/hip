@@ -34,15 +34,19 @@ data Branch = (:->) { brPat :: Pattern , brExpr :: Expr }
 
 data Pattern = PVar { patName :: Name }
              | PCon { patName :: Name, patArgs :: [Pattern] }
+             | PWild
   deriving(Eq,Ord,Data,Typeable)
 
 -- Auxiliary functions
 
--- The two kinds of patterns
-varPat,conPat :: Pattern -> Bool
-varPat (PVar _) = True
-varPat _        = False
-conPat          = not . varPat
+-- The three kinds of patterns
+varPat,conPat,wildPat :: Pattern -> Bool
+varPat (PVar _)   = True
+varPat _          = False
+conPat (PCon _ _) = True
+conPat _          = False
+wildPat PWild     = True
+wildPat _         = False
 
 con0Pat :: Pattern -> Bool
 con0Pat (PCon _ []) = True

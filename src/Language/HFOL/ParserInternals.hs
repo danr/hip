@@ -61,6 +61,7 @@ patternGrammar parens = do
                 , id      <@> p2 ]
     p2  <- rule [ PVar    <@> l
                 , pcon0   <@> u
+                , PWild   <@  L.Under 
                 , id      <@  L.LPar <#> p <# L.RPar ]
     p2s <- several p2
 

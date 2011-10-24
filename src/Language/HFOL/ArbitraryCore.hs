@@ -31,7 +31,7 @@ instance Arbitrary BottomPattern where
 arbPat bottoms s = frequency
                  [(5,PVar <$> arbName)
                  ,(if bottoms then 5 else 0,return (pcon0 "⊥"))
-                 ,(1,return (PVar "_"))
+                 ,(1,return PWild)
                  ,(s,do n <- choose (0,2)
                         PCon <$> arbC n <*> replicateM n (arbPat bottoms s'))
                  ]
@@ -49,6 +49,9 @@ instance Arbitrary Body where
                    return (Case e brs)
               , Expr <$> arbExpr s
               ]
+
+instance Arbitrary Expr where
+    arbitrary = sized arbExpr
 
 arbExpr s = frequency
           [(5,Var <$> arbName)

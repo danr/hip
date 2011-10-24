@@ -36,6 +36,7 @@ instance P Branch where
 instance P Pattern where
   p = ppat 2
 
+ppat l PWild       = text "_"
 ppat l (PVar n)    = text n
 ppat l (PCon n []) = text n
 ppat l (PCon n ps) = enclose (l <= 1) (text n <+> hsep (map (ppat 1) ps))
