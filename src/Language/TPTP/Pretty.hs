@@ -8,11 +8,21 @@ import Data.List
 class PrettyTPTP p where
     prettyTPTP :: p -> String
 
+lowercase :: Char -> Bool
+lowercase n = 'a' <= n && n <= 'z'
+
+lowerNumeric :: Char -> Bool
+lowerNumeric n = lowercase n || '0' <= n && n <= '9' || n == '_'
+
+prettyName :: String -> String
+prettyName (n:ns) | lowercase n && all lowerNumeric ns = n:ns
+prettyName ns = "'" ++ ns ++ "'"
+
 instance PrettyTPTP FunName where
-    prettyTPTP = show
+    prettyTPTP = prettyName . funName
 
 instance PrettyTPTP RelName where
-    prettyTPTP = show
+    prettyTPTP = prettyName . relName
 
 instance PrettyTPTP VarName where
     prettyTPTP = show

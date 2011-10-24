@@ -7,8 +7,7 @@
 
 -}
 
-module Language.HFOL.FixBranches -- (fixBranches,moreSpecificPatterns,bottomName,nameWilds) where
-       where
+module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName,nameWilds) where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
@@ -26,7 +25,7 @@ import Test.QuickCheck.Arbitrary
 -- The name for bottom
 
 bottomName :: Name
-bottomName = "⊥"
+bottomName = "bottom"
 
 bottomP :: Pattern
 bottomP = pcon0 bottomName
