@@ -152,11 +152,13 @@ type Constraint = (Expr,Pattern)
 
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
 withConstraints f css = do write $ "withConstraints: " ++ show css
-                           foldl (\/) f <$> mapM conj css
+                           foldl (\/) f . catMaybes <$> mapM conj css
   where
-    conj :: [Constraint] -> TM Formula
-    conj [] = error "empty constraint?!"
-    conj cs = foldl1 (/\) . catMaybes <$> mapM disj cs
+    conj :: [Constraint] -> TM (Maybe Formula)
+    conj cs = do
+        fs <- catMaybes <$> mapM disj cs
+        if null fs then return Nothing
+                   else return (Just (foldl1 (/\) fs))
 
     disj :: Constraint -> TM (Maybe Formula)
     disj (e,p) = do
