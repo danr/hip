@@ -71,9 +71,9 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
   where
     translateBranch :: Pattern -> Expr -> [Pattern] -> Int -> TM (Maybe T.Decl)
     translateBranch pattern expr prev num = do
-      write $ "translateBranch " ++ fname ++ " " ++ unwords args ++ " ="
+      write $ "\ntranslateBranch " ++ fname ++ " " ++ unwords args ++ " ="
               ++ "\n\t" ++ "case " ++ prettyCore scrutinee ++ " of"
-              ++ "\n\t" ++ prettyCore (pattern :-> expr)
+              ++ "\n\t" ++ prettyCore (pattern :-> expr) ++ "\n"
       d <- scrutinee ~~ pattern
       case d of
         Nothing -> return Nothing
@@ -82,11 +82,14 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
           rhs <- translateExpr expr
           formula <- (lhs === rhs) `withConditions` conds
           let constr = moreSpecificPatterns pattern prev
+          write $ "moreSpecificPatterns of " ++ prettyCore pattern ++ " are:\n" ++
+                  unlines [ unwords [ "\t" ++ n ++ " = " ++ prettyCore p | (n,p) <- cons ]
+                          | cons <- constr ]
+          write $ "previous patterns are\n" ++ unlines [ "\t" ++ prettyCore p | p <- prev ]
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ "axiom" ++ show num)
                                   (forall qs formula')
-
 
 type Condition = (Expr,Pattern)
 
@@ -144,8 +147,10 @@ withConstraints f css = do write $ "withConstraints: " ++ show css
         b <- lookupName n
         t <- case b of
                  QuantVar x    -> return (T.Var x)
-                 Indirection e -> translateExpr e
-                 _             -> error $ "disj : " ++ n ++ "," ++ show p ++ "," ++ show b
+                 Indirection e -> do
+                     write $ "disj : indirection " ++ n ++ " to " ++ prettyCore e
+                     translateExpr e
+                 _ -> error $ "disj : " ++ n ++ "," ++ show p ++ "," ++ show b
         (t ===) <$> invertPattern p t
 
 -- | Inverts a pattern into projections

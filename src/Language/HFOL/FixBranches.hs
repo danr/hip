@@ -7,7 +7,8 @@
 
 -}
 
-module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName,nameWilds) where
+module Language.HFOL.FixBranches -- (fixBranches,moreSpecificPatterns,bottomName,nameWilds) where
+       where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
@@ -59,6 +60,9 @@ removeOverlap = reverse . foldl f []
     f brs (p :-> e) | any ((<=? p) . brPat) brs = brs
                     | otherwise                 = p :-> e : brs
 
+removeOverlappingPatterns :: [Pattern] -> [Pattern]
+removeOverlappingPatterns = map brPat . removeOverlap . map (:-> undefined)
+
 -- | Less specific than or equal specificity as
 (<=?) :: Pattern -> Pattern -> Bool
 PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
@@ -80,12 +84,17 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 -- | Adds bottoms. Not in the most efficient way, since we
 --   remove overlaps afterwards
 addBottoms :: Expr -> [Branch] -> [Branch]
-addBottoms scrut = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)))
-                 . (++ [matchscrut scrut :-> bottom])
+addBottoms scrut brs = concat
+         [ (p :-> e) : [ p' :-> bottom
+                       | p' <- addBottom scrut' p
+                       ]
+         | (p :-> e) <- brs
+         ]
+      ++ [scrut' :-> bottom]
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 
-
+        scrut' = matchscrut scrut
 
 -- | What are the bottom patterns for
 --
@@ -99,14 +108,25 @@ addBottoms scrut = concatMap (\br -> br : map (:-> bottom) (addBottom (brPat br)
 -- > A (B ⊥) _
 -- > A _     (D ⊥)
 
-addBottom :: Pattern -> [Pattern]
-addBottom PWild       = []
-addBottom (PVar _)    = []
-addBottom (PCon c ps) = bottomP : fails
+testScr  = parsePattern "A x y"
+testScr' = parsePattern "A (B x) y"
+testBPS  = parsePattern "A (B C) (D E)"
+
+addBottom :: Pattern -> Pattern -> [Pattern]
+addBottom _scrut        PWild       = []
+addBottom _scrut        (PVar _)    = []
+addBottom (PCon sc sps) (PCon c ps)
+     | sc /= c   = []               -- Unreachable clause
+     | otherwise = [ PCon c (map fst l ++ [fp] ++ map fst r)
+                   | (l,(sp,p),r) <- selections (zip sps ps)
+                   , fp <- addBottom sp p
+                   ]
+addBottom scrut (PCon c ps)         =  bottomP : fails
   where
     fails   = [ PCon c (wild l ++ [fp] ++ wild r)
-              | (l,p,r) <- selections ps, fp <- addBottom p
+              | (l,p,r) <- selections ps, fp <- addBottom PWild p
               ]
+
 
 -- | Gets the more specific patterns, and blanks the arguments
 --
@@ -120,15 +140,17 @@ addBottom (PCon c ps) = bottomP : fails
 --
 -- > moreSpecificPatterns (x:xs) [(x:y:ys),_] = [(xs,_:_)]
 moreSpecificPatterns :: Pattern -> [Pattern] -> [[(Name,Pattern)]]
-moreSpecificPatterns p ps = msp p (map brPat $ removeOverlap $ reverse
-                                             $ map (:-> undefined) ps)
+moreSpecificPatterns p ps = msp p (removeOverlappingPatterns (reverse ps))
 
-msp (PVar x)    ps = map (return . (,) x) $ nubBy ((==) `on` patName)
-                     [ PCon c (wild as) | PCon c as <- ps]
+msp (PVar x)    ps = map (return . (,) x) $ ps
+--                     [ PCon c (wild as) | PCon c as <- ps]
 msp (PCon c as) ps = filter (not . null)
                      [ cc $ zipWith (\a a' -> msp a [a']) as as'
                      | PCon c' as' <- ps , c == c']
   where cc = concat . concat
+
+testPat = parsePattern "x"
+testPatterns = map parsePattern ["Tup2 Zero _","x"]
 
 -- All wilds need to be namen to use moreSpecificPatterns
 nameWilds :: Pattern -> Pattern
@@ -143,8 +165,8 @@ nameWilds p = evalState (go p) 0
 --------------------------------------------------------------------------------
 -- Testing without bottoms
 
-pat = parsePattern "C2 B0 b"
-brs = map parseBranch ["C2 Z0 (Z1 (Y1 (B2 (C1 y) _))) -> z","z -> a"]
+testpat = parsePattern "C2 B0 b"
+testbrs = map parseBranch ["C2 Z0 (Z1 (Y1 (B2 (C1 y) _))) -> z","z -> a"]
 
 pickBranch :: Pattern -> [Branch] -> Maybe Expr
 pickBranch p = fmap brExpr . listToMaybe . filter (matches p . brPat)
