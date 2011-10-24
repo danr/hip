@@ -3,6 +3,7 @@ module Language.HFOL.ArbitraryCore where
 
 -- Orphan instances for the rescue!
 
+import Language.HFOL.Bottom
 import Language.HFOL.Core
 import Test.QuickCheck
 import Data.Char
@@ -30,7 +31,7 @@ instance Arbitrary BottomPattern where
 
 arbPat bottoms s = frequency
                  [(5,PVar <$> arbName)
-                 ,(if bottoms then 5 else 0,return (pcon0 "⊥"))
+                 ,(if bottoms then 5 else 0,return bottomP)
                  ,(1,return PWild)
                  ,(s,do n <- choose (0,2)
                         PCon <$> arbC n <*> replicateM n (arbPat bottoms s'))

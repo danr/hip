@@ -23,7 +23,11 @@ module Language.HFOL.Monad
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
+import Language.HFOL.Bottom
+import Language.HFOL.Util (withPrevious)
+
 import qualified Language.TPTP as T
+import Language.TPTP hiding (Decl,Var)
 import Language.TPTP
 import Language.TPTP.Pretty
 
@@ -32,6 +36,7 @@ import Control.Monad
 import Control.Monad.RWS
 
 import Data.Maybe
+import Data.List
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -59,6 +64,7 @@ data Env = Env { arities    :: Map Name Int
                  -- ^ Projection functions for constructors
                , conFam     :: Map Name [Name]
                  -- ^ The other constructors for a given constructor
+               , datatypes  :: [[(Name,Int)]]
                }
 
 data St = St { usedFunPtrs :: Set Name
@@ -90,7 +96,7 @@ boundCon _          = False
 
 -- | The empty environment
 emptyEnv :: Env
-emptyEnv = Env M.empty M.empty M.empty
+emptyEnv = Env M.empty M.empty M.empty []
 
 -- | The empty state
 emptySt :: St
@@ -191,8 +197,10 @@ addCons :: [[(Name,Int)]] -> TM a -> TM a
 addCons css (TM m) = do
   bindFunVars cons ConVar
   addArities (concat css) $ TM $ flip local m $ \e -> e
-      { conFam  = insertMany fams  (conFam e)
-      , conProj = insertMany projs (conProj e) }
+      { conFam    = insertMany fams  (conFam e)
+      , conProj   = insertMany projs (conProj e)
+      , datatypes = css ++ datatypes e
+      }
   where
     cons  = [ c          | cs <- css, (c,_) <- cs ]
     fams  = [ (c,cs')    | cs <- css, let cs' = map fst cs, c <- cs']
@@ -221,7 +229,33 @@ envStDecls :: TM [T.Decl]
 envStDecls = TM $ do
   e <- ask
   s <- get
-  return (projDecls (conProj e) ++ ptrDecls (arities e) (usedFunPtrs s))
+  return (projDecls (conProj e) ++
+          ptrDecls (arities e) (usedFunPtrs s) ++
+          disjConstr (datatypes e) )
+
+-- | Make datatypes disjunct, i.e.
+-- data Maybe = Just a | Nothing
+-- gives
+-- forall x . just x != nothing
+-- forall x . just x != bottom
+-- forall x . nothing != bottom
+disjConstr :: [[(Name,Int)]] -> [T.Decl]
+disjConstr = concatMap datatypeDisj
+  where
+    datatypeDisj :: [(Name,Int)] -> [T.Decl]
+    datatypeDisj ctors = concat (zipWith constrDisj ctors' (tail (tails ctors')))
+      where ctors' = (bottomName,0) : ctors
+
+    constrDisj :: (Name,Int) -> [(Name,Int)] -> [T.Decl]
+    constrDisj x = map (disjunct x) . filter ((fst x /=) . fst)
+
+    disjunct :: (Name,Int) -> (Name,Int) -> T.Decl
+    disjunct (c1,a1) (c2,a2) = T.Axiom ("axiomdisj" ++ c1 ++ c2)
+       $ forall (xs ++ ys) $ Fun (FunName c1) (map T.Var xs)
+                               !=
+                             Fun (FunName c2) (map T.Var ys)
+
+      where (xs,ys) = splitAt a1 (makeVarNames (a1 + a2))
 
 -- | Make projection declarations
 projDecls :: Map Name [Name] -> [T.Decl]

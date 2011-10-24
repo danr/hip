@@ -12,6 +12,8 @@ module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName,na
 import Language.HFOL.Core
 import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
+import Language.HFOL.Bottom
+import Language.HFOL.Util (selections)
 import Control.Applicative
 import Control.Monad.State
 import Data.List (nubBy)
@@ -21,17 +23,6 @@ import Data.Maybe (listToMaybe,fromMaybe)
 import Language.HFOL.ArbitraryCore
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary
-
--- The name for bottom
-
-bottomName :: Name
-bottomName = "bottom"
-
-bottomP :: Pattern
-bottomP = pcon0 bottomName
-
-bottom :: Expr
-bottom = con0 bottomName
 
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
@@ -72,10 +63,6 @@ _           <=? _           = True
 wild :: [Pattern] -> [Pattern]
 wild ps = [ PWild | _ <- ps ]
 
-
-selections :: [a] -> [([a],a,[a])]
-selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
-  where fromSplit (as,b:bs) = (as,b,bs)
 
 --------------------------------------------------------------------------------
 -- Add bottoms

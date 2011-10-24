@@ -5,6 +5,7 @@ import Language.HFOL.Core
 import Language.HFOL.FixBranches
 import Language.HFOL.Pretty
 import Language.HFOL.Monad
+import Language.HFOL.Util (withPrevious)
 import Language.TPTP hiding (Decl,Var)
 import qualified Language.TPTP as T
 
@@ -54,10 +55,6 @@ applyFun n as = do
 translateExpr :: Expr -> TM Term
 translateExpr (Var n) = applyFun n []
 translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
-
-withPrevious :: [a] -> [(a,[a])]
-withPrevious [] = []
-withPrevious (x:xs) = (x,xs) : [(y,x:ys) | (y,ys) <- withPrevious xs]
 
 translate :: Decl -> TM [T.Decl]
 translate (Func fname args (Expr e)) = bindNames args $ \vars -> do
