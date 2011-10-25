@@ -12,10 +12,10 @@ import Language.HFOL.Core
 import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
 import Language.HFOL.Bottom
-import Language.HFOL.Util (selections)
+import Language.HFOL.Util
 import Control.Applicative
 import Control.Monad.State
-import Data.Maybe (listToMaybe,fromMaybe)
+import Data.Maybe (listToMaybe,fromMaybe,catMaybes)
 
 import Language.HFOL.ArbitraryCore
 import Test.QuickCheck
@@ -114,15 +114,16 @@ testExpr = parseExpr "Tup2 Zero x"
 
 
 moreSpecificPatterns :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
-moreSpecificPatterns e ps = msp e (removeOverlappingPatterns (reverse ps))
+moreSpecificPatterns e = reverse
+                       . catMaybes . map (msp e)
+                       . removeOverlappingPatterns . reverse
 
-msp :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
-msp (Con c as) ps = filter (not . null)
-                    [ cc $ zipWith (\a a' -> msp a [a']) as ps'
-                    | PCon c' ps' <- ps , c == c']
-  where cc = concat . concat
-msp e          ps = [ [(e,p)] | p <- ps ]
-
+msp :: Expr -> Pattern -> Maybe [(Expr,Pattern)]
+msp (Con c as) (PCon c' ps)
+  | c /= c' = Nothing
+  | c == c' = concatMaybe $ zipWith msp as ps
+msp (Con c as) _            = Nothing
+msp e          p            = Just [(e,p)]
 
 -- | All wilds need to be named to use moreSpecificPatterns.
 --

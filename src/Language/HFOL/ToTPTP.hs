@@ -5,7 +5,7 @@ import Language.HFOL.Core
 import Language.HFOL.FixBranches
 import Language.HFOL.Pretty
 import Language.HFOL.Monad
-import Language.HFOL.Util (withPrevious)
+import Language.HFOL.Util
 import Language.HFOL.Bottom
 import Language.TPTP hiding (Decl,Var)
 import Language.TPTP.Pretty
@@ -15,7 +15,7 @@ import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 
-import Data.Maybe (catMaybes,isNothing)
+import Data.Maybe (catMaybes)
 
 -- | A sample prelude datatype
 datatypes :: [[(Name,Int)]]
@@ -172,12 +172,6 @@ condition (e,p) = do
   write $ "condition: " ++ prettyCore e ++ " = " ++ prettyCore p
   return . return . return $ (e,p)
 
--- | If any is nothing (unreachable branch), return nothing,
---   otherwise return just the catMaybes.
-concatMaybe :: [Maybe [a]] -> Maybe [a]
-concatMaybe ms | any isNothing ms = Nothing
-               | otherwise        = Just (concat (catMaybes ms))
-
 -- | Let the conjuncted conditions imply the formula
 withConditions :: Formula -> [Condition] -> TM Formula
 withConditions phi []    = return phi
@@ -223,6 +217,8 @@ invertPattern (PVar _)      x = return x
 invertPattern PWild         x = return x
 invertPattern (PCon n pats) x = do
   projs <- lookupProj n
-  ConVar c <- lookupName n
-  T.Fun c <$> sequence [ invertPattern pat (T.Fun proj [x])
-                       | pat <- pats | proj <- projs ]
+  b <- lookupName n
+  case b of
+    ConVar c -> T.Fun c <$> sequence [ invertPattern pat (T.Fun proj [x])
+                                     | pat <- pats | proj <- projs ]
+    _ -> error $ "invertPattern: unbound constructor " ++ n

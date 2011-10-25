@@ -29,6 +29,7 @@ main = do
 latexHeader :: String -> String
 latexHeader file = unlines
   ["\\documentclass{article}"
+  ,"\\usepackage[a4paper]{geometry}"
   ,"\\usepackage{amsmath}"
   ,"\\begin{document}"
   ,"\\title{" ++ file ++ "}"
