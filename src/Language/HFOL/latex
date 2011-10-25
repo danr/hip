@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./Main examples/$1.ec -s -l > $1.tex && pdflatex $1.tex
