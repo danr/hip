@@ -25,10 +25,11 @@ instance P Expr where
 enclose True  = parens
 enclose False = id
 
+pexpr :: Int -> Expr -> Doc
 --pexpr l (App n []) = error "app empty"     -- This is an invariant that should be true
 pexpr l (App n es) = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
 pexpr l (Con n es) = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
-pexpr l (Var n)    = text n
+pexpr _ (Var n)    = text n
 
 instance P Branch where
   p (pat :-> e) = p pat <+> text "->" <+> p e
@@ -36,9 +37,10 @@ instance P Branch where
 instance P Pattern where
   p = ppat 2
 
-ppat l PWild       = text "_"
-ppat l (PVar n)    = text n
-ppat l (PCon n []) = text n
+ppat :: Int -> Pattern -> Doc
+ppat _ PWild       = text "_"
+ppat _ (PVar n)    = text n
+ppat _ (PCon n []) = text n
 ppat l (PCon n ps) = enclose (l <= 1) (text n <+> hsep (map (ppat 1) ps))
 
 instance P Name where

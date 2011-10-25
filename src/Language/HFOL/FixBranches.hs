@@ -16,8 +16,6 @@ import Language.HFOL.Bottom
 import Language.HFOL.Util (selections)
 import Control.Applicative
 import Control.Monad.State
-import Data.List (nubBy)
-import Data.Function (on)
 import Data.Maybe (listToMaybe,fromMaybe)
 
 import Language.HFOL.ArbitraryCore
@@ -27,7 +25,7 @@ import Test.QuickCheck.Arbitrary
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
 fixBranches :: Expr -> [Branch] -> [Branch]
-fixBranches scrut = removeOverlap . (addBottoms scrut)
+fixBranches scrut = removeOverlap . addBottoms scrut
 
 --------------------------------------------------------------------------------
 -- Remove overlapping branches
@@ -88,7 +86,7 @@ addBottom (PCon sc sps) (PCon c ps)
                    | (l,(sp,p),r) <- selections (zip sps ps)
                    , fp <- addBottom sp p
                    ]
-addBottom scrut (PCon c ps)         =  bottomP : fails
+addBottom _scrut (PCon c ps) = bottomP : fails
   where
     fails   = [ PCon c (wild l ++ [fp] ++ wild r)
               | (l,p,r) <- selections ps, fp <- addBottom PWild p
@@ -131,13 +129,12 @@ msp e          ps = [ [(e,p)] | p <- ps ]
 --
 -- > nameWilds (Tup3 _ x _) = Tup3 _0 x _1
 nameWilds :: Pattern -> Pattern
-nameWilds p = evalState (go p) 0
+nameWilds = (`evalState` 0) . go
   where
     go :: Pattern -> State Int Pattern
     go PWild       = do { x <- get; modify succ; return (PVar ('_':show x)) }
     go (PCon c ps) = PCon c <$> mapM go ps
     go p           = return p
-
 
 --------------------------------------------------------------------------------
 -- Testing without bottoms

@@ -17,6 +17,7 @@ data Tok = LPar | RPar
 
 $(deriveLift ''Tok)
 
+lident,uident :: Tok
 lident = LIdent ""
 uident = UIdent ""
 
@@ -40,8 +41,6 @@ lex s@(x:xs)
     | isSpace x = lex xs
     | otherwise = error $ "lex failed on unknow character " ++ [x]
 
-isIdentChar c = isAlphaNum c || c == '_'
-
 lexIdent :: (String -> Tok) -> String -> [Tok]
-lexIdent c s = let (i,s') = span isIdentChar s
+lexIdent c s = let (i,s') = span isAlphaNum s
                in  c i : lex s'

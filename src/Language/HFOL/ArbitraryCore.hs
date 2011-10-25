@@ -10,16 +10,20 @@ import Data.Char
 import Control.Monad
 import Control.Applicative
 
+names :: [String]
 names = map return "abcxyz"
 
+arbName :: Gen Name
 arbName = elements names
 
+arbC :: Int -> Gen Name
 arbC n = elements (map ((++ show n) . map toUpper) names)
 
 instance Arbitrary Pattern where
     arbitrary = sized (arbPat False)
+    shrink PWild    = []
     shrink (PVar _) = []
-    shrink (PCon c as) = as ++ [PCon c as' | as' <- sequence (map shrink as)]
+    shrink (PCon c as) = as ++ [PCon c as' | as' <- mapM shrink as]
 
 newtype BottomPattern = BP { unBP :: Pattern } deriving (Eq)
 
@@ -29,6 +33,7 @@ instance Show Pattern => Show BottomPattern where
 instance Arbitrary BottomPattern where
     arbitrary = BP <$> sized (arbPat True)
 
+arbPat :: Bool -> Int -> Gen Pattern
 arbPat bottoms s = frequency
                  [(5,PVar <$> arbName)
                  ,(if bottoms then 5 else 0,return bottomP)
@@ -54,6 +59,7 @@ instance Arbitrary Body where
 instance Arbitrary Expr where
     arbitrary = sized arbExpr
 
+arbExpr :: Int -> Gen Expr
 arbExpr s = frequency
           [(5,Var <$> arbName)
           ,(s,app <$> arbExpr s' <*> arbExpr s')
@@ -65,4 +71,5 @@ arbExpr s = frequency
 instance Arbitrary Branch where
   arbitrary = (:->) <$> arbitrary <*> (Var <$> arbName)
 
+arbBranch :: Int -> Gen Branch
 arbBranch s = (:->) <$> arbPat False s <*> arbExpr s

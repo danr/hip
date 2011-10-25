@@ -92,8 +92,8 @@ funcMatrix :: Name -> [([Pattern],Expr)] -> Decl
 funcMatrix n m = Func n us $ Case (Con tup (map Var us))
                                   (map (\(as,e) -> PCon tup as :-> e) m)
   where len = length (fst (head m))
-        us  = [ "u" ++ show x | x <- [1..len] ]
-        tup = ("Tup" ++ show len)
+        us  = [ 'u':show x | x <- [1..len] ]
+        tup = "Tup" ++ show len
 
 {-
    Expand a function definition with pattern matchings
@@ -107,6 +107,6 @@ func n as (Case s brs) = Func n us $
                          Case (Con tup (s : map Var us))
                               (map (\(p :-> e) -> PCon tup (p : as) :-> e) brs)
   where len = length as
-        us  = [ "u" ++ show x | x <- [1..len] ]
+        us  = [ 'u':show x | x <- [1..len] ]
         tup = "Tup" ++ show (len + 1)
 

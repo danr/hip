@@ -7,6 +7,7 @@ import Language.HFOL.Pretty
 import Language.HFOL.Monad
 import Language.HFOL.Util (withPrevious)
 import Language.TPTP hiding (Decl,Var)
+import Language.TPTP.Pretty
 import qualified Language.TPTP as T
 
 import Control.Arrow ((&&&))
@@ -25,12 +26,15 @@ datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
             , [(bottomName,0)]
             ]
 
--- | Translates a program to TPTP
-toTPTP :: [Decl] -> ([T.Decl],[String])
-toTPTP ds = runTM $ addFuns funs $ addCons datatypes $ do
+-- | Translates a program to TPTP, with its debug output
+toTPTP :: [Decl] -> ([T.Decl],Debug)
+toTPTP ds = runTM $ do
+               addFuns funs
+               addCons datatypes
                faxioms <- concat <$> mapM translate ds
                extra   <- envStDecls
-               return $ extra ++ faxioms
+               db      <- popDebug
+               return (extra ++ faxioms,db)
   where
     funs = map (funcName &&& length . funcArgs) ds
 
@@ -66,18 +70,27 @@ translate :: Decl -> TM [T.Decl]
 translate (Func fname args (Expr e)) = bindNames args $ \vars -> do
     rhs <- applyFun fname (map T.Var vars)
     lhs <- translateExpr e
-    return [T.Axiom (fname ++ "axiom") $ forall vars $ rhs === lhs]
+    let f = Axiom (fname ++ "axiom") $ forall vars $ rhs === lhs
+    write (prettyTPTP f)
+    return [f]
 translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
-    [ locally (translateBranch (nameWilds p) e (map brPat prevbrs) num)
+    [ do mf <- indented (locally (translateBranch (nameWilds p) e (map brPat prevbrs) num))
+         case mf of
+           Just f  -> write (prettyTPTP f)
+           Nothing -> write "No formula produced."
+         return mf
     | ((p :-> e,prevbrs),num) <- zip (withPrevious (fixBranches scrutinee brs)) [0..]
     ]
   where
     translateBranch :: Pattern -> Expr -> [Pattern] -> Int -> TM (Maybe T.Decl)
     translateBranch pattern expr prev num = do
-      write $ "\ntranslateBranch " ++ fname ++ " " ++ unwords args ++ " ="
-              ++ "\n\t" ++ "case " ++ prettyCore scrutinee ++ " of"
-              ++ "\n\t" ++ prettyCore (pattern :-> expr) ++ "\n"
-      d <- scrutinee ~~ pattern
+      writeDelimiter
+      write $ "translateBranch " ++ fname ++ " " ++ unwords args ++ " ="
+      indented $ do write $ "case " ++ prettyCore scrutinee ++ " of"
+                    write $ prettyCore (pattern :-> expr)
+      writeDelimiter
+      d <- indented (scrutinee ~~ pattern)
+      writeDelimiter
       case d of
         Nothing -> return Nothing
         Just conds -> do
@@ -86,13 +99,16 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
           formula <- (lhs === rhs) `withConditions` conds
           patExpr <- followExpr (patternToExpr pattern)
           let constr = moreSpecificPatterns patExpr prev
+
           write $ "moreSpecificPatterns of " ++ prettyCore pattern ++
-                  " followed to " ++ prettyCore patExpr ++ " are:\n" ++
-                  unlines [ unwords [ "\t" ++ prettyCore n ++ " = " ++ prettyCore p
-                                    | (n,p) <- cons ]
-                          | cons <- constr ] ++
-                  "previous patterns are\n" ++ unlines [ "\t" ++ prettyCore p
-                                                       | p <- prev ]
+                  " followed to " ++ prettyCore patExpr ++ " are:"
+          indented $ do
+            mapM_ write [ unwords [ prettyCore n ++ " = " ++ prettyCore p
+                                  | (n,p) <- cons ]
+                        | cons <- constr ]
+            write "previous patterns are:"
+            mapM_ write [ prettyCore p | p <- prev ]
+
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ "axiom" ++ show num)
@@ -162,7 +178,7 @@ withConditions phi conds = do
   return $ foldr1 (/\) conds' ==> phi
     where
       translateCond :: Condition -> TM Formula
-      translateCond (expr,pat) = 
+      translateCond (expr,pat) =
           liftM2 (===) (translateExpr expr)
                        (translateExpr (patternToExpr pat))
 

@@ -15,16 +15,16 @@ extParser :: String -> ParseResult Tok [Decl]
 extParser = extTokParser . lex
 
 parseStringIO :: String -> IO ()
-parseStringIO s = do
+parseStringIO s =
    case extParser s of
       Right r  -> mapM_ (putStrLn . prettyCore) r
-      Left err -> do mapM_ print $ zip [0..] (lex s)
-                     putStrLn (show err)
+      Left err -> do mapM_ print $ zip [(0 :: Integer)..] (lex s)
+                     print err
 
 parseFile :: String -> IO [Decl]
 parseFile n = do
    s <- readFile n
    case extParser s of
       Right r  -> return r
-      Left err -> do mapM_ print $ zip [0..] (lex s)
+      Left err -> do mapM_ print $ zip [(0 :: Integer)..] (lex s)
                      error (n ++ " " ++ show err)
