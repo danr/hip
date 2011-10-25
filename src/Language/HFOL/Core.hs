@@ -11,7 +11,7 @@ data Decl = Func { funcName :: Name
                  , funcArgs :: [Name]
                  , funcBody :: Body
                  }
-          | Data
+          | Data { dataCons :: [(Name,Int)] }
   deriving(Eq,Ord,Data,Typeable)
 
 data Body = Case { caseScrutinee :: Expr

@@ -15,29 +15,23 @@ import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 
+import Data.List (partition,intercalate)
 import Data.Maybe (catMaybes)
 
--- | A sample prelude datatype
-datatypes :: [[(Name,Int)]]
-datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
-            [ [("Cons",2),("Nil",0)]
-            , [("True",0),("False",0)]
-            , [("Nothing",0),("Just",1)]
-            , [("Zero",0),("Succ",1)]
-            , [(bottomName,0)]
-            ]
-
 -- | Translates a program to TPTP, with its debug output
-toTPTP :: [Decl] -> ([(Decl,[T.Decl])],Debug)
+toTPTP :: [Decl] -> ([(Decl,[T.Decl])],[T.Decl],Debug)
 toTPTP ds = runTM $ do
                addFuns funs
                addCons datatypes
-               faxioms <- mapM translate ds
+               faxioms <- mapM translate (filter funcDecl ds)
                extra   <- envStDecls
                db      <- popDebug
-               return ((Data,extra) : faxioms,db)
+               return (faxioms,extra,db)
   where
-    funs = map (funcName &&& length . funcArgs) (filter funcDecl ds)
+    (funs,datatypes) =
+      let (funs',datatypes') = partition funcDecl ds
+      in  (map (funcName &&& length . funcArgs) funs'
+          ,[(bottomName,0)] : map dataCons datatypes')
 
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term
@@ -76,18 +70,24 @@ translate d@(Func fname args (Expr e)) = locally $ do
     let f = Axiom fname $ forall qs $ rhs === lhs
     write (prettyTPTP f)
     return (d,[f])
-translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> sequence
-    [ do mf <- indented
-                 (locally
-                    (translateBranch (nameWilds p) e (map brPat prevbrs) num))
-         case mf of
-           Just f  -> write (prettyTPTP f)
-           Nothing -> write "No formula produced."
-         writeDelimiter
-         return mf
-    | (p :-> e,prevbrs) <- withPrevious (fixBranches scrutinee brs)
-    | num <- [0..]
-    ]
+translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
+    write $ "translate " ++ prettyCore d
+    write $ "branches fixed to:"
+    write $ prettyCore (Func fname args
+                                               (Case scrutinee
+                                                (fixBranches scrutinee brs)))
+    sequence
+      [ do mf <- indented
+                   (locally
+                      (translateBranch (nameWilds p) e (map brPat prevbrs) num))
+           case mf of
+             Just f  -> write (prettyTPTP f)
+             Nothing -> write "No formula produced."
+           writeDelimiter
+           return mf
+      | (p :-> e,prevbrs) <- withPrevious (fixBranches scrutinee brs)
+      | num <- [0..]
+      ]
   where
     translateBranch :: Pattern -> Expr -> [Pattern] -> Int -> TM (Maybe T.Decl)
     translateBranch pattern expr prev num = do
@@ -110,8 +110,8 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> seque
           write $ "moreSpecificPatterns of " ++ prettyCore pattern ++
                   " followed to " ++ prettyCore patExpr ++ " are:"
           indented $ do
-            mapM_ write [ unwords [ prettyCore n ++ " = " ++ prettyCore p
-                                  | (n,p) <- cons ]
+            mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++ prettyCore p
+                                          | (n,p) <- cons ]
                         | cons <- constr ]
             write "previous patterns are:"
             mapM_ write [ prettyCore p | p <- prev ]
@@ -120,7 +120,7 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> seque
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ show num)
                                   (forall qs formula')
-translate d = error $ "tranlateExpr on " ++ prettyCore d
+translate d = error $ "translate on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the
 --   more specific pattern for a branch. This function in partial:

@@ -12,7 +12,7 @@ class P a where
 
 instance P Decl where
   p (Func n as b) = text n <+> hsep (map text as) <+> equals <+> p b <+> semi
-  p Data          = text "data"
+  p (Data cs    ) = text "data" <+> hsep [text c <+> int a | (c,a) <- cs] <+> semi
 
 instance P Body where
   p (Case e brs) = text "case" <+> p e <+> text "of" <+> lbrace

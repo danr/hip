@@ -317,7 +317,7 @@ ptrDecls as = map mkDecl . S.toList
   where
     mkDecl fn = Axiom ("ptr" ++ fn)
               $ forall xs
-                $ appFold (T.Var (VarName (makePtrName fn))) (map T.Var xs)
+                $ appFold (Fun (FunName (makePtrName fn)) []) (map T.Var xs)
                   ===
                   Fun (FunName fn) (map T.Var xs)
       where arity = as M.! fn

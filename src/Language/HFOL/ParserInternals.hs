@@ -43,12 +43,12 @@ exprGrammar = do
     l   <- lg
     u   <- ug
 
-    e   <- rule [ app     <@> e <#> e2
-                , id      <@> e2
+    e   <- rule [ app  <@> e <#> e2
+                , id   <@> e2
                 ]
-    e2  <- rule [ con0    <@> u
-                , Var     <@> l
-                , id      <@  L.LPar <#> e <# L.RPar ]
+    e2  <- rule [ con0 <@> u
+                , Var  <@> l
+                , id   <@  L.LPar <#> e <# L.RPar ]
   return e
 
 patternGrammar :: Bool -> Grammar L.Tok Pattern
@@ -57,12 +57,12 @@ patternGrammar parens = do
     l   <- lg
     u   <- ug
 
-    p   <- rule [ PCon    <@> u <#> p2s
-                , id      <@> p2 ]
-    p2  <- rule [ PVar    <@> l
-                , pcon0   <@> u
-                , PWild   <@  L.Under
-                , id      <@  L.LPar <#> p <# L.RPar ]
+    p   <- rule [ PCon  <@> u <#> p2s
+                , id    <@> p2 ]
+    p2  <- rule [ PVar  <@> l
+                , pcon0 <@> u
+                , PWild <@  L.Under
+                , id    <@  L.LPar <#> p <# L.RPar ]
     p2s <- several p2
 
   if parens then return p2
@@ -73,7 +73,7 @@ branchGrammar = do
   rec
     p   <- patternGrammar False
     e   <- exprGrammar
-    br  <- rule [ (:->)   <@> p <# L.Arrow <#> e ]
+    br  <- rule [ (:->) <@> p <# L.Arrow <#> e ]
 
   return br
 
@@ -86,11 +86,16 @@ declsGrammar = do
     pp   <- patternGrammar True
     pps0 <- several0 pp
 
-    d   <- rule [ func    <@> l <#> pps0 <# L.Eq <#> b <# L.Semi ]
+    num <- rule [ L.getNum <@> L.number ]
+    c   <- rule [ (,)  <@> u <#> num ]
+    cs  <- several c
+
+    d   <- rule [ func <@> l <#> pps0 <# L.Eq <#> b <# L.Semi
+                , Data <@  L.Data <#> cs <# L.Semi ]
     ds  <- several d
 
-    b   <- rule [ Case    <@  L.Case <#> e <# L.Of <# L.LBrace <#> brs <# L.RBrace
-                , Expr    <@> e]
+    b   <- rule [ Case <@  L.Case <#> e <# L.Of <# L.LBrace <#> brs <# L.RBrace
+                , Expr <@> e ]
 
     e   <- exprGrammar
 

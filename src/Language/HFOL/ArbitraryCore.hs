@@ -38,18 +38,23 @@ arbPat bottoms s = frequency
                  [(5,PVar <$> arbName)
                  ,(if bottoms then 5 else 0,return bottomP)
                  ,(1,return PWild)
-                 ,(s,do n <- choose (0,2)
+                 ,(s,do n <- choose (0,3)
                         PCon <$> arbC n <*> replicateM n (arbPat bottoms s'))
                  ]
   where s' = s `div` 2
 
 instance Arbitrary Decl where
-    arbitrary = Func <$> arbName <*> args <*> arbitrary
-        where args = choose (0,3) >>= flip replicateM arbName
+    arbitrary = frequency
+      [(9,do let args = choose (0,3) >>= flip replicateM arbName
+             Func <$> arbName <*> args <*> arbitrary)
+      ,(1,do let cons = choose(0,2) >>= \n -> (,) <$> arbC n <*> return n
+             n <- choose (1,5)
+             Data <$> replicateM n cons)
+      ]
 
 instance Arbitrary Body where
     arbitrary = sized $ \s -> oneof
-              [ do n <- choose (1,4)
+              [ do n <- choose (1,5)
                    brs <- replicateM n (arbBranch s)
                    e <- arbExpr s
                    return (Case e brs)
@@ -63,7 +68,7 @@ arbExpr :: Int -> Gen Expr
 arbExpr s = frequency
           [(5,Var <$> arbName)
           ,(s,app <$> arbExpr s' <*> arbExpr s')
-          ,(s,do n <- choose (0,4)
+          ,(s,do n <- choose (0,3)
                  Con <$> arbC n <*> replicateM n (arbExpr s'))
           ]
   where s' = s `div` 2

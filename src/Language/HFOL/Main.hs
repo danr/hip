@@ -16,35 +16,36 @@ main :: IO ()
 main = do
   file:rest <- getArgs
   ds <- parseFile file
-  let (formulas,debug) = toTPTP ds
+  let (funcAxiomsWithDef,extraAxioms,debug) = toTPTP ds
+      axioms = concatMap snd funcAxiomsWithDef ++ extraAxioms
   -- Verbose output
   when ("-v" `elem` rest)    (mapM_ putStrLn debug)
   -- Supress ordinary output
-  when ("-s" `notElem` rest) (putStrLn (prettyTPTP (concatMap snd formulas)))
+  when ("-s" `notElem` rest) (putStrLn (prettyTPTP axioms))
   -- Latex output
-  when ("-l" `elem` rest)  $ do putStrLn (latexHeader file)
-                                (mapM_ (putStr . uncurry latexDecl) formulas)
-                                putStrLn latexFooter
+  when ("-l" `elem` rest) $ do
+      putStrLn (latexHeader file extraAxioms)
+      mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
+      putStrLn latexFooter
 
-latexHeader :: String -> String
-latexHeader file = unlines
+latexHeader :: String -> [T.Decl] -> String
+latexHeader file fs = unlines $
   ["\\documentclass{article}"
   ,"\\usepackage[a4paper]{geometry}"
   ,"\\usepackage{amsmath}"
   ,"\\begin{document}"
   ,"\\title{" ++ file ++ "}"
   ,"\\maketitle"
-  ]
-
-latexDecl :: Decl -> [T.Decl] -> String
-latexDecl Data            fs = unlines $
-  ["\\section{Datatypes}"
+  ,"\\section{Datatypes and pointers}"
   ,"\\begin{align*}"
   ]
   ++ map runLatex fs ++
   ["\\end{align*}"
   ,"\\newpage"
   ]
+
+latexDecl :: Decl -> [T.Decl] -> String
+latexDecl Data{}          _  = error "latexDecl on data"
 latexDecl d@(Func fn _ _) fs = unlines $
   ["\\section{" ++ fn ++ "}"
   ,""

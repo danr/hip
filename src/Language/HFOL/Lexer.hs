@@ -10,9 +10,10 @@ import Language.Haskell.TH.Lift
 data Tok = LPar | RPar
          | LBrace | RBrace
          | Eq | Arrow | Semi | Under
-         | Case | Of
+         | Case | Of | Data
          | UIdent { fromTok :: String }
          | LIdent { fromTok :: String }
+         | Number { getNum  :: Int    }
   deriving (Show,Eq,Ord,Typeable,Data)
 
 $(deriveLift ''Tok)
@@ -20,6 +21,9 @@ $(deriveLift ''Tok)
 lident,uident :: Tok
 lident = LIdent ""
 uident = UIdent ""
+
+number :: Tok
+number = Number 0
 
 instance ToPat Tok where toPat = toConstrPat
 
@@ -35,10 +39,14 @@ lex (';':xs)     = Semi   : lex xs
 lex ('_':xs)     = Under  : lex xs
 lex ('c':'a':'s':'e':xs) = Case : lex xs
 lex ('o':'f':xs)         = Of   : lex xs
+lex ('d':'a':'t':'a':xs) = Data : lex xs
 lex s@(x:xs)
     | isLower x = lexIdent LIdent s
     | isUpper x = lexIdent UIdent s
     | isSpace x = lex xs
+    | isDigit x = case reads s of
+                     [(n,s')] -> Number n : lex s'
+                     _        -> error $ "lex failed to read after number"
     | otherwise = error $ "lex failed on unknow character " ++ [x]
 
 lexIdent :: (String -> Tok) -> String -> [Tok]
