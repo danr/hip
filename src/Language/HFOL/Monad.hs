@@ -172,7 +172,7 @@ lookupName n@(x:xs) = TM $ do
       Just b  -> return b
       Nothing -> do -- Variable is unbound, quantify over it
         -- q <- head <$> gets namesupply
-        let q  = if x == '_' then VarName $ "W." ++ xs
+        let q  = if x == '_' then VarName $ "W_" ++ xs
                              else VarName (toUpper x:xs)
             qv = QuantVar q
         write' $ "New quantified variable " ++ show q ++ " for " ++ n

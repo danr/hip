@@ -48,7 +48,10 @@ removeOverlap = reverse . foldl f []
                     | otherwise                 = p :-> e : brs
 
 removeOverlappingPatterns :: [Pattern] -> [Pattern]
-removeOverlappingPatterns = map brPat . removeOverlap . map (:-> undefined)
+removeOverlappingPatterns = reverse . foldl f []
+  where
+    f ps p | any (<=? p) ps = ps
+           | otherwise      = p:ps
 
 -- | Less specific than or equal specificity as
 (<=?) :: Pattern -> Pattern -> Bool
@@ -56,26 +59,44 @@ PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
 PCon _ _    <=? _           = False
 _           <=? _           = True
 
-
 --------------------------------------------------------------------------------
 -- Add bottoms
 
 -- | Adds bottoms. Not in the most efficient way, since we
 --   remove overlaps afterwards
+--
+--   If there exists a match-any pattern, we need to add all branches
+--   with pattern-matched constructors as bottoms. Though, if the
+--   match-any pattern goes to bottom, nothing needs to be done.
+--   If there is no match-any pattern, just add a new one which goes to bottom.
 addBottoms :: Expr -> [Branch] -> [Branch]
-addBottoms scrut brs = concat
-         [ (p :-> e) : [ p' :-> bottom
-                       | p' <- addBottom scrut' p
-                       ]
-         | (p :-> e) <- brs
-         ]
-      ++ [scrut' :-> bottom]
+addBottoms scrut brs = case matchAnyBranch scrut brs of
+  Nothing -> brs ++ [PWild :-> bottom]
+  Just (p :-> e) | e == bottom -> brs
+                 | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
+                                                     | p' <- addBottom scrut' p
+                                                     ]
+                                       | (p :-> e) <- brs
+                                       ]
+                                    ++ [PWild :-> bottom]
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 
         scrut' = matchscrut scrut
 
+-- | Returns the branch that matches anything, if it exists
+matchAnyBranch :: Expr -> [Branch] -> Maybe Branch
+matchAnyBranch scrut = listToMaybe . filter (matchAny scrut . brPat)
+  where
+    -- Is this pattern a default match-all branch?
+    matchAny :: Expr -> Pattern -> Bool
+    matchAny (Con sc sps) (PCon c ps)
+        | sc == c   = and (zipWith matchAny sps ps)
+        | otherwise = False
+    matchAny _            (PCon _ _) = False
+    matchAny _            _          = True
 
+-- | Adds the bottom patterns for a pattern under a scrutinee
 addBottom :: Pattern -> Pattern -> [Pattern]
 addBottom _scrut        PWild       = []
 addBottom _scrut        (PVar _)    = []
@@ -83,8 +104,7 @@ addBottom (PCon sc sps) (PCon c ps)
      | sc /= c   = []               -- Unreachable clause
      | otherwise = [ PCon c (map fst l ++ [fp] ++ map fst r)
                    | (l,(sp,p),r) <- selections (zip sps ps)
-                   , fp <- addBottom sp p
-                   ]
+                   , fp <- addBottom sp p ]
 addBottom _scrut (PCon c ps) = bottomP : fails
   where
     fails   = [ PCon c (wild l ++ [fp] ++ wild r)
