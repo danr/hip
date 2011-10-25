@@ -8,7 +8,7 @@ import Control.Monad
 
 import System.Environment
 
-
+main :: IO ()
 main = do
   file:rest <- getArgs
   ds <- parseFile file

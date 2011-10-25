@@ -65,6 +65,7 @@ data Env = Env { arities    :: Map Name Int
                , conFam     :: Map Name [Name]
                  -- ^ The other constructors for a given constructor
                , datatypes  :: [[(Name,Int)]]
+                 -- ^ The datatypes in the program
                }
 
 data St = St { usedFunPtrs :: Set Name
@@ -115,10 +116,14 @@ lookupName n = TM $ do
     case mn of
       Just b  -> return b
       Nothing -> do -- Variable is unbound, quantify over it
-        q <- QuantVar <$> gets (head . namesupply)
-        modify $ \s -> s { boundNames = M.insert n q (boundNames s)
-                         , namesupply = tail (namesupply s) }
-        return q
+        q <- gets (head . namesupply)
+        let qv = QuantVar q
+        tell $ ["New quantified variable " ++ show q ++ " for " ++ n]
+        modify $ \s -> s { boundNames = M.insert n qv (boundNames s)
+                         , namesupply = tail (namesupply s)
+                         , quantified = S.insert q (quantified s)
+                         }
+        return qv
 
 addIndirection :: Name -> Expr -> TM ()
 addIndirection n e = do
@@ -231,24 +236,31 @@ envStDecls = TM $ do
   s <- get
   return (projDecls (conProj e) ++
           ptrDecls (arities e) (usedFunPtrs s) ++
-          disjConstr (datatypes e) )
+          disjDecls (datatypes e) )
 
--- | Make datatypes disjunct, i.e.
--- data Maybe = Just a | Nothing
+-- | Make datatypes disjunct.
+--
+-- > data Maybe = Just a | Nothing
+--
 -- gives
--- forall x . just x != nothing
--- forall x . just x != bottom
--- forall x . nothing != bottom
-disjConstr :: [[(Name,Int)]] -> [T.Decl]
-disjConstr = concatMap datatypeDisj
+--
+-- > forall x . just x != nothing
+-- > forall x . just x != bottom
+-- > forall x . nothing != bottom
+disjDecls :: [[(Name,Int)]] -> [T.Decl]
+disjDecls = concatMap datatypeDisj
   where
+    -- Make this datatype's constructors and bottom disjunct
     datatypeDisj :: [(Name,Int)] -> [T.Decl]
     datatypeDisj ctors = concat (zipWith constrDisj ctors' (tail (tails ctors')))
       where ctors' = (bottomName,0) : ctors
 
+    -- Make this constructor unequal to all the constructors in the list
     constrDisj :: (Name,Int) -> [(Name,Int)] -> [T.Decl]
     constrDisj x = map (disjunct x) . filter ((fst x /=) . fst)
+                                   -- ^ avoid making bottom/=bottom
 
+    -- Make two constructors disjunct
     disjunct :: (Name,Int) -> (Name,Int) -> T.Decl
     disjunct (c1,a1) (c2,a2) = T.Axiom ("axiomdisj" ++ c1 ++ c2)
        $ forall (xs ++ ys) $ Fun (FunName c1) (map T.Var xs)

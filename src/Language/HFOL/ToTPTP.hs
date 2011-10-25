@@ -15,6 +15,7 @@ import Control.Monad
 
 import Data.Maybe (catMaybes,isNothing)
 
+-- | A sample prelude datatype
 datatypes :: [[(Name,Int)]]
 datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
             [ [("Cons",2),("Nil",0)]
@@ -24,6 +25,7 @@ datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
             , [(bottomName,0)]
             ]
 
+-- | Translates a program to TPTP
 toTPTP :: [Decl] -> ([T.Decl],[String])
 toTPTP ds = runTM $ addFuns funs $ addCons datatypes $ do
                faxioms <- concat <$> mapM translate ds
@@ -32,14 +34,21 @@ toTPTP ds = runTM $ addFuns funs $ addCons datatypes $ do
   where
     funs = map (funcName &&& length . funcArgs) ds
 
--- Notice that this function works well on an empty argument list
+-- | Translate an expression to a term
+translateExpr :: Expr -> TM Term
+translateExpr (Var n) = applyFun n []
+translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
+
+-- | Apply a function/constructor name to an argument list
+--   Follows the function definition if it is an indirection
+--   Notice that this function works well on an empty argument list
 applyFun :: Name -> [Term] -> TM Term
 applyFun n as = do
   b <- lookupName n
   case b of
-    QuantVar x          -> return (appFold (T.Var x) as)
-    Indirection e       -> do t <- translateExpr e
-                              return (appFold t as)
+    QuantVar x        -> return (appFold (T.Var x) as)
+    Indirection e     -> do t <- translateExpr e
+                            return (appFold t as)
     (boundName -> fn) -> do
       arity <- lookupArity n
       if length as < arity
@@ -52,10 +61,7 @@ applyFun n as = do
                  ++ "constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
-translateExpr :: Expr -> TM Term
-translateExpr (Var n) = applyFun n []
-translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
-
+-- | Translate a function declaration to axioms
 translate :: Decl -> TM [T.Decl]
 translate (Func fname args (Expr e)) = bindNames args $ \vars -> do
     rhs <- applyFun fname (map T.Var vars)
@@ -82,19 +88,25 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
           let constr = moreSpecificPatterns patExpr prev
           write $ "moreSpecificPatterns of " ++ prettyCore pattern ++
                   " followed to " ++ prettyCore patExpr ++ " are:\n" ++
-                  unlines [ unwords [ "\t" ++ prettyCore n ++ " = " ++ prettyCore p | (n,p) <- cons ]
+                  unlines [ unwords [ "\t" ++ prettyCore n ++ " = " ++ prettyCore p
+                                    | (n,p) <- cons ]
                           | cons <- constr ] ++
-                  "previous patterns are\n" ++ unlines [ "\t" ++ prettyCore p | p <- prev ]
+                  "previous patterns are\n" ++ unlines [ "\t" ++ prettyCore p
+                                                       | p <- prev ]
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ "axiom" ++ show num)
                                   (forall qs formula')
 
-
+-- | Translate a pattern to an expression. This is needed to get the
+--   more specific pattern for a branch. This function in partial:
+--   the PWild pattern does not exists, as the are named by nameWilds.
 patternToExpr :: Pattern -> Expr
 patternToExpr (PVar x)    = Var x
 patternToExpr (PCon p ps) = Con p (map patternToExpr ps)
+patternToExpr PWild       = error "patternToExpr on PWild: use nameWilds"
 
+-- | Follow indirections of an expression
 followExpr :: Expr -> TM Expr
 followExpr (Var x) = do
   b <- lookupName x
@@ -104,64 +116,78 @@ followExpr (Var x) = do
 followExpr (Con c as) = Con c <$> mapM followExpr as
 followExpr e          = return e
 
+-- | The type of conditions. They stem from a case scrutinee being a function
+--   application and matched against a constructor.
 type Condition = (Expr,Pattern)
 
--- Unify the scrutinee expression with the pattern,
--- returning just the conditions for this branch,
--- or nothing if this branch is unreachable
+-- | "Unify" the scrutinee expression with the pattern, returning just
+--   the conditions for this branch, or nothing if this branch is
+--   unreachable. The wilds in the pattern must be named.
 (~~),(~~~) :: Expr -> Pattern -> TM (Maybe [Condition])
 e ~~ p = do write $ "[" ++ prettyCore e ++ " ~ " ++ prettyCore p ++ "]"
             e ~~~ p
 
 Con c as ~~~ PCon c' ps | c == c'   = concatMaybe <$> zipWithM (~~) as ps
                         | otherwise = unreachable
-e        ~~~ PVar n     = addIndirection n e          >> noConditions
-Var n    ~~~ p          = addIndirection n (toExpr p) >> noConditions
+e        ~~~ PVar n     = addIndirection n e                 >> noConditions
+Var n    ~~~ p          = addIndirection n (patternToExpr p) >> noConditions
 App f as ~~~ PCon c ps  = condition (App f as,PCon c ps)
-_        ~~~ PWild      = noConditions
+_        ~~~ PWild      = error "~~~ on PWild: use nameWilds"
 
+-- | No conditions from this unification
 noConditions :: TM (Maybe [Condition])
 noConditions = return (return [])
 
+-- | This branch is unreachable
 unreachable :: TM (Maybe [Condition])
 unreachable = write "unreachable" >> return Nothing
 
+-- | Return a condition
 condition :: Condition -> TM (Maybe [Condition])
 condition (e,p) = do
   write $ "condition: " ++ prettyCore e ++ " = " ++ prettyCore p
   return . return . return $ (e,p)
 
+-- | If any is nothing (unreachable branch), return nothing,
+--   otherwise return just the catMaybes.
 concatMaybe :: [Maybe [a]] -> Maybe [a]
 concatMaybe ms | any isNothing ms = Nothing
                | otherwise        = Just (concat (catMaybes ms))
 
+-- | Let the conjuncted conditions imply the formula
 withConditions :: Formula -> [Condition] -> TM Formula
 withConditions phi []    = return phi
 withConditions phi conds = do
   conds' <- mapM translateCond conds
   return $ foldr1 (/\) conds' ==> phi
+    where
+      translateCond :: Condition -> TM Formula
+      translateCond (expr,pat) = 
+          liftM2 (===) (translateExpr expr)
+                       (translateExpr (patternToExpr pat))
 
-translateCond :: Condition -> TM Formula
-translateCond (expr,pat) = liftM2 (===) (translateExpr expr)
-                                        (translateExpr (toExpr pat))
-
+-- | The type of constraints. They come from the more specific patterns,
+--   looking "upwards" in the patterns of the case.
 type Constraint = (Expr,Pattern)
 
+-- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
 withConstraints f css = do write $ "withConstraints: " ++ show css
-                           foldl (\/) f . catMaybes <$> mapM conj css
+                           foldl (\/) f . catMaybes <$> mapM translateGroup css
   where
-    conj :: [Constraint] -> TM (Maybe Formula)
-    conj cs = do
-        fs <- catMaybes <$> mapM disj cs
+    -- And the constraints of a group
+    translateGroup :: [Constraint] -> TM (Maybe Formula)
+    translateGroup cs = do
+        fs <- catMaybes <$> mapM translateConstraint cs
         if null fs then return Nothing
                    else return (Just (foldl1 (/\) fs))
 
-    disj :: Constraint -> TM (Maybe Formula)
-    disj (e,p) = do
+    -- Translate a constraint
+    translateConstraint :: Constraint -> TM (Maybe Formula)
+    translateConstraint (e,p) = do
         t <- translateExpr e
         r <- invertPattern p t
-        if t == r then return Nothing
+        if t == r then return Nothing          -- Equal by reflexivity
                   else return (Just (t === r))
 
 -- | Inverts a pattern into projections

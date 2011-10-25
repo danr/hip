@@ -8,5 +8,3 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 
 withPrevious :: [a] -> [(a,[a])]
 withPrevious xs = zip xs (inits xs)
---withPrevious [] = []
---withPrevious (x:xs) = (x,xs) : [(y,x:ys) | (y,ys) <- withPrevious xs]

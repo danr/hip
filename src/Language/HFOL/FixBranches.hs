@@ -1,6 +1,6 @@
 {-
 
-   fixBranches : Remove overlapping branches + Insert bottoms
+   fixBranches : Remove overlapping branches and insert bottoms
 
    moreSpecificPatterns : Get the least more specific patterns than a pattern
                           This function needs more testing
@@ -59,10 +59,6 @@ PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
 PCon _ _    <=? _           = False
 _           <=? _           = True
 
--- | Makes a list of patterns into a list of wild patterns
-wild :: [Pattern] -> [Pattern]
-wild ps = [ PWild | _ <- ps ]
-
 
 --------------------------------------------------------------------------------
 -- Add bottoms
@@ -82,21 +78,6 @@ addBottoms scrut brs = concat
 
         scrut' = matchscrut scrut
 
--- | What are the bottom patterns for
---
--- > A (B C) (D E) ?
---
--- They are
---
--- > ⊥
--- > A ⊥     _
--- > A _     ⊥
--- > A (B ⊥) _
--- > A _     (D ⊥)
-
-testScr  = parsePattern "A x y"
-testScr' = parsePattern "A (B x) y"
-testBPS  = parsePattern "A (B C) (D E)"
 
 addBottom :: Pattern -> Pattern -> [Pattern]
 addBottom _scrut        PWild       = []
@@ -113,6 +94,12 @@ addBottom scrut (PCon c ps)         =  bottomP : fails
               | (l,p,r) <- selections ps, fp <- addBottom PWild p
               ]
 
+-- | Makes a list of patterns into a list of wild patterns
+wild :: [Pattern] -> [Pattern]
+wild ps = [ PWild | _ <- ps ]
+
+--------------------------------------------------------------------------------
+-- More specific patterns
 
 -- | Gets the more specific patterns, and blanks the arguments
 --
@@ -132,6 +119,7 @@ testExpr = parseExpr "Tup2 Zero x"
 moreSpecificPatterns :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
 moreSpecificPatterns e ps = msp e (removeOverlappingPatterns (reverse ps))
 
+msp :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
 msp (Con c as) ps = filter (not . null)
                     [ cc $ zipWith (\a a' -> msp a [a']) as ps'
                     | PCon c' ps' <- ps , c == c']
@@ -139,7 +127,9 @@ msp (Con c as) ps = filter (not . null)
 msp e          ps = [ [(e,p)] | p <- ps ]
 
 
--- All wilds need to be namen to use moreSpecificPatterns
+-- | All wilds need to be named to use moreSpecificPatterns.
+--
+-- > nameWilds (Tup3 _ x _) = Tup3 _0 x _1
 nameWilds :: Pattern -> Pattern
 nameWilds p = evalState (go p) 0
   where
@@ -184,6 +174,7 @@ prop_fixBranches scrut brs = forAll (patternFromScrut scrut) $ \p ->
                              Just (fromMaybe bottom (pickBranch p brs))
                           == pickBranch p (fixBranches scrut brs)
 
+--------------------------------------------------------------------------------
 -- Testing with bottoms
 
 data Match = Mismatch | Match | Bottom deriving (Eq,Ord,Show)
@@ -233,8 +224,8 @@ prop_fixBranches' scrut brs = forAll (botpatFromScrut scrut) $ \p ->
 -- For manual testing
 
 -- | A small test :)
-test1 :: [Branch]
-test1 = map parseBranch
+testOverlap :: [Branch]
+testOverlap = map parseBranch
         ["C x                -> e1"
         ,"C (C x)            -> e2"
         ,"A D J              -> e3"
@@ -247,3 +238,20 @@ test1 = map parseBranch
         ,"x                  -> e0"
         ,"_                  -> e9"
         ]
+
+-- | What are the bottom patterns for
+--
+-- > A (B C) (D E) ?
+--
+-- They are
+--
+-- > ⊥
+-- > A ⊥     _
+-- > A _     ⊥
+-- > A (B ⊥) _
+-- > A _     (D ⊥)
+
+testExpr1    = parsePattern "_"
+testExpr2    = parsePattern "A x y"
+testExpr3    = parsePattern "A (B x) y"
+testPattern  = parsePattern "A (B C) (D E)"

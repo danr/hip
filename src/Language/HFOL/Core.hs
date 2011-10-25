@@ -39,7 +39,7 @@ data Pattern = PVar { patName :: Name }
 
 -- Auxiliary functions
 
--- The three kinds of patterns
+-- | The three kinds of patterns
 varPat,conPat,wildPat :: Pattern -> Bool
 varPat (PVar _)   = True
 varPat _          = False
@@ -48,9 +48,25 @@ conPat _          = False
 wildPat PWild     = True
 wildPat _         = False
 
+-- | Costructor pattern without arguments
 con0Pat :: Pattern -> Bool
 con0Pat (PCon _ []) = True
 con0Pat _           = False
+
+-- | Transforms applications to the function/constructor name with an
+--   argument list.
+app :: Expr -> Expr -> Expr
+app (App n es) e = App n (es ++ [e])
+app (Con n es) e = Con n (es ++ [e])
+app (Var n)    e = App n [e]
+
+-- | Nullary constructor
+con0 :: Name -> Expr
+con0 n = Con n []
+
+-- | Nullary constructor pattern
+pcon0 :: Name -> Pattern
+pcon0 n = PCon n []
 
 {-
  Given a function name and the matrix of patterns and expressions,
@@ -93,24 +109,4 @@ func n as (Case s brs) = Func n us $
   where len = length as
         us  = [ "u" ++ show x | x <- [1..len] ]
         tup = "Tup" ++ show (len + 1)
-
--- Transforms applications on constructors as the constructor name
--- with an argument list. Investigate if we should do this on function
--- application too.
-app :: Expr -> Expr -> Expr
-app (App n es) e = App n (es ++ [e])
-app (Con n es) e = Con n (es ++ [e])
-app (Var n)    e = App n [e]
-
--- Nullary constructor
-con0 :: Name -> Expr
-con0 n = Con n []
-
--- Nullary constructor pattern
-pcon0 :: Name -> Pattern
-pcon0 n = PCon n []
-
-toExpr :: Pattern -> Expr
-toExpr (PVar n)    = Var n
-toExpr (PCon n as) = Con n (map toExpr as)
 
