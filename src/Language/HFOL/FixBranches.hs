@@ -6,7 +6,11 @@
                           This function needs more testing
 
 -}
-module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,nameWilds) where
+module Language.HFOL.FixBranches 
+       (fixBranches,moreSpecificPatterns,nameWilds
+       ,prop_addBottoms,prop_addBottoms'
+       ,prop_removeOverlap
+       ,prop_fixBranches,prop_fixBranches') where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
