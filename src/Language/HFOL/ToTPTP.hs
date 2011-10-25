@@ -71,7 +71,7 @@ translate (Func fname args (Expr e)) = locally $ do
     rhs <- translateExpr (App fname (map Var args))
     lhs <- translateExpr e
     qs  <- popQuantified
-    let f = Axiom (fname ++ "axiom") $ forall qs $ rhs === lhs
+    let f = Axiom fname $ forall qs $ rhs === lhs
     write (prettyTPTP f)
     return [f]
 translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
@@ -116,7 +116,7 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
 
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
-          return $ Just $ T.Axiom (fname ++ "axiom" ++ show num)
+          return $ Just $ T.Axiom (fname ++ show num)
                                   (forall qs formula')
 
 -- | Translate a pattern to an expression. This is needed to get the

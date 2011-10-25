@@ -179,7 +179,7 @@ lookupName n@(x:xs) = TM $ do
         -- modify namesupply tail
         modify quantified (S.insert q)
         return qv
-lookupName "" = error "lookupName on empty name"        
+lookupName "" = error "lookupName on empty name"
 
 -- | Add a new indirection
 addIndirection :: Name -> Expr -> TM ()
@@ -288,7 +288,7 @@ disjDecls = concatMap datatypeDisj
 
     -- Make two constructors disjunct
     disjunct :: (Name,Int) -> (Name,Int) -> T.Decl
-    disjunct (c1,a1) (c2,a2) = T.Axiom ("axiomdisj" ++ c1 ++ c2)
+    disjunct (c1,a1) (c2,a2) = T.Axiom ("disj" ++ c1 ++ c2)
        $ forall (xs ++ ys) $ Fun (FunName c1) (map T.Var xs)
                              !=
                              Fun (FunName c2) (map T.Var ys)
@@ -300,7 +300,7 @@ projDecls :: Map Name [Name] -> [T.Decl]
 projDecls = concatMap (uncurry mkDecl) . M.toList
   where
     mkDecl :: Name -> [Name] -> [T.Decl]
-    mkDecl c ps = [ Axiom ("axiom" ++ p) $ forall xs $
+    mkDecl c ps = [ Axiom ("proj" ++ p) $ forall xs $
                     Fun (FunName p) [Fun (FunName c) (map T.Var xs)] === T.Var x
                   | x <- xs | p <- ps ]
       where arity = length ps
