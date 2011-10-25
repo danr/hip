@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving,
              TemplateHaskell,
              TypeOperators,
+             ParallelListComp,
              FlexibleContexts #-}
 module Language.HFOL.Monad
        (TM()
@@ -19,8 +20,6 @@ module Language.HFOL.Monad
        ,lookupProj
        ,popQuantified
        ,addIndirection
-       ,bindNames
-       ,bindPattern
        ,makeFunPtrName
        ,addFuns
        ,addCons
@@ -47,7 +46,7 @@ import Control.Monad.State hiding (gets,modify)
 
 import Data.Maybe
 import Data.List
-
+import Data.Char (toUpper)
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -88,7 +87,6 @@ emptySt = St { _arities     = M.empty
              , _usedFunPtrs = S.empty
              , _boundNames  = M.empty
              , _quantified  = S.empty
-             , _namesupply  = [ T.VarName ('X' : show x) | x <- [(0 :: Integer)..] ]
              , _debug       = []
              , _debugIndent = 0
              }
@@ -110,8 +108,6 @@ data St = St { _arities     :: Map Name Int
                -- ^ TPTP name of functions and constructors and quantified variables
              , _quantified  :: Set VarName
                -- ^ Variables to quantify over
-             , _namesupply  :: [VarName]
-               -- ^ Supply of variables
              , _debug       :: Debug
                -- ^ Debug messages
              , _debugIndent :: Int
@@ -170,18 +166,20 @@ insertMany kvs m = foldr (uncurry M.insert) m kvs
 
 -- | Looks up if a name is a variable or a function/constructor
 lookupName :: Name -> TM Bound
-lookupName n = TM $ do
+lookupName n@(x:xs) = TM $ do
     mn <- M.lookup n <$> gets boundNames
     case mn of
       Just b  -> return b
       Nothing -> do -- Variable is unbound, quantify over it
-        q <- head <$> gets namesupply
-        let qv = QuantVar q
+        -- q <- head <$> gets namesupply
+        let q  = VarName (toUpper x:xs)
+            qv = QuantVar q
         write' $ "New quantified variable " ++ show q ++ " for " ++ n
         modify boundNames (M.insert n qv)
-        modify namesupply tail
+        -- modify namesupply tail
         modify quantified (S.insert q)
         return qv
+lookupName "" = error "lookupName on empty name"        
 
 -- | Add a new indirection
 addIndirection :: Name -> Expr -> TM ()
@@ -208,25 +206,6 @@ lookupArity n = TM $ (fromUnbound "lookupArity" n . M.lookup n) <$> gets arities
 lookupProj :: Name -> TM [FunName]
 lookupProj n = TM $ (fmap FunName . fromUnbound "lookupProj" n . M.lookup n)
                  <$> gets conProj
-
--- | Binds the names to quantified variables inside the action
-bindNames :: [Name] -> ([VarName] -> TM a) -> TM a
-bindNames ns vm = TM $ do
-    let l = length ns
-    vs <- take l <$> gets namesupply
-    let TM m = vm vs
-    modify namesupply (drop l)
-    locally' $ do
-      modify boundNames (insertMany (zipWith (\n v -> (n,QuantVar v)) ns vs))
-      m
-
--- | Bind all variables in a pattern
-bindPattern :: Pattern -> ([VarName] -> TM a) -> TM a
-bindPattern p m = bindNames (fv p) m
-  where
-    fv PWild       = []
-    fv (PVar x)    = [x]
-    fv (PCon _ xs) = concatMap fv xs
 
 -- | Make a pointer name of a name
 makePtrName :: Name -> Name
@@ -311,7 +290,7 @@ disjDecls = concatMap datatypeDisj
     disjunct :: (Name,Int) -> (Name,Int) -> T.Decl
     disjunct (c1,a1) (c2,a2) = T.Axiom ("axiomdisj" ++ c1 ++ c2)
        $ forall (xs ++ ys) $ Fun (FunName c1) (map T.Var xs)
-                               !=
+                             !=
                              Fun (FunName c2) (map T.Var ys)
 
       where (xs,ys) = splitAt a1 (makeVarNames (a1 + a2))
@@ -321,11 +300,9 @@ projDecls :: Map Name [Name] -> [T.Decl]
 projDecls = concatMap (uncurry mkDecl) . M.toList
   where
     mkDecl :: Name -> [Name] -> [T.Decl]
-    mkDecl c ps = zipWith (\x p -> Axiom ("axiom" ++ p)
-                                 $ forall xs $ Fun (FunName p)
-                                                [Fun (FunName c) (map T.Var xs)]
-                                               === T.Var x)
-                          xs ps
+    mkDecl c ps = [ Axiom ("axiom" ++ p) $ forall xs $
+                    Fun (FunName p) [Fun (FunName c) (map T.Var xs)] === T.Var x
+                  | x <- xs | p <- ps ]
       where arity = length ps
             xs    = makeVarNames arity
 
@@ -335,9 +312,8 @@ ptrDecls as = map mkDecl . S.toList
   where
     mkDecl fn = Axiom ("ptr" ++ fn)
               $ forall xs
-                $ appFold (T.Var (VarName (makePtrName fn)))
-                                   (map T.Var xs)
-                         ===
-                         (Fun (FunName fn) (map T.Var xs))
+                $ appFold (T.Var (VarName (makePtrName fn))) (map T.Var xs)
+                  ===
+                  Fun (FunName fn) (map T.Var xs)
       where arity = as M.! fn
             xs    = makeVarNames arity

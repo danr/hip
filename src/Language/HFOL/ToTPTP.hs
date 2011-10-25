@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, ViewPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, ViewPatterns, ParallelListComp #-}
 module Language.HFOL.ToTPTP where
 
 import Language.HFOL.Core
@@ -67,19 +67,24 @@ applyFun n as = do
 
 -- | Translate a function declaration to axioms
 translate :: Decl -> TM [T.Decl]
-translate (Func fname args (Expr e)) = bindNames args $ \vars -> do
-    rhs <- applyFun fname (map T.Var vars)
+translate (Func fname args (Expr e)) = locally $ do
+    rhs <- translateExpr (App fname (map Var args))
     lhs <- translateExpr e
-    let f = Axiom (fname ++ "axiom") $ forall vars $ rhs === lhs
+    qs  <- popQuantified
+    let f = Axiom (fname ++ "axiom") $ forall qs $ rhs === lhs
     write (prettyTPTP f)
     return [f]
 translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
-    [ do mf <- indented (locally (translateBranch (nameWilds p) e (map brPat prevbrs) num))
+    [ do mf <- indented
+                 (locally
+                    (translateBranch (nameWilds p) e (map brPat prevbrs) num))
          case mf of
            Just f  -> write (prettyTPTP f)
            Nothing -> write "No formula produced."
+         writeDelimiter
          return mf
-    | ((p :-> e,prevbrs),num) <- zip (withPrevious (fixBranches scrutinee brs)) [0..]
+    | (p :-> e,prevbrs) <- withPrevious (fixBranches scrutinee brs)
+    | num <- [0..]
     ]
   where
     translateBranch :: Pattern -> Expr -> [Pattern] -> Int -> TM (Maybe T.Decl)
@@ -209,12 +214,12 @@ withConstraints f css = do write $ "withConstraints: " ++ show css
 -- | Inverts a pattern into projections
 --
 -- > invertPattern (C (E a b) c) x =
--- >     C (E (projE1 (projC1 x)) (projE2 (projC1 x))) (projC2 x)
+-- >     C (E (E.0 (C.0 x)) (E.1 (C.0 x))) (C.1 x)
 invertPattern :: Pattern -> Term -> TM (Term)
 invertPattern (PVar _)      x = return x
 invertPattern PWild         x = return x
 invertPattern (PCon n pats) x = do
   projs <- lookupProj n
   ConVar c <- lookupName n
-  T.Fun c <$> sequence
-    (zipWith (\pat proj -> invertPattern pat (T.Fun proj [x])) pats projs)
+  T.Fun c <$> sequence [ invertPattern pat (T.Fun proj [x])
+                       | pat <- pats | proj <- projs ]
