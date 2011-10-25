@@ -6,8 +6,9 @@
                           This function needs more testing
 
 -}
-module Language.HFOL.FixBranches 
+module Language.HFOL.FixBranches
        (fixBranches,moreSpecificPatterns,nameWilds
+       ,matchAnyBranch
        ,prop_addBottoms,prop_addBottoms'
        ,prop_removeOverlap
        ,prop_fixBranches,prop_fixBranches') where
@@ -82,7 +83,6 @@ addBottoms scrut brs = case matchAnyBranch scrut brs of
                                                      ]
                                        | (p :-> e) <- brs
                                        ]
-                                    ++ [PWild :-> bottom]
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 
