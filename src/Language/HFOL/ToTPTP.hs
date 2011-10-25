@@ -6,6 +6,7 @@ import Language.HFOL.FixBranches
 import Language.HFOL.Pretty
 import Language.HFOL.Monad
 import Language.HFOL.Util (withPrevious)
+import Language.HFOL.Bottom
 import Language.TPTP hiding (Decl,Var)
 import Language.TPTP.Pretty
 import qualified Language.TPTP as T
@@ -27,16 +28,16 @@ datatypes = [ [("Tup" ++ show x,x)] | x <- [0..4] ] ++
             ]
 
 -- | Translates a program to TPTP, with its debug output
-toTPTP :: [Decl] -> ([T.Decl],Debug)
+toTPTP :: [Decl] -> ([(Decl,[T.Decl])],Debug)
 toTPTP ds = runTM $ do
                addFuns funs
                addCons datatypes
-               faxioms <- concat <$> mapM translate ds
+               faxioms <- mapM translate ds
                extra   <- envStDecls
                db      <- popDebug
-               return (extra ++ faxioms,db)
+               return ((Data,extra) : faxioms,db)
   where
-    funs = map (funcName &&& length . funcArgs) ds
+    funs = map (funcName &&& length . funcArgs) (filter funcDecl ds)
 
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term
@@ -65,16 +66,17 @@ applyFun n as = do
                  ++ "constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
--- | Translate a function declaration to axioms
-translate :: Decl -> TM [T.Decl]
-translate (Func fname args (Expr e)) = locally $ do
+-- | Translate a function declaration to axioms,
+--   together with its original definition for latex output.
+translate :: Decl -> TM (Decl,[T.Decl])
+translate d@(Func fname args (Expr e)) = locally $ do
     rhs <- translateExpr (App fname (map Var args))
     lhs <- translateExpr e
     qs  <- popQuantified
     let f = Axiom fname $ forall qs $ rhs === lhs
     write (prettyTPTP f)
-    return [f]
-translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
+    return (d,[f])
+translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> sequence
     [ do mf <- indented
                  (locally
                     (translateBranch (nameWilds p) e (map brPat prevbrs) num))
@@ -94,9 +96,9 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
       indented $ do write $ "case " ++ prettyCore scrutinee ++ " of"
                     write $ prettyCore (pattern :-> expr)
       writeDelimiter
-      d <- indented (scrutinee ~~ pattern)
+      mconds <- indented (scrutinee ~~ pattern)
       writeDelimiter
-      case d of
+      case mconds of
         Nothing -> return Nothing
         Just conds -> do
           lhs <- translateExpr (App fname (map Var args))
@@ -118,6 +120,7 @@ translate (Func fname args (Case scrutinee brs)) = catMaybes <$> sequence
           qs <- popQuantified
           return $ Just $ T.Axiom (fname ++ show num)
                                   (forall qs formula')
+translate d = error $ "tranlateExpr on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the
 --   more specific pattern for a branch. This function in partial:

@@ -6,8 +6,7 @@
                           This function needs more testing
 
 -}
-
-module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,bottomName,nameWilds) where
+module Language.HFOL.FixBranches (fixBranches,moreSpecificPatterns,nameWilds) where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty

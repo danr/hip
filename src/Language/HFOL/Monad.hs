@@ -209,7 +209,7 @@ lookupProj n = TM $ (fmap FunName . fromUnbound "lookupProj" n . M.lookup n)
 
 -- | Make a pointer name of a name
 makePtrName :: Name -> Name
-makePtrName n = n ++ "_ptr"
+makePtrName n = n ++ ".ptr"
 
 -- | Make a pointer of a function name
 makeFunPtrName :: FunName -> FunName
@@ -239,30 +239,34 @@ addCons css = TM $ do
     projs = [ projName c | cs <- css, c <- cs]
 
     projName :: (Name,Int) -> (Name,[Name])
-    projName (c,n) = (c,[c ++ "." ++ show x  | x <- [0..n-1]])
+    projName (c,n) = (c,[c ++ "_" ++ show x  | x <- [0..n-1]])
 
 -- | Mark a pointer as used
 useFunPtr :: Name -> TM ()
 useFunPtr fn = TM $ modify usedFunPtrs (S.insert fn)
 
+-- | A list of nice variable names
+varNames :: [String]
+varNames = [1..] >>= flip replicateM "XYZWVU"
+
 -- | Make a number of new variable names
-makeVarNames :: Int -> [T.VarName]
-makeVarNames n = [ T.VarName ('X' : show x) | x <- [0..n-1] ]
+makeVarNames :: Int -> [VarName]
+makeVarNames n = take n (map VarName varNames)
 
 -- | Fold the function app over the arguments
 --
 -- > appFold f [x,y,z] = app(app(app(f,x),y),z)
 -- > appFold f []      = f
-appFold :: T.Term -> [T.Term] -> T.Term
-appFold = foldl (\f x -> T.Fun (T.FunName "app") [f,x])
+appFold :: Term -> [Term] -> Term
+appFold = foldl (\f x -> T.Fun (FunName "app") [f,x])
 
 -- | All FOL declarations from an environment and state
 envStDecls :: TM [T.Decl]
 envStDecls = TM $ do
   s <- get
-  return (projDecls (_conProj s) ++
-          ptrDecls (_arities s) (_usedFunPtrs s) ++
-          disjDecls (_datatypes s) )
+  return $ projDecls (_conProj s) ++
+           ptrDecls (_arities s) (_usedFunPtrs s) ++
+           disjDecls (_datatypes s)
 
 -- | Make datatypes disjunct.
 --

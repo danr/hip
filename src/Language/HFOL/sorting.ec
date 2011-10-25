@@ -34,14 +34,6 @@ append xs ys = case xs of {
    Cons z zs -> Cons z (append zs ys);
    Nil       -> ys };
 
-zero  = Zero;
-one   = Succ zero;
-two   = Succ one;
-three = Succ two;
-four  = Succ three;
-
-exampleList = Cons three (Cons four (Cons one (Cons zero (Cons two Nil))));
-   
 qsort xs = case xs of
       { Cons x ys -> append (qsort (filter (le x) ys))
                             (Cons x (qsort (filter (gt x) ys)))

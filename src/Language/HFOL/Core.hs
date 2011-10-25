@@ -11,6 +11,7 @@ data Decl = Func { funcName :: Name
                  , funcArgs :: [Name]
                  , funcBody :: Body
                  }
+          | Data
   deriving(Eq,Ord,Data,Typeable)
 
 data Body = Case { caseScrutinee :: Expr
@@ -24,8 +25,6 @@ data Expr = App { exprName :: Name , exprArgs :: [Expr] }
           | Var { exprName :: Name }
   deriving(Eq,Ord,Data,Typeable)
 
-
-
 infix 7 :->
 
 data Branch = (:->) { brPat :: Pattern , brExpr :: Expr }
@@ -38,6 +37,11 @@ data Pattern = PVar { patName :: Name }
   deriving(Eq,Ord,Data,Typeable)
 
 -- Auxiliary functions
+
+-- | Declaration is a function declaration
+funcDecl :: Decl -> Bool
+funcDecl Func{} = True
+funcDecl _      = False
 
 -- | The three kinds of patterns
 varPat,conPat,wildPat :: Pattern -> Bool
