@@ -85,6 +85,21 @@ con0 n = Con n []
 pcon0 :: Name -> Pattern
 pcon0 n = PCon n []
 
+-- | Free variables
+class FV a where
+  fv :: a -> [Name]
+
+instance FV Expr where
+  fv (Var x)      = [x]
+  fv (App f xs)   = concatMap fv xs
+  fv (Con c xs)   = concatMap fv xs
+  fv (IsBottom e) = fv e
+
+instance FV Pattern where
+  fv (PVar x)    = [x]
+  fv (PCon c xs) = concatMap fv xs
+  fv PWild       = []
+
 {-
  Given a function name and the matrix of patterns and expressions,
  returns a function which cases on the arguments and branches
