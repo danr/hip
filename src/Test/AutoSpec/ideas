@@ -1,8 +1,0 @@
-* let and where float everything to top level
-
-* desugar all sections and lambdas to top level definitions
-
-* how to handle guards?
-
-* use all type signatures from the source code and let
-  ghc figure out the remaining top level signatures
