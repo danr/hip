@@ -2,6 +2,10 @@
 *hi
 *out
 *tptp
+src/**\.tex
+*.aux
+*.log
+*Main
 examples/*
 !examples/*hs
 docs/*pdf
