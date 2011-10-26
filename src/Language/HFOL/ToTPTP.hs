@@ -6,7 +6,7 @@ import Language.HFOL.FixBranches
 import Language.HFOL.Pretty
 import Language.HFOL.Monad
 import Language.HFOL.Util
-import Language.HFOL.Bottom
+import Language.HFOL.Constructors
 import Language.TPTP hiding (Decl,Var)
 import Language.TPTP.Pretty
 import qualified Language.TPTP as T
@@ -31,7 +31,8 @@ toTPTP ds = runTM $ do
     (funs,datatypes) =
       let (funs',datatypes') = partition funcDecl ds
       in  (map (funcName &&& length . funcArgs) funs'
-          ,[(bottomName,0)] : map dataCons datatypes')
+          ,[(bottomName,0)] : [(trueName,0),(falseName,0)] :
+           map dataCons datatypes')
 
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term
@@ -109,9 +110,18 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
           write $ "conditions : " ++ show conds
           formula <- (lhs === rhs) `withConditions` conds
           patExpr <- followExpr (patternToExpr (pattern pmg))
-          let constr = {- stripContradictions conds
-                     $ -} map flattenPMGConstraints
+          let constr = stripContradictions conds
                      $ moreSpecificPatterns patExpr prev
+
+          write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
+                  " followed to " ++ prettyCore patExpr ++ " are:"
+          indented $
+            mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++
+                                            prettyCore p
+                                          | (n,p) <- cons ]
+                        | cons <- constr ]
+          write "previous patterns are:"
+          indented $ mapM_ write [ prettyCore p | p <- prev ]
 
           case find (\cr -> sort conds == sort cr) constr of
             Just x  -> do write $ "constraint " ++ show x ++
@@ -119,15 +129,6 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
                           return Nothing
             Nothing -> do
 
-              write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
-                      " followed to " ++ prettyCore patExpr ++ " are:"
-              indented $
-                mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++
-                                                prettyCore p
-                                              | (n,p) <- cons ]
-                            | cons <- constr ]
-              write "previous patterns are:"
-              indented $ mapM_ write [ prettyCore p | p <- prev ]
 
               formula' <- formula `withConstraints` constr
               qs <- popQuantified
@@ -156,15 +157,6 @@ followExpr e          = return e
 --   application and matched against a constructor.
 type Condition = (Expr,Pattern)
 
-addGuardConds :: Maybe [a] -> Maybe a -> Maybe [a]
-addGuardConds (Just xs) (Just y) = Just (y : xs)
-addGuardConds Nothing   _        = Nothing
-addGuardConds xs        Nothing  = xs
-
-guardCondition :: PMG -> Maybe Condition
-guardCondition (NoGuard _)            = Nothing
-guardCondition (Guard _ (IsBottom e)) = Just (e,bottomP)
-guardCondition (Guard _ e           ) = Just (e,pcon0 "True")
 
 -- | "Unify" the scrutinee expression with the pattern, returning just
 --   the conditions for this branch, or nothing if this branch is
@@ -210,12 +202,6 @@ withConditions phi conds = do
 -- | The type of constraints. They come from the more specific patterns,
 --   looking "upwards" in the patterns of the case.
 type Constraint = (Expr,Pattern)
-
-flattenPMGConstraints :: [(Expr,PMG)] -> [Constraint]
-flattenPMGConstraints ((e,pmg):pmgs) = [(e,pattern pmg)]
-                                    ++ maybeToList (guardCondition pmg)
-                                    ++ flattenPMGConstraints pmgs
-flattenPMGConstraints [] = []
 
 -- | Remove all constraint groups which have contradictions with the conditions
 stripContradictions :: [Condition] -> [[Constraint]] -> [[Constraint]]

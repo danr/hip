@@ -3,7 +3,7 @@ module Language.HFOL.Pretty (prettyCore) where
 
 import Language.HFOL.Core
 import Text.PrettyPrint.HughesPJ
-import Language.HFOL.Bottom
+import Language.HFOL.Constructors
 
 prettyCore :: P a => a -> String
 prettyCore = render . p

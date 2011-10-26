@@ -1,4 +1,3 @@
-data True 0 False 0;
 data Cons 2 Nil 0;
 data T 2;
 data A 0 B 0 C 0;

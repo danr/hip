@@ -9,6 +9,7 @@
 module Language.HFOL.FixBranches
 {-
        (fixBranches,moreSpecificPatterns,nameWilds
+       ,addGuardConds,guardCondition
        ,matchAnyBranch
        ,prop_addBottoms,prop_addBottoms'
        ,prop_removeOverlap
@@ -19,7 +20,7 @@ module Language.HFOL.FixBranches
 import Language.HFOL.Core
 import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
-import Language.HFOL.Bottom
+import Language.HFOL.Constructors
 
 import Language.HFOL.Util
 import Control.Applicative
@@ -173,32 +174,28 @@ wild ps = [ PWild | _ <- ps ]
 -- > moreSpecificPatterns (x:f x) [(x:y:ys),_] = [(f x,_:_)]
 -- > moreSpecificPatterns (x:xs)  [(x:xs | p x)] = [(x,x | p x),(xs,xs)]
 -}
-moreSpecificPatterns :: Expr -> [PMG] -> [[(Expr,PMG)]]
-moreSpecificPatterns e = reverse
-                       . catMaybes . map (msp e)
-                       . removeOverlappingPatterns . reverse
+moreSpecificPatterns :: Expr -> [PMG] -> [[(Expr,Pattern)]]
+moreSpecificPatterns e pmgs = reverse $ filter (not . null) $ catMaybes
+   [ addGuardConds (msp e (pattern pmg)) (guardCondition pmg)
+   | pmg <- removeOverlappingPatterns (reverse pmgs)
+   ]
 
--- | Keeps the guard if the pattern contains the FV of the guard,
---   otherwise no guard
-keepGuard :: PMG -> PMG
-keepGuard (NoGuard p) = NoGuard p
-keepGuard (Guard p e) | null (fv p `intersect` fv e) = NoGuard p
-                      | otherwise                    = Guard p e
+addGuardConds :: Maybe [a] -> Maybe a -> Maybe [a]
+addGuardConds (Just xs) (Just y) = Just (y : xs)
+addGuardConds Nothing   _        = Nothing
+addGuardConds xs        Nothing  = xs
 
--- | More
-msp :: Expr -> PMG -> Maybe [(Expr,PMG)]
-msp (Con c as) p@(Guard (PCon c' ps) g)
-  | c /= c' = Nothing
-  | c == c' = if null as then Just [(Con c as,p)]
-                         else concatMaybe $
-                                zipWith msp
-                                        as
-                                        (map (keepGuard . (`Guard` g)) ps)
-msp (Con c as) (NoGuard (PCon c' ps))
-  | c /= c' = Nothing
-  | c == c' = concatMaybe $ zipWith msp as (map NoGuard ps)
+guardCondition :: PMG -> Maybe (Expr,Pattern)
+guardCondition (NoGuard _)            = Nothing
+guardCondition (Guard _ (IsBottom e)) = Just (e,bottomP)
+guardCondition (Guard _ e           ) = Just (e,trueP)
+
+-- | More specific patterns
+msp :: Expr -> Pattern -> Maybe [(Expr,Pattern)]
+msp (Con c as) (PCon c' ps) | c == c'   = concatMaybe $ zipWith msp as ps
+                            | otherwise = Nothing
 msp (Con c as) _            = Just []
-msp e          p            = Just [(e,keepGuard p)]
+msp e          p            = Just [(e,p)]
 
 -- | All wilds need to be named to use moreSpecificPatterns.
 --
@@ -220,6 +217,8 @@ testUs = map (brPMG . parseBranch) ["U | eq n m -> e1"
                                    ]
 
 testU = parseExpr "U"
+
+testWs = map (brPMG . parseBranch) ["_ | eq n m -> e1"]
 
 testPrev = map (brPMG . parseBranch)
     [ "T (Cons Zero xs) (Cons (Succ n) ys) -> e"

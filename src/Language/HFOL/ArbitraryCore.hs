@@ -3,7 +3,7 @@ module Language.HFOL.ArbitraryCore where
 
 -- Orphan instances for the rescue!
 
-import Language.HFOL.Bottom
+import Language.HFOL.Constructors
 import Language.HFOL.Core
 import Test.QuickCheck
 import Data.Char

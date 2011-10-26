@@ -70,10 +70,14 @@ instance Latex Formula where
     as' <- mapM latex as
     return (relName r ++ "(" ++ intercalate "," as' ++ ")")
 
+showFunName :: FunName -> String
+showFunName (FunName "Bottom") = "\\bot"
+showFunName (FunName f)        = f
+
 instance Latex Term where
   latex (Var x)    = return $ map toLower (varName x)
-  latex (Fun f []) = return $ "\\mathrm{" ++ funName f ++ "}"
+  latex (Fun f []) = return $ "\\mathrm{" ++ showFunName f ++ "}"
   latex (Fun f as) = do
     as' <- mapM latex as
-    return ("\\mathrm{" ++ funName f ++ "}"
+    return ("\\mathrm{" ++ showFunName f ++ "}"
             ++ "(" ++ intercalate "," as' ++ ")")

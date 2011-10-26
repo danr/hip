@@ -1,4 +1,3 @@
-data True 0 False 0;
 data Cons 2 Nil 0;
 
 filterOr p q xs = case xs of

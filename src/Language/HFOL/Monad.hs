@@ -35,7 +35,7 @@ import Data.Label.PureM
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
-import Language.HFOL.Bottom
+import Language.HFOL.Constructors
 
 import qualified Language.TPTP as T
 import Language.TPTP hiding (Decl,Var)

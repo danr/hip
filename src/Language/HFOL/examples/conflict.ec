@@ -1,4 +1,3 @@
-data True 0 False 0;
 data A 0 B 0 C 0;
 
 conflict p x = case p x of

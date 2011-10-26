@@ -1,5 +1,4 @@
 data T 2;
-data True 0 False 0;
 data A 0 B 0 C 0 D 0;
 data Cons 2 Nil 0;
 data J 1 N 0;
@@ -19,8 +18,3 @@ s p q a = case T (f a) (g a) of
 f x = x;
 g x = x;
 
-conflict p x = case p x of
-           { True -> A
-           ; _ | p x -> B
-           ; _ -> C
-           };

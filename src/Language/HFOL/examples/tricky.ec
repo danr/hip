@@ -1,4 +1,3 @@
-data True 0 False 0;
 data C 2 N 0;
 
 anyAndFirst p q xs = case filter p xs of

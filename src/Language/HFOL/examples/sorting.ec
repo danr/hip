@@ -1,5 +1,3 @@
-
-data True 0 False 0;
 data T 2;
 data Cons 2 Nil 0;
 data Zero 0 Succ 1;
@@ -47,3 +45,4 @@ qsort xs = case xs of
                             (Cons x (qsort (filter (gt x) ys)))
       ; Nil       -> Nil
       };
+

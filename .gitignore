@@ -2,7 +2,8 @@
 *hi
 *out
 *tptp
-src/**\.tex
+src/*/*/*\.tex
+src/*/*/*\.pdf
 *.aux
 *.log
 *Main

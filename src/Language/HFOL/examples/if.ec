@@ -1,4 +1,3 @@
-data True 0 False 0;
 
 if b t f = case b of
     { True  -> t
