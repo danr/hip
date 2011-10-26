@@ -18,4 +18,9 @@ s p q a = case T (f a) (g a) of
 
 f x = x;
 g x = x;
-          
+
+conflict p x = case p x of
+           { True -> A
+           ; _ | p x -> B
+           ; _ -> C
+           };

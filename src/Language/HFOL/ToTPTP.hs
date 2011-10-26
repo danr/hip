@@ -15,7 +15,7 @@ import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 
-import Data.List (partition,intercalate)
+import Data.List (partition,intercalate,sort,find)
 import Data.Maybe (catMaybes,maybeToList)
 
 -- | Translates a program to TPTP, with its debug output
@@ -110,22 +110,29 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
           write $ "conditions : " ++ show conds
           formula <- (lhs === rhs) `withConditions` conds
           patExpr <- followExpr (patternToExpr (pattern pmg))
-          let constr = stripConflicts conds
+          let constr = stripContradictions conds
                      $ map flattenPMGConstraints
                      $ moreSpecificPatterns patExpr prev
 
-          write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
-                  " followed to " ++ prettyCore patExpr ++ " are:"
-          indented $
-            mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++ prettyCore p
-                                          | (n,p) <- cons ]
-                        | cons <- constr ]
-          write "previous patterns are:"
-          indented $ mapM_ write [ prettyCore p | p <- prev ]
+          case find (\cr -> sort conds == sort cr) constr of
+            Just x  -> do write $ "constraint " ++ show x ++ 
+                                  " is equal to conditions!"
+                          return Nothing
+            Nothing -> do
 
-          formula' <- formula `withConstraints` constr
-          qs <- popQuantified
-          return $ Just $ T.Axiom (fname ++ show num) (forall qs formula')
+              write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
+                      " followed to " ++ prettyCore patExpr ++ " are:"
+              indented $
+                mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++
+                                                prettyCore p
+                                              | (n,p) <- cons ]
+                            | cons <- constr ]
+              write "previous patterns are:"
+              indented $ mapM_ write [ prettyCore p | p <- prev ]
+
+              formula' <- formula `withConstraints` constr
+              qs <- popQuantified
+              return $ Just $ T.Axiom (fname ++ show num) (forall qs formula')
 translate d = error $ "translate on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the
@@ -211,22 +218,21 @@ flattenPMGConstraints ((e,pmg):pmgs) = [(e,pattern pmg)]
                                     ++ flattenPMGConstraints pmgs
 flattenPMGConstraints [] = []
 
--- | Remove all constraint groups which have conflicts with the conditions
-stripConflicts :: [Condition] -> [[Constraint]] -> [[Constraint]]
-stripConflicts conds css = [ constr
-                           | constr <- css, and [ not (conflict c c')
-                                                | c <- conds, c' <- constr
-                                                ]
-                           ]
+-- | Remove all constraint groups which have contradictions with the conditions
+stripContradictions :: [Condition] -> [[Constraint]] -> [[Constraint]]
+stripContradictions conds css = [ constr
+                                | constr <- css, and [ not (contradict c c')
+                                                     | c <- conds, c' <- constr
+                                                     ]
+                                ]
 
--- | The condition and the constraint is in conflict, then we can remove
+-- | The condition and the constraint contradicts each other, then we can remove
 --   the whole constraint group this constraint comes from.
 --
 --   This happens for instance when we have p x == bottom as a condition
 --   and p x == True as a constraint
-conflict :: Condition -> Constraint -> Bool
-conflict (e,p) (e',p') = e == e' && p /= p'
-
+contradict :: Condition -> Constraint -> Bool
+contradict (e,p) (e',p') = e == e' && p /= p'
 
 -- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
