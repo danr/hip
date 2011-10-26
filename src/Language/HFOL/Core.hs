@@ -44,6 +44,11 @@ data Pattern = PVar { patName :: Name }
 
 -- Auxiliary functions
 
+-- | Modify the pattern of a PMG
+modifyPattern :: (Pattern -> Pattern) -> PMG -> PMG
+modifyPattern f (Guard p e) = Guard (f p) e
+modifyPattern f (NoGuard p) = NoGuard (f p)
+
 -- | Declaration is a function declaration
 funcDecl :: Decl -> Bool
 funcDecl Func{} = True
@@ -64,10 +69,10 @@ con0Pat (PCon _ []) = True
 con0Pat _           = False
 
 -- | With or without guard
-guard,noGuard :: PMG -> Bool
-guard Guard{} = True
-guard _       = False
-noGuard = not . guard
+guarded,notGuarded :: PMG -> Bool
+guarded Guard{} = True
+guarded _       = False
+notGuarded = not . guarded
 
 -- | Transforms applications to the function/constructor name with an
 --   argument list.
@@ -137,8 +142,8 @@ func n as b | all varPat as || null as = Func n (map patName as) b
 func n as (Expr e)     = funcMatrix n [(as,e)]
 func n as (Case s brs) = Func n us $
                          Case (Con tup (s : map Var us))
-                              [ p { pattern = (PCon tup (pattern p:as)) } :-> e
-                              | p :-> e <- brs ]
+                              [ modifyPattern (\p -> PCon tup (p:as)) pmg :-> e
+                              | pmg :-> e <- brs ]
   where len = length as
         us  = [ 'u':show x | x <- [1..len] ]
         tup = "Tup" ++ show (len + 1)

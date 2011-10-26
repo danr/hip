@@ -16,7 +16,7 @@ import Control.Applicative
 import Control.Monad
 
 import Data.List (partition,intercalate)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes,maybeToList)
 
 -- | Translates a program to TPTP, with its debug output
 toTPTP :: [Decl] -> ([(Decl,[T.Decl])],[T.Decl],Debug)
@@ -77,9 +77,12 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
                                                (Case scrutinee
                                                 (fixBranches scrutinee brs)))
     sequence
-      [ do mf <- indented
-                   (locally
-                      (translateBranch (nameWilds p) e (map brPat prevbrs) num))
+      [ do mf <- indented $
+                   locally $
+                      translateBranch (modifyPattern nameWilds p)
+                                      e
+                                      (map brPMG prevbrs)
+                                      num
            case mf of
              Just f  -> write (prettyTPTP f)
              Nothing -> write "No formula produced."
@@ -89,14 +92,15 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
       | num <- [0..]
       ]
   where
-    translateBranch :: Pattern -> Expr -> [Pattern] -> Int -> TM (Maybe T.Decl)
-    translateBranch pattern expr prev num = do
+    translateBranch :: PMG -> Expr -> [PMG] -> Int -> TM (Maybe T.Decl)
+    translateBranch pmg expr prev num = do
       writeDelimiter
       write $ "translateBranch " ++ fname ++ " " ++ unwords args ++ " ="
       indented $ do write $ "case " ++ prettyCore scrutinee ++ " of"
-                    write $ prettyCore (pattern :-> expr)
+                    write $ prettyCore (pmg :-> expr)
       writeDelimiter
-      mconds <- indented (scrutinee ~~ pattern)
+      mconds <- indented $ (`addConds` guardCondition pmg)
+                        <$> scrutinee ~~ pattern pmg
       writeDelimiter
       case mconds of
         Nothing -> return Nothing
@@ -104,10 +108,11 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
           lhs <- translateExpr (App fname (map Var args))
           rhs <- translateExpr expr
           formula <- (lhs === rhs) `withConditions` conds
-          patExpr <- followExpr (patternToExpr pattern)
-          let constr = moreSpecificPatterns patExpr prev
+          patExpr <- followExpr (patternToExpr (pattern pmg))
+          let constr = map flattenPMGConstraints
+                           (moreSpecificPatterns patExpr prev)
 
-          write $ "moreSpecificPatterns of " ++ prettyCore pattern ++
+          write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
                   " followed to " ++ prettyCore patExpr ++ " are:"
           indented $ do
             mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++ prettyCore p
@@ -118,8 +123,7 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
 
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
-          return $ Just $ T.Axiom (fname ++ show num)
-                                  (forall qs formula')
+          return $ Just $ T.Axiom (fname ++ show num) (forall qs formula')
 translate d = error $ "translate on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the
@@ -144,6 +148,16 @@ followExpr e          = return e
 --   application and matched against a constructor.
 type Condition = (Expr,Pattern)
 
+addConds :: Maybe [a] -> Maybe a -> Maybe [a]
+addConds (Just xs) (Just y) = Just (y : xs)
+addConds Nothing   _        = Nothing
+addConds xs        Nothing  = xs
+
+guardCondition :: PMG -> Maybe Condition
+guardCondition (NoGuard _)            = Nothing
+guardCondition (Guard _ (IsBottom e)) = Just (e,bottomP)
+guardCondition (Guard _ e           ) = Just (e,pcon0 "True")
+
 -- | "Unify" the scrutinee expression with the pattern, returning just
 --   the conditions for this branch, or nothing if this branch is
 --   unreachable. The wilds in the pattern must be named.
@@ -157,6 +171,7 @@ e        ~~~ PVar n     = addIndirection n e                 >> noConditions
 Var n    ~~~ p          = addIndirection n (patternToExpr p) >> noConditions
 App f as ~~~ PCon c ps  = condition (App f as,PCon c ps)
 _        ~~~ PWild      = error "~~~ on PWild: use nameWilds"
+IsBottom{} ~~~ _        = error "~~~ on IsBottom"
 
 -- | No conditions from this unification
 noConditions :: TM (Maybe [Condition])
@@ -187,6 +202,12 @@ withConditions phi conds = do
 -- | The type of constraints. They come from the more specific patterns,
 --   looking "upwards" in the patterns of the case.
 type Constraint = (Expr,Pattern)
+
+flattenPMGConstraints :: [(Expr,PMG)] -> [Constraint]
+flattenPMGConstraints ((e,pmg):pmgs) = [(e,pattern pmg)]
+                                    ++ maybeToList (guardCondition pmg)
+                                    ++ flattenPMGConstraints pmgs
+flattenPMGConstraints [] = []
 
 -- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula

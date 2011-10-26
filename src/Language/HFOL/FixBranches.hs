@@ -79,7 +79,7 @@ class Specificity a where
   (<=?) :: a -> a -> Bool
 
 instance Specificity PMG where
-  pg <=? pg' = pattern pg <=? pattern pg' && noGuard pg
+  pg <=? pg' = pattern pg <=? pattern pg' && notGuarded pg
 
 -- | Less specific than or equal specificity as
 instance Specificity Pattern where
@@ -99,8 +99,8 @@ instance Specificity Pattern where
 --   If there is no match-any pattern, just add a new one which goes to bottom.
 addBottoms :: Expr -> [Branch] -> [Branch]
 addBottoms scrut brs = case matchAnyBranch scrut brs of
-  Nothing -> brs ++ [NoGuard PWild :-> bottom]
-  Just (p :-> e) | e == bottom -> brs
+  Nothing -> brsBottomGuards ++ [NoGuard PWild :-> bottom]
+  Just (p :-> e) | e == bottom -> brsBottomGuards
                  | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
                                                      | p' <- addBottom scrut' p
                                                      ]
@@ -109,13 +109,15 @@ addBottoms scrut brs = case matchAnyBranch scrut brs of
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 
+        brsBottomGuards = concatMap addBottomGuard brs
+
         scrut' = matchscrut scrut
 
 -- | Returns the branch that matches anything, if it exists
 matchAnyBranch :: Expr -> [Branch] -> Maybe Branch
 matchAnyBranch scrut brs = listToMaybe
                            [ pmg :-> e | pmg :-> e <- brs
-                           , noGuard pmg , matchAny scrut (pattern pmg) ]
+                           , notGuarded pmg , matchAny scrut (pattern pmg) ]
   where
     -- Is this pattern a default match-all branch?
     matchAny :: Expr -> Pattern -> Bool
@@ -124,6 +126,10 @@ matchAnyBranch scrut brs = listToMaybe
         | otherwise = False
     matchAny _            (PCon _ _) = False
     matchAny _            _          = True
+
+addBottomGuard :: Branch -> [Branch]
+addBottomGuard br@(NoGuard p :-> e) = [br]
+addBottomGuard br@(Guard p g :-> e) = [br,Guard p (IsBottom g) :-> bottom]
 
 -- | Adds the bottom PMGs for a PMG under a scrutinee
 addBottom :: Pattern -> PMG -> [PMG]
