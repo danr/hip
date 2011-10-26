@@ -181,7 +181,7 @@ moreSpecificPatterns e pmgs = reverse $ filter (not . null) $ catMaybes
    ]
 
 addGuardConds :: Maybe [a] -> Maybe a -> Maybe [a]
-addGuardConds (Just xs) (Just y) = Just (y : xs)
+addGuardConds (Just xs) (Just y) = Just (xs ++ [y])
 addGuardConds Nothing   _        = Nothing
 addGuardConds xs        Nothing  = xs
 

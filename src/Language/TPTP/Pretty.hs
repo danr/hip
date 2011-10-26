@@ -50,7 +50,7 @@ instance PrettyTPTP Term where
 
 instance PrettyTPTP BinOp where
     prettyTPTP (:&)   = " & "
-    prettyTPTP (:|)   = " | "
+    prettyTPTP (:|)   = " \n\t| "
     prettyTPTP (:=>)  = " => "
     prettyTPTP (:<=>) = " <=> "
 
