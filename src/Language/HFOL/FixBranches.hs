@@ -20,6 +20,7 @@ import Language.HFOL.Core
 import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
 import Language.HFOL.Bottom
+
 import Language.HFOL.Util
 import Control.Applicative
 import Control.Monad.State
@@ -161,9 +162,11 @@ wild ps = [ PWild | _ <- ps ]
 
 {-| Gets the more specific patterns
 --
---  Now we can removeOverlap on the reverse because we're looking "upwards"
---  the case tree. This enables us to remove duplicate and more specific
---  results.
+--  Now we can removeOverlap on the reverse because we're looking
+--  "upwards" the case tree. This enables us to remove duplicate and
+--  more specific results.
+--
+--  TODO: Tidy up
 --
 --  TODO: Make tests
 --
@@ -175,7 +178,8 @@ moreSpecificPatterns e = reverse
                        . catMaybes . map (msp e)
                        . removeOverlappingPatterns . reverse
 
--- | Keeps the guard if the pattern contains the FV of the guard, otherwise no guard
+-- | Keeps the guard if the pattern contains the FV of the guard,
+--   otherwise no guard
 keepGuard :: PMG -> PMG
 keepGuard (NoGuard p) = NoGuard p
 keepGuard (Guard p e) | null (fv p `intersect` fv e) = NoGuard p
@@ -183,13 +187,17 @@ keepGuard (Guard p e) | null (fv p `intersect` fv e) = NoGuard p
 
 -- | More
 msp :: Expr -> PMG -> Maybe [(Expr,PMG)]
-msp (Con c as) (Guard (PCon c' ps) g)
+msp (Con c as) p@(Guard (PCon c' ps) g)
   | c /= c' = Nothing
-  | c == c' = concatMaybe $ zipWith msp as (map (`Guard` g) ps)
+  | c == c' = if null as then Just [(Con c as,p)]
+                         else concatMaybe $
+                                zipWith msp
+                                        as
+                                        (map (keepGuard . (`Guard` g)) ps)
 msp (Con c as) (NoGuard (PCon c' ps))
   | c /= c' = Nothing
   | c == c' = concatMaybe $ zipWith msp as (map NoGuard ps)
-msp (Con c as) _            = Nothing
+msp (Con c as) _            = Just []
 msp e          p            = Just [(e,keepGuard p)]
 
 -- | All wilds need to be named to use moreSpecificPatterns.
@@ -206,6 +214,22 @@ nameWilds = (`evalState` 0) . go
 testPMGs = map (brPMG . parseBranch) ["Cons x xs | p x -> filter"
                                      ]
 testExpr = parseExpr "Cons x xs"
+
+testUs = map (brPMG . parseBranch) ["U | eq n m -> e1"
+                                   ,"U | lt n m -> e2"
+                                   ]
+
+testU = parseExpr "U"
+
+testPrev = map (brPMG . parseBranch)
+    [ "T (Cons Zero xs) (Cons (Succ n) ys) -> e"
+    , "T Bottom _                          -> e"
+    , "T (Cons Bottom _) _                 -> e"
+    , "T _ Bottom                          -> e"
+    , "T _ (Cons Bottom _)                 -> e"
+    ]
+
+testEPrev = parseExpr "T (Cons n zs) b"
 
 {-
 

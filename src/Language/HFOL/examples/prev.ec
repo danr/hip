@@ -10,6 +10,17 @@ taily a b = case T a b of
 
 prev a b = case T a b of
   { T (Cons Zero xs) (Cons (Succ n) ys) -> ys
-  ; T (Cons n xs)    _                  -> xs
+  ; T (Cons n zs)    _                  -> zs
   ; _                                   -> Nil
+  };
+
+skippy a b = case T a b of
+  { T Nil (Cons (Succ n) ys) -> ys
+  ; T Nil zs                 -> zs
+  ; _                      -> Nil
+  };
+
+skipZero xs = case xs of
+  { Cons (Succ n) ys -> ys
+  ; _                -> xs
   };

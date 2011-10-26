@@ -15,7 +15,7 @@ import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 
-import Data.List (partition,intercalate,sort,find)
+import Data.List (partition,intercalate,sort,find,nub)
 import Data.Maybe (catMaybes,maybeToList)
 
 -- | Translates a program to TPTP, with its debug output
@@ -94,13 +94,12 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
   where
     translateBranch :: PMG -> Expr -> [PMG] -> Int -> TM (Maybe T.Decl)
     translateBranch pmg expr prev num = do
-      writeDelimiter
       write $ "translateBranch " ++ fname ++ " " ++ unwords args ++ " ="
       indented $ do write $ "case " ++ prettyCore scrutinee ++ " of"
                     write $ prettyCore (pmg :-> expr)
       writeDelimiter
-      mconds <- indented $ (`addConds` guardCondition pmg)
-                        <$> scrutinee ~~ pattern pmg
+      mconds <- indented $ do conds <- scrutinee ~~ pattern pmg
+                              return (addGuardConds conds (guardCondition pmg))
       writeDelimiter
       case mconds of
         Nothing -> return Nothing
@@ -110,12 +109,12 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
           write $ "conditions : " ++ show conds
           formula <- (lhs === rhs) `withConditions` conds
           patExpr <- followExpr (patternToExpr (pattern pmg))
-          let constr = stripContradictions conds
-                     $ map flattenPMGConstraints
+          let constr = {- stripContradictions conds
+                     $ -} map flattenPMGConstraints
                      $ moreSpecificPatterns patExpr prev
 
           case find (\cr -> sort conds == sort cr) constr of
-            Just x  -> do write $ "constraint " ++ show x ++ 
+            Just x  -> do write $ "constraint " ++ show x ++
                                   " is equal to conditions!"
                           return Nothing
             Nothing -> do
@@ -157,10 +156,10 @@ followExpr e          = return e
 --   application and matched against a constructor.
 type Condition = (Expr,Pattern)
 
-addConds :: Maybe [a] -> Maybe a -> Maybe [a]
-addConds (Just xs) (Just y) = Just (y : xs)
-addConds Nothing   _        = Nothing
-addConds xs        Nothing  = xs
+addGuardConds :: Maybe [a] -> Maybe a -> Maybe [a]
+addGuardConds (Just xs) (Just y) = Just (y : xs)
+addGuardConds Nothing   _        = Nothing
+addGuardConds xs        Nothing  = xs
 
 guardCondition :: PMG -> Maybe Condition
 guardCondition (NoGuard _)            = Nothing

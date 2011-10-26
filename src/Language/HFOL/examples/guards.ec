@@ -23,15 +23,15 @@ filter3 p xs = case xs of
     ; Nil                   -> Nil
     };
 
-t f p q = case f x of
-           { Cons x xs | p x -> A
-           ; Cons x xs | q x -> B
+t f x p q = case f x of
+           { Cons y ys | p y -> A
+           ; Cons y ys | q y -> B
            ; _               -> C
            };
-    
+
 s f g p q r x z w = case T (f x) (g x) of
-            { T (Cons x xs) (Cons y ys) | p x -> x
-            ; T Nil         (Cons y ys) | q y -> y
-            ; T (Cons x xs) Nil         | r x -> z
+            { T (Cons y ys) (Cons z zs) | p y -> y
+            ; T Nil         (Cons z zs) | q z -> z
+            ; T (Cons y ys) Nil         | r y -> x
             ; _                               -> w
             };
