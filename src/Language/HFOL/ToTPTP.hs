@@ -114,12 +114,12 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
 
           write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
                   " followed to " ++ prettyCore patExpr ++ " are:"
-          indented $ do
+          indented $
             mapM_ write [ intercalate "," [ prettyCore n ++ " = " ++ prettyCore p
                                           | (n,p) <- cons ]
                         | cons <- constr ]
-            write "previous patterns are:"
-            mapM_ write [ prettyCore p | p <- prev ]
+          write "previous patterns are:"
+          indented $ mapM_ write [ prettyCore p | p <- prev ]
 
           formula' <- formula `withConstraints` constr
           qs <- popQuantified
@@ -211,16 +211,19 @@ flattenPMGConstraints [] = []
 
 -- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
-withConstraints f css = do write $ "withConstraints: " ++ show css
+withConstraints f css = do -- write $ "withConstraints: "
+                           -- indented $ mapM_ (write . show) css
                            foldl (\/) f . catMaybes
-                             <$> mapM (locally . translateGroup) css
+                             <$> mapM translateGroup css
   where
     -- And the constraints of a group
     translateGroup :: [Constraint] -> TM (Maybe Formula)
     translateGroup cs = do
-        fs <- catMaybes <$> mapM translateConstraint cs
-        if null fs then return Nothing
-                   else return (Just (foldl1 (/\) fs))
+        write $ "translateGroup " ++ show cs
+        locally . indented $ do
+          fs <- catMaybes <$> mapM translateConstraint cs
+          if null fs then return Nothing
+                     else return (Just (foldl1 (/\) fs))
 
     -- Translate a constraint
     translateConstraint :: Constraint -> TM (Maybe Formula)
