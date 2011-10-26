@@ -19,19 +19,28 @@ arbName = elements names
 arbC :: Int -> Gen Name
 arbC n = elements (map ((++ show n) . map toUpper) names)
 
+instance Arbitrary PMG where
+    arbitrary = sized (arbPMG False) 
+
 instance Arbitrary Pattern where
     arbitrary = sized (arbPat False)
     shrink PWild    = []
     shrink (PVar _) = []
     shrink (PCon c as) = as ++ [PCon c as' | as' <- mapM shrink as]
 
-newtype BottomPattern = BP { unBP :: Pattern } deriving (Eq)
+newtype BottomPMG = BP { unBP :: PMG } deriving Eq
 
-instance Show Pattern => Show BottomPattern where
+instance Show PMG => Show BottomPMG where
    show (BP p) = show p
 
-instance Arbitrary BottomPattern where
-    arbitrary = BP <$> sized (arbPat True)
+instance Arbitrary BottomPMG where
+    arbitrary = BP <$> sized (arbPMG True)
+
+arbPMG :: Bool -> Int -> Gen PMG
+arbPMG bottoms s = frequency
+                 [(4,NoGuard <$> arbPat bottoms s)
+                 ,(1,Guard   <$> arbPat bottoms s <*> arbExpr s)
+                 ]
 
 arbPat :: Bool -> Int -> Gen Pattern
 arbPat bottoms s = frequency
@@ -77,4 +86,4 @@ instance Arbitrary Branch where
   arbitrary = (:->) <$> arbitrary <*> (Var <$> arbName)
 
 arbBranch :: Int -> Gen Branch
-arbBranch s = (:->) <$> arbPat False s <*> arbExpr s
+arbBranch s = (:->) <$> arbPMG False s <*> arbExpr s

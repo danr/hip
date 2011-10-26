@@ -9,7 +9,7 @@ import Language.Haskell.TH.Lift
 
 data Tok = LPar | RPar
          | LBrace | RBrace
-         | Eq | Arrow | Semi | Under
+         | Eq | Arrow | Semi | Under | Bar
          | Case | Of | Data
          | UIdent { fromTok :: String }
          | LIdent { fromTok :: String }
@@ -37,6 +37,7 @@ lex ('=':xs)     = Eq     : lex xs
 lex ('-':'>':xs) = Arrow  : lex xs
 lex (';':xs)     = Semi   : lex xs
 lex ('_':xs)     = Under  : lex xs
+lex ('|':xs)     = Bar    : lex xs
 lex ('c':'a':'s':'e':xs) = Case : lex xs
 lex ('o':'f':xs)         = Of   : lex xs
 lex ('d':'a':'t':'a':xs) = Data : lex xs

@@ -70,12 +70,18 @@ patternGrammar parens = do
 
 branchGrammar :: Grammar L.Tok Branch
 branchGrammar = do
+  let (-->) :: Pattern -> (Maybe Expr,Expr) -> Branch
+      p --> (Just g ,e) = Guard p g :-> e
+      p --> (Nothing,e) = NoGuard p :-> e
   rec
     p   <- patternGrammar False
     e   <- exprGrammar
-    br  <- rule [ (:->) <@> p <# L.Arrow <#> e ]
+    g   <- rule [ (,) Nothing <@ L.Arrow <#> e
+                , (,) . Just  <@ L.Bar   <#> e <# L.Arrow <#> e ]
+    br  <- rule [ (-->) <@> p <#> g ]
 
   return br
+
 
 declsGrammar :: Grammar L.Tok [Decl]
 declsGrammar = do

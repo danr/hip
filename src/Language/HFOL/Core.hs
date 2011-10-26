@@ -27,9 +27,13 @@ data Expr = App { exprName :: Name , exprArgs :: [Expr] }
 
 infix 7 :->
 
-data Branch = (:->) { brPat :: Pattern , brExpr :: Expr }
+data Branch = (:->) { brPG :: PMG , brExpr :: Expr }
   deriving(Eq,Ord,Data,Typeable)
 
+-- Pattern + Maybe Guard
+data PMG = NoGuard { pattern :: Pattern }
+         | Guard   { pattern :: Pattern, guardExpr :: Expr }
+  deriving(Eq,Ord,Data,Typeable)
 
 data Pattern = PVar { patName :: Name }
              | PCon { patName :: Name, patArgs :: [Pattern] }
@@ -45,17 +49,23 @@ funcDecl _      = False
 
 -- | The three kinds of patterns
 varPat,conPat,wildPat :: Pattern -> Bool
-varPat (PVar _)   = True
-varPat _          = False
-conPat (PCon _ _) = True
-conPat _          = False
-wildPat PWild     = True
-wildPat _         = False
+varPat PVar{} = True
+varPat _      = False
+conPat PCon{} = True
+conPat _      = False
+wildPat PWild = True
+wildPat _     = False
 
 -- | Costructor pattern without arguments
 con0Pat :: Pattern -> Bool
 con0Pat (PCon _ []) = True
 con0Pat _           = False
+
+-- | With or without guard
+guard,noGuard :: PMG -> Bool
+guard Guard{} = True
+guard _       = False
+noGuard = not . guard
 
 -- | Transforms applications to the function/constructor name with an
 --   argument list.
@@ -94,7 +104,7 @@ pcon0 n = PCon n []
 -}
 funcMatrix :: Name -> [([Pattern],Expr)] -> Decl
 funcMatrix n m = Func n us $ Case (Con tup (map Var us))
-                                  (map (\(as,e) -> PCon tup as :-> e) m)
+                                  [ NoGuard (PCon tup as) :-> e | (as,e) <- m ]
   where len = length (fst (head m))
         us  = [ 'u':show x | x <- [1..len] ]
         tup = "Tup" ++ show len
@@ -109,7 +119,8 @@ func n as b | all varPat as || null as = Func n (map patName as) b
 func n as (Expr e)     = funcMatrix n [(as,e)]
 func n as (Case s brs) = Func n us $
                          Case (Con tup (s : map Var us))
-                              (map (\(p :-> e) -> PCon tup (p : as) :-> e) brs)
+                              [ p { pattern = (PCon tup (pattern p:as)) } :-> e
+                              | p :-> e <- brs ]
   where len = length as
         us  = [ 'u':show x | x <- [1..len] ]
         tup = "Tup" ++ show (len + 1)

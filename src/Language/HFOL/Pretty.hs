@@ -35,6 +35,10 @@ pexpr _ (Var n)    = text n
 instance P Branch where
   p (pat :-> e) = p pat <+> text "->" <+> p e
 
+instance P PMG where
+  p (Guard pat e) = p pat <+> text "|" <+> p e
+  p (NoGuard pat) = p pat
+
 instance P Pattern where
   p = ppat 2
 
@@ -52,4 +56,5 @@ instance Show Decl where show = prettyCore
 instance Show Body where show = prettyCore
 instance Show Expr where show = prettyCore
 instance Show Branch where show = prettyCore
+instance Show PMG where show = prettyCore
 instance Show Pattern where show = prettyCore
