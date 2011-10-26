@@ -20,7 +20,7 @@ arbC :: Int -> Gen Name
 arbC n = elements (map ((++ show n) . map toUpper) names)
 
 instance Arbitrary PMG where
-    arbitrary = sized (arbPMG False) 
+    arbitrary = sized (arbPMG False)
 
 instance Arbitrary Pattern where
     arbitrary = sized (arbPat False)

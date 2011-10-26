@@ -3,6 +3,7 @@ module Language.HFOL.Pretty (prettyCore) where
 
 import Language.HFOL.Core
 import Text.PrettyPrint.HughesPJ
+import Language.HFOL.Bottom
 
 prettyCore :: P a => a -> String
 prettyCore = render . p
@@ -27,10 +28,10 @@ enclose True  = parens
 enclose False = id
 
 pexpr :: Int -> Expr -> Doc
---pexpr l (App n []) = error "app empty"     -- This is an invariant that should be true
-pexpr l (App n es) = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
-pexpr l (Con n es) = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
-pexpr _ (Var n)    = text n
+pexpr l (App n es)   = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
+pexpr l (Con n es)   = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
+pexpr _ (Var n)      = text n
+pexpr _ (IsBottom e) = pexpr 2 e <+> text "==" <+> text bottomName
 
 instance P Branch where
   p (pat :-> e) = p pat <+> text "->" <+> p e

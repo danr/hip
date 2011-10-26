@@ -7,11 +7,14 @@
 
 -}
 module Language.HFOL.FixBranches
+{-
        (fixBranches,moreSpecificPatterns,nameWilds
        ,matchAnyBranch
        ,prop_addBottoms,prop_addBottoms'
        ,prop_removeOverlap
        ,prop_fixBranches,prop_fixBranches') where
+-}
+ where
 
 import Language.HFOL.Core
 import Language.HFOL.Pretty
@@ -49,20 +52,39 @@ fixBranches scrut = removeOverlap . addBottoms scrut
 removeOverlap :: [Branch] -> [Branch]
 removeOverlap = reverse . foldl f []
   where
-    f brs (p :-> e) | any ((<=? p) . brPat) brs = brs
+    f brs (p :-> e) | any ((<=? p) . brPMG) brs = brs
                     | otherwise                 = p :-> e : brs
 
-removeOverlappingPatterns :: [Pattern] -> [Pattern]
+
+removeOverlappingPatterns :: [PMG] -> [PMG]
 removeOverlappingPatterns = reverse . foldl f []
   where
     f ps p | any (<=? p) ps = ps
            | otherwise      = p:ps
 
+{-
+
+   With guards:
+
+   b1 -> e1
+   b2 -> e2
+
+   If b1 <= b2, remove b2 unless b1 is guarded
+   If b1 == b2, keep b2
+
+-}
+
+class Specificity a where
+  (<=?) :: a -> a -> Bool
+
+instance Specificity PMG where
+  pg <=? pg' = pattern pg <=? pattern pg' && noGuard pg
+
 -- | Less specific than or equal specificity as
-(<=?) :: Pattern -> Pattern -> Bool
-PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
-PCon _ _    <=? _           = False
-_           <=? _           = True
+instance Specificity Pattern where
+  PCon c1 ps1 <=? PCon c2 ps2 = c1 == c2 && and (zipWith (<=?) ps1 ps2)
+  PCon _ _    <=? _           = False
+  _           <=? _           = True
 
 --------------------------------------------------------------------------------
 -- Add bottoms
@@ -76,7 +98,7 @@ _           <=? _           = True
 --   If there is no match-any pattern, just add a new one which goes to bottom.
 addBottoms :: Expr -> [Branch] -> [Branch]
 addBottoms scrut brs = case matchAnyBranch scrut brs of
-  Nothing -> brs ++ [PWild :-> bottom]
+  Nothing -> brs ++ [NoGuard PWild :-> bottom]
   Just (p :-> e) | e == bottom -> brs
                  | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
                                                      | p' <- addBottom scrut' p
@@ -90,7 +112,9 @@ addBottoms scrut brs = case matchAnyBranch scrut brs of
 
 -- | Returns the branch that matches anything, if it exists
 matchAnyBranch :: Expr -> [Branch] -> Maybe Branch
-matchAnyBranch scrut = listToMaybe . filter (matchAny scrut . brPat)
+matchAnyBranch scrut brs = listToMaybe
+                           [ pmg :-> e | pmg :-> e <- brs
+                           , noGuard pmg , matchAny scrut (pattern pmg) ]
   where
     -- Is this pattern a default match-all branch?
     matchAny :: Expr -> Pattern -> Bool
@@ -100,24 +124,32 @@ matchAnyBranch scrut = listToMaybe . filter (matchAny scrut . brPat)
     matchAny _            (PCon _ _) = False
     matchAny _            _          = True
 
+-- | Adds the bottom PMGs for a PMG under a scrutinee
+addBottom :: Pattern -> PMG -> [PMG]
+addBottom scrut (NoGuard p) = map NoGuard (addBottomPattern scrut p)
+addBottom scrut (Guard p g) = Guard p (IsBottom g)
+                            : map NoGuard (addBottomPattern scrut p)
+
 -- | Adds the bottom patterns for a pattern under a scrutinee
-addBottom :: Pattern -> Pattern -> [Pattern]
-addBottom _scrut        PWild       = []
-addBottom _scrut        (PVar _)    = []
-addBottom (PCon sc sps) (PCon c ps)
+addBottomPattern :: Pattern -> Pattern -> [Pattern]
+addBottomPattern _scrut        PWild       = []
+addBottomPattern _scrut        (PVar _)    = []
+addBottomPattern (PCon sc sps) (PCon c ps)
      | sc /= c   = []               -- Unreachable clause
      | otherwise = [ PCon c (map fst l ++ [fp] ++ map fst r)
                    | (l,(sp,p),r) <- selections (zip sps ps)
-                   , fp <- addBottom sp p ]
-addBottom _scrut (PCon c ps) = bottomP : fails
+                   , fp <- addBottomPattern sp p ]
+addBottomPattern _scrut (PCon c ps) = bottomP : fails
   where
     fails   = [ PCon c (wild l ++ [fp] ++ wild r)
-              | (l,p,r) <- selections ps, fp <- addBottom PWild p
+              | (l,p,r) <- selections ps, fp <- addBottomPattern PWild p
               ]
 
 -- | Makes a list of patterns into a list of wild patterns
 wild :: [Pattern] -> [Pattern]
 wild ps = [ PWild | _ <- ps ]
+
+{-
 
 --------------------------------------------------------------------------------
 -- More specific patterns
@@ -128,14 +160,11 @@ wild ps = [ PWild | _ <- ps ]
 --   the case tree. This enables us to remove duplicate and more specific
 --   results.
 --
---   TODO: Tidy this up, make it more efficient
---
 --   TODO: Make tests
 --
 -- > moreSpecificPatterns (x:f x) [(x:y:ys),_] = [(f x,_:_)]
 testPs = map parsePattern ["Tup2 _ Zero","Tup2 _ bottom"]
 testExpr = parseExpr "Tup2 Zero x"
-
 
 moreSpecificPatterns :: Expr -> [Pattern] -> [[(Expr,Pattern)]]
 moreSpecificPatterns e = reverse
@@ -159,6 +188,8 @@ nameWilds = (`evalState` 0) . go
     go PWild       = do { x <- get; modify succ; return (PVar ('_':show x)) }
     go (PCon c ps) = PCon c <$> mapM go ps
     go p           = return p
+
+
 
 --------------------------------------------------------------------------------
 -- Testing without bottoms
@@ -244,12 +275,16 @@ prop_fixBranches' scrut brs = forAll (botpatFromScrut scrut) $ \p ->
 --------------------------------------------------------------------------------
 -- For manual testing
 
+-}
+
 -- | A small test :)
 testOverlap :: [Branch]
 testOverlap = map parseBranch
-        ["C x                -> e1"
-        ,"C (C x)            -> e2"
-        ,"A D J              -> e3"
+        ["C x      | p x     -> e11"
+        ,"C x      | p2 x    -> e12"
+        ,"C (C x)  | p3 x    -> e21"
+        ,"C (C x)            -> e22"
+        ,"A D J    | b       -> e3"
         ,"A D z              -> e4"
         ,"A y E              -> e5"
         ,"Cons x (Cons y ys) -> e6"

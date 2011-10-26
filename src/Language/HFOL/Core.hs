@@ -23,11 +23,13 @@ data Body = Case { caseScrutinee :: Expr
 data Expr = App { exprName :: Name , exprArgs :: [Expr] }
           | Con { exprName :: Name , exprArgs :: [Expr] }
           | Var { exprName :: Name }
+          | IsBottom Expr
+            -- ^ For guards that evaluate to bottom
   deriving(Eq,Ord,Data,Typeable)
 
 infix 7 :->
 
-data Branch = (:->) { brPG :: PMG , brExpr :: Expr }
+data Branch = (:->) { brPMG :: PMG , brExpr :: Expr }
   deriving(Eq,Ord,Data,Typeable)
 
 -- Pattern + Maybe Guard
@@ -73,6 +75,7 @@ app :: Expr -> Expr -> Expr
 app (App n es) e = App n (es ++ [e])
 app (Con n es) e = Con n (es ++ [e])
 app (Var n)    e = App n [e]
+app IsBottom{} _ = error "app on IsBottom"
 
 -- | Nullary constructor
 con0 :: Name -> Expr
