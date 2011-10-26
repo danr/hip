@@ -56,6 +56,10 @@ instance Latex Formula where
                                  (latex f1)
                                  (latex op)
                                  (latex f2)
+  latex (BinOp f1 (:=>) f2) = paren (:=>) <$> liftM3 trippend
+                                                  (latex f2)
+                                                  (return " \\leftarrow ")
+                                                  (latex f1)
   latex (BinOp f1 op f2) = paren op <$> liftM3 trippend
                                                (latex f1)
                                                (latex op)
@@ -71,5 +75,5 @@ instance Latex Term where
   latex (Fun f []) = return $ "\\mathrm{" ++ funName f ++ "}"
   latex (Fun f as) = do
     as' <- mapM latex as
-    return ("\\mathrm{" ++ funName f ++ "}" 
+    return ("\\mathrm{" ++ funName f ++ "}"
             ++ "(" ++ intercalate "," as' ++ ")")

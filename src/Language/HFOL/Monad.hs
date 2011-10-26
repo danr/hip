@@ -59,7 +59,7 @@ import qualified Data.Set as S
 --   even debug output to easier pair it up with accompanying code
 --
 --   The state capabilities are kept abstract
-newtype TM a = TM (State St a)
+newtype TM a = TM { unTM :: (State St a) }
   deriving (Functor,Applicative,Monad)
 
 -- | Runs a computation in an empty environment, with an empty state.
@@ -186,7 +186,9 @@ lookupName "" = error "lookupName on empty name"
 addIndirection :: Name -> Expr -> TM ()
 addIndirection n e = TM $ do
     write' $ "indirection: " ++ n ++ " := " ++ prettyCore e
-    modify boundNames (M.insert n (Indirection e))
+    mem <- M.member n <$> gets boundNames
+    if mem then write' "indirection already exists!"
+           else modify boundNames (M.insert n (Indirection e))
 
 -- | Pop and return the quantified variables
 popQuantified :: TM [VarName]
@@ -227,17 +229,24 @@ addFuns :: [(Name,Int)] -> TM ()
 addFuns = TM . addNameAndArity FunVar
 
 -- | Add a datatype's constructor given the arities
---   Projections are also generated
+--   Projections are also generated, and added as functions
 addCons :: [[(Name,Int)]] -> TM ()
 addCons css = TM $ do
-     addNameAndArity ConVar (concat css)
      addNameAndArity ConVar (concat css)
      modify conFam (insertMany fams)
      modify conProj (insertMany projs)
      modify datatypes (css ++)
+     unTM (addFuns projfuns)
   where
     fams  = [ (c,cs')    | cs <- css, let cs' = map fst cs, c <- cs']
     projs = [ projName c | cs <- css, c <- cs]
+
+    projfuns :: [(Name,Int)]
+    projfuns = [ (pname,1)
+               | cs <- css
+               , c <- cs
+               , pname <- snd (projName c)
+               ]
 
     projName :: (Name,Int) -> (Name,[Name])
     projName (c,n) = (c,[c ++ "_" ++ show x  | x <- [0..n-1]])

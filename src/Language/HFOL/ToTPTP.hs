@@ -212,7 +212,8 @@ flattenPMGConstraints [] = []
 -- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
 withConstraints f css = do write $ "withConstraints: " ++ show css
-                           foldl (\/) f . catMaybes <$> mapM translateGroup css
+                           foldl (\/) f . catMaybes
+                             <$> mapM (locally . translateGroup) css
   where
     -- And the constraints of a group
     translateGroup :: [Constraint] -> TM (Maybe Formula)
@@ -225,21 +226,29 @@ withConstraints f css = do write $ "withConstraints: " ++ show css
     translateConstraint :: Constraint -> TM (Maybe Formula)
     translateConstraint (e,p) = do
         t <- translateExpr e
-        r <- invertPattern p t
-        if t == r then return Nothing          -- Equal by reflexivity
-                  else return (Just (t === r))
+        r <- invertPattern p e t
+        if t == r then returnAndWrite Nothing  -- Equal by reflexivity
+                  else returnAndWrite (Just (t === r))
 
+returnAndWrite r = write (show (fmap prettyTPTP r)) >> return r
 -- | Inverts a pattern into projections
 --
 -- > invertPattern (C (E a b) c) x =
 -- >     C (E (E.0 (C.0 x)) (E.1 (C.0 x))) (C.1 x)
-invertPattern :: Pattern -> Term -> TM (Term)
-invertPattern (PVar _)      x = return x
-invertPattern PWild         x = return x
-invertPattern (PCon n pats) x = do
+--
+-- Also adds
+--     a = C.0 (E.0 x)
+--     b = C.0 (E.1 x)
+--     c = C.1 x
+invertPattern :: Pattern -> Expr -> Term -> TM (Term)
+invertPattern (PVar v)        e x = addIndirection v e >> return x
+invertPattern PWild           _ x = return x
+invertPattern p@(PCon n pats) e x = do
+  write $ "inverting pattern " ++ prettyCore p
   projs <- lookupProj n
   b <- lookupName n
   case b of
-    ConVar c -> T.Fun c <$> sequence [ invertPattern pat (T.Fun proj [x])
+    ConVar c -> T.Fun c <$> sequence [ invertPattern pat (App (funName proj) [e])
+                                                         (T.Fun proj [x])
                                      | pat <- pats | proj <- projs ]
     _ -> error $ "invertPattern: unbound constructor " ++ n
