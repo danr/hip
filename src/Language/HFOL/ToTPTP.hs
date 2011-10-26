@@ -77,12 +77,12 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
                                                (Case scrutinee
                                                 (fixBranches scrutinee brs)))
     sequence
-      [ do mf <- indented $
-                   locally $
-                      translateBranch (modifyPattern nameWilds p)
-                                      e
-                                      (map brPMG prevbrs)
-                                      num
+      [ do mf <- indented
+               $ locally
+               $ translateBranch (modifyPattern nameWilds p)
+                                 e
+                                 (map brPMG prevbrs)
+                                 num
            case mf of
              Just f  -> write (prettyTPTP f)
              Nothing -> write "No formula produced."
@@ -107,10 +107,12 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
         Just conds -> do
           lhs <- translateExpr (App fname (map Var args))
           rhs <- translateExpr expr
+          write $ "conditions : " ++ show conds
           formula <- (lhs === rhs) `withConditions` conds
           patExpr <- followExpr (patternToExpr (pattern pmg))
-          let constr = map flattenPMGConstraints
-                           (moreSpecificPatterns patExpr prev)
+          let constr = stripConflicts conds
+                     $ map flattenPMGConstraints
+                     $ moreSpecificPatterns patExpr prev
 
           write $ "moreSpecificPatterns of " ++ prettyCore pmg ++
                   " followed to " ++ prettyCore patExpr ++ " are:"
@@ -208,6 +210,23 @@ flattenPMGConstraints ((e,pmg):pmgs) = [(e,pattern pmg)]
                                     ++ maybeToList (guardCondition pmg)
                                     ++ flattenPMGConstraints pmgs
 flattenPMGConstraints [] = []
+
+-- | Remove all constraint groups which have conflicts with the conditions
+stripConflicts :: [Condition] -> [[Constraint]] -> [[Constraint]]
+stripConflicts conds css = [ constr
+                           | constr <- css, and [ not (conflict c c')
+                                                | c <- conds, c' <- constr
+                                                ]
+                           ]
+
+-- | The condition and the constraint is in conflict, then we can remove
+--   the whole constraint group this constraint comes from.
+--
+--   This happens for instance when we have p x == bottom as a condition
+--   and p x == True as a constraint
+conflict :: Condition -> Constraint -> Bool
+conflict (e,p) (e',p') = e == e' && p /= p'
+
 
 -- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
