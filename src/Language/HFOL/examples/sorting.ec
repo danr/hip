@@ -8,22 +8,22 @@ if b t f = case b of {
    False -> f };
 
 filter p xs = case xs of
-    { Cons y ys | p y -> Cons y (filter p ys)
-    ; Cons y ys       -> filter p ys
+    { Cons x xs | p x -> Cons x (filter p xs)
+    ; Cons x xs       -> filter p xs
     ; Nil             -> Nil
     };
 
-plus n m = case n of { Zero -> m ; Succ n2 -> Succ (plus n2 m) };
+plus n m = case n of { Zero -> m ; Succ n -> Succ (plus n m) };
 
 eq n m = case T n m of {
-              T Zero Zero           -> True;
-              T (Succ n2) (Succ m2) -> eq n2 m2;
-              _                     -> False };
+              T Zero Zero         -> True;
+              T (Succ n) (Succ m) -> eq n m;
+              _                   -> False };
 
 lt n m = case T n m of {
-              T _      Zero   -> False;
-              T Zero   _      -> True;
-              T (Succ n2) (Succ m2) -> lt n2 m2 };
+              T _        Zero     -> False;
+              T Zero     _        -> True;
+              T (Succ n) (Succ m) -> lt n m };
 
 le n m = case U of
            { U | eq n m -> True
@@ -37,12 +37,12 @@ gt n m = case U of
            };
 
 append xs ys = case xs of {
-   Cons z zs -> Cons z (append zs ys);
+   Cons x xs -> Cons x (append xs ys);
    Nil       -> ys };
 
 qsort xs = case xs of
-      { Cons x ys -> append (qsort (filter (le x) ys))
-                            (Cons x (qsort (filter (gt x) ys)))
+      { Cons x xs -> append (qsort (filter (gt x) xs))
+                            (Cons x (qsort (filter (le x) xs)))
       ; Nil       -> Nil
       };
 

@@ -25,9 +25,9 @@ import Language.HFOL.Constructors
 import Language.HFOL.Util
 import Control.Applicative
 import Control.Monad.State
+import Control.Arrow (second,(***))
 import Data.List (intersect)
 import Data.Maybe (listToMaybe,fromMaybe,catMaybes)
-
 import Language.HFOL.ArbitraryCore
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary
@@ -35,7 +35,26 @@ import Test.QuickCheck.Arbitrary
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
 fixBranches :: Expr -> [Branch] -> [Branch]
-fixBranches scrut = removeOverlap . addBottoms scrut
+fixBranches scrut = renameBranches . removeOverlap . addBottoms scrut
+
+-- | Rename all bindings in a list of branches
+renameBranches :: [Branch] -> [Branch]
+renameBranches = (`evalState` (0,[]))
+               . mapM ((modify (second (const [])) >>) . renameBranch)
+  where
+    renameBranch :: Branch -> State (Int,[(Name,Name)]) Branch
+    renameBranch (pmg :-> e) = do
+      p' <- renamePattern (pattern pmg)
+      renames <- gets snd
+      return (modifyGuard (substVars renames) (pmg { pattern = p' })
+              :-> substVars renames e)
+
+    renamePattern :: Pattern -> State (Int,[(Name,Name)]) Pattern
+    renamePattern PWild       = return PWild
+    renamePattern (PCon c ps) = PCon c <$> mapM renamePattern ps
+    renamePattern (PVar x)    = do x' <- (((x ++ "_") ++) . show) <$> gets fst
+                                   modify (succ *** ((x,x'):))
+                                   return (PVar x')
 
 --------------------------------------------------------------------------------
 -- Remove overlapping branches

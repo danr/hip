@@ -1,9 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module Language.HFOL.Core where
 
--- TODO : Add guards!
-
 import Data.Data
+import Data.Generics.Uniplate.Data
 
 type Name = String
 
@@ -34,11 +33,11 @@ data Branch = (:->) { brPMG :: PMG , brExpr :: Expr }
 
 -- Pattern + Maybe Guard
 data PMG = NoGuard { pattern :: Pattern }
-         | Guard   { pattern :: Pattern, guardExpr :: Expr }
+         | Guard   { pattern :: Pattern , guardExpr :: Expr }
   deriving(Eq,Ord,Data,Typeable)
 
 data Pattern = PVar { patName :: Name }
-             | PCon { patName :: Name, patArgs :: [Pattern] }
+             | PCon { patName :: Name , patArgs :: [Pattern] }
              | PWild
   deriving(Eq,Ord,Data,Typeable)
 
@@ -48,6 +47,11 @@ data Pattern = PVar { patName :: Name }
 modifyPattern :: (Pattern -> Pattern) -> PMG -> PMG
 modifyPattern f (Guard p e) = Guard (f p) e
 modifyPattern f (NoGuard p) = NoGuard (f p)
+
+-- | Modify the guard of a PMG if it exists
+modifyGuard :: (Expr -> Expr) -> PMG -> PMG
+modifyGuard f (Guard p e) = Guard p (f e)
+modifyGuard f ng          = ng
 
 -- | Declaration is a function declaration
 funcDecl :: Decl -> Bool
@@ -95,15 +99,19 @@ class FV a where
   fv :: a -> [Name]
 
 instance FV Expr where
-  fv (Var x)      = [x]
-  fv (App f xs)   = concatMap fv xs
-  fv (Con c xs)   = concatMap fv xs
-  fv (IsBottom e) = fv e
+  fv e = [ x | Var x <- universe e ]
 
 instance FV Pattern where
-  fv (PVar x)    = [x]
-  fv (PCon c xs) = concatMap fv xs
-  fv PWild       = []
+  fv p = [ x | PVar x <- universe p ]
+
+-- | Substitution
+subst :: Name -> Expr -> Expr -> Expr
+subst x' e' = transform f
+  where f (Var x) | x == x' = e'
+        f e       =  e
+
+substVars :: [(Name,Name)] -> Expr -> Expr
+substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
 
 {-
  Given a function name and the matrix of patterns and expressions,
