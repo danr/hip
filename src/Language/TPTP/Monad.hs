@@ -5,7 +5,8 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,newVar
                            ,constant
                            ,unary
-                           ,binary
+                           ,binary                            
+                           ,trinary
                            ,predicate
                            ,relation
                            ,(==>),(&),(/\),(\/),(<=>)
@@ -23,7 +24,7 @@ import Control.Monad.State
 import Control.Applicative hiding (empty)
 import Control.Arrow (first,second,(***))
 
-import Language.TPTP hiding ((===),(!=),(&),(/\),(\/),(==>),(<=>),mkBinOp)
+import Language.TPTP hiding ((===),(!=),(&),(/\),(\/),(==>),(<=>),mkBinOp,forall,exists)
 
 type ST = [VarName]
 
@@ -48,6 +49,9 @@ unary n = liftM (Fun (FunName n) . pure)
 
 binary :: String -> M Term -> M Term -> M Term
 binary n = liftM2 (\x y -> Fun (FunName n) [x,y])
+
+trinary :: String -> M Term -> M Term -> M Term -> M Term
+trinary n = liftM3 (\x y z -> Fun (FunName n) [x,y,z])
 
 predicate :: String -> M Term -> M Formula
 predicate n = liftM (Rel (RelName n) . pure)

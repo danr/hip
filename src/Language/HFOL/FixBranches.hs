@@ -154,9 +154,8 @@ addBottomGuard br@(Guard p g :-> e) = [br,Guard p (IsBottom g) :-> bottom]
 
 -- | Adds the bottom PMGs for a PMG under a scrutinee
 addBottom :: Pattern -> PMG -> [PMG]
-addBottom scrut (NoGuard p) = map NoGuard (addBottomPattern scrut p)
-addBottom scrut (Guard p g) = Guard p (IsBottom g)
-                            : map NoGuard (addBottomPattern scrut p)
+addBottom scrut pmg = [ Guard p (IsBottom g) | Guard p g <- [pmg] ] ++
+                      map NoGuard (addBottomPattern scrut (pattern pmg))
 
 -- | Adds the bottom patterns for a pattern under a scrutinee
 addBottomPattern :: Pattern -> Pattern -> [Pattern]

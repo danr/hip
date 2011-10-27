@@ -28,6 +28,7 @@ main = do
       mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
       putStrLn latexFooter
 
+
 latexHeader :: String -> [T.Decl] -> String
 latexHeader file fs = unlines $
   ["\\documentclass{article}"
