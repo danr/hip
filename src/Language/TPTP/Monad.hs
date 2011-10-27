@@ -5,7 +5,7 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,newVar
                            ,constant
                            ,unary
-                           ,binary                            
+                           ,binary
                            ,trinary
                            ,predicate
                            ,relation

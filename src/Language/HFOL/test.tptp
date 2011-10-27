@@ -1,7 +1,0 @@
-fof(ptrk,axiom,! [X0,X1]: (app(app(k_ptr,X0),X1) = k(X0,X1))).
-fof(ptrs,axiom,! [X0,X1,X2]: (app(app(app(s_ptr,X0),X1),X2) = s(X0,X1,X2))).
-fof(saxiom,axiom,! [X0,X1,X2]: (s(X0,X1,X2) = app(app(X0,X2),app(X1,X2)))).
-fof(kaxiom,axiom,! [X0,X1]: (k(X0,X1) = X0)).
-fof(idaxiom,axiom,id = app(app(s_ptr,k_ptr),k_ptr)).
-fof(flipaxiom,axiom,! [X0,X1,X2]: (flip(X0,X1,X2) = app(app(X0,X2),X1))).
-fof(main,question,? [X] : s(k_ptr,k_ptr,a) = X).

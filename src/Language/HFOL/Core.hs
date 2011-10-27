@@ -118,27 +118,30 @@ substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
  returns a function which cases on the arguments and branches
  on the patterns and expressions
 
- f p11 p12 ... p1n = e1
+ f p11 p12 ... p1n | g1 = e1
  ...
- f pk1 pk2 ... pkn = ek
+ f pk1 pk2 ... pkn | gk = ek
 
    =>
 
  f u1 ... un = case Tn u1 .. un of
-                   Tn p11 ... p1n -> e1
+                   Tn p11 ... p1n | g1 -> e1
                    ...
-                   Tn pk1 ... pkn -> ek
+                   Tn pk1 ... pkn | gk -> ek
 
  The corresponding function call is
  funcMatrix "f" [ ( [p11,...,p1n] , e1 ), ... , ([pk1,...,pkn] , ek) ]
 
 -}
-funcMatrix :: Name -> [([Pattern],Expr)] -> Decl
+funcMatrix :: Name -> [([Pattern],Maybe Expr,Expr)] -> Decl
 funcMatrix n m = Func n us $ Case (Con tup (map Var us))
-                                  [ NoGuard (PCon tup as) :-> e | (as,e) <- m ]
+                                  [ guardMaybe ps mg :-> e | (ps,mg,e) <- m ]
   where len = length (fst (head m))
-        us  = [ 'u':show x | x <- [1..len] ]
-        tup = "Tup" ++ show len
+        us  = [ "u_" ++ show x | x <- [1..len] ]
+        tup = "T" ++ show len
+        guardMaybe :: [Pattern] -> Maybe Expr -> PMG
+        guardMaybe ps (Just e) = Guard   (PCon tup ps) e
+        guardMaybe ps Nothing  = NoGuard (PCon tup ps) e
 
 {-
    Expand a function definition with pattern matchings
@@ -146,13 +149,13 @@ funcMatrix n m = Func n us $ Case (Con tup (map Var us))
    do the same as funcMatrix above.
 -}
 func :: Name -> [Pattern] -> Body -> Decl
-func n as b | all varPat as || null as = Func n (map patName as) b
-func n as (Expr e)     = funcMatrix n [(as,e)]
-func n as (Case s brs) = Func n us $
+func n ps b | all varPat ps || null ps = Func n (map patName ps) b
+func n ps (Expr e)     = funcMatrix n [(ps,Nothing,e)]
+func n ps (Case s brs) = Func n us $
                          Case (Con tup (s : map Var us))
-                              [ modifyPattern (\p -> PCon tup (p:as)) pmg :-> e
+                              [ modifyPattern (\p -> PCon tup (p:ps)) pmg :-> e
                               | pmg :-> e <- brs ]
-  where len = length as
-        us  = [ 'u':show x | x <- [1..len] ]
-        tup = "Tup" ++ show (len + 1)
+  where len = length ps
+        us  = [ "u"++show x | x <- [1..len] ]
+        tup = "T" ++ show (len + 1)
 
