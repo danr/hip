@@ -59,7 +59,7 @@ import qualified Data.Set as S
 --   even debug output to easier pair it up with accompanying code
 --
 --   The state capabilities are kept abstract
-newtype TM a = TM { unTM :: (State St a) }
+newtype TM a = TM { unTM :: State St a }
   deriving (Functor,Applicative,Monad)
 
 -- | Runs a computation in an empty environment, with an empty state.
@@ -303,7 +303,7 @@ disjDecls = concatMap datatypeDisj
     -- Make two constructors disjunct
     disjunct :: (Name,Int) -> (Name,Int) -> T.Decl
     disjunct (c1,a1) (c2,a2) = T.Axiom ("disj" ++ c1 ++ c2)
-       $ forall (xs ++ ys) $ Fun (FunName c1) (map T.Var xs)
+       $ forall' (xs ++ ys) $ Fun (FunName c1) (map T.Var xs)
                              !=
                              Fun (FunName c2) (map T.Var ys)
 
@@ -314,7 +314,7 @@ projDecls :: Map Name [Name] -> [T.Decl]
 projDecls = concatMap (uncurry mkDecl) . M.toList
   where
     mkDecl :: Name -> [Name] -> [T.Decl]
-    mkDecl c ps = [ Axiom ("proj" ++ p) $ forall xs $
+    mkDecl c ps = [ Axiom ("proj" ++ p) $ forall' xs $
                     Fun (FunName p) [Fun (FunName c) (map T.Var xs)] === T.Var x
                   | x <- xs | p <- ps ]
       where arity = length ps
@@ -325,7 +325,7 @@ ptrDecls :: Map Name Int -> Set Name -> [T.Decl]
 ptrDecls as = map mkDecl . S.toList
   where
     mkDecl fn = Axiom ("ptr" ++ fn)
-              $ forall xs
+              $ forall' xs
                 $ appFold (Fun (FunName (makePtrName fn)) []) (map T.Var xs)
                   ===
                   Fun (FunName fn) (map T.Var xs)

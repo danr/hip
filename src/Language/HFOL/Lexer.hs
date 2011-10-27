@@ -47,7 +47,7 @@ lex s@(x:xs)
     | isSpace x = lex xs
     | isDigit x = case reads s of
                      [(n,s')] -> Number n : lex s'
-                     _        -> error $ "lex failed to read after number"
+                     _        -> error "lex failed to read after number"
     | otherwise = error $ "lex failed on unknow character " ++ [x]
 
 lexIdent :: (String -> Tok) -> String -> [Tok]

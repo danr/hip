@@ -51,7 +51,7 @@ modifyPattern f (NoGuard p) = NoGuard (f p)
 -- | Modify the guard of a PMG if it exists
 modifyGuard :: (Expr -> Expr) -> PMG -> PMG
 modifyGuard f (Guard p e) = Guard p (f e)
-modifyGuard f ng          = ng
+modifyGuard _ ng          = ng
 
 -- | Declaration is a function declaration
 funcDecl :: Decl -> Bool
@@ -108,7 +108,7 @@ instance FV Pattern where
 subst :: Name -> Expr -> Expr -> Expr
 subst x' e' = transform f
   where f (Var x) | x == x' = e'
-        f e       =  e
+        f e       = e
 
 substVars :: [(Name,Name)] -> Expr -> Expr
 substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
@@ -136,12 +136,13 @@ substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
 funcMatrix :: Name -> [([Pattern],Maybe Expr,Expr)] -> Decl
 funcMatrix n m = Func n us $ Case (Con tup (map Var us))
                                   [ guardMaybe ps mg :-> e | (ps,mg,e) <- m ]
-  where len = length (fst (head m))
+  where fst3 (x,_,_) = x
+        len = length (fst3 (head m))
         us  = [ "u_" ++ show x | x <- [1..len] ]
-        tup = "T" ++ show len
+        tup = 'T' : show len
         guardMaybe :: [Pattern] -> Maybe Expr -> PMG
         guardMaybe ps (Just e) = Guard   (PCon tup ps) e
-        guardMaybe ps Nothing  = NoGuard (PCon tup ps) e
+        guardMaybe ps Nothing  = NoGuard (PCon tup ps)
 
 {-
    Expand a function definition with pattern matchings
@@ -156,6 +157,6 @@ func n ps (Case s brs) = Func n us $
                               [ modifyPattern (\p -> PCon tup (p:ps)) pmg :-> e
                               | pmg :-> e <- brs ]
   where len = length ps
-        us  = [ "u"++show x | x <- [1..len] ]
-        tup = "T" ++ show (len + 1)
+        us  = [ "u_" ++ show x | x <- [1..len] ]
+        tup = 'T' : show (len + 1)
 

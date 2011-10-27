@@ -8,7 +8,6 @@ module Language.HFOL.ParserInternals
        )
        where
 
-import Control.Applicative
 import Data.Parser.Grempa.Grammar
 import Data.Parser.Grempa.Dynamic
 import Data.Data

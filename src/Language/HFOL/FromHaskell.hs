@@ -11,51 +11,76 @@ import Language.HFOL.Pretty
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Writer
-import Control.Monad.Identity
+import Control.Monad.Error
+import Control.Monad.RWS
 
 import Data.List (groupBy)
 import Data.Function (on)
+import Data.Either (partitionEithers)
 
-newtype FH a = FH { unFH :: Writer [String] a }
-  deriving(Functor,Applicative,Monad,MonadWriter [String])
+newtype FH a = FH (ErrorT String (RWS Env [Either String C.Decl] St) a)
+  deriving(Functor,Applicative,Monad
+          ,MonadWriter [Either String C.Decl]
+          ,MonadReader Env
+          ,MonadState St)
 
-write :: MonadWriter [a] m => a -> m ()
-write = tell . return
+type St = ()
 
-warn :: MonadWriter [String] m => String -> m ()
+type Env = ()
+
+initSt :: St
+initSt = ()
+
+initEnv :: Env
+initEnv = ()
+
+write :: String -> FH ()
+write = tell . return . Left
+
+warn :: String -> FH ()
 warn = write . ("Warning: " ++)
 
-runFH :: FH a -> (a,[String])
-runFH = runWriter . unFH
+runFH :: FH () -> (Either String [C.Decl],[String])
+runFH (FH m) = case evalRWS (runErrorT m) initEnv initSt of
+  (Left err,w) -> (Left err,fst (partitionEithers w))
+  (Right (),w) -> let (msgs,decls) = partitionEithers w
+                  in  (Right decls,msgs)
+
+decl :: C.Decl -> FH ()
+decl = tell . return . Right
 
 run :: FilePath -> IO ()
 run f = do
   r <- parseFile f
   case r of
-    ParseOk m -> do
-       let (ds,msgs) = runFH (fromModule m)
-       mapM_ putStrLn msgs
-       putStrLn ""
-       mapM_ (putStrLn . prettyCore) ds
+    ParseOk m ->
+      case runFH (fromModule m) of
+        (Left err,msgs) -> do
+          mapM_ putStrLn msgs
+          putStrLn ""
+          putStrLn err
+        (Right ds,msgs) -> do
+          mapM_ putStrLn msgs
+          putStrLn ""
+          mapM_ (putStrLn . prettyCore) ds
     ParseFailed loc s -> putStrLn $ show loc ++ ": " ++ s
 
 indented :: String -> String
 indented = unlines . map ("    " ++) . lines
 
-fromModule :: Module -> FH [C.Decl]
+fromModule :: Module -> FH ()
 fromModule (Module loc name pragmas warnings exports imports decls) =
-  concat <$> mapM fromDecl decls
+  mapM_ fromDecl decls
 
-fromDecl :: Decl -> FH [C.Decl]
+fromDecl :: Decl -> FH ()
 fromDecl d = case d of
   DataDecl loc dataornew ctxt name tyvars qualcondecls derives ->
-    return . Data <$> mapM fromQualConDecl qualcondecls
-  FunBind matches -> fromMatches matches
+    (decl . Data) =<< mapM fromQualConDecl qualcondecls
+--  FunBind matches -> fromMatches matches
   e -> do
     warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
     write $ indented (show e)
-    return []
+
 
 fromQualConDecl :: QualConDecl -> FH (Name,Int)
 fromQualConDecl (QualConDecl loc tyvars cxtx condecl) = fromConDecl condecl
@@ -94,34 +119,38 @@ fromConDecl c = case c of
 matchName :: Match -> H.Name
 matchName (Match _ name _ _ _ _) = name
 
-fromMatches :: [Match] -> FH C.Decl
-fromMatches = mapM fromFunMatches . groupBy ((==) `on` matchName)
+fromMatches :: [Match] -> FH ()
+fromMatches = mapM_ fromFunMatches . groupBy ((==) `on` matchName)
 
-fromFunMatches :: [Match] -> FH C.Decl
-fromFunMatches ms = funcMatrix (fromName (matchName (head ms)))
-                 <$> (concat <$> mapM matchToRow ms)
+concatMapM f xs = concat <$> mapM f xs
+
+fromFunMatches :: [Match] -> FH ()
+fromFunMatches ms = decl =<< funcMatrix (fromName (matchName (head ms)))
+                 <$> (concatMapM matchToRow ms)
 
 matchToRow :: Match -> FH [([Pattern],Maybe C.Expr,C.Expr)]
 matchToRow (Match loc name ps mtype rhs binds) = do
-  when (not (null binds)) $
-    warn $ "Not generating any binds for where clause" ++ prettyPrint binds
-  case rhs of
+  when undefined $ -- (not (null binds)) $
+    warn $ "Not generating any binds for where clause" ++ show binds
+  return []
+{-  case rhs of
     UnGuardedRhs e ->
     GuardedRhs guards
+-}
 
 fromPat :: Pat -> FH Pattern
 fromPat pat = case pat of
   H.PVar name   -> return (C.PVar (fromName name))
   PTuple ps     -> PCon ("T" ++ show (length ps)) <$> mapM fromPat ps
   PParen p      -> fromPat p
-  PWildCard     -> PWild
+  PWildCard     -> return PWild
   PatTypeSig loc p ty -> do
     warn $ "Ignored type signature in pattern " ++ prettyPrint pat
     fromPat p
   PAsPat name p -> do
     warn $ "No handling of as patterns: " ++ prettyPrint pat
     fromPat p
-  PInfixApp p1 qname p2) ->
+  PInfixApp p1 qname p2 ->
     (\n a b -> PCon n [a,b]) <$> fromQName qname <*> fromPat p1 <*> fromPat p2
   _ -> do
     warn $ "No handling for pattern: " ++ prettyPrint pat

@@ -24,6 +24,7 @@ instance P Body where
 instance P Expr where
   p = pexpr 2
 
+enclose :: Bool -> Doc -> Doc
 enclose True  = parens
 enclose False = id
 

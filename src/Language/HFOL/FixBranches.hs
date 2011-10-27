@@ -18,7 +18,7 @@ module Language.HFOL.FixBranches
  where
 
 import Language.HFOL.Core
-import Language.HFOL.Pretty
+-- import Language.HFOL.Pretty
 import Language.HFOL.ParserInternals
 import Language.HFOL.Constructors
 
@@ -26,11 +26,10 @@ import Language.HFOL.Util
 import Control.Applicative
 import Control.Monad.State
 import Control.Arrow (second,(***))
-import Data.List (intersect)
-import Data.Maybe (listToMaybe,fromMaybe,catMaybes)
-import Language.HFOL.ArbitraryCore
-import Test.QuickCheck
-import Test.QuickCheck.Arbitrary
+import Data.Maybe (listToMaybe,catMaybes)
+import Language.HFOL.ArbitraryCore()
+--import Test.QuickCheck
+--import Test.QuickCheck.Arbitrary
 
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
@@ -121,12 +120,12 @@ instance Specificity Pattern where
 addBottoms :: Expr -> [Branch] -> [Branch]
 addBottoms scrut brs = case matchAnyBranch scrut brs of
   Nothing -> brsBottomGuards ++ [NoGuard PWild :-> bottom]
-  Just (p :-> e) | e == bottom -> brsBottomGuards
-                 | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
-                                                     | p' <- addBottom scrut' p
-                                                     ]
-                                       | (p :-> e) <- brs
-                                       ]
+  Just (_ :-> e') | e' == bottom -> brsBottomGuards
+                  | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
+                                                      | p' <- addBottom scrut' p
+                                                      ]
+                                        | (p :-> e) <- brs
+                                        ]
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 
@@ -149,8 +148,8 @@ matchAnyBranch scrut brs = listToMaybe
     matchAny _            _          = True
 
 addBottomGuard :: Branch -> [Branch]
-addBottomGuard br@(NoGuard p :-> e) = [br]
-addBottomGuard br@(Guard p g :-> e) = [br,Guard p (IsBottom g) :-> bottom]
+addBottomGuard br@(NoGuard _ :-> _) = [br]
+addBottomGuard br@(Guard p g :-> _) = [br,Guard p (IsBottom g) :-> bottom]
 
 -- | Adds the bottom PMGs for a PMG under a scrutinee
 addBottom :: Pattern -> PMG -> [PMG]
@@ -212,7 +211,7 @@ guardCondition (Guard _ e           ) = Just (e,trueP)
 msp :: Expr -> Pattern -> Maybe [(Expr,Pattern)]
 msp (Con c as) (PCon c' ps) | c == c'   = concatMaybe $ zipWith msp as ps
                             | otherwise = Nothing
-msp (Con c as) _            = Just []
+msp (Con _ _)  _            = Just []
 msp e          p            = Just [(e,p)]
 
 -- | All wilds need to be named to use moreSpecificPatterns.
@@ -225,28 +224,6 @@ nameWilds = (`evalState` 0) . go
     go PWild       = do { x <- get; modify succ; return (PVar ('_':show x)) }
     go (PCon c ps) = PCon c <$> mapM go ps
     go p           = return p
-
-testPMGs = map (brPMG . parseBranch) ["Cons x xs | p x -> filter"
-                                     ]
-testExpr = parseExpr "Cons x xs"
-
-testUs = map (brPMG . parseBranch) ["U | eq n m -> e1"
-                                   ,"U | lt n m -> e2"
-                                   ]
-
-testU = parseExpr "U"
-
-testWs = map (brPMG . parseBranch) ["_ | eq n m -> e1"]
-
-testPrev = map (brPMG . parseBranch)
-    [ "T (Cons Zero xs) (Cons (Succ n) ys) -> e"
-    , "T Bottom _                          -> e"
-    , "T (Cons Bottom _) _                 -> e"
-    , "T _ Bottom                          -> e"
-    , "T _ (Cons Bottom _)                 -> e"
-    ]
-
-testEPrev = parseExpr "T (Cons n zs) b"
 
 {-
 
@@ -366,6 +343,7 @@ testOverlap = map parseBranch
 -- > A (B ⊥) _
 -- > A _     (D ⊥)
 
+testExpr1,testExpr2,testExpr3,testPattern :: Pattern
 testExpr1    = parsePattern "_"
 testExpr2    = parsePattern "A x y"
 testExpr3    = parsePattern "A (B x) y"

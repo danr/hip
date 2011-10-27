@@ -15,8 +15,8 @@ import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 
-import Data.List (partition,intercalate,sort,find,nub)
-import Data.Maybe (catMaybes,maybeToList)
+import Data.List (partition,intercalate,sort,find)
+import Data.Maybe (catMaybes)
 
 -- | Translates a program to TPTP, with its debug output
 toTPTP :: [Decl] -> ([(Decl,[T.Decl])],[T.Decl],Debug)
@@ -68,12 +68,12 @@ translate d@(Func fname args (Expr e)) = locally $ do
     rhs <- translateExpr (App fname (map Var args))
     lhs <- translateExpr e
     qs  <- popQuantified
-    let f = Axiom fname $ forall qs $ rhs === lhs
+    let f = Axiom fname $ forall' qs $ rhs === lhs
     write (prettyTPTP f)
     return (d,[f])
 translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
     write $ "translate " ++ prettyCore d
-    write $ "branches fixed to:"
+    write   "branches fixed to:"
     write $ prettyCore (Func fname args
                                                (Case scrutinee
                                                 (fixBranches scrutinee brs)))
@@ -132,7 +132,7 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
 
               formula' <- formula `withConstraints` constr
               qs <- popQuantified
-              return $ Just $ T.Axiom (fname ++ show num) (forall qs formula')
+              return $ Just $ T.Axiom (fname ++ show num) (forall' qs formula')
 translate d = error $ "translate on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the
@@ -221,7 +221,7 @@ contradict (e,p) (e',p') = e == e' && p /= p'
 
 -- | The formula is true or one of the constraints are true
 withConstraints :: Formula -> [[Constraint]] -> TM Formula
-withConstraints f css = do -- write $ "withConstraints: "
+withConstraints f css =    -- write $ "withConstraints: "
                            -- indented $ mapM_ (write . show) css
                            foldl (\/) f . catMaybes
                              <$> mapM translateGroup css
@@ -242,8 +242,7 @@ withConstraints f css = do -- write $ "withConstraints: "
         r <- invertPattern p e t
         if t == r then returnAndWrite Nothing  -- Equal by reflexivity
                   else returnAndWrite (Just (t === r))
-
-returnAndWrite r = write (show (fmap prettyTPTP r)) >> return r
+      where returnAndWrite r = write (show (fmap prettyTPTP r)) >> return r
 -- | Inverts a pattern into projections
 --
 -- > invertPattern (C (E a b) c) x =
@@ -253,7 +252,7 @@ returnAndWrite r = write (show (fmap prettyTPTP r)) >> return r
 --     a = C.0 (E.0 x)
 --     b = C.0 (E.1 x)
 --     c = C.1 x
-invertPattern :: Pattern -> Expr -> Term -> TM (Term)
+invertPattern :: Pattern -> Expr -> Term -> TM Term
 invertPattern (PVar v)        e x = addIndirection v e >> return x
 invertPattern PWild           _ x = return x
 invertPattern p@(PCon n pats) e x = do
