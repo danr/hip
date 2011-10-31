@@ -7,8 +7,6 @@ src/*/*/*\.pdf
 *.aux
 *.log
 *Main
-examples/*
-!examples/*hs
 docs/*pdf
 docs/*tex
 docs/*mail*
