@@ -2,6 +2,7 @@
 *hi
 *out
 *tptp
+*html
 src/*/*/*\.tex
 src/*/*/*\.pdf
 *.aux

@@ -1,0 +1,102 @@
+#+TITLE:     Time Plan
+#+AUTHOR:    Dan Rosén
+#+EMAIL:     danr@student.gu.se
+#+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+LATEX_HEADER: \usepackage{fullpage}
+
+* Github repo
+[[http://github.com/danr/autospec/][Link to the github repository.]]
+
+* Week 44 (31 Oct - 6 Nov)
+** DONE Write project proposal
+** TODO Hand in project proposal
+SCHEDULED: <2011-11-01 Tue>
+
+** TODO Write time plan
+SCHEDULED: <2011-11-01 Tue>
+
+** TODO Mail Koen
+About time plan, merge-sort implementation, approx lemma and
+typeclasses.
+SCHEDULED: <2011-11-01 Tue>
+
+** TODO Write more examples
+SCHEDULED: <2011-11-02 Wed>
+
+** TODO Haskell $\rightarrow$ Core
+The translation should cover most of the examples
+SCHEDULED: <2011-11-04 Fri>
+
+** TODO Read about different proving techniques
+
+* Week 45 (7 Nov - 13 Nov)
+** TODO Meeting with Koen
+Discuss different proving techniques
+
+Present Haskell $\rightarrow$ Core translation
+
+SCHEDULED: <2011-11-07 Mon>
+** TODO Write report about translation to FOL
+SCHEDULED: <2011-11-08 Tue>
+** TODO Implement proving techniques
+SCHEDULED: <2011-11-11 Fri>
+
+* Week 46 (14 Nov - 20 Nov)
+** Evaluation of proving techniques
+SCHEDULED: <2011-11-14 Mon>
+
+** Evaluate translation
+Do we need to add a larger part in the Haskell $\rightarrow$ Core
+translation?
+SCHEDULED: <2011-11-14 Mon>
+
+** Continued work on proving
+SCHEDULED: <2011-11-15 Tue>
+
+* Week 47 (21 Nov - 27 Nov)
+** Report proving techniques
+** Report related work
+
+* Week 48 (28 Nov - 4 Dec)
+** Work on proving
+
+* Week 49 (5 Dec - 11 Dec)
+** Report work
+
+* Week 50 (12 Dec - 18 Dec)
+** First draft of report complete.
+Should have all necessary parts.
+
+* Week 51 (19 Dec - 25 Dec)
+** Christmas break
+SCHEDULED: <2011-12-23 Fri>
+
+* Week 52 (26 Dec - 1 Jan)
+** New Year's break
+SCHEDULED: <2012-01-01 Sun>
+
+* Week 1 (2 Jan - 8 Jan)
+** Write report
+SCHEDULED: <2012-01-06 Fri>
+
+* Week 2 (9 Jan - 15 Jan)
+** Write report
+SCHEDULED: <2012-01-13 Fri>
+** Hacking on the lost features
+SCHEDULED: <2012-01-13 Fri>
+
+* Week 3 (16 Jan - 22 Jan)
+** Write report
+SCHEDULED: <2012-01-20 Fri>
+** Prepare presentation
+SCHEDULED: <2012-01-20 Fri>
+
+* Week 4 (23 Jan - 29 Jan)
+** Prepare presentation
+
+** Final presentation
+
+* Week 5 (30 Jan - 5 Feb)
+** Report done
+
