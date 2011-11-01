@@ -1,0 +1,41 @@
+#+TITLE:     Proposal for Master Thesis : Automated Proving of Haskell Program Properties
+#+AUTHOR:    Dan Rosén
+#+EMAIL:     danr@student.gu.se
+#+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+STARTUP:   indent
+
+* Proposal
+This project is about proving properties of Haskell functions and
+programs by translating Haskell to First Order Logic (FOL) and using
+Automated Theorem Provers (ATPs). To do this, a tool needs to be produced
+that can do this translation, try different proving techniques and
+integrate this with an automated theorem prover.
+
+** Translate Haskell to FOL
+Haskell is a big language and the aim is to produce a translator for
+a sufficiently big subset of the Haskell98 standard to prove
+interesting properties. Special care needs to be taken to care for the
+undefined bottom value that exists in Haskell but not directly in
+First Order Logic.
+
+** Investigate different proving methods for programs
+There are several developed methods for proving properties in
+functional languages like Haskell, including normal induction,
+fix-point induction, coinduction techniques like bisimilation, the
+generic approximation lemma, reasoning with ana- and catamorphisms and
+Hoare induction.  The developed tool should be able to try to prove
+the property with different proving techniques, on different parts of
+the program, i.e. try induction on different combination of variables.
+
+** Integrate this with ATPs
+The intended output of the translation and proof axioms is the format
+TPTP (Thousand Problems for Theorem Provers). This is a standardised
+format most theorem provers can read. Eprover is a well-used theorem
+prover and its output should be made readible for the end user, if the
+property is true, and could possibly be used to produce a
+counterexample if the property fails.
+
+* Contributions
+The contributions of this project is work towards an automated way to
+prove prove properties of Haskell programs. Futhermore, the Haskell to
+FOL translation that could be used in other projects and research.
