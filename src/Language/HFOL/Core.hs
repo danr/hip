@@ -96,16 +96,6 @@ con0 n = Con n []
 pcon0 :: Name -> Pattern
 pcon0 n = PCon n []
 
--- | Free variables
-class FV a where
-  fv :: a -> [Name]
-
-instance FV Expr where
-  fv e = [ x | Var x <- universe e ]
-
-instance FV Pattern where
-  fv p = [ x | PVar x <- universe p ]
-
 -- | Substitution
 subst :: Name -> Expr -> Expr -> Expr
 subst x' e' = transform f
