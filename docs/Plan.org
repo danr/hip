@@ -2,7 +2,7 @@
 #+AUTHOR:    Dan Rosén
 #+EMAIL:     danr@student.gu.se
 #+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
-#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
 #+LATEX_HEADER: \usepackage{fullpage}
 
 * Github repo
@@ -13,15 +13,28 @@
 ** TODO Hand in project proposal
 SCHEDULED: <2011-11-01 Tue>
 
-** TODO Write time plan
-SCHEDULED: <2011-11-01 Tue>
+*** DONE Mail Graham
+CLOSED: [2011-11-02 Wed 08:50]
+** DONE Write time plan
+CLOSED: [2011-11-01 Tue 17:17] SCHEDULED: <2011-11-01 Tue>
 
-** TODO Mail Koen
+** DONE Mail Koen
+CLOSED: [2011-11-01 Tue 17:00]
+SCHEDULED: <2011-11-01 Tue>
 About time plan, merge-sort implementation, approx lemma and
 typeclasses.
-SCHEDULED: <2011-11-01 Tue>
+
 
 ** TODO Write more examples
+SCHEDULED: <2011-11-02 Wed>
+
+*** TODO Add merge sort
+*** TODO Feldspar examples
+*** TODO Case-Analysis from Moa's project
+[[http://dream.inf.ed.ac.uk/projects/lemmadiscovery/case_results.php][Case-Analysis Results]]
+**** TODO Translate to Haskell
+**** TODO Translate Theorems to Haskell
+** TODO How does Zeno handle typeclasses?
 SCHEDULED: <2011-11-02 Wed>
 
 ** TODO Haskell $\rightarrow$ Core
