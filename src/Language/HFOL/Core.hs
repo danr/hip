@@ -86,6 +86,8 @@ app (Con n es) e = Con n (es ++ [e])
 app (Var n)    e = App n [e]
 app IsBottom{} _ = error "app on IsBottom"
 
+infixl `app`
+
 -- | Nullary constructor
 con0 :: Name -> Expr
 con0 n = Con n []
@@ -134,15 +136,19 @@ substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
 
 -}
 funcMatrix :: Name -> [([Pattern],Maybe Expr,Expr)] -> Decl
-funcMatrix n m = Func n us $ Case (Con tup (map Var us))
+funcMatrix n [] = error "funcMatrix on empty matrix!"
+funcMatrix n [([],Nothing,e)] = Func n [] (Expr e)
+funcMatrix n m@(mn:_) = Func n us $ Case (con (map Var us))
                                   [ guardMaybe ps mg :-> e | (ps,mg,e) <- m ]
   where fst3 (x,_,_) = x
-        len = length (fst3 (head m))
+        len = length (fst3 mn)
         us  = [ "u_" ++ show x | x <- [1..len] ]
         tup = 'T' : show len
+        (con,pcon) = if len == 1 then (head,head)
+                                 else (Con tup,PCon tup)
         guardMaybe :: [Pattern] -> Maybe Expr -> PMG
-        guardMaybe ps (Just e) = Guard   (PCon tup ps) e
-        guardMaybe ps Nothing  = NoGuard (PCon tup ps)
+        guardMaybe ps (Just e) = Guard   (pcon ps) e
+        guardMaybe ps Nothing  = NoGuard (pcon ps)
 
 {-
    Expand a function definition with pattern matchings
