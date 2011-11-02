@@ -27,14 +27,17 @@ typeclasses.
 
 ** TODO Write more examples
 SCHEDULED: <2011-11-02 Wed>
-
-*** TODO Add merge sort
+*** DONE Add merge sort
+CLOSED: [2011-11-02 Wed 10:22]
 *** TODO Feldspar examples
 *** TODO Case-Analysis from Moa's project
 [[http://dream.inf.ed.ac.uk/projects/lemmadiscovery/case_results.php][Case-Analysis Results]]
 **** TODO Translate to Haskell
 **** TODO Translate Theorems to Haskell
-** TODO How does Zeno handle typeclasses?
+** TODO Comparison with Zeno
+*** DONE Write how Zeno compares to this project
+CLOSED: [2011-11-02 Wed 10:42]
+*** TODO How does Zeno handle typeclasses?
 SCHEDULED: <2011-11-02 Wed>
 
 ** TODO Haskell $\rightarrow$ Core

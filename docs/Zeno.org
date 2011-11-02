@@ -1,0 +1,73 @@
+#+TITLE:     Differences to Zeno
+#+AUTHOR:    Dan Rosén
+#+EMAIL:     danr@student.gu.se
+#+OPTIONS:   H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+* Resources
+[[http://www.haskell.org/haskellwiki/Zeno#Limitations][Haskell Wiki about Zeno]]
+
+* What Zeno does
+Aims to solve the general probelm of equality between to haskell terms
+for any input value
+
+Outputs proofs and translated Haskell programs to Isabelle/HOL, and
+lets Isabelle check it.
+
+Works with full Haskell98 with any GHC extensions not related to the
+type system, though with limitations that not all code is translated
+to Isabelle/HOL
+
+Can make counter-examples
+
+Property language is a Haskell DSL:
+#+begin_src haskell exports: code
+  data Equals
+    = forall a . (:=:) a a
+
+  data Prop
+    = Given Equals Prop
+    | Prove Equals
+
+  prop_length xs ys
+    = prove (length (xs ++ ys) :=: length xs + length ys)
+#+end_src
+
+* Zeno's limitations
+
+** No bottom of handling
+Zeno restricts its user to only use total pattern matches, and no
+partial definitions
+
+** Infinite values
+Zeno proves properties only true for finite values, it will gladly
+prove that reverse is involutive though it is only true for finite
+lists. It can also prove properties like
+#+begin_src haskell exports: code
+p = const undefined
+xs /= []
+takeWhile p xs ++ dropWile p xs == xs
+#+end_src
+This is an interesting limitation of takeWhile and dropWhile.
+
+*** Commentary from the Haskell wiki:
+You might ask why this is a Haskell theorem prover, rather than an ML
+one, if it cannot deal with infinite values, which would be a very
+valid question. As it stands Zeno is more a base-line for us to start
+more advanced research into lazy functional program verification,
+which will include attempting to tackle this issue.
+
+** No handling of mutually recursive datatypes
+Our project aims to make induction principles and use methods like
+fix point induction that will handle mutally recursive datatypes.
+
+** No internally recursive definitions
+Out project will float all definitions to top-level, solving this
+
+** No handling of primitive types
+Apart from lists, tuples and Bool, it does not handle Integer, Int,
+Char etc. Our project will possibly have support for Integers and
+other primitive Haskell types.
+
+
