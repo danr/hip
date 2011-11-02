@@ -4,13 +4,13 @@
   fusion (unfold)
 
 * Haskell -> FOL translation:
-  
+
   * Extensional equality is an axiom schema
 
     ! [f,g] : ( ( ! [X] : (f(X) = g(X))) => ( f = g ))
 
     fix:
-    
+
     ! [f_ptr,g_ptr] : ((! [X] : (app(f_ptr,X) = app(g_ptr,X))) => (f_ptr = g_ptr))
 
   * Congruence rules for functions
@@ -44,15 +44,15 @@
 
   * Which axioms for arithmetics on Integers (what to do with Int overflow)? PA?
 
-    
 
-    
-    
-    
-  
-  
- 
-  
+
+
+
+
+
+
+
+
 
 
 
