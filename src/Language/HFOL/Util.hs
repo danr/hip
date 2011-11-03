@@ -17,7 +17,7 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 withPrevious :: [a] -> [(a,[a])]
 withPrevious xs = zip xs (inits xs)
 
--- | If any is nothing (unreachable branch), return nothing,
+-- | If any is nothing (unreachable branch etc), return nothing,
 --   otherwise return just the catMaybes.
 concatMaybe :: [Maybe [a]] -> Maybe [a]
 concatMaybe ms | any isNothing ms = Nothing

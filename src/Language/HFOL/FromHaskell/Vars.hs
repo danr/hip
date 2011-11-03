@@ -1,4 +1,4 @@
-module Language.HFOL.FromHaskell.Vars where
+module Language.HFOL.FromHaskell.Vars (freeVars) where
 
 import qualified Language.HFOL.Core as C
 import Language.Haskell.Exts
@@ -12,11 +12,18 @@ import Control.Applicative hiding (empty)
 class FV a where
   fv :: a -> FH (Set C.Name)
 
+class BV a where
+  bv :: a -> FH (Set C.Name)
+
+-- The only exported function
 freeVars :: FV a => a -> FH [C.Name]
 freeVars = fmap S.toList . fv
 
 fvs :: FV a => [a] -> FH (Set C.Name)
 fvs = fmap unions . mapM fv
+
+bvs :: BV a => [a] -> FH (Set C.Name)
+bvs = fmap unions . mapM bv
 
 none :: FH (Set C.Name)
 none = return empty
@@ -29,9 +36,10 @@ instance FV Exp where
       InfixApp e1 (QVarOp qn) e2 -> unions <$> sequence [singleton <$> fromQName qn,fv e1,fv e2]
       InfixApp{}                 -> none
       App e1 e2                  -> union <$> fv e1 <*> fv e2
-      Lambda _loc ps el          -> difference <$> fv el <*> fvs ps
+      Lambda _loc ps el          -> difference <$> fv el <*> bvs ps
       If e1 e2 e3                -> unions <$> mapM fv [e1,e2,e3]
       Case e alts                -> union <$> fv e <*> fvs alts
+      Paren e                    -> fv e
       _                          -> fatal $ "FV on exp " ++ show e
 
 instance FV Decl where
@@ -43,11 +51,14 @@ instance FV Decl where
 instance FV Match where
   fv (Match _loc name ps _mtype rhs binds) = do
      rhsvs   <- fv rhs
-     psvs    <- fvs ps
+     psvs    <- bvs ps
      bindsvs <- fv binds
+     bindsbv <- bv binds
      -- Is this correct? Take all FV of the rhsvs and the binds, minus
      -- those from the patterns
-     return $ (rhsvs `union` bindsvs) `difference` psvs
+     let r = (rhsvs `union` bindsvs) `difference` (psvs `union` bindsbv)
+     debug $ show name ++ " fv: " ++ show r ++ " bindsbv: " ++ show bindsbv
+     return r
 
 instance FV Rhs where
   fv (UnGuardedRhs e) = fv e
@@ -58,10 +69,11 @@ instance FV GuardedRhs where
 
 instance FV Alt where
   fv (Alt _loc pat guarded binds) = do
-    patvs   <- fv pat
+    patvs   <- bv pat
     guardvs <- fv guarded
     bindsvs <- fv binds
-    return $ (guardvs `union` bindsvs) `difference` patvs
+    bindsbv <- bv binds
+    return $ (guardvs `union` bindsvs) `difference` (patvs `union` bindsbv)
 
 instance FV GuardedAlts where
   fv (UnGuardedAlt e) = fv e
@@ -81,16 +93,32 @@ instance FV Binds where
   fv (BDecls ds) = fvs ds
   fv (IPBinds{}) = warn "Not handling implicit arguments" >> none
 
+-- Bound Variables -------------------------------------------------------------
+
+instance BV Decl where
+  bv d = case d of
+    FunBind ms -> bvs ms
+    PatBind loc (PVar name) mtype rhs binds -> return (singleton (fromName name))
+    PatBind _loc p _mtype _rhs _binds -> fatal $ "BV on top level pattern: " ++ show p
+
+instance BV Match where
+  -- Handle binds?
+  bv (Match _loc name ps _mtype rhs binds) = return (singleton (fromName name))
+
+instance BV Binds where
+  bv (BDecls ds) = bvs ds
+  bv (IPBinds{}) = warn "Not handling implicit arguments" >> none
+
 -- These are not really free vars, they are bound vars, but they work the same way
-instance FV Pat where
-  fv p = case p of
+instance BV Pat where
+  bv p = case p of
     PVar name           -> return (singleton (fromName name))
     PLit{}              -> none
     PNeg{}              -> none
-    PInfixApp p1 _qn p2 -> union <$> fv p1 <*> fv p2
-    PApp _qn ps         -> fvs ps
-    PTuple ps           -> fvs ps
-    PList ps            -> fvs ps
-    PParen p            -> fv p
+    PInfixApp p1 _qn p2 -> union <$> bv p1 <*> bv p2
+    PApp _qn ps         -> bvs ps
+    PTuple ps           -> bvs ps
+    PList ps            -> bvs ps
+    PParen p            -> bv p
     PWildCard           -> none
     _                   -> fatal $ "FV on pat " ++ show p

@@ -15,11 +15,12 @@ import Language.HFOL.Pretty
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Error
-import Control.Monad.RWS hiding (gets,modify,local)
+import Control.Monad.RWS hiding (gets,modify,local,asks)
 import Data.Label.PureM
 
-import Data.List (groupBy)
+import Data.List (groupBy,(\\))
 import Data.Function (on)
+import Data.Maybe (fromMaybe)
 
 run :: FilePath -> IO ()
 run f = do
@@ -41,8 +42,16 @@ indented :: String -> String
 indented = unlines . map ("    " ++) . lines
 
 fromModule :: Module -> FH ()
-fromModule (Module loc name pragmas warnings exports imports decls) =
+fromModule (Module loc name pragmas warnings exports imports decls) = do
+  mapM_ addToScope decls
   mapM_ fromDecl decls
+
+addToScope :: Decl -> FH ()
+addToScope d = case d of
+  FunBind ms -> forM_ ms $ \(Match _ mn _ _ _ _) -> let n = fromName mn
+                                                     in addBind n n []
+  PatBind _ (H.PVar mn) _ _ _ -> let n = fromName mn in addBind n n []
+  _ -> return ()
 
 fromDecl :: Decl -> FH ()
 fromDecl d = case d of
@@ -54,17 +63,26 @@ fromDecl d = case d of
     warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
     write $ indented (show e)
 
+-- Functions -------------------------------------------------------------------
+
 fromMatches :: [Match] -> FH ()
 fromMatches = mapM_ fromFunMatches . groupBy ((==) `on` matchName)
 
-fromFunMatches :: [Match]-> FH ()
+fromFunMatches :: [Match] -> FH ()
 fromFunMatches [] = warn $ "Empty funmatches"
 fromFunMatches ms@(m:_) = do
-   let n = fromName (matchName m)
-   matrix <- localScope n (concatMapM matchToRow ms)
-   if null matrix
-       then warn $ "Empty matrix from " ++ n
-       else decl (funcMatrix n matrix)
+    let name = fromName (matchName m)
+    fvs <- (\\) <$> concatMapM freeVars ms <*> namesInScope
+    scopedname <- scopePrefix name
+    addBind name scopedname fvs
+    debug $ scopedname ++ " free vars: " ++ unwords fvs
+    matrix <- localScopeName name (map (addToPats fvs) <$> concatMapM matchToRow ms)
+    if null matrix
+        then warn $ "Empty matrix from " ++ name
+        else decl (funcMatrix scopedname matrix)
+  where
+    addToPats vars (ps,g,e) = (map C.PVar vars ++ ps,g,e)
+
 
 fromPatBind :: Decl -> FH ()
 fromPatBind (PatBind loc (H.PVar name) mtype rhs binds) =
@@ -74,9 +92,8 @@ fromPatBind pb@(PatBind loc p mtype rhs binds) =
 fromPatBind d = fatal $ "Internal error, fromPatBind on decl " ++ show d
 
 matchToRow :: Match -> FH [([Pattern],Maybe Expr,Expr)]
-matchToRow (Match loc name ps mtype rhs binds) = do
-  fromBinds binds
-  return []
+matchToRow (Match loc name ps mtype rhs binds) = localBindScope $ do
+  localScopeName "where" (fromBinds binds)
   ps' <- mapM fromPat ps
   case rhs of
     UnGuardedRhs e -> do e' <- fromExp e
@@ -85,6 +102,8 @@ matchToRow (Match loc name ps mtype rhs binds) = do
                                      g <- fromGuardStmts stmts
                                      e' <- fromExp e
                                      return (ps',Just g,e')
+
+-- Guards ----------------------------------------------------------------------
 
 fromGuardStmts :: [Stmt] -> FH Expr
 fromGuardStmts ss = case sequence (map unQualify ss) of
@@ -96,12 +115,18 @@ fromGuardStmts ss = case sequence (map unQualify ss) of
     unQualify (Qualifier e) = Just e
     unQualify _             = Nothing
 
-----------------------------------------------------------------------
--- Expressions
+-- Binds, i.e where ------------------------------------------------------------
+
+fromBinds :: Binds -> FH ()
+fromBinds (BDecls ds) = mapM_ fromDecl ds
+fromBinds b@(IPBinds xs) =
+  warn $ "Not handling implicit arguments: " ++ show b
+
+-- Expressions -----------------------------------------------------------------
 
 fromExp :: Exp -> FH Expr
 fromExp e = case e of
-  H.Var qn           -> C.Var <$> fromQName qn
+  H.Var qn           -> mkVar =<< fromQName qn
   H.Con qn           -> con0  <$> fromQName qn
   H.App e1 e2        -> C.app <$> fromExp e1 <*> fromExp e2
   Paren e            -> fromExp e
@@ -115,13 +140,14 @@ fromExp e = case e of
                                                            <*> fromExp e3
   _ -> fatal $ "No handling of expression " ++ prettyPrint e ++ "\n\n" ++ show e
 
+mkVar :: Name -> FH Expr
+mkVar n = fromMaybe (C.Var n) <$> lookupBind n
 
 fromQOp :: QOp -> FH Expr
-fromQOp (QVarOp qname) = C.Var <$> fromQName qname
+fromQOp (QVarOp qname) = mkVar =<< fromQName qname
 fromQOp (QConOp qname) = con0  <$> fromQName qname
 
-----------------------------------------------------------------------
--- Patterns
+-- Patterns --------------------------------------------------------------------
 
 fromPat :: Pat -> FH Pattern
 fromPat pat = case pat of
@@ -140,12 +166,3 @@ fromPat pat = case pat of
   _ -> do
     fatal $ "No handling for pattern: " ++ show pat ++ "\n\n" ++ prettyPrint pat
 
-----------------------------------------------------------------------
--- Binds, i.e where
-
-fromBinds :: Binds -> FH ()
-fromBinds (BDecls []) = return ()
-fromBinds (BDecls xs) =
-  warn $ "Not producing any binds for where clause: " ++ show xs
-fromBinds b@(IPBinds xs) =
-  warn $ "Not handling implicit arguments: " ++ show b

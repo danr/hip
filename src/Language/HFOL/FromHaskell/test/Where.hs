@@ -10,14 +10,14 @@ r x y = k (m x) (m y)
 
 k x y = x
 
-f x = k m m
+f x y = k m m
   where m = k x x
 
--- No scopink
-f' x = k (m x)
-  where m y = k y y
+-- No scoping
+g x y = k (n x)
+  where n y = k x y
 
--- Scopink;
-f'' x = k (m x)
-  where m x = k x x
+-- Scoping;
+h x y = k (m x)
+  where m x = k x y
 
