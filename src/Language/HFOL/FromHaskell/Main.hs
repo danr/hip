@@ -133,7 +133,8 @@ fromExp e = case e of
   InfixApp e1 qop e2 -> (app .) . app <$> fromQOp qop <*> fromExp e1 <*> fromExp e2
   Lambda loc ps e    -> fatal "No lambda"
   H.Case e alts      -> fatal "No case exps"
-  Let binds e        -> fatal "No lets"
+  Let binds e        -> localBindScope $ do localScopeName "let" (fromBinds binds)
+                                            fromExp e              
   Tuple es           -> C.Con ('T':show (length es)) <$> mapM fromExp es
   If e1 e2 e3        -> (app .) . app . (app (C.Var "if")) <$> fromExp e1
                                                            <*> fromExp e2

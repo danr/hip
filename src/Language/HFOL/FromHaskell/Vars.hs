@@ -40,6 +40,10 @@ instance FV Exp where
       If e1 e2 e3                -> unions <$> mapM fv [e1,e2,e3]
       Case e alts                -> union <$> fv e <*> fvs alts
       Paren e                    -> fv e
+      Let bs e                   -> do bsf <- fv bs
+                                       bsb <- bv bs
+                                       v   <- fv e
+                                       return $ (v `union` bsf) `difference` bsb
       _                          -> fatal $ "FV on exp " ++ show e
 
 instance FV Decl where
