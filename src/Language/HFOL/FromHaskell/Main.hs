@@ -19,7 +19,6 @@ import Control.Monad.RWS hiding (gets,modify,local)
 import Data.Label.PureM
 
 import Data.List (groupBy)
-import Data.Either (partitionEithers)
 import Data.Function (on)
 
 run :: FilePath -> IO ()
@@ -58,7 +57,7 @@ fromDecl d = case d of
 fromMatches :: [Match] -> FH ()
 fromMatches = mapM_ fromFunMatches . groupBy ((==) `on` matchName)
 
-fromFunMatches :: [Match] -> FH ()
+fromFunMatches :: [Match]-> FH ()
 fromFunMatches [] = warn $ "Empty funmatches"
 fromFunMatches ms@(m:_) = do
    let n = fromName (matchName m)
@@ -74,16 +73,28 @@ fromPatBind pb@(PatBind loc p mtype rhs binds) =
   fatal $ "Top level patterns not supported : " ++ prettyPrint pb
 fromPatBind d = fatal $ "Internal error, fromPatBind on decl " ++ show d
 
-matchToRow :: Match -> FH [([Pattern],Maybe C.Expr,Expr)]
+matchToRow :: Match -> FH [([Pattern],Maybe Expr,Expr)]
 matchToRow (Match loc name ps mtype rhs binds) = do
   fromBinds binds
   return []
+  ps' <- mapM fromPat ps
   case rhs of
-    UnGuardedRhs e     -> do ps' <- mapM fromPat ps
-                             e' <- fromExp e
-                             return [(ps',Nothing,e')]
-    GuardedRhss guards -> do warn $ "no handling of guards" ++ prettyPrint rhs
-                             return []
+    UnGuardedRhs e -> do e' <- fromExp e
+                         return [(ps',Nothing,e')]
+    GuardedRhss gs -> forM gs $ \(GuardedRhs _loc stmts e) -> do
+                                     g <- fromGuardStmts stmts
+                                     e' <- fromExp e
+                                     return (ps',Just g,e')
+
+fromGuardStmts :: [Stmt] -> FH Expr
+fromGuardStmts ss = case sequence (map unQualify ss) of
+     Nothing -> fatal $ "Cannot handle these guard statements: " ++ show ss
+     Just es -> foldr1 (\e1 e2 -> C.App "&&" [e1,e2]) <$> mapM fromExp es
+  where
+    -- No handling of let, arrow recs or pattern guards
+    unQualify :: Stmt -> Maybe Exp
+    unQualify (Qualifier e) = Just e
+    unQualify _             = Nothing
 
 ----------------------------------------------------------------------
 -- Expressions
