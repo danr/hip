@@ -1,4 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving,FlexibleContexts,TemplateHaskell #-}
 module Language.HFOL.FromHaskell where
 
 import qualified Language.Haskell.Exts as H
@@ -7,56 +6,21 @@ import Language.Haskell.Exts hiding (Name,app)
 import qualified Language.HFOL.Core as C
 import Language.HFOL.Core hiding (Decl)
 
-import Language.HFOL.Pretty
+import Language.HFOL.FromHaskell.Names
+import Language.HFOL.FromHaskell.Monad
+import Language.HFOL.FromHaskell.Vars
 
-import Data.Label (mkLabels)
-import Data.Label.PureM
+import Language.HFOL.Pretty
 
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Error
-import Control.Monad.RWS hiding (gets,modify)
+import Control.Monad.RWS hiding (gets,modify,local)
+import Data.Label.PureM
 
 import Data.List (groupBy)
-import Data.Function (on)
 import Data.Either (partitionEithers)
-
-data St = St { _namesupply :: [Int] }
-$(mkLabels [''St])
-
-data Env = Env { _scope :: String }
-$(mkLabels [''Env])
-
-initSt :: St
-initSt = St { _namesupply = [0..] }
-
-initEnv :: Env
-initEnv = Env { _scope = "" }
-
-newtype FH a = FH (ErrorT String (RWS Env [Either String C.Decl] St) a)
-  deriving(Functor,Applicative,Monad
-          ,MonadWriter [Either String C.Decl]
-          ,MonadReader Env
-          ,MonadState St
-          ,MonadError String)
-
-write :: String -> FH ()
-write = tell . return . Left
-
-warn :: String -> FH ()
-warn = write . ("Warning: " ++)
-
-fatal :: String -> FH a
-fatal = throwError
-
-runFH :: FH () -> (Either String [C.Decl],[String])
-runFH (FH m) = case evalRWS (runErrorT m) initEnv initSt of
-  (Left err,w) -> (Left err,fst (partitionEithers w))
-  (Right (),w) -> let (msgs,decls) = partitionEithers w
-                  in  (Right decls,msgs)
-
-decl :: C.Decl -> FH ()
-decl = tell . return . Right
+import Data.Function (on)
 
 run :: FilePath -> IO ()
 run f = do
@@ -94,16 +58,14 @@ fromDecl d = case d of
 fromMatches :: [Match] -> FH ()
 fromMatches = mapM_ fromFunMatches . groupBy ((==) `on` matchName)
 
-concatMapM :: (Functor m,Monad m) => (a -> m [b]) -> [a] -> m [b]
-concatMapM f xs = concat <$> mapM f xs
-
 fromFunMatches :: [Match] -> FH ()
 fromFunMatches [] = warn $ "Empty funmatches"
 fromFunMatches ms@(m:_) = do
-   matrix <- concatMapM matchToRow ms
+   let n = fromName (matchName m)
+   matrix <- localScope n (concatMapM matchToRow ms)
    if null matrix
-       then warn $ "Empty matrix from " ++ show (matchName m)
-       else decl (funcMatrix (fromName (matchName m)) matrix)
+       then warn $ "Empty matrix from " ++ n
+       else decl (funcMatrix n matrix)
 
 fromPatBind :: Decl -> FH ()
 fromPatBind (PatBind loc (H.PVar name) mtype rhs binds) =
@@ -176,43 +138,3 @@ fromBinds (BDecls xs) =
   warn $ "Not producing any binds for where clause: " ++ show xs
 fromBinds b@(IPBinds xs) =
   warn $ "Not handling implicit arguments: " ++ show b
-
-----------------------------------------------------------------------
--- Extracting names
-
-matchName :: Match -> H.Name
-matchName (Match _ name _ _ _ _) = name
-
-fromName :: H.Name -> Name
-fromName (Ident s)  = s
-fromName (Symbol s) = s
-
-fromQName :: QName -> FH Name
-fromQName q@(Qual modulename name) = do
-  warn $ "No handling for qualifed names: " ++ prettyPrint q
-  return (fromName name)
-fromQName (UnQual name) = return (fromName name)
-fromQName (Special special) = fromSpecial special
-
-fromSpecial :: SpecialCon -> FH Name
-fromSpecial UnitCon = return "()"
-fromSpecial ListCon = return "[]"
-fromSpecial FunCon  = warn "Using FunCon" >> return "->"
-fromSpecial (TupleCon b n) = do
-  when (b == Boxed) $ warn "No handling of boxed tuples"
-  return ("T" ++ show n)
-fromSpecial Cons    = return ":"
-fromSpecial UnboxedSingleCon = do
-  warn "No handling of unboxed singleton constructor"
-  return "()"
-
-fromQualConDecl :: QualConDecl -> FH (Name,Int)
-fromQualConDecl (QualConDecl loc tyvars cxtx condecl) = fromConDecl condecl
-
-fromConDecl :: ConDecl -> FH (Name,Int)
-fromConDecl c = case c of
-  ConDecl name bangtypes                  -> return (fromName name,length bangtypes)
-  InfixConDecl _bangtype1 name _bangtype2 -> return (fromName name,2)
-  RecDecl name namedbangtypes             -> do
-      warn $ "not creating projection declarations (" ++ fromName name ++ ")"
-      return (fromName name,length namedbangtypes)
