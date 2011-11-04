@@ -29,7 +29,7 @@ fromSpecial ListCon = return "[]"
 fromSpecial FunCon  = warn "Using FunCon" >> return "->"
 fromSpecial (TupleCon b n) = do
   when (b == Boxed) $ warn "No handling of boxed tuples"
-  return ("T" ++ show n)
+  return ('T':show n)
 fromSpecial Cons    = return ":"
 fromSpecial UnboxedSingleCon = do
   warn "No handling of unboxed singleton constructor"

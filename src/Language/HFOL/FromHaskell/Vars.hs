@@ -1,4 +1,4 @@
-module Language.HFOL.FromHaskell.Vars (freeVars) where
+module Language.HFOL.FromHaskell.Vars (freeVars,freeVarss) where
 
 import qualified Language.HFOL.Core as C
 import Language.Haskell.Exts
@@ -15,9 +15,12 @@ class FV a where
 class BV a where
   bv :: a -> FH (Set C.Name)
 
--- The only exported function
+-- The only exported functions
 freeVars :: FV a => a -> FH [C.Name]
 freeVars = fmap S.toList . fv
+
+freeVarss :: FV a => [a] -> FH [C.Name]
+freeVarss = fmap S.toList . fvs
 
 fvs :: FV a => [a] -> FH (Set C.Name)
 fvs = fmap unions . mapM fv
@@ -28,13 +31,21 @@ bvs = fmap unions . mapM bv
 none :: FH (Set C.Name)
 none = return empty
 
+fvVar :: QName -> FH (Set C.Name)
+fvVar qn = do
+   n <- fromQName qn
+   b <- lookupBind n
+   case b of
+     Nothing -> return (singleton n)
+     Just e  -> fv e
+
 instance FV Exp where
-  fv e = case e of
-      Var qn                     -> singleton <$> fromQName qn
+  fv ex = case ex of
+      Var qn                     -> fvVar qn
       Con{}                      -> none
       Lit{}                      -> none
       InfixApp e1 (QVarOp qn) e2 -> unions <$> sequence
-                                                 [singleton <$> fromQName qn
+                                                 [fvVar qn
                                                  ,fv e1
                                                  ,fv e2]
       InfixApp{}                 -> none
@@ -43,29 +54,31 @@ instance FV Exp where
       If e1 e2 e3                -> unions <$> mapM fv [e1,e2,e3]
       Case e alts                -> union <$> fv e <*> fvs alts
       Paren e                    -> fv e
+      List es                    -> fvs es
       Let bs e -> do bsf <- fv bs
                      bsb <- bv bs
                      v   <- fv e
                      return ((v `union` bsf) `difference` bsb)
-      _        -> fatal $ "FV on exp " ++ show e
+      _        -> fatal $ "FV on exp " ++ show ex
 
 instance FV Decl where
   fv d = case d of
     FunBind ms -> fvs ms
-    PatBind loc p mtype rhs binds -> case p of
-      PVar name -> fv (Match loc name [] mtype rhs binds)
-      _         -> fatal $ "FV on top level pattern: " ++ show p
+    PatBind loc p mtype rhs bs -> case p of
+      PVar n -> fv (Match loc n [] mtype rhs bs)
+      _      -> fatal $ "FV on top level pattern: " ++ show p
+    _ -> warn ("Assumes decl: " ++ show d ++ " contains no FV") >> none
 
 instance FV Match where
-  fv (Match _loc name ps _mtype rhs binds) = do
-     rhsvs   <- fv rhs
-     psvs    <- bvs ps
-     bindsvs <- fv binds
-     bindsbv <- bv binds
-     -- Is this correct? Take all FV of the rhsvs and the binds, minus
+  fv (Match _loc n ps _mtype rhs bs) = do
+     rhsvs <- fv rhs
+     psvs  <- bvs ps
+     bsvs  <- fv bs
+     bsbv  <- bv bs
+     -- Is this correct? Take all FV of the rhsvs and the bs, minus
      -- those from the patterns
-     let r = (rhsvs `union` bindsvs) `difference` (psvs `union` bindsbv)
-     debug $ show name ++ " fv: " ++ show r ++ " bindsbv: " ++ show bindsbv
+     let r = (rhsvs `union` bsvs) `difference` (psvs `union` bsbv)
+     debug $ show n ++ " fv: " ++ show r ++ " bsbv: " ++ show bsbv
      return r
 
 instance FV Rhs where
@@ -76,12 +89,12 @@ instance FV GuardedRhs where
   fv (GuardedRhs _loc stmts e) = union <$> fvs stmts <*> fv e
 
 instance FV Alt where
-  fv (Alt _loc pat guarded binds) = do
+  fv (Alt _loc pat guarded bs) = do
     patvs   <- bv pat
     guardvs <- fv guarded
-    bindsvs <- fv binds
-    bindsbv <- bv binds
-    return $ (guardvs `union` bindsvs) `difference` (patvs `union` bindsbv)
+    bsvs    <- fv bs
+    bsbv    <- bv bs
+    return $ (guardvs `union` bsvs) `difference` (patvs `union` bsbv)
 
 instance FV GuardedAlts where
   fv (UnGuardedAlt e) = fv e
@@ -94,8 +107,8 @@ instance FV GuardedAlt where
 instance FV Stmt where
   fv (Generator _loc p _e) = fatal $ "Pattern guards not supported: " ++ show p
   fv (Qualifier e)         = fv e
-  fv (LetStmt binds)       = fv binds
-  fv (RecStmt _stmts)      = fatal $ "Rec statements not supported"
+  fv (LetStmt bs)          = fv bs
+  fv (RecStmt _stmts)      = fatal "Rec statements not supported"
 
 instance FV Binds where
   fv (BDecls ds) = fvs ds
@@ -103,16 +116,20 @@ instance FV Binds where
 
 -- Bound Variables ------------------------------------------------------------
 
+retName :: Name -> FH (Set C.Name)
+retName = return . singleton . fromName
+
 instance BV Decl where
   bv d = case d of
     FunBind ms -> bvs ms
-    PatBind loc p mtype rhs binds -> case p of
-      PVar name -> return (singleton (fromName name))
+    PatBind _loc p _mtype _rhs _bs -> case p of
+      PVar n -> retName n
       _ -> fatal $ "BV on top level pattern: " ++ show p
+    _ -> warn ("Assumes decl: " ++ show d ++ " contains no BV") >> none
 
 instance BV Match where
   -- Handle binds?
-  bv (Match _loc name ps _mtype rhs binds) = return (singleton (fromName name))
+  bv (Match _loc n ps _mtype _rhs _bs) = union <$> retName n <*> bvs ps
 
 instance BV Binds where
   bv (BDecls ds) = bvs ds
@@ -121,8 +138,8 @@ instance BV Binds where
 -- These are not really free vars, they are bound vars, but they work
 -- the same way
 instance BV Pat where
-  bv p = case p of
-    PVar name           -> return (singleton (fromName name))
+  bv pat = case pat of
+    PVar n              -> retName n
     PLit{}              -> none
     PNeg{}              -> none
     PInfixApp p1 _qn p2 -> union <$> bv p1 <*> bv p2
@@ -131,4 +148,4 @@ instance BV Pat where
     PList ps            -> bvs ps
     PParen p            -> bv p
     PWildCard           -> none
-    _                   -> fatal $ "FV on pat " ++ show p
+    _                   -> fatal $ "FV on pat " ++ show pat
