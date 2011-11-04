@@ -55,6 +55,7 @@ instance FV Exp where
       Case e alts                -> union <$> fv e <*> fvs alts
       Paren e                    -> fv e
       List es                    -> fvs es
+      Tuple es                   -> fvs es
       Let bs e -> do bsf <- fv bs
                      bsb <- bv bs
                      v   <- fv e
