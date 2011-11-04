@@ -46,9 +46,11 @@ newtype FH a = FH (ErrorT String (RWS Env [Either String Decl] St) a)
 
 runFH :: FH () -> (Either String [Decl],[String])
 runFH (FH m) = case evalRWS (runErrorT m) initEnv initSt of
-  (Left err,w) -> (Left err,fst (partitionEithers w))
-  (Right (),w) -> let (msgs,decls) = partitionEithers w
-                  in  (Right decls,msgs)
+  (r,w) -> let (msgs,decls) = partitionEithers w
+           in  (case r of
+                   Right () -> Right decls
+                   Left err -> Left err
+               ,msgs)
 
 localScopeName :: Name -> FH a -> FH a
 localScopeName n = local scopeName (n:)
@@ -72,7 +74,9 @@ addBind fname scopedfname args
                                  then do warn $ "occurs check: " ++ fname
                                          return (var fname)
                                  else fatal $ "occurs check: " ++ fname
-    | otherwise = modify binds (M.insert fname e) >> return e
+    | otherwise = do modify binds (M.insert fname e)
+                     debug $ "addBind: " ++ fname ++ " to " ++ show e
+                     return e
   where e = foldl H.App (var scopedfname) (map var args)
         var = H.Var . H.UnQual . H.Ident
 

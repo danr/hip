@@ -23,16 +23,13 @@ run :: FilePath -> IO ()
 run f = do
   r <- parseFile f
   case r of
-    ParseOk m ->
-      case runFH (fromModule m) of
-        (Left err,msgs) -> do
-          mapM_ putStrLn msgs
-          putStrLn ""
-          putStrLn err
-        (Right ds,msgs) -> do
-          mapM_ putStrLn msgs
-          putStrLn ""
-          mapM_ (putStrLn . prettyCore) ds
+    ParseOk m -> do
+      let (res,msgs) = runFH (fromModule m)
+      mapM_ putStrLn msgs
+      putStrLn ""
+      case res of
+        Left err -> putStrLn err
+        Right ds -> mapM_ (putStrLn . prettyCore) ds
     ParseFailed loc s -> putStrLn $ show loc ++ ": " ++ s
 
 indented :: String -> String
