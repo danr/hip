@@ -78,6 +78,7 @@ fromFunMatches ms@(m:_) = do
     scopedname <- scopePrefix n
     e <- addBind n scopedname fvs
     addToScope scopedname
+    mapM_ addToScope fvs
     debug $ scopedname ++ " free vars: " ++ unwords fvs
     matrix <- localScopeName n
                 (map (addToPats fvs) <$> concatMapM matchToRow ms)
@@ -171,7 +172,13 @@ fromQOp (QConOp qname) = con0  <$> fromQName qname
 
 fromPat :: Pat -> FH Pattern
 fromPat pat = case pat of
-  H.PVar n      -> return (C.PVar (fromName n))
+  H.PVar pn     -> do debug $ "Är du redan bunden, lille vän? " ++ show pn
+                      let n = fromName pn
+                      b <- inScope n
+                      if b then do n' <- scopePrefix n
+                                   addBind n n' []
+                                   return (C.PVar n')
+                           else return (C.PVar n)
   PTuple ps     -> PCon ('T':show (length ps)) <$> mapM fromPat ps
   PParen p      -> fromPat p
   PWildCard     -> return PWild

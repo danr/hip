@@ -58,12 +58,17 @@ localScopeName n = local scopeName (n:)
 localBindScope :: FH a -> FH a
 localBindScope m = do
   bs <- gets binds
+  sc <- gets scope
   r <- m
   puts binds bs
+  puts scope sc
   return r
 
 addToScope :: Name -> FH ()
 addToScope = modify scope . (:)
+
+inScope :: Name -> FH Bool
+inScope n = (n `elem`) <$> gets scope
 
 namesInScope :: FH [Name]
 namesInScope = liftM2 (++) (M.keys <$> gets binds) (gets scope)
@@ -83,14 +88,15 @@ addBind fname scopedfname args
 lookupBind :: Name -> FH (Maybe Exp)
 lookupBind n = M.lookup n <$> gets binds
 
+
 scopePrefix :: Name -> FH Name
 scopePrefix n = do
   s <- asks scopeName
   if null s then return n
             else do _u <- newUnique
                     let delim = "_"
-                    return (intercalate delim (reverse s) ++ delim ++ n )
-                           {- ++ delim ++  show u) -}
+                    return (intercalate delim (reverse s) ++ delim ++ n)
+                           {-  ++ delim ++  show u) -}
 
 newUnique :: FH Int
 newUnique = do
