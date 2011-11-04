@@ -74,7 +74,7 @@ fromFunMatches :: [Match] -> FH Exp
 fromFunMatches [] = fatal "Empty funmatches"
 fromFunMatches ms@(m:_) = do
     let n = fromName (matchName m)
-    fvs <- (\\) <$> freeVarss ms <*> namesInScope
+    fvs <- (\\) <$> freeVarss ms <*> ((n:) <$> namesInScope)
     scopedname <- scopePrefix n
     e <- addBind n scopedname fvs
     addToScope scopedname
