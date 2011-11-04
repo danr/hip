@@ -21,7 +21,8 @@ quantifier :: Bool -> [VarName] -> Formula -> State Bool String
 quantifier fa xs phi = do
   phi' <- latex phi
   return $ (if fa then " \\forall \\;" else " \\exists \\;")
-         ++ intercalate " \\; " (map (map toLower . varName) xs) ++ " \\; . \\; " ++ phi'
+         ++ intercalate " \\; " (map (map toLower . varName) xs)
+         ++ " \\; . \\; " ++ phi'
 
 eqop :: EqOp -> String
 eqop (:==) = " = "

@@ -127,7 +127,8 @@ substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
 -}
 funcMatrix :: Name -> [([Pattern],Maybe Expr,Expr)] -> Decl
 funcMatrix n [] = error "funcMatrix on empty matrix!"
-funcMatrix n [(ps,Nothing,e)] | all varPat ps = Func n (map patName ps) (Expr e)
+funcMatrix n [(ps,Nothing,e)] | all varPat ps = Func n (map patName ps)
+                                                       (Expr e)
 funcMatrix n m@(mn:_) = Func n us $ Case (con (map Var us))
                                   [ guardMaybe ps mg :-> e | (ps,mg,e) <- m ]
   where fst3 (x,_,_) = x

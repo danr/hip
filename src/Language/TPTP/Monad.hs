@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances,GeneralizedNewtypeDeriving,TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances, GeneralizedNewtypeDeriving,
+                                TypeSynonymInstances #-}
 module Language.TPTP.Monad (module Language.TPTP
                            ,M
                            ,run
@@ -24,7 +25,8 @@ import Control.Monad.State
 import Control.Applicative hiding (empty)
 import Control.Arrow (first,second,(***))
 
-import Language.TPTP hiding ((===),(!=),(&),(/\),(\/),(==>),(<=>),mkBinOp,forall,exists)
+import Language.TPTP hiding ((===),(!=),(&),(/\),(\/),(==>),(<=>)
+                            ,mkBinOp,forall,exists)
 
 type ST = [VarName]
 
@@ -99,7 +101,8 @@ instance Quantifier (M Formula) where
     quantifier q acc f = q (reverse acc) <$> f
 
 instance Quantifier r => Quantifier (M Term -> r) where
-    quantifier q acc f = newVar >>= \v -> quantifier q (v:acc) (f (return (Var v)))
+    quantifier q acc f = newVar >>= \v -> quantifier q (v:acc)
+                                                     (f (return (Var v)))
 
 forall :: (Quantifier t) => t -> M Formula
 forall = quantifier Forall []

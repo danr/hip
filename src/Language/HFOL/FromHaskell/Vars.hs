@@ -33,24 +33,28 @@ instance FV Exp where
       Var qn                     -> singleton <$> fromQName qn
       Con{}                      -> none
       Lit{}                      -> none
-      InfixApp e1 (QVarOp qn) e2 -> unions <$> sequence [singleton <$> fromQName qn,fv e1,fv e2]
+      InfixApp e1 (QVarOp qn) e2 -> unions <$> sequence
+                                                 [singleton <$> fromQName qn
+                                                 ,fv e1
+                                                 ,fv e2]
       InfixApp{}                 -> none
       App e1 e2                  -> union <$> fv e1 <*> fv e2
       Lambda _loc ps el          -> difference <$> fv el <*> bvs ps
       If e1 e2 e3                -> unions <$> mapM fv [e1,e2,e3]
       Case e alts                -> union <$> fv e <*> fvs alts
       Paren e                    -> fv e
-      Let bs e                   -> do bsf <- fv bs
-                                       bsb <- bv bs
-                                       v   <- fv e
-                                       return $ (v `union` bsf) `difference` bsb
-      _                          -> fatal $ "FV on exp " ++ show e
+      Let bs e -> do bsf <- fv bs
+                     bsb <- bv bs
+                     v   <- fv e
+                     return ((v `union` bsf) `difference` bsb)
+      _        -> fatal $ "FV on exp " ++ show e
 
 instance FV Decl where
   fv d = case d of
     FunBind ms -> fvs ms
-    PatBind loc (PVar name) mtype rhs binds -> fv (Match loc name [] mtype rhs binds)
-    PatBind _loc p _mtype _rhs _binds -> fatal $ "FV on top level pattern: " ++ show p
+    PatBind loc p mtype rhs binds -> case p of
+      PVar name -> fv (Match loc name [] mtype rhs binds)
+      _         -> fatal $ "FV on top level pattern: " ++ show p
 
 instance FV Match where
   fv (Match _loc name ps _mtype rhs binds) = do
@@ -97,13 +101,14 @@ instance FV Binds where
   fv (BDecls ds) = fvs ds
   fv (IPBinds{}) = warn "Not handling implicit arguments" >> none
 
--- Bound Variables -------------------------------------------------------------
+-- Bound Variables ------------------------------------------------------------
 
 instance BV Decl where
   bv d = case d of
     FunBind ms -> bvs ms
-    PatBind loc (PVar name) mtype rhs binds -> return (singleton (fromName name))
-    PatBind _loc p _mtype _rhs _binds -> fatal $ "BV on top level pattern: " ++ show p
+    PatBind loc p mtype rhs binds -> case p of
+      PVar name -> return (singleton (fromName name))
+      _ -> fatal $ "BV on top level pattern: " ++ show p
 
 instance BV Match where
   -- Handle binds?
@@ -113,7 +118,8 @@ instance BV Binds where
   bv (BDecls ds) = bvs ds
   bv (IPBinds{}) = warn "Not handling implicit arguments" >> none
 
--- These are not really free vars, they are bound vars, but they work the same way
+-- These are not really free vars, they are bound vars, but they work
+-- the same way
 instance BV Pat where
   bv p = case p of
     PVar name           -> return (singleton (fromName name))

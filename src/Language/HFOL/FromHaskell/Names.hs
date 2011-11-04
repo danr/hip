@@ -40,8 +40,8 @@ fromQualConDecl (QualConDecl _loc _tyvars _cxtx condecl) = fromConDecl condecl
 
 fromConDecl :: ConDecl -> FH (Name,Int)
 fromConDecl c = case c of
-  ConDecl name bangtypes                  -> return (fromName name,length bangtypes)
-  InfixConDecl _bangtype1 name _bangtype2 -> return (fromName name,2)
-  RecDecl name namedbangtypes             -> do
+  ConDecl name bangts               -> return (fromName name,length bangts)
+  InfixConDecl _bangt1 name _bangt2 -> return (fromName name,2)
+  RecDecl name namedbangtypes       -> do
       warn $ "not creating projection declarations (" ++ fromName name ++ ")"
       return (fromName name,length namedbangtypes)

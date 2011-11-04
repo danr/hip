@@ -37,7 +37,7 @@ toTPTP ds = runTM $ do
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term
 translateExpr (Var n) = applyFun n []
-translateExpr e       = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
+translateExpr e = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
 
 -- | Apply a function/constructor name to an argument list
 --   Follows the function definition if it is an indirection
@@ -57,8 +57,8 @@ applyFun n as = do
              return $ appFold (T.Fun (makeFunPtrName fn) []) as
         else -- Function has enough arguments, and could possibly have more
           do -- (for functions returning functions)
-             when (boundCon b && length as > arity) $ error $ "Internal error: "
-                 ++ "constructor " ++ n ++ "applied to too many arguments."
+             when (boundCon b && length as > arity) $ error $ "Internal error:"
+                 ++ " constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
 -- | Translate a function declaration to axioms,
@@ -211,8 +211,8 @@ stripContradictions conds css = [ constr
                                                      ]
                                 ]
 
--- | The condition and the constraint contradicts each other, then we can remove
---   the whole constraint group this constraint comes from.
+-- | The condition and the constraint contradicts each other, then we
+--   can remove the whole constraint group this constraint comes from.
 --
 --   This happens for instance when we have p x == bottom as a condition
 --   and p x == True as a constraint
@@ -260,7 +260,8 @@ invertPattern p@(PCon n pats) e x = do
   projs <- lookupProj n
   b <- lookupName n
   case b of
-    ConVar c -> T.Fun c <$> sequence [ invertPattern pat (App (funName proj) [e])
-                                                         (T.Fun proj [x])
+    ConVar c -> T.Fun c <$> sequence [ invertPattern pat
+                                                     (App (funName proj) [e])
+                                                     (T.Fun proj [x])
                                      | pat <- pats | proj <- projs ]
     _ -> error $ "invertPattern: unbound constructor " ++ n

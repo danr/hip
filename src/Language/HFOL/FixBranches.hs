@@ -55,8 +55,8 @@ renameBranches = (`evalState` (0,[]))
                                    modify (succ *** ((x,x'):))
                                    return (PVar x')
 
---------------------------------------------------------------------------------
--- Remove overlapping branches
+
+-- Remove overlapping branches ------------------------------------------------
 
 {-| Removes overlapping branches:
 
@@ -107,8 +107,7 @@ instance Specificity Pattern where
   PCon _ _    <=? _           = False
   _           <=? _           = True
 
---------------------------------------------------------------------------------
--- Add bottoms
+-- Add bottoms ---------------------------------------------------------------
 
 -- | Adds bottoms. Not in the most efficient way, since we
 --   remove overlaps afterwards
@@ -120,12 +119,12 @@ instance Specificity Pattern where
 addBottoms :: Expr -> [Branch] -> [Branch]
 addBottoms scrut brs = case matchAnyBranch scrut brs of
   Nothing -> brsBottomGuards ++ [NoGuard PWild :-> bottom]
-  Just (_ :-> e') | e' == bottom -> brsBottomGuards
-                  | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
-                                                      | p' <- addBottom scrut' p
-                                                      ]
-                                        | (p :-> e) <- brs
-                                        ]
+  Just (_ :-> l) | l == bottom -> brsBottomGuards
+                 | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
+                                                     | p' <- addBottom scrut' p
+                                                     ]
+                                       | (p :-> e) <- brs
+                                       ]
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 
@@ -175,8 +174,7 @@ addBottomPattern _scrut (PCon c ps) = bottomP : fails
 wild :: [Pattern] -> [Pattern]
 wild ps = [ PWild | _ <- ps ]
 
---------------------------------------------------------------------------------
--- More specific patterns
+-- More specific patterns ----------------------------------------------------
 
 {-| Gets the more specific patterns
 --
@@ -227,8 +225,7 @@ nameWilds = (`evalState` 0) . go
 
 {-
 
---------------------------------------------------------------------------------
--- Testing without bottoms
+-- Testing without bottoms ---------------------------------------------------
 
 testpat = parsePattern "C2 B0 b"
 testbrs = map parseBranch ["C2 Z0 (Z1 (Y1 (B2 (C1 y) _))) -> z","z -> a"]
@@ -262,8 +259,7 @@ prop_fixBranches scrut brs = forAll (patternFromScrut scrut) $ \p ->
                              Just (fromMaybe bottom (pickBranch p brs))
                           == pickBranch p (fixBranches scrut brs)
 
---------------------------------------------------------------------------------
--- Testing with bottoms
+-- Testing with bottoms ------------------------------------------------------
 
 data Match = Mismatch | Match | Bottom deriving (Eq,Ord,Show)
 
@@ -283,10 +279,11 @@ PCon c as `matchesBottom` PCon c' as'
 _         `matchesBottom` _           = Match
 
 pickBranchBottom :: Pattern -> [Branch] -> Expr
-pickBranchBottom p brs = case [ (match,p' :-> e) | p' :-> e <- brs
-                                                 , let match = p `matchesBottom` p'
-                                                 , match /= Mismatch] of
-                               []                 -> bottom      -- non-exhaustive patterns
+pickBranchBottom p brs = case [ (match,p' :-> e)
+                              | p' :-> e <- brs
+                              , let match = p `matchesBottom` p'
+                              , match /= Mismatch] of
+                               []                 -> bottom -- non-exhastive
                                (Bottom,_      ):_ -> bottom
                                (Match ,_ :-> e):_ -> e
 
@@ -307,11 +304,9 @@ prop_fixBranches' scrut brs = forAll (botpatFromScrut scrut) $ \p ->
                              case pickBranch p (fixBranches scrut brs) of
                                         Nothing -> False
                                         Just e  -> e == pickBranchBottom p brs
-
---------------------------------------------------------------------------------
--- For manual testing
-
 -}
+
+-- For manual testing --------------------------------------------------------
 
 -- | A small test :)
 testOverlap :: [Branch]

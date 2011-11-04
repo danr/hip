@@ -99,13 +99,13 @@ data St = St { _arities     :: Map Name Int
              , _conProj     :: Map Name [Name]
                -- ^ Projection functions for constructors
              , _conFam      :: Map Name [Name]
-               -- ^ The other constructors for a given constructor (so far unused)
+               -- ^ The other constructors for a given constructor (unused)
              , _datatypes   :: [[(Name,Int)]]
                -- ^ The datatypes in the program
              , _usedFunPtrs :: Set Name
                -- ^ Which functions we need to produce ptr conversions for
              , _boundNames  :: Map Name Bound
-               -- ^ TPTP name of functions and constructors and quantified variables
+               -- ^ TPTP name of funs/costr and quantified variables
              , _quantified  :: Set VarName
                -- ^ Variables to quantify over
              , _debug       :: Debug
@@ -203,7 +203,8 @@ fromUnbound fn n = fromMaybe (error $ fn ++ ", unbound: " ++ n)
 
 -- | Looks up an arity of a function or constructor
 lookupArity :: Name -> TM Int
-lookupArity n = TM $ (fromUnbound "lookupArity" n . M.lookup n) <$> gets arities
+lookupArity n = TM $ (fromUnbound "lookupArity" n . M.lookup n)
+                  <$> gets arities
 
 -- | Looks up the projections for a constructor
 lookupProj :: Name -> TM [FunName]
@@ -219,7 +220,8 @@ makeFunPtrName :: FunName -> FunName
 makeFunPtrName = FunName . makePtrName . funName
 
 -- | Add functions/constructor name and arity.
-addNameAndArity :: MonadState St m => (FunName -> Bound) -> [(Name,Int)] -> m ()
+addNameAndArity :: MonadState St m =>
+                   (FunName -> Bound) -> [(Name,Int)] -> m ()
 addNameAndArity mk funs = do
    modify boundNames (insertMany [(n,mk (FunName n))| (n,_) <- funs])
    modify arities (insertMany funs)
@@ -292,7 +294,8 @@ disjDecls = concatMap datatypeDisj
   where
     -- Make this datatype's constructors and bottom disjunct
     datatypeDisj :: [(Name,Int)] -> [T.Decl]
-    datatypeDisj ctors = concat (zipWith constrDisj ctors' (tail (tails ctors')))
+    datatypeDisj ctors = concat (zipWith constrDisj ctors'
+                                                    (tail (tails ctors')))
       where ctors' = (bottomName,0) : ctors
 
     -- Make this constructor unequal to all the constructors in the list
@@ -315,7 +318,8 @@ projDecls = concatMap (uncurry mkDecl) . M.toList
   where
     mkDecl :: Name -> [Name] -> [T.Decl]
     mkDecl c ps = [ Axiom ("proj" ++ p) $ forall' xs $
-                    Fun (FunName p) [Fun (FunName c) (map T.Var xs)] === T.Var x
+                        Fun (FunName p) [Fun (FunName c) (map T.Var xs)]
+                        === T.Var x
                   | x <- xs | p <- ps ]
       where arity = length ps
             xs    = makeVarNames arity

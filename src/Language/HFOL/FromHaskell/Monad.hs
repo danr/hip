@@ -74,7 +74,8 @@ scopePrefix n = do
   if null s then return n
             else do u <- newUnique
                     let delim = "_"
-                    return (intercalate delim (reverse s) ++ delim ++ n ) {- ++ delim ++  show u) -}
+                    return (intercalate delim (reverse s) ++ delim ++ n )
+                           {- ++ delim ++  show u) -}
 
 newUnique :: FH Int
 newUnique = do
