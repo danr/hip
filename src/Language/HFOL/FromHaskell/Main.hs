@@ -156,7 +156,10 @@ fromExp ex = case ex of
   Paren e            -> fromExp e
   InfixApp e1 qop e2 -> (app .) . app <$> fromQOp qop <*> fromExp e1
                                                       <*> fromExp e2
-  Lambda _loc _ps _e -> fatal "No lambda"
+  Lambda loc ps e    -> fromExp =<< localBindScope (fromFunMatches
+                        [ Match loc (Ident "lambda") ps
+                                (error "fromExp: lambda maybe type")
+                                (UnGuardedRhs e) (BDecls []) ])
   H.Case e alts      -> fromExp =<< ((`H.App` e) <$> fromCase alts)
   Let bs e           -> localBindScope $ do
                             localScopeName "let" (fromBinds bs)

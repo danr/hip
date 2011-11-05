@@ -43,7 +43,9 @@ SCHEDULED: <2011-11-02 Wed>
 ** TODO Haskell $\rightarrow$ Core
 The translation should cover most of the examples
 SCHEDULED: <2011-11-05 Sat>
-*** TODO Lambdas
+*** DONE Lambdas
+CLOSED: [2011-11-05 Sat 14:04]
+**** TODO More tests needed
 *** TODO Sections
 *** TODO Add all functions in scope for mutually recursive let/where
 *** TODO Output declarations together with its definitions
@@ -55,6 +57,9 @@ Currently, when something needs to be floated uses a where-clause, the
 FV looks inside the definition of the where's definition. This could
 be stored to avoid recalulation and to avoid termination issues.
 *** TODO Tidy up code and comment
+*** TODO Generate code and test
+*** TODO Pattern binds
+let (x,y) = foo in e
 *** Future plans:
 Just a reminder what is not currently subject for translation
 **** List comprehensions
