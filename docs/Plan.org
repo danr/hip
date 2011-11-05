@@ -46,7 +46,8 @@ SCHEDULED: <2011-11-05 Sat>
 *** DONE Lambdas
 CLOSED: [2011-11-05 Sat 14:04]
 **** TODO More tests needed
-*** TODO Sections
+*** DONE Sections
+CLOSED: [2011-11-05 Sat 15:41]
 *** DONE Add all functions in scope for mutually recursive let/where
 CLOSED: [2011-11-05 Sat 15:21]
 *** TODO Output declarations together with its definitions

@@ -212,6 +212,14 @@ fromExp ex = case ex of
   List es            -> listExp es
   If e1 e2 e3        -> (app .) . app . app (C.Var "if")
                           <$> fromExp e1 <*> fromExp e2 <*> fromExp e3
+  RightSection op e  -> do x <- Ident <$> scopePrefix "x"
+                           fromExp (Lambda (error "lambda location on rsection")
+                                           [H.PVar x]
+                                           (InfixApp (H.Var (UnQual x)) op e))
+  LeftSection e op   -> do x <- Ident <$> scopePrefix "x"
+                           fromExp (Lambda (error "lambda location on lsection")
+                                           [H.PVar x]
+                                           (InfixApp e op (H.Var (UnQual x))))
   _ -> fatal $ "No handling of exp " ++ prettyPrint ex ++ "\n\n" ++ show ex
 
 listExp :: [Exp] -> FH Expr

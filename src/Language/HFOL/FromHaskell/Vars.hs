@@ -48,23 +48,26 @@ fvVar qn = do
      Nothing       -> return (singleton n)
      Just (sn,fvs) -> return (singleton n `union` S.fromList fvs)
 
+instance FV QOp where
+  fv (QVarOp qn) = fvVar qn
+  fv (QConOp{})  = none
+
 instance FV Exp where
   fv ex = case ex of
-      Var qn                     -> fvVar qn
-      Con{}                      -> none
-      Lit{}                      -> none
-      InfixApp e1 (QVarOp qn) e2 -> unions <$> sequence
-                                                 [fvVar qn
-                                                 ,fv e1
-                                                 ,fv e2]
-      InfixApp{}                 -> none
-      App e1 e2                  -> union <$> fv e1 <*> fv e2
-      Lambda _loc ps el          -> difference <$> fv el <*> bvs ps
-      If e1 e2 e3                -> unions <$> mapM fv [e1,e2,e3]
-      Case e alts                -> union <$> fv e <*> fvs alts
-      Paren e                    -> fv e
-      List es                    -> fvs es
-      Tuple es                   -> fvs es
+      Var qn             -> fvVar qn
+      Con{}              -> none
+      Lit{}              -> none
+      InfixApp e1 qop e2 -> unions <$> sequence [fv e1,fv qop,fv e2]
+      RightSection qop e -> union <$> fv qop <*> fv e
+      LeftSection  e qop -> union <$> fv e <*> fv qop
+      App e1 e2          -> union <$> fv e1 <*> fv e2
+      Lambda _loc ps el  -> difference <$> fv el <*> bvs ps
+      If e1 e2 e3        -> unions <$> mapM fv [e1,e2,e3]
+      Case e alts        -> union <$> fv e <*> fvs alts
+      Paren e            -> fv e
+      List es            -> fvs es
+      Tuple es           -> fvs es
+
       Let bs e -> do bsf <- fv bs
                      bsb <- bv bs
                      v   <- fv e
