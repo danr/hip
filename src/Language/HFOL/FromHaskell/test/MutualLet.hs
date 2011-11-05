@@ -11,4 +11,3 @@ even n = let even (Succ x) = not (odd x)
              not True      = False
              not False     = True
 
-          

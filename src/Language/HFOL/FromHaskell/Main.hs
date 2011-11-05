@@ -153,10 +153,15 @@ fromExp ex = case ex of
   Let bs e           -> localBindScope $ do
                             localScopeName "let" (fromBinds bs)
                             fromExp e
-  Tuple es           -> C.Con ('T':show (length es)) <$> mapM fromExp es
+  Tuple es           -> C.Con (tupleName (length es)) <$> mapM fromExp es
+  List es            -> listExp es
   If e1 e2 e3        -> (app .) . app . app (C.Var "if")
                           <$> fromExp e1 <*> fromExp e2 <*> fromExp e3
   _ -> fatal $ "No handling of exp " ++ prettyPrint ex ++ "\n\n" ++ show ex
+
+listExp :: [Exp] -> FH Expr
+listExp es = foldr (\x xs -> C.Con consName [x,xs]) (con0 nilName)
+          <$> mapM fromExp es
 
 mkVar :: Name -> FH Expr
 mkVar n = do b <- lookupBind n
@@ -179,7 +184,8 @@ fromPat pat = case pat of
                                    addBind n n' []
                                    return (C.PVar n')
                            else return (C.PVar n)
-  PTuple ps     -> PCon ('T':show (length ps)) <$> mapM fromPat ps
+  PTuple ps     -> PCon (tupleName (length ps)) <$> mapM fromPat ps
+  PList ps      -> listPattern ps
   PParen p      -> fromPat p
   PWildCard     -> return PWild
   PApp qname ps -> PCon <$> fromQName qname <*> mapM fromPat ps
@@ -192,3 +198,6 @@ fromPat pat = case pat of
     fatal $ "No handling of as patterns: " ++ prettyPrint pat
   _ -> fatal $ "No handling for pat: " ++ show pat ++ "\n\n" ++ prettyPrint pat
 
+listPattern :: [Pat] -> FH Pattern
+listPattern ps = foldr (\x xs -> PCon consName [x,xs]) (pcon0 nilName)
+              <$> mapM fromPat ps

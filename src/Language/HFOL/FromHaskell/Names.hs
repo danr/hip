@@ -6,8 +6,16 @@ import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,name)
 import Control.Monad
 
-----------------------------------------------------------------------
--- Extracting names
+-- Names ----------------------------------------------------------------------
+unitName,nilName,consName :: Name
+unitName = "()"
+nilName  = "[]"
+consName = ":"
+
+tupleName :: Int -> Name
+tupleName n = 'T':show n
+
+-- Extracting names -----------------------------------------------------------
 
 matchName :: Match -> H.Name
 matchName (Match _ name _ _ _ _) = name
@@ -24,16 +32,15 @@ fromQName (UnQual name) = return (fromName name)
 fromQName (Special special) = fromSpecial special
 
 fromSpecial :: SpecialCon -> FH Name
-fromSpecial UnitCon = return "()"
-fromSpecial ListCon = return "[]"
+fromSpecial UnitCon = return unitName
+fromSpecial ListCon = return nilName
 fromSpecial FunCon  = warn "Using FunCon" >> return "->"
 fromSpecial (TupleCon b n) = do
-  when (b == Boxed) $ warn "No handling of boxed tuples"
-  return ('T':show n)
+  when (b == Unboxed) $ warn "No handling of unboxed tuples"
+  return (tupleName n)
 fromSpecial Cons    = return ":"
 fromSpecial UnboxedSingleCon = do
-  warn "No handling of unboxed singleton constructor"
-  return "()"
+  fatal "No handling of unboxed singleton constructor"
 
 fromQualConDecl :: QualConDecl -> FH (Name,Int)
 fromQualConDecl (QualConDecl _loc _tyvars _cxtx condecl) = fromConDecl condecl

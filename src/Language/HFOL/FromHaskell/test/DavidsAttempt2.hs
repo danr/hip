@@ -4,7 +4,6 @@ d p = case p of
 
 data Nat = Succ Nat | Zero
 
-
 pred x = case x of
     Succ x -> x
     Zero   -> x

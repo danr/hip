@@ -48,7 +48,8 @@ SCHEDULED: <2011-11-05 Sat>
 *** TODO Add all functions in scope for mutually recursive let/where
 *** TODO Output declarations together with its definitions
 Accompany a function with its produced floated definitions
-*** TODO Support for pattern matching on lists
+*** DONE Support for pattern matching on lists
+CLOSED: [2011-11-05 Sat 12:45]
 *** TODO Don't recalculate FV for binds
 Currently, when something needs to be floated uses a where-clause, the
 FV looks inside the definition of the where's definition. This could
@@ -60,7 +61,7 @@ Just a reminder what is not currently subject for translation
 **** Do notation
 **** Let in guards
 **** Typeclasses
-**** Records 
+**** Records
 **** As-patterns, and
 ** TODO Read about different proving techniques
 
