@@ -36,66 +36,110 @@ indented :: String -> String
 indented = unlines . map ("    " ++) . lines
 
 fromModule :: Module -> FH ()
-fromModule (Module _loc _name _pragmas _warnings _exports _imports decls) = do
-  mapM_ addTopScope decls
-  mapM_ fromDecl decls
+fromModule (Module _loc _name _pragmas _warns _ex _im decls) = fromDecls decls
 
-addTopScope :: Decl -> FH ()
-addTopScope d = case d of
-  FunBind ms -> forM_ ms $ \(Match _ mn _ _ _ _) -> let n = fromName mn
-                                                     in addToScope n
-  PatBind _ (H.PVar mn) _ _ _ -> let n = fromName mn in addToScope n
+-- Removing pattern binds -----------------------------------------------------
+
+patBindToFunBind :: Decl -> FH Decl
+patBindToFunBind d = case d of
+  PatBind loc (H.PVar n) mtype rhs bs -> return (FunBind [Match loc n [] mtype rhs bs])
+  PatBind{} -> fatal $ "Patterns binds not supported : " ++ prettyPrint d
+  _ -> return d
+
+-- For declarations, you need to do three passes:
+--
+-- (1) Add all defined declarations as in scope
+--
+-- (2) Add an indirection to the defined name to the scoped name
+--     applied to free variables
+--
+-- (3) Produce code
+
+fromDecls :: [Decl] -> FH ()
+fromDecls ds = do
+  ds' <- mapM patBindToFunBind ds
+  mapM_ addDeclScope ds'
+  mapM_ addDeclIndirection ds'
+  mapM_ fromDecl ds'
+
+addDeclScope :: Decl -> FH ()
+addDeclScope d = case d of
+  FunBind ms -> mapM_ addMatchesScope (groupBy ((==) `on` matchName) ms)
+  _ -> return ()
+
+addDeclIndirection :: Decl -> FH ()
+addDeclIndirection d = case d of
+  FunBind ms -> mapM_ addMatchesIndirection (groupBy ((==) `on` matchName) ms)
   _ -> return ()
 
 fromDecl :: Decl -> FH ()
 fromDecl d = case d of
   DataDecl _loc _dataornew _ctxt _name _tyvars qualcondecls _derives ->
     (decl . Data) =<< mapM fromQualConDecl qualcondecls
-  FunBind matches -> fromMatches matches
-  PatBind{}       -> fromPatBind d
-  TypeSig{}       -> debug $ (prettyPrint d)
+  FunBind ms -> mapM_ fromMatches (groupBy ((==) `on` matchName) ms)
+  PatBind{}  -> fatal $ "Internal error: PatBind in fromDecl"
+  TypeSig{}  -> debug $ (prettyPrint d)
   e -> do
     warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
     write $ indented (show e)
 
 -- Functions ------------------------------------------------------------------
 
-fromMatches :: [Match] -> FH ()
-fromMatches = mapM_ fromFunMatches . groupBy ((==) `on` matchName)
+-- Adding binds (first pass)
 
-fromPatBind :: Decl -> FH ()
-fromPatBind (PatBind loc (H.PVar n) mtype rhs bs) = do
-  fromFunMatches [Match loc n [] mtype rhs bs]
-  return ()
-fromPatBind pb@(PatBind{}) =
-  fatal $ "Top level patterns not supported : " ++ prettyPrint pb
-fromPatBind d = fatal $ "Internal error, fromPatBind on decl " ++ show d
-
-fromFunMatches :: [Match] -> FH Exp
-fromFunMatches [] = fatal "Empty funmatches"
-fromFunMatches ms@(m:_) = do
+addMatchesScope :: [Match] -> FH ()
+addMatchesScope [] = fatal "Empty funmatches"
+addMatchesScope ms@(m:_) = do
     let n = fromName (matchName m)
-    fvs <- (\\) <$> freeVarss ms <*> ((n:) <$> namesInScope)
+    addToScope n
+    debug $ "addMatchesScope: " ++ n ++ " added to scope."
+
+addMatchesIndirection :: [Match] -> FH ()
+addMatchesIndirection [] = fatal "Empty funmatches"
+addMatchesIndirection ms@(m:_) = do
+    let n = fromName (matchName m)
+    fvs <- (\\) <$> freeVarss ms <*> namesInScope
     scopedname <- scopePrefix n
 
     scope <- namesInScope
-    debug $ "fromFunMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
+    debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
+            ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
+
+    addToScope scopedname
+    addBind n scopedname fvs
+
+fromMatches :: [Match] -> FH Expr
+fromMatches [] = fatal "Empty funmatches"
+fromMatches ms@(m:_) = do
+    let n = fromName (matchName m)
+    (scopedname,fvs) <- fromMaybe (error $ "fromMatches: unbound " ++ n)
+                                  <$> lookupBind n
+
+    scope <- namesInScope
+    debug $ "fromMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
             ++ " (in scope: " ++ unwords scope ++ ")"
 
-    -- this should not be done here (mutual let)
-    e <- addBind n scopedname fvs
-    addToScope scopedname
-
     localBindScope $ do
-      mapM_ addToScope fvs  -- these are in scope here
+      -- All free variables are arguments to this function
+      mapM_ addToScope fvs
       matrix <- localScopeName n
                   (map (addToPats fvs) <$> concatMapM matchToRow ms)
       if null matrix
           then warn $ "Empty matrix from " ++ n
           else decl (funcMatrix scopedname matrix)
-      return e
+
+    -- Return the expression that is this function (used by case, lambda)
+    mkVar n
   where
     addToPats vars (ps,g,e) = (map C.PVar vars ++ ps,g,e)
+    matchPattern (Match _ _ ps _ _ _) = ps
+
+-- This is used from lambda and case
+fromMatches' :: [Match] -> FH Expr
+fromMatches' ms = do
+  addMatchesScope ms
+  addMatchesIndirection ms
+  fromMatches ms
 
 matchToRow :: Match -> FH [([Pattern],Maybe Expr,Expr)]
 matchToRow (Match _loc _name ps _mtype rhs bs) = localBindScope $ do
@@ -111,8 +155,8 @@ matchToRow (Match _loc _name ps _mtype rhs bs) = localBindScope $ do
 
 -- Case -----------------------------------------------------------------------
 
-fromCase :: [Alt] -> FH Exp
-fromCase alts = localBindScope $ fromFunMatches (map altToMatch alts)
+fromCase :: [Alt] -> FH Expr
+fromCase alts = localBindScope $ fromMatches' (map altToMatch alts)
   where
     altToMatch :: Alt -> Match
     altToMatch (Alt loc pat guardedAlt bs) =
@@ -142,7 +186,7 @@ fromGuardStmts ss = case mapM unQualify ss of
 -- Binds, i.e where -----------------------------------------------------------
 
 fromBinds :: Binds -> FH ()
-fromBinds (BDecls ds) = mapM_ fromDecl ds
+fromBinds (BDecls ds) = fromDecls ds
 fromBinds b@(IPBinds{}) =
   warn $ "Not handling implicit arguments: " ++ show b
 
@@ -156,11 +200,11 @@ fromExp ex = case ex of
   Paren e            -> fromExp e
   InfixApp e1 qop e2 -> (app .) . app <$> fromQOp qop <*> fromExp e1
                                                       <*> fromExp e2
-  Lambda loc ps e    -> fromExp =<< localBindScope (fromFunMatches
+  Lambda loc ps e    -> localBindScope (fromMatches'
                         [ Match loc (Ident "lambda") ps
                                 (error "fromExp: lambda maybe type")
                                 (UnGuardedRhs e) (BDecls []) ])
-  H.Case e alts      -> fromExp =<< ((`H.App` e) <$> fromCase alts)
+  H.Case e alts      -> C.app <$> fromCase alts <*> fromExp e
   Let bs e           -> localBindScope $ do
                             localScopeName "let" (fromBinds bs)
                             fromExp e
@@ -176,9 +220,9 @@ listExp es = foldr (\x xs -> C.Con consName [x,xs]) (con0 nilName)
 
 mkVar :: Name -> FH Expr
 mkVar n = do b <- lookupBind n
-             case b of
-               Nothing -> return (C.Var n)
-               Just e  -> fromExp e
+             return $ case b of
+               Nothing       -> C.Var n
+               Just (n,args) -> foldl C.app (C.Var n) (map C.Var args)
 
 fromQOp :: QOp -> FH Expr
 fromQOp (QVarOp qname) = mkVar =<< fromQName qname

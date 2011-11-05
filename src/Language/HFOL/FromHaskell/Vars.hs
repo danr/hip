@@ -1,4 +1,6 @@
-module Language.HFOL.FromHaskell.Vars (freeVars,freeVarss) where
+module Language.HFOL.FromHaskell.Vars
+       (freeVars,freeVarss
+       ,boundVars,boundVarss) where
 
 import qualified Language.HFOL.Core as C
 import Language.Haskell.Exts
@@ -22,6 +24,12 @@ freeVars = fmap S.toList . fv
 freeVarss :: FV a => [a] -> FH [C.Name]
 freeVarss = fmap S.toList . fvs
 
+boundVars :: BV a => a -> FH [C.Name]
+boundVars = fmap S.toList . bv
+
+boundVarss :: BV a => [a] -> FH [C.Name]
+boundVarss = fmap S.toList . bvs
+
 fvs :: FV a => [a] -> FH (Set C.Name)
 fvs = fmap unions . mapM fv
 
@@ -35,10 +43,10 @@ fvVar :: QName -> FH (Set C.Name)
 fvVar qn = do
    n <- fromQName qn
    b <- lookupBind n
-   debug $ "fvVar: on " ++ n ++ " bound: " ++ show b
+   -- debug $ "fvVar: on " ++ n ++ " bound: " ++ show b
    case b of
-     Nothing -> return (singleton n)
-     Just e  -> fv e
+     Nothing       -> return (singleton n)
+     Just (sn,fvs) -> return (singleton n `union` S.fromList fvs)
 
 instance FV Exp where
   fv ex = case ex of

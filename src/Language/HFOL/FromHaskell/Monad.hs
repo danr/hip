@@ -20,8 +20,10 @@ concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
 concatMapM f = liftM concat . mapM f
 
 data St = St { _namesupply :: [Int]
-             , _binds      :: Map Name Exp
+             , _binds      :: Map Name (Name,[Name])
+              -- ^ An identifier to its scoped name and free vars
              , _scope      :: [Name]
+              -- ^ An identifier in scope
              }
 $(mkLabels [''St])
 
@@ -73,31 +75,25 @@ inScope n = (n `elem`) <$> gets scope
 namesInScope :: FH [Name]
 namesInScope = liftM2 (++) (M.keys <$> gets binds) (gets scope)
 
-addBind :: Name -> Name -> [Name] -> FH Exp
+addBind :: Name -> Name -> [Name] -> FH ()
 addBind fname scopedfname args
-    | fname == scopedfname = if null args
-                                 then do debug $ "No bind added: " ++ fname
-                                         return (var fname)
-                                 else fatal $ "Scope error: " ++ fname
-                                               ++ " uses :" ++ show args
-    | otherwise = do modify binds (M.insert fname e)
-                     debug $ "addBind: " ++ fname ++ " to " ++ show e
-                     return e
-  where e = foldl H.App (var scopedfname) (map var args)
-        var = H.Var . H.UnQual . H.Ident
+    | fname == scopedfname && not (null args) =
+        fatal $ "Scope error: " ++ fname ++ " uses :" ++ unwords args
+    | otherwise = do modify binds (M.insert fname (scopedfname,args))
+                     debug $ "addBind: " ++ fname ++ " to " ++ scopedfname
+                             ++ " with args " ++ unwords args
 
-lookupBind :: Name -> FH (Maybe Exp)
+lookupBind :: Name -> FH (Maybe (Name,[Name]))
 lookupBind n = M.lookup n <$> gets binds
-
 
 scopePrefix :: Name -> FH Name
 scopePrefix n = do
   s <- asks scopeName
   if null s then return n
-            else do _u <- newUnique
+            else do u <- newUnique
                     let delim = "_"
-                    return (intercalate delim (reverse s) ++ delim ++ n)
-                           {-  ++ delim ++  show u) -}
+                    return ({- intercalate delim (reverse s) ++ delim ++ -} n
+                            ++ delim ++  show u)
 
 newUnique :: FH Int
 newUnique = do

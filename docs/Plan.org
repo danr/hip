@@ -47,12 +47,14 @@ SCHEDULED: <2011-11-05 Sat>
 CLOSED: [2011-11-05 Sat 14:04]
 **** TODO More tests needed
 *** TODO Sections
-*** TODO Add all functions in scope for mutually recursive let/where
+*** DONE Add all functions in scope for mutually recursive let/where
+CLOSED: [2011-11-05 Sat 15:21]
 *** TODO Output declarations together with its definitions
 Accompany a function with its produced floated definitions
 *** DONE Support for pattern matching on lists
 CLOSED: [2011-11-05 Sat 12:45]
-*** TODO Don't recalculate FV for binds
+*** DONE Don't recalculate FV for binds
+CLOSED: [2011-11-05 Sat 15:21]
 Currently, when something needs to be floated uses a where-clause, the
 FV looks inside the definition of the where's definition. This could
 be stored to avoid recalulation and to avoid termination issues.

@@ -1,5 +1,3 @@
--- This example produces wrong code
-
 scanr             :: (a -> b -> b) -> b -> [a] -> [b]
 scanr f q0 []     =  [q0]
 scanr f q0 (x:xs) =  f x q : qs
