@@ -10,8 +10,8 @@
 
 * Week 44 (31 Oct - 6 Nov)
 ** DONE Write project proposal
-** TODO Hand in project proposal
-SCHEDULED: <2011-11-01 Tue>
+** DONE Hand in project proposal
+CLOSED: [2011-11-04 Fri 11:45] SCHEDULED: <2011-11-01 Tue>
 
 *** DONE Mail Graham
 CLOSED: [2011-11-02 Wed 08:50]
@@ -42,8 +42,26 @@ SCHEDULED: <2011-11-02 Wed>
 
 ** TODO Haskell $\rightarrow$ Core
 The translation should cover most of the examples
-SCHEDULED: <2011-11-04 Fri>
-
+SCHEDULED: <2011-11-05 Sat>
+*** TODO Lambdas
+*** TODO Sections
+*** TODO Add all functions in scope for mutually recursive let/where
+*** TODO Output declarations together with its definitions
+Accompany a function with its produced floated definitions
+*** TODO Support for pattern matching on lists
+*** TODO Don't recalculate FV for binds
+Currently, when something needs to be floated uses a where-clause, the
+FV looks inside the definition of the where's definition. This could
+be stored to avoid recalulation and to avoid termination issues.
+*** TODO Tidy up code and comment
+*** Future plans:
+Just a reminder what is not currently subject for translation
+**** List comprehensions
+**** Do notation
+**** Let in guards
+**** Typeclasses
+**** Records 
+**** As-patterns, and
 ** TODO Read about different proving techniques
 
 * Week 45 (7 Nov - 13 Nov)
