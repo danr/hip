@@ -35,6 +35,7 @@ fvVar :: QName -> FH (Set C.Name)
 fvVar qn = do
    n <- fromQName qn
    b <- lookupBind n
+   debug $ "fvVar: on " ++ n ++ " bound: " ++ show b
    case b of
      Nothing -> return (singleton n)
      Just e  -> fv e
@@ -79,7 +80,7 @@ instance FV Match where
      -- Is this correct? Take all FV of the rhsvs and the bs, minus
      -- those from the patterns
      let r = (rhsvs `union` bsvs) `difference` (psvs `union` bsbv)
-     debug $ show n ++ " fv: " ++ show r ++ " bsbv: " ++ show bsbv
+     -- debug $ show n ++ " fv: " ++ show r ++ " bsbv: " ++ show bsbv
      return r
 
 instance FV Rhs where

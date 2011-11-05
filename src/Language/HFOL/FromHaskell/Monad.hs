@@ -76,9 +76,10 @@ namesInScope = liftM2 (++) (M.keys <$> gets binds) (gets scope)
 addBind :: Name -> Name -> [Name] -> FH Exp
 addBind fname scopedfname args
     | fname == scopedfname = if null args
-                                 then do warn $ "occurs check: " ++ fname
+                                 then do debug $ "No bind added: " ++ fname
                                          return (var fname)
-                                 else fatal $ "occurs check: " ++ fname
+                                 else fatal $ "Scope error: " ++ fname
+                                               ++ " uses :" ++ show args
     | otherwise = do modify binds (M.insert fname e)
                      debug $ "addBind: " ++ fname ++ " to " ++ show e
                      return e

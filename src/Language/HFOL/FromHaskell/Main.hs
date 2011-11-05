@@ -53,6 +53,7 @@ fromDecl d = case d of
     (decl . Data) =<< mapM fromQualConDecl qualcondecls
   FunBind matches -> fromMatches matches
   PatBind{}       -> fromPatBind d
+  TypeSig{}       -> debug $ (prettyPrint d)
   e -> do
     warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
     write $ indented (show e)
@@ -76,16 +77,23 @@ fromFunMatches ms@(m:_) = do
     let n = fromName (matchName m)
     fvs <- (\\) <$> freeVarss ms <*> ((n:) <$> namesInScope)
     scopedname <- scopePrefix n
+
+    scope <- namesInScope
+    debug $ "fromFunMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
+            ++ " (in scope: " ++ unwords scope ++ ")"
+
+    -- this should not be done here (mutual let)
     e <- addBind n scopedname fvs
     addToScope scopedname
-    mapM_ addToScope fvs
-    debug $ scopedname ++ " free vars: " ++ unwords fvs
-    matrix <- localScopeName n
-                (map (addToPats fvs) <$> concatMapM matchToRow ms)
-    if null matrix
-        then warn $ "Empty matrix from " ++ n
-        else decl (funcMatrix scopedname matrix)
-    return e
+
+    localBindScope $ do
+      mapM_ addToScope fvs  -- these are in scope here
+      matrix <- localScopeName n
+                  (map (addToPats fvs) <$> concatMapM matchToRow ms)
+      if null matrix
+          then warn $ "Empty matrix from " ++ n
+          else decl (funcMatrix scopedname matrix)
+      return e
   where
     addToPats vars (ps,g,e) = (map C.PVar vars ++ ps,g,e)
 
@@ -177,7 +185,7 @@ fromQOp (QConOp qname) = con0  <$> fromQName qname
 
 fromPat :: Pat -> FH Pattern
 fromPat pat = case pat of
-  H.PVar pn     -> do debug $ "Är du redan bunden, lille vän? " ++ show pn
+  H.PVar pn     -> do -- debug $ "Check if in scope: " ++ show pn
                       let n = fromName pn
                       b <- inScope n
                       if b then do n' <- scopePrefix n
