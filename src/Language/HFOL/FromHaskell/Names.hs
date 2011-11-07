@@ -1,7 +1,7 @@
 module Language.HFOL.FromHaskell.Names where
 
 import Language.HFOL.FromHaskell.Monad
-import Language.HFOL.Core(Name)
+import Language.HFOL.ToFOL.Core(Name)
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,name)
 import Control.Monad

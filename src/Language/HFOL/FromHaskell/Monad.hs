@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving,FlexibleContexts,TemplateHaskell #-}
 module Language.HFOL.FromHaskell.Monad where
 
-import Language.HFOL.Core as C
+import Language.HFOL.ToFOL.Core as C
 import Language.Haskell.Exts as H hiding (Name,Decl)
 
 import Control.Applicative
@@ -15,9 +15,6 @@ import Data.Map (Map)
 import Data.Label (mkLabels)
 import Data.Either (partitionEithers)
 import Data.List (intercalate)
-
-concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
-concatMapM f = liftM concat . mapM f
 
 data St = St { _namesupply :: [Int]
              , _binds      :: Map Name (Name,[Name])
@@ -92,8 +89,8 @@ scopePrefix n = do
   if null s then return n
             else do u <- newUnique
                     let delim = "_"
-                    return ({- intercalate delim (reverse s) ++ delim ++ -} n
-                            ++ delim ++  show u)
+                    return ({- intercalate delim (reverse s) ++ delim ++ -}
+                            n ++ delim ++ show u)
 
 newUnique :: FH Int
 newUnique = do

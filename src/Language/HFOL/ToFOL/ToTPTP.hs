@@ -1,12 +1,13 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, ViewPatterns, ParallelListComp #-}
-module Language.HFOL.ToTPTP where
+module Language.HFOL.ToFOL.ToTPTP where
 
-import Language.HFOL.Core
-import Language.HFOL.FixBranches
-import Language.HFOL.Pretty
-import Language.HFOL.Monad
+import Language.HFOL.ToFOL.Core
+import Language.HFOL.ToFOL.FixBranches
+import Language.HFOL.ToFOL.Pretty
+import Language.HFOL.ToFOL.Monad
 import Language.HFOL.Util
-import Language.HFOL.Constructors
+import Language.HFOL.ToFOL.Constructors
+import Language.HFOL.FromHaskell.Names
 import Language.TPTP hiding (Decl,Var)
 import Language.TPTP.Pretty
 import qualified Language.TPTP as T
@@ -31,8 +32,13 @@ toTPTP ds = runTM $ do
     (funs,datatypes) =
       let (funs',datatypes') = partition funcDecl ds
       in  (map (funcName &&& length . funcArgs) funs'
-          ,[(bottomName,0)] : [(trueName,0),(falseName,0)] :
-           map dataCons datatypes')
+          ,[[(bottomName,0)]
+           ,[(trueName,0),(falseName,0)]
+           ,[(unitName,0)]
+           ,[(nilName,0),(consName,2)]
+           ] ++
+           [ [(tupleName n,n)] | n <- [2..5] ]
+           ++ map dataCons datatypes')
 
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term

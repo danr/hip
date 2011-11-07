@@ -1,10 +1,10 @@
-module Language.HFOL.Test where
+module Language.HFOL.ToFOL.Test where
 
-import Language.HFOL.Core
-import Language.HFOL.Parser
-import Language.HFOL.Pretty
+import Language.HFOL.ToFOL.Core
+import Language.HFOL.ToFOL.Parser
+import Language.HFOL.ToFOL.Pretty
 
-import Language.HFOL.ArbitraryCore
+import Language.HFOL.ToFOL.ArbitraryCore
 import Test.QuickCheck
 
 import System.IO.Unsafe

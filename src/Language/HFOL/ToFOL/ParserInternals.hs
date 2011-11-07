@@ -1,5 +1,5 @@
 {-# LANGUAGE DoRec #-}
-module Language.HFOL.ParserInternals
+module Language.HFOL.ToFOL.ParserInternals
        (declsGrammar
        ,parseDecls
        ,parseBranch
@@ -12,8 +12,8 @@ import Data.Parser.Grempa.Grammar
 import Data.Parser.Grempa.Dynamic
 import Data.Data
 
-import qualified Language.HFOL.Lexer as L
-import Language.HFOL.Core
+import qualified Language.HFOL.ToFOL.Lexer as L
+import Language.HFOL.ToFOL.Core
 
 parseFromGrammar :: Data e => Grammar L.Tok e -> String -> e
 parseFromGrammar g = parse (mkDynamicParser constrWrapper g) . L.lex

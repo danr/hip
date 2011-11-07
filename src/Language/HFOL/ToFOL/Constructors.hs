@@ -1,6 +1,6 @@
-module Language.HFOL.Constructors where
+module Language.HFOL.ToFOL.Constructors where
 
-import Language.HFOL.Core
+import Language.HFOL.ToFOL.Core
 
 -- | The name for bottom
 bottomName :: Name

@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeSynonymInstances #-}
-module Language.HFOL.Pretty (prettyCore) where
+module Language.HFOL.ToFOL.Pretty (prettyCore) where
 
-import Language.HFOL.Core
+import Language.HFOL.ToFOL.Core
 import Text.PrettyPrint.HughesPJ
-import Language.HFOL.Constructors
+import Language.HFOL.ToFOL.Constructors
 
 prettyCore :: P a => a -> String
 prettyCore = render . p

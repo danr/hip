@@ -4,10 +4,12 @@
 *tptp
 *html
 src/*/*/*\.tex
+src/*/*/*/*\.tex
 src/*/*/*\.pdf
 *.aux
 *.log
 *Main
+*Translate
 docs/*pdf
 docs/*tex
 docs/*mail*

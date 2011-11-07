@@ -1,11 +1,11 @@
-module Main where
+module Language.HFOL.ToFOL.Run where
 
 import Language.TPTP.Pretty
-import Language.HFOL.Parser
-import Language.HFOL.Latex
-import Language.HFOL.ToTPTP
-import Language.HFOL.Core
-import Language.HFOL.Pretty
+import Language.HFOL.ToFOL.Parser
+import Language.HFOL.ToFOL.Latex
+import Language.HFOL.ToFOL.ToTPTP
+import Language.HFOL.ToFOL.Core
+import Language.HFOL.ToFOL.Pretty
 import qualified Language.TPTP as T
 
 import Control.Monad

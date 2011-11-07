@@ -1,0 +1,30 @@
+fof(map0,axiom,! [F,X_0,Xs_1]: (map(F,'Cons'(X_0,Xs_1)) = 'Cons'(app(F,X_0),map(F,Xs_1)))).
+fof(map1,axiom,! [F]: (map(F,'Nil') = 'Nil')).
+fof(map2,axiom,! [F,Xs]: (((map(F,Xs) = 'Bottom') 
+	| (Xs = 'Cons'('Cons_0'(Xs),'Cons_1'(Xs)))) 
+	| (Xs = 'Nil'))).
+fof(approx0,axiom,! [N_0]: (approx('Succ'(N_0),'Nil') = 'Nil')).
+fof(approx1,axiom,! [N_1,X_2,Xs_3]: (approx('Succ'(N_1),'Cons'(X_2,Xs_3)) = 'Cons'(X_2,approx(N_1,Xs_3)))).
+fof(approx2,axiom,! [N,Xs]: (((approx(N,Xs) = 'Bottom') 
+	| ((N = 'Succ'('Succ_0'(N))) & (Xs = 'Nil'))) 
+	| ((N = 'Succ'('Succ_0'(N))) & (Xs = 'Cons'('Cons_0'(Xs),'Cons_1'(Xs)))))).
+fof(iterate,axiom,! [F,X]: (iterate(F,X) = 'Cons'(X,iterate(F,app(F,X))))).
+fof(compose,axiom,! [F,G,X]: (compose(F,G,X) = app(F,app(G,X)))).
+fof(projCons_0,axiom,! [X,Y]: ('Cons_0'('Cons'(X,Y)) = X)).
+fof(projCons_1,axiom,! [X,Y]: ('Cons_1'('Cons'(X,Y)) = Y)).
+fof(projSucc_0,axiom,! [X]: ('Succ_0'('Succ'(X)) = X)).
+fof(projT_0,axiom,! [X,Y]: ('T_0'('T'(X,Y)) = X)).
+fof(projT_1,axiom,! [X,Y]: ('T_1'('T'(X,Y)) = Y)).
+fof(disjBottomTrue,axiom,'Bottom' != 'True').
+fof(disjBottomFalse,axiom,'Bottom' != 'False').
+fof(disjTrueFalse,axiom,'True' != 'False').
+fof(disjBottomCons,axiom,! [X,Y]: ('Bottom' != 'Cons'(X,Y))).
+fof(disjBottomNil,axiom,'Bottom' != 'Nil').
+fof(disjConsNil,axiom,! [X,Y]: ('Cons'(X,Y) != 'Nil')).
+fof(disjBottomSucc,axiom,! [X]: ('Bottom' != 'Succ'(X))).
+fof(disjBottomZero,axiom,'Bottom' != 'Zero').
+fof(disjSuccZero,axiom,! [X]: ('Succ'(X) != 'Zero')).
+fof(disjBottomT,axiom,! [X,Y]: ('Bottom' != 'T'(X,Y))).
+
+fof(IH,axiom,! [X0,X1]: (approx(n,map(X0,iterate(X0,X1))) = approx(n,iterate(X0,app(X0,X1))))).
+fof(IS,conjecture,! [X0,X1]: (approx('Succ'(n),map(X0,iterate(X0,X1))) = approx('Succ'(n),iterate(X0,app(X0,X1))))).

@@ -1,16 +1,17 @@
-module Language.HFOL.FromHaskell where
+module Language.HFOL.FromHaskell.FromHaskell (parseHaskell,run) where
 
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,app)
 
-import qualified Language.HFOL.Core as C
-import Language.HFOL.Core hiding (Decl)
+import qualified Language.HFOL.ToFOL.Core as C
+import Language.HFOL.ToFOL.Core hiding (Decl)
 
 import Language.HFOL.FromHaskell.Names
 import Language.HFOL.FromHaskell.Monad
 import Language.HFOL.FromHaskell.Vars
 
-import Language.HFOL.Pretty
+import Language.HFOL.Util (concatMapM)
+import Language.HFOL.ToFOL.Pretty
 
 import Control.Applicative
 import Control.Monad
@@ -31,6 +32,13 @@ run f = do
         Left err -> putStrLn err
         Right ds -> mapM_ (putStrLn . prettyCore) ds
     ParseFailed loc s -> putStrLn $ show loc ++ ": " ++ s
+
+parseHaskell :: String -> (Either String [C.Decl],[String])
+parseHaskell s =
+  let r = parseModule s in
+  case r of
+    ParseOk     m     -> runFH (fromModule m)
+    ParseFailed loc s -> (Left ("Parse fail " ++ show loc ++ ": " ++ s),[])
 
 indented :: String -> String
 indented = unlines . map ("    " ++) . lines
@@ -83,10 +91,9 @@ fromDecl d = case d of
     warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
     write $ indented (show e)
 
--- Functions ------------------------------------------------------------------
+-- Functions --------------------------------------------------------------------
 
--- Adding binds (first pass)
-
+-- Adding scope (first pass)
 addMatchesScope :: [Match] -> FH ()
 addMatchesScope [] = fatal "Empty funmatches"
 addMatchesScope ms@(m:_) = do
@@ -94,6 +101,7 @@ addMatchesScope ms@(m:_) = do
     addToScope n
     debug $ "addMatchesScope: " ++ n ++ " added to scope."
 
+-- Add indirections (second pass)
 addMatchesIndirection :: [Match] -> FH ()
 addMatchesIndirection [] = fatal "Empty funmatches"
 addMatchesIndirection ms@(m:_) = do
@@ -105,9 +113,9 @@ addMatchesIndirection ms@(m:_) = do
     debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
             ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
 
-    addToScope scopedname
     addBind n scopedname fvs
 
+-- Generate code (third pass)
 fromMatches :: [Match] -> FH Expr
 fromMatches [] = fatal "Empty funmatches"
 fromMatches ms@(m:_) = do
@@ -134,13 +142,6 @@ fromMatches ms@(m:_) = do
     addToPats vars (ps,g,e) = (map C.PVar vars ++ ps,g,e)
     matchPattern (Match _ _ ps _ _ _) = ps
 
--- This is used from lambda and case
-fromMatches' :: [Match] -> FH Expr
-fromMatches' ms = do
-  addMatchesScope ms
-  addMatchesIndirection ms
-  fromMatches ms
-
 matchToRow :: Match -> FH [([Pattern],Maybe Expr,Expr)]
 matchToRow (Match _loc _name ps _mtype rhs bs) = localBindScope $ do
   localScopeName "where" (fromBinds bs)
@@ -153,8 +154,16 @@ matchToRow (Match _loc _name ps _mtype rhs bs) = localBindScope $ do
                                      e' <- fromExp e
                                      return (ps',Just g,e')
 
+-- This is used from lambda and case
+fromMatches' :: [Match] -> FH Expr
+fromMatches' ms = do
+  addMatchesScope ms
+  addMatchesIndirection ms
+  fromMatches ms
+
 -- Case -----------------------------------------------------------------------
 
+-- This does not yet use the C.Case
 fromCase :: [Alt] -> FH Expr
 fromCase alts = localBindScope $ fromMatches' (map altToMatch alts)
   where
@@ -174,7 +183,8 @@ fromCase alts = localBindScope $ fromMatches' (map altToMatch alts)
 -- Guards ---------------------------------------------------------------------
 
 fromGuardStmts :: [Stmt] -> FH Expr
-fromGuardStmts ss = case mapM unQualify ss of
+fromGuardStmts ss = case (mapM :: (Stmt -> Maybe Exp) -> [Stmt] -> Maybe [Exp])
+                         unQualify ss of
      Nothing -> fatal $ "Cannot handle these guard statements: " ++ show ss
      Just es -> foldr1 (\e1 e2 -> C.App "&&" [e1,e2]) <$> mapM fromExp es
   where
@@ -183,7 +193,7 @@ fromGuardStmts ss = case mapM unQualify ss of
     unQualify (Qualifier e) = Just e
     unQualify _             = Nothing
 
--- Binds, i.e where -----------------------------------------------------------
+-- Binds, i.e where, let ------------------------------------------------------
 
 fromBinds :: Binds -> FH ()
 fromBinds (BDecls ds) = fromDecls ds
@@ -210,8 +220,9 @@ fromExp ex = case ex of
                             fromExp e
   Tuple es           -> C.Con (tupleName (length es)) <$> mapM fromExp es
   List es            -> listExp es
-  If e1 e2 e3        -> (app .) . app . app (C.Var "if")
-                          <$> fromExp e1 <*> fromExp e2 <*> fromExp e3
+  If e1 e2 e3        -> do warn $ "Assumes if :: Bool -> a -> a -> a in scope"
+                           (app .) . app . app (C.Var "if")
+                             <$> fromExp e1 <*> fromExp e2 <*> fromExp e3
   RightSection op e  -> do x <- Ident <$> scopePrefix "x"
                            fromExp (Lambda (error "lambda location on rsection")
                                            [H.PVar x]

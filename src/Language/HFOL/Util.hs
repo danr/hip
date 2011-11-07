@@ -1,4 +1,6 @@
-module Language.HFOL.Util (selections,withPrevious,concatMaybe) where
+module Language.HFOL.Util
+       (selections,withPrevious,concatMapM,concatMaybe)
+       where
 
 import Data.Maybe
 import Data.List
@@ -17,6 +19,10 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 -- > withPrevious "abc" = [('a',""),('b',"a"),('c',"ab")]
 withPrevious :: [a] -> [(a,[a])]
 withPrevious xs = zip xs (inits xs)
+
+-- | concatMapM
+concatMapM :: (Functor m,Monad m) => (a -> m [b]) -> [a] -> m [b]
+concatMapM f = fmap concat . mapM f
 
 -- | If any is nothing (unreachable branch etc), return nothing,
 --   otherwise return just the catMaybes.

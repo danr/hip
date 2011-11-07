@@ -62,7 +62,12 @@ be stored to avoid recalulation and to avoid termination issues.
 *** TODO Tidy up code and comment
 *** TODO Generate code and test
 *** TODO Pattern binds
-let (x,y) = foo in e
+(x,y) = e
+Here, x and y can occur in e. This can be translated with
+e' x y = e
+x = case e' x y of (x,y) -> x
+y = case e' x y of (x,y) -> y
+In a let/where stmt there can of course be more free variables in e.
 *** Future plans:
 Just a reminder what is not currently subject for translation
 **** List comprehensions

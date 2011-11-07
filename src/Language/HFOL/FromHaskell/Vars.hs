@@ -2,7 +2,7 @@ module Language.HFOL.FromHaskell.Vars
        (freeVars,freeVarss
        ,boundVars,boundVarss) where
 
-import qualified Language.HFOL.Core as C
+import qualified Language.HFOL.ToFOL.Core as C
 import Language.Haskell.Exts
 import Language.HFOL.FromHaskell.Monad
 import Language.HFOL.FromHaskell.Names
