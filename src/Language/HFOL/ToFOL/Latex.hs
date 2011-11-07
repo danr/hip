@@ -120,9 +120,19 @@ showFunName :: FunName -> String
 showFunName (FunName "Bottom") = "\\bot"
 showFunName (FunName f)        = f
 
+opsyms :: String
+opsyms = "-+@/\\!?<>=%.:"
+
+isOp :: String -> Bool
+isOp = all (`elem` opsyms)
+
 instance Latex Term where
   latex (Var x)    = return $ map toLower (varName x)
   latex (Fun f []) = return $ "\\mathrm{" ++ showFunName f ++ "}"
+  latex (Fun op [x,y]) | isOp (funName op) = do
+    x' <- latex x
+    y' <- latex y
+    return (x' ++ funName op ++ y')
   latex (Fun f as) = do
     as' <- mapM latex as
     return ("\\mathrm{" ++ showFunName f ++ "}"
