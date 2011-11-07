@@ -88,7 +88,7 @@ scopePrefix n = do
   s <- asks scopeName
   if null s then return n
             else do u <- newUnique
-                    let delim = "_"
+                    let delim = "."
                     return ({- intercalate delim (reverse s) ++ delim ++ -}
                             n ++ delim ++ show u)
 

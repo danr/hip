@@ -13,13 +13,19 @@ import Data.List
 import Data.Char
 
 runLatex :: Latex a => a -> String
-runLatex = (++ "\\\\") . (`evalState` False) . latex
+runLatex = (++ "\\\\") .  (`evalState` False) . latex
+
+escape :: String -> String
+escape = concatMap e
+ where e '&' = "\\&"
+       e c   = [c]
 
 latexHeader :: String -> [Decl] -> String
 latexHeader file fs = unlines $
   ["\\documentclass{article}"
   ,"\\usepackage[a4paper]{geometry}"
   ,"\\usepackage{amsmath}"
+  ,"\\allowdisplaybreaks"
   ,"\\begin{document}"
   ,"\\title{" ++ file ++ "}"
   ,"\\maketitle"
@@ -34,7 +40,7 @@ latexHeader file fs = unlines $
 latexDecl :: C.Decl -> [Decl] -> String
 latexDecl C.Data{}          _  = error "latexDecl on data"
 latexDecl d@(C.Func fn _ _) fs = unlines $
-  ["\\section{" ++ fn ++ "}"
+  ["\\section{" ++ escape fn ++ "}"
   ,""
   ,"\\subsection{Definition}"
   ,""
@@ -118,21 +124,25 @@ instance Latex Formula where
 
 showFunName :: FunName -> String
 showFunName (FunName "Bottom") = "\\bot"
-showFunName (FunName f)        = f
+showFunName (FunName f)        = escape f
 
 opsyms :: String
-opsyms = "-+@/\\!?<>=%.:"
+opsyms = "-+@/\\!?<>=%.:&|"
 
 isOp :: String -> Bool
 isOp = all (`elem` opsyms)
 
+parenTerm :: Term -> String -> String
+parenTerm (Fun _ (_:_)) s = "(" ++ s ++ ")"
+parenTerm _             s = s
+
 instance Latex Term where
-  latex (Var x)    = return $ map toLower (varName x)
+  latex (Var x)    = return $ map toLower (escape (varName x))
   latex (Fun f []) = return $ "\\mathrm{" ++ showFunName f ++ "}"
   latex (Fun op [x,y]) | isOp (funName op) = do
-    x' <- latex x
-    y' <- latex y
-    return (x' ++ funName op ++ y')
+    x' <- parenTerm x <$> latex x
+    y' <- parenTerm y <$> latex y
+    return (x' ++ " \\; " ++ showFunName op ++ " \\; " ++ y')
   latex (Fun f as) = do
     as' <- mapM latex as
     return ("\\mathrm{" ++ showFunName f ++ "}"
