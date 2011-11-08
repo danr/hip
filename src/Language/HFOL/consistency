@@ -8,10 +8,15 @@ else
     if [ $2 == "eproof" ]; then
         PROGRAM="eproof"
         FLAG=""
-    else 
+    else
         FLAG=$2
     fi
 fi
 
-./Translate $1 > `basename $1.tptp` && \
-   $PROGRAM -tAuto -xAuto --tptp3-format $FLAG `basename $1.tptp`
+./Translate $1 > `basename $1.tptp`
+
+if [ $? == 0 ]; then
+    $PROGRAM -tAuto -xAuto --tptp3-format $FLAG `basename $1.tptp`
+else
+    cat `basename $1.tptp`
+fi    

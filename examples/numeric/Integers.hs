@@ -1,7 +1,9 @@
 import Test.QuickCheck
 import Control.Applicative
 
-data Nat = S Nat | Z deriving (Eq,Show)
+import Prelude hiding ((==))
+
+data Nat = S Nat | Z deriving (Show)
 
 instance Arbitrary Nat where
   arbitrary =
@@ -10,11 +12,19 @@ instance Arbitrary Nat where
           x <- choose (0,s)
           return (nats !! x)
 
-data Integ = P Nat | N Nat deriving (Eq,Show)
+data Integ = P Nat | N Nat deriving (Show)
 
 instance Arbitrary Integ where
   arbitrary = oneof [P <$> arbitrary,N <$> arbitrary]
 
+eqnat Z Z = True
+eqnat (S m) (S n) = True
+eqnat _ _ = False
+
+(==) :: Integ -> Integ -> Bool
+N x == N y = eqnat x y
+P x == P y = eqnat x y
+_   == _   = False
 
 neg :: Integ -> Integ
 neg (P (S n)) = N n

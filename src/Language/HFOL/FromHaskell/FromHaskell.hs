@@ -164,8 +164,12 @@ fromMatches' ms = do
 -- Case -----------------------------------------------------------------------
 
 -- This does not yet use the C.Case
-fromCase :: [Alt] -> FH Expr
-fromCase alts = localBindScope $ fromMatches' (map altToMatch alts)
+fromCase :: Exp -> [Alt] -> FH Expr
+fromCase e alts = do
+     caseExpr <- localBindScope $ do
+                    mapM_ removeFromScope =<< freeVars e
+                    fromMatches' (map altToMatch alts)
+     (caseExpr `C.app`) <$> fromExp e
   where
     altToMatch :: Alt -> Match
     altToMatch (Alt loc pat guardedAlt bs) =
@@ -214,7 +218,7 @@ fromExp ex = case ex of
                         [ Match loc (Ident "lambda") ps
                                 (error "fromExp: lambda maybe type")
                                 (UnGuardedRhs e) (BDecls []) ])
-  H.Case e alts      -> C.app <$> fromCase alts <*> fromExp e
+  H.Case e alts      -> fromCase e alts
   Let bs e           -> localBindScope $ do
                             localScopeName "let" (fromBinds bs)
                             fromExp e

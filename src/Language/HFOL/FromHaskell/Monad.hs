@@ -66,6 +66,11 @@ localBindScope m = do
 addToScope :: Name -> FH ()
 addToScope = modify scope . (:)
 
+removeFromScope :: Name -> FH ()
+removeFromScope n = do
+  modify scope (filter (/= n))
+  modify binds (M.delete n)
+
 inScope :: Name -> FH Bool
 inScope n = (n `elem`) <$> gets scope
 
@@ -75,7 +80,7 @@ namesInScope = liftM2 (++) (M.keys <$> gets binds) (gets scope)
 addBind :: Name -> Name -> [Name] -> FH ()
 addBind fname scopedfname args
     | fname == scopedfname && not (null args) =
-        fatal $ "Scope error: " ++ fname ++ " uses :" ++ unwords args
+        fatal $ "Scope error, " ++ fname ++ " uses: " ++ unwords args
     | otherwise = do modify binds (M.insert fname (scopedfname,args))
                      debug $ "addBind: " ++ fname ++ " to " ++ scopedfname
                              ++ " with args " ++ unwords args

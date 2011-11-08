@@ -13,3 +13,9 @@ predpred x = case x of
         Succ x -> x
         Zero   -> x
     Zero -> x
+
+predhead x = case x of
+    x : xs -> case x of
+       Succ x -> x : xs
+       Zero   -> x : xs
+    []     -> []   
