@@ -1,3 +1,17 @@
 #!/bin/bash
 
-./Main Examples/$1.ec > $1.tptp && eprover -tAuto -xAuto --tptp3-format $1.tptp
+PROGRAM="eprover"
+
+if [ -z $2 ]; then
+    FLAG=""
+else
+    if [ $2 == "eproof" ]; then
+        PROGRAM="eproof"
+        FLAG=""
+    else 
+        FLAG=$2
+    fi
+fi
+
+./Translate $1 > `basename $1.tptp` && \
+   $PROGRAM -tAuto -xAuto --tptp3-format $FLAG `basename $1.tptp`

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+for f in `ls $1/*hs`; do
+    echo "$f:"
+    timeout 2 ./consistency $f -s
+    echo
+    echo " ------------------------------------------------------------------ "
+    echo
+done

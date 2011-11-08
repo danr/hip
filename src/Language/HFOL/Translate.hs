@@ -37,7 +37,7 @@ main = do
       when (flag "-ct") exitSuccess
       -- Translation to FOL
       let (funcAxiomsWithDef,extraAxioms,debug) = toTPTP ds
-          axioms = concatMap snd funcAxiomsWithDef ++ extraAxioms
+          axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
       -- Verbose output
       when (flag "-v") (mapM_ putStrLn debug)
       -- TPTP output
