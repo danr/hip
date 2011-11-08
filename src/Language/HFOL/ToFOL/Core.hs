@@ -97,13 +97,14 @@ pcon0 :: Name -> Pattern
 pcon0 n = PCon n []
 
 -- | Substitution
-subst :: Name -> Expr -> Expr -> Expr
-subst x' e' = transform f
-  where f (Var x) | x == x' = e'
+subst :: Name -> Name -> Expr -> Expr
+subst xold xnew = transform f
+  where f (Var x)    | x == xold = Var xnew
+        f (App x as) | x == xold = App xnew as
         f e       = e
 
 substVars :: [(Name,Name)] -> Expr -> Expr
-substVars ns e = foldr (\(x,x') -> subst x (Var x')) e ns
+substVars ns e = foldr (\(x,x') -> subst x x') e ns
 
 {-
  Given a function name and the matrix of patterns and expressions,
