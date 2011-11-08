@@ -51,6 +51,8 @@ main = do
 printUsage :: IO ()
 printUsage = mapM_ putStrLn
   [ "Usage:"
+  , "    autospec filename [flags]"
+  , ""
   , "First argument is filename"
   , "    suffix: hs then it is assumed to be haskell"
   , "    other suffix is Core"
