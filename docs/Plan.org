@@ -24,7 +24,6 @@ SCHEDULED: <2011-11-01 Tue>
 About time plan, merge-sort implementation, approx lemma and
 typeclasses.
 
-
 ** TODO Write more examples
 SCHEDULED: <2011-11-02 Wed>
 *** DONE Add merge sort
@@ -79,17 +78,26 @@ Just a reminder what is not currently subject for translation
 ** TODO Read about different proving techniques
 
 * Week 45 (7 Nov - 13 Nov)
-** TODO Meeting with Koen
+** DONE Meeting with Koen
+CLOSED: [2011-11-07 Mon 14:50]
 Discuss different proving techniques
 
 Present Haskell $\rightarrow$ Core translation
-
 SCHEDULED: <2011-11-07 Mon>
 ** TODO Write report about translation to FOL
 SCHEDULED: <2011-11-08 Tue>
 ** TODO Implement proving techniques
-SCHEDULED: <2011-11-11 Fri>
+*** First steps:
+Total and finite input
 
+Later versions can use QuickCheck to see if it holds for partial
+input, see paper by NAD et al Chasing Bottoms, and prove with the
+given information and prove with finite, infinite, partial and total.
+
+Implement simple proof techniques: approximation lemma, structural
+induction, fixpoint induction and [[http://www-formal.stanford.edu/jmc/basis1/node11.html][recursion induction]]
+SCHEDULED: <2011-11-11 Fri>
+** TODO Bug Sven until registered on course
 * Week 46 (14 Nov - 20 Nov)
 ** Evaluation of proving techniques
 SCHEDULED: <2011-11-14 Mon>
