@@ -1,0 +1,43 @@
+#+TITLE:     README
+#+AUTHOR:    Dan Rosén
+#+EMAIL:     danr@student.gu.se
+#+OPTIONS:   H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+* Autospec
+
+Prove properties of Haskell functions by translating the functions to 
+First Order Logic and use Automated Theorem Provers.
+
+** Folders and Files
+
+| latex         | produces latex output of Haskell -> FOL translation           |
+| consistency   | checks if the translation of a Haskell module is consistent   |
+| consistencies | checks if an entire directory is consistent after translation |
+| src/          | source code                                                   |
+| examples-hs/  | Haskell examples subject to translation to FOL                |
+| examples-ec/  | Core examples subject to translation to FOL                   |
+| examples/     | Example proof haskell files                                   |
+| docs/         | Documents                                                     |
+| tptp-test/    | Some example formulas written in tptp format                  |
+
+** Source contents
+*** Language.TPTP
+The TPTP library used in this project
+*** Language.HFOL
+Everything concerning Haskell -> FOL translation
+**** Language.HFOL.FromHaskell
+From Haskell to Core
+**** Language.HFOL.ToFOL
+From Core to FOL
+*** Test.QuickSpec
+The QuickSpec library made my Nick Smallbone and Koen Claessen
+
+** Links
+
+QuickSpec : http://code.haskell.org/QuickSpec/
+TPTP      : http://www.tptp.org/
+
+
+

@@ -1,3 +1,0 @@
-#!/bin/bash
-
-./Translate $1 -l > $1.tex && pdflatex $1.tex

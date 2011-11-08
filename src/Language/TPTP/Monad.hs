@@ -14,8 +14,8 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,(===),(!=)
                            ,axiom
                            ,conjecture
-                           ,forall
-                           ,exists
+                           ,forall'
+                           ,exists'
                            ) where
 
 import Data.Map (Map)
@@ -26,7 +26,7 @@ import Control.Applicative hiding (empty)
 import Control.Arrow (first,second,(***))
 
 import Language.TPTP hiding ((===),(!=),(&),(/\),(\/),(==>),(<=>)
-                            ,mkBinOp,forall,exists)
+                            ,mkBinOp,forall',exists')
 
 type ST = [VarName]
 
@@ -104,9 +104,9 @@ instance Quantifier r => Quantifier (M Term -> r) where
     quantifier q acc f = newVar >>= \v -> quantifier q (v:acc)
                                                      (f (return (Var v)))
 
-forall :: (Quantifier t) => t -> M Formula
-forall = quantifier Forall []
+forall' :: (Quantifier t) => t -> M Formula
+forall' = quantifier Forall []
 
-exists :: (Quantifier t) => t -> M Formula
-exists = quantifier Exists []
+exists' :: (Quantifier t) => t -> M Formula
+exists' = quantifier Exists []
 

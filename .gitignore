@@ -13,7 +13,9 @@ src/*/*/*\.pdf
 docs/*pdf
 docs/*tex
 docs/*mail*
+dist/*
 paper/
 src/Test/QuickSpec/
 html/
 *#*
+tmp/

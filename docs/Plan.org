@@ -97,7 +97,17 @@ given information and prove with finite, infinite, partial and total.
 Implement simple proof techniques: approximation lemma, structural
 induction, fixpoint induction and [[http://www-formal.stanford.edu/jmc/basis1/node11.html][recursion induction]]
 SCHEDULED: <2011-11-11 Fri>
+
+*** Remove unnecessary definitions when proving
+Eprover gets totally lost when you have unnecessary axioms in scope.
+These needs to be disabled somehow. Probably not predicates, easy to
+get inconsistencies with a definition being activated and decativated.
+But for each thing you want to prove, one will need to know every
+function and datatype it depends on.
+**** TODO Disable generation of unneccessary haskell-builtin datatypes
+Tuples, lists
 ** TODO Bug Sven until registered on course
+** TODO Cabal project file
 * Week 46 (14 Nov - 20 Nov)
 ** Evaluation of proving techniques
 SCHEDULED: <2011-11-14 Mon>
