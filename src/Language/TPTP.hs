@@ -8,7 +8,6 @@ instance Show FunName where show = funName
 instance Show RelName where show = relName
 instance Show VarName where show = varName
 
-
 data Term = Fun FunName [Term]
           | Var VarName
   deriving (Eq,Ord,Show)

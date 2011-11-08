@@ -20,6 +20,11 @@ elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
 elem_by _  _ []         =  False
 elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
 
+filter :: (a -> Bool) -> [a] -> [a]
+filter p []                 = []
+filter p (x:xs) | p x       = x : filter p xs
+                | otherwise = filter p xs
+
 nubBy'                   :: (a -> a -> Bool) -> [a] -> [a]
 nubBy' eq []             =  []
 nubBy' eq (x:xs)         =  x : nubBy' eq (filter (\ y -> not (eq x y)) xs)

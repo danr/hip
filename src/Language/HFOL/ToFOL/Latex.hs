@@ -2,6 +2,7 @@
 module Language.HFOL.ToFOL.Latex where
 
 import Language.TPTP
+import Language.HFOL.Util (isOp)
 
 import qualified Language.HFOL.ToFOL.Core as C
 import Language.HFOL.ToFOL.Pretty
@@ -125,12 +126,6 @@ instance Latex Formula where
 showFunName :: FunName -> String
 showFunName (FunName "Bottom") = "\\bot"
 showFunName (FunName f)        = escape f
-
-opsyms :: String
-opsyms = "-+@/\\!?<>=%.:&|"
-
-isOp :: String -> Bool
-isOp = all (`elem` opsyms)
 
 parenTerm :: Term -> String -> String
 parenTerm (Fun _ (_:_)) s = "(" ++ s ++ ")"

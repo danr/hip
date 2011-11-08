@@ -14,9 +14,15 @@ lowercase n = 'a' <= n && n <= 'z'
 lowerNumeric :: Char -> Bool
 lowerNumeric n = lowercase n || '0' <= n && n <= '9' || n == '_'
 
+escape' :: String -> String
+escape' = map escapeChar'
+  where escapeChar' '\'' = '_'
+        escapeChar' x    = x
+
 prettyName :: String -> String
-prettyName (n:ns) | lowercase n && all lowerNumeric ns = n:ns
-prettyName ns = "'" ++ ns ++ "'"
+prettyName name = case escape' name of
+  n:ns | lowercase n && all lowerNumeric ns -> n:ns
+  ns                                        -> "'" ++ ns ++ "'"
 
 instance PrettyTPTP FunName where
     prettyTPTP = prettyName . funName
@@ -25,7 +31,11 @@ instance PrettyTPTP RelName where
     prettyTPTP = prettyName . relName
 
 instance PrettyTPTP VarName where
-    prettyTPTP = show
+    prettyTPTP = map escapeVarChar . show
+      where
+        escapeVarChar '.'  = '_'
+        escapeVarChar '\'' = '_'
+        escapeVarChar x    = x
 
 p :: PrettyTPTP a => a -> String
 p = prettyTPTP
@@ -67,8 +77,8 @@ pdecl :: String -> String -> Formula -> String
 pdecl n t f = "fof" ++ paren (n ++ "," ++ t ++ "," ++ prettyTPTP f) ++ "."
 
 instance PrettyTPTP Decl where
-    prettyTPTP (Axiom      n f) = pdecl n "axiom"      f
-    prettyTPTP (Conjecture n f) = pdecl n "conjecture" f
+    prettyTPTP (Axiom      n f) = pdecl (prettyName n) "axiom"      f
+    prettyTPTP (Conjecture n f) = pdecl (prettyName n) "conjecture" f
 
 instance PrettyTPTP [Decl] where
     prettyTPTP ds = unlines (map prettyTPTP ds)

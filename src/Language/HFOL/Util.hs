@@ -1,5 +1,5 @@
 module Language.HFOL.Util
-       (selections,withPrevious,concatMapM,concatMaybe)
+       (selections,withPrevious,concatMapM,concatMaybe,isOp)
        where
 
 import Data.Maybe
@@ -19,6 +19,12 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 -- > withPrevious "abc" = [('a',""),('b',"a"),('c',"ab")]
 withPrevious :: [a] -> [(a,[a])]
 withPrevious xs = zip xs (inits xs)
+
+-- | Is this a haskell operator?
+isOp :: String -> Bool
+isOp = all (`elem` opsyms)
+  where opsyms :: String
+        opsyms = "-+@/\\!?<>=%.:&|"
 
 -- | concatMapM
 concatMapM :: (Functor m,Monad m) => (a -> m [b]) -> [a] -> m [b]

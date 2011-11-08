@@ -36,6 +36,7 @@ import Data.Label.PureM
 import Language.HFOL.ToFOL.Core
 import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.Constructors
+import Language.HFOL.Util (isOp)
 
 import qualified Language.TPTP as T
 import Language.TPTP hiding (Decl,Var)
@@ -89,6 +90,7 @@ emptySt = St { _arities     = M.empty
              , _quantified  = S.empty
              , _debug       = []
              , _debugIndent = 0
+             , _namesupply  = [ show x | x <- [0..] ]
              }
 
 -- | The type of debug messages
@@ -112,6 +114,7 @@ data St = St { _arities     :: Map Name Int
                -- ^ Debug messages
              , _debugIndent :: Int
                -- ^ Indentation depth for debug messages
+             , _namesupply  :: [Name]
              } deriving (Show)
 $(mkLabels [''St])
 
@@ -171,13 +174,15 @@ lookupName n@(x:xs) = TM $ do
     case mn of
       Just b  -> return b
       Nothing -> do -- Variable is unbound, quantify over it
-        -- q <- head <$> gets namesupply
-        let q  = if x == '_' then VarName $ "W_" ++ xs
-                             else VarName (toUpper x:xs)
-            qv = QuantVar q
+        q <- VarName <$> case () of
+                   () | x == '_'  -> return ("W_" ++ xs)
+                      | isOp n    -> do v <- head <$> gets namesupply
+                                        modify namesupply tail
+                                        return ("OP_" ++ v)
+                      | otherwise -> return (toUpper x:xs)
+        let qv = QuantVar q
         write' $ "New quantified variable " ++ show q ++ " for " ++ n
         modify boundNames (M.insert n qv)
-        -- modify namesupply tail
         modify quantified (S.insert q)
         return qv
 lookupName "" = error "lookupName on empty name"
