@@ -71,21 +71,23 @@ applyFun n as = do
                  ++ " constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
-nonemptyPowerset :: [a] -> [[a]]
-nonemptyPowerset = filter (not . null) . filterM (const [True,False])
+powerset :: [a] -> [[a]]
+powerset = filterM (const [False,True]) . reverse
 
 -- So far, all arguments are assumed to be Nat with Z, S constructors :)
 makeProofDecls :: Name -> [Name] -> Expr -> TM ()
 makeProofDecls fname args e = case e of
     App "proveBool" [lhs] -> prove lhs (Con "True" [])
     App "prove" [Con ":=:" [lhs,rhs]] -> prove lhs rhs
-    _ -> write $ "Error: makeProofDecl on nonsense expression " ++ prettyCore e
+    _ -> write $ "Error: makeProofDecl onp nonsense expression " ++ prettyCore e
   where
     prove :: Expr -> Expr -> TM ()
-    prove lhs rhs = (mapM_ addProofDecl =<<) $ forM (nonemptyPowerset args) $
-       \indargs -> do z <- zeroClause indargs
-                      s <- succClause indargs
-                      return (ProofDecl fname (Induction indargs [z,s]))
+    prove lhs rhs = (addProofDecl . ProofDecl fname =<<) . forM (powerset args) $
+       \indargs -> if null indargs
+                      then Plain <$> zeroClause []
+                      else do z <- zeroClause indargs
+                              s <- succClause indargs
+                              return (Induction indargs z s)
 
        where
          zeroClause indargs = locally $ do

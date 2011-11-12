@@ -82,8 +82,22 @@ max Z     y     = y
 max x     Z     = x
 max (S x) (S y) = S (max x y)
 
+prop_zero_is_one = prove (Z :=: S Z)
+
 prop_refl x
   = proveBool (x == x)
+
+prop_add_comm x y
+  = prove (x + y :=: y + x)
+
+prop_mul_comm x y
+  = prove (x * y :=: y * x)
+
+prop_left_distrib x y z
+  = prove (x * (y + z) :=: (x * y) + (x * z))
+
+prop_right_distrib x y z
+  = prove ((x + y) * z :=: (x * z) + (y * z))
 
 prop_assoc_plus x y z
   = prove (x + (y + z) :=: (x + y) + z)
@@ -178,7 +192,7 @@ prop_70 m n
   $ proveBool (m <= S n)
 -}
 
-prpop_79 m n k
+prop_79 m n k
   = prove ((S m - n) - S k :=: (m - n) - k)
 
 

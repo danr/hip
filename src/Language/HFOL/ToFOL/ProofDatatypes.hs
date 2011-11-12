@@ -13,9 +13,12 @@ provable :: Expr -> Bool
 provable (App f es) = f `elem` proveFunctions || any provable es
 provable _          = False
 
-data ProofDecl = ProofDecl Name ProofType
+data ProofDecl = ProofDecl Name [ProofType]
   deriving (Eq,Ord,Show)
 
 data ProofType = Plain [T.Decl]
-               | Induction [Name] [[T.Decl]]
+               | Induction { inductionVars :: [Name]
+                           , inductionBase :: [T.Decl]
+                           , inductionStep :: [T.Decl]
+                           }
   deriving (Eq,Ord,Show)
