@@ -7,6 +7,9 @@ module Language.HFOL.ToFOL.Monad
        (TM()
        ,runTM
        ,Debug
+       ,getProofMode
+       ,addProofDecl
+       ,getProofDecls
        ,write
        ,writeDelimiter
        ,indented
@@ -65,8 +68,8 @@ newtype TM a = TM { unTM :: State St a }
 
 -- | Runs a computation in an empty environment, with an empty state.
 --   The computation's result is returned with the updated state.
-runTM :: TM a -> a
-runTM (TM m) = evalState m emptySt
+runTM :: Bool -> TM a -> a
+runTM p (TM m) = evalState m (initSt p)
 
 data Bound = QuantVar    { quantVar  :: VarName }
            | FunVar      { boundName :: FunName }
@@ -80,18 +83,20 @@ boundCon (ConVar _) = True
 boundCon _          = False
 
 -- | The empty state
-emptySt :: St
-emptySt = St { _arities     = M.empty
-             , _conProj     = M.empty
-             , _conFam      = M.empty
-             , _datatypes   = []
-             , _usedFunPtrs = S.empty
-             , _boundNames  = M.empty
-             , _quantified  = S.empty
-             , _debug       = []
-             , _debugIndent = 0
-             , _namesupply  = [ show x | x <- [0..] ]
-             }
+initSt :: Bool -> St
+initSt p = St { _arities     = M.empty
+              , _conProj     = M.empty
+              , _conFam      = M.empty
+              , _datatypes   = []
+              , _usedFunPtrs = S.empty
+              , _boundNames  = M.empty
+              , _quantified  = S.empty
+              , _debug       = []
+              , _debugIndent = 0
+              , _namesupply  = [ show x | x <- [(0 :: Integer)..] ]
+              , _proofMode   = p
+              , _proofDecls  = []
+              }
 
 -- | The type of debug messages
 type Debug = [String]
@@ -115,8 +120,25 @@ data St = St { _arities     :: Map Name Int
              , _debugIndent :: Int
                -- ^ Indentation depth for debug messages
              , _namesupply  :: [Name]
+               -- ^ Namesupply, currently only used to rename infix operators
+             , _proofMode   :: Bool
+               -- ^ Is proof mode on?
+             , _proofDecls  :: [T.Decl]
+               -- ^ Proof declarations, i.e propositions to be proved
              } deriving (Show)
 $(mkLabels [''St])
+
+-- | Are we currently in proof mode?
+getProofMode :: TM Bool
+getProofMode = TM $ gets proofMode
+
+-- | Add a proof declaration
+addProofDecl :: T.Decl -> TM ()
+addProofDecl d = TM $ modify proofDecls (d:)
+
+-- | Get all proof declarations
+getProofDecls :: TM [T.Decl]
+getProofDecls = TM $ gets proofDecls
 
 -- | Write a debug delimiter (a newline)
 writeDelimiter :: TM ()

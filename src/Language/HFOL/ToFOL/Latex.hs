@@ -17,9 +17,14 @@ runLatex :: Latex a => a -> String
 runLatex = (++ "\\\\") .  (`evalState` False) . latex
 
 escape :: String -> String
-escape = concatMap e
+escape = fixUnderscore . concatMap e
  where e '&' = "\\&"
        e c   = [c]
+
+       fixUnderscore s =
+           case break (== '_') s of
+                    (l,'_':rest) -> l ++ '_':'{':fixUnderscore rest ++ "}"
+                    _            -> s
 
 latexHeader :: String -> [Decl] -> String
 latexHeader file fs = unlines $
@@ -40,8 +45,10 @@ latexHeader file fs = unlines $
 
 latexDecl :: C.Decl -> [Decl] -> String
 latexDecl C.Data{}          _  = error "latexDecl on data"
-latexDecl d@(C.Func fn _ _) fs = unlines $
-  ["\\section{" ++ escape fn ++ "}"
+latexDecl d@(C.Func fn _ _) fs
+  | null fs = ""
+  | otherwise = unlines $
+  ["\\section{$" ++ escape fn ++ "$}"
   ,""
   ,"\\subsection{Definition}"
   ,""

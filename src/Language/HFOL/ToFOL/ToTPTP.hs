@@ -20,14 +20,16 @@ import Data.List (partition,intercalate,sort,find)
 import Data.Maybe (catMaybes)
 
 -- | Translates a program to TPTP, with its debug output
-toTPTP :: [Decl] -> ([(Decl,[T.Decl])],[T.Decl],Debug)
-toTPTP ds = runTM $ do
-               addFuns funs
-               addCons datatypes
-               faxioms <- mapM translate (filter funcDecl ds)
-               extra   <- envStDecls
-               db      <- popDebug
-               return (faxioms,extra,db)
+--   First argument is if proof mode is on or not
+toTPTP :: Bool -> [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[T.Decl],Debug)
+toTPTP p ds = runTM p $ do
+                addFuns funs
+                addCons datatypes
+                faxioms <- mapM translate (filter funcDecl ds)
+                extra   <- envStDecls
+                db      <- popDebug
+                proofs  <- getProofDecls
+                return (faxioms,extra,proofs,db)
   where
     (funs,datatypes) =
       let (funs',datatypes') = partition funcDecl ds
@@ -38,7 +40,8 @@ toTPTP ds = runTM $ do
            ,[(nilName,0),(consName,2)]
            ] ++
            [ [(tupleName n,n)] | n <- [2..5] ]
-           ++ map dataCons datatypes')
+           ++ filter (\r -> not p || r /= [("Prove",1)])
+                     (map dataCons datatypes'))
 
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term
@@ -67,6 +70,13 @@ applyFun n as = do
                  ++ " constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
+proveFunctions :: [Name]
+proveFunctions = ["prove","proveBool","given","givenBool"]
+
+provable :: Expr -> Bool
+provable (App f es) = f `elem` proveFunctions || any provable es
+provable _          = False
+
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.
 translate :: Decl -> TM (Decl,[T.Decl])
@@ -75,8 +85,15 @@ translate d@(Func fname args (Expr e)) = locally $ do
     lhs <- translateExpr e
     qs  <- popQuantified
     let f = Axiom fname $ forall' qs $ rhs === lhs
-    write (prettyTPTP f)
-    return (d,[f])
+    pm  <- getProofMode
+    if pm && (provable e || fname `elem` proveFunctions)
+         then do write $ "Proof definition " ++ fname
+                 write (prettyTPTP f)
+                 when (fname `notElem` proveFunctions) (addProofDecl f)
+                 return (d,[])
+         else do write (prettyTPTP f)
+                 return (d,[f])
+
 translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
     write $ "translate " ++ prettyCore d
     write   "branches fixed to:"

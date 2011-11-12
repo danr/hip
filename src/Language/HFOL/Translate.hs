@@ -1,14 +1,12 @@
 module Main where
 
-import qualified Language.TPTP as T
 import Language.TPTP.Pretty
 
 import Language.HFOL.FromHaskell.FromHaskell
-import Language.HFOL.ToFOL.ToTPTP
+import Language.HFOL.ToFOL.ToTPTP (toTPTP)
 import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.Parser
 import Language.HFOL.ToFOL.Latex
-import Language.HFOL.ToFOL.Core
 
 import System.Environment (getArgs)
 import System.Exit (exitFailure,exitSuccess)
@@ -35,16 +33,18 @@ main = do
       when (flag "-c" || flag "-ct") (mapM_ (putStrLn . prettyCore) ds)
       -- Output Core and terminate
       when (flag "-ct") exitSuccess
+      -- Proof mode
+      let proofMode = flag "-p"
       -- Translation to FOL
-      let (funcAxiomsWithDef,extraAxioms,debug) = toTPTP ds
-          axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
+      let (funcAxiomsWithDef,extraAxioms,proofs,debug) = toTPTP proofMode ds
+          axioms = extraAxioms ++ proofs ++ concatMap snd funcAxiomsWithDef
       -- Verbose output
       when (flag "-v") (mapM_ putStrLn debug)
       -- TPTP output
       when (flag "-t" || not (flag "-l")) (putStrLn (prettyTPTP axioms))
       -- Latex output
       when (flag "-l") $ do
-          putStrLn (latexHeader file extraAxioms)
+          putStrLn (latexHeader file (extraAxioms ++ proofs))
           mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
           putStrLn latexFooter
 

@@ -24,7 +24,7 @@ withPrevious xs = zip xs (inits xs)
 isOp :: String -> Bool
 isOp = all (`elem` opsyms)
   where opsyms :: String
-        opsyms = "-+@/\\!?<>=%.:&|"
+        opsyms = "!#$%*+./<=>?\\^|:-~"
 
 -- | concatMapM
 concatMapM :: (Functor m,Monad m) => (a -> m [b]) -> [a] -> m [b]
