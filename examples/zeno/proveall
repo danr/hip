@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for f in `ls prove/*.tptp`; do
+    echo "$f:"
+    timeout 1 eprover -tAuto -xAuto --tptp3-format --memory-limit=1000 $f -s | grep -v "Presaturation"
+    echo
+    echo "------------------------------------------------------------------"
+done

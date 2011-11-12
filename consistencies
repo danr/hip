@@ -1,9 +1,8 @@
 #!/bin/bash
 
-for f in `ls $1/*hs`; do
+for f in `ls $1/*`; do
     echo "$f:"
-    timeout 1 ./consistency $f -s
+    timeout 1 ./consistency $f -s | grep -v "Presaturation"
     echo
-    echo " ------------------------------------------------------------------ "
-    echo
+    echo "------------------------------------------------------------------"
 done

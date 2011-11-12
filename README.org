@@ -7,7 +7,7 @@
 
 * Autospec
 
-Prove properties of Haskell functions by translating the functions to 
+Prove properties of Haskell functions by translating the functions to
 First Order Logic and use Automated Theorem Provers.
 
 ** Folders and Files

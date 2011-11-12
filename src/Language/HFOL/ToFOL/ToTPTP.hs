@@ -5,8 +5,9 @@ import Language.HFOL.ToFOL.Core
 import Language.HFOL.ToFOL.FixBranches
 import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.Monad
-import Language.HFOL.Util
 import Language.HFOL.ToFOL.Constructors
+import Language.HFOL.ToFOL.ProofDatatypes
+import Language.HFOL.Util
 import Language.HFOL.FromHaskell.Names
 import Language.TPTP hiding (Decl,Var)
 import Language.TPTP.Pretty
@@ -21,7 +22,7 @@ import Data.Maybe (catMaybes)
 
 -- | Translates a program to TPTP, with its debug output
 --   First argument is if proof mode is on or not
-toTPTP :: Bool -> [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[T.Decl],Debug)
+toTPTP :: Bool -> [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[ProofDecl],Debug)
 toTPTP p ds = runTM p $ do
                 addFuns funs
                 addCons datatypes
@@ -40,7 +41,7 @@ toTPTP p ds = runTM p $ do
            ,[(nilName,0),(consName,2)]
            ] ++
            [ [(tupleName n,n)] | n <- [2..5] ]
-           ++ filter (\r -> not p || r /= [("Prove",1)])
+           ++ filter (\d -> not p || d `notElem` proofDatatypes)
                      (map dataCons datatypes'))
 
 -- | Translate an expression to a term
@@ -70,29 +71,68 @@ applyFun n as = do
                  ++ " constructor " ++ n ++ "applied to too many arguments."
              return $ appFold (T.Fun fn (take arity as)) (drop arity as)
 
-proveFunctions :: [Name]
-proveFunctions = ["prove","proveBool","given","givenBool"]
+nonemptyPowerset :: [a] -> [[a]]
+nonemptyPowerset = filter (not . null) . filterM (const [True,False])
 
-provable :: Expr -> Bool
-provable (App f es) = f `elem` proveFunctions || any provable es
-provable _          = False
+-- So far, all arguments are assumed to be Nat with Z, S constructors :)
+makeProofDecls :: Name -> [Name] -> Expr -> TM ()
+makeProofDecls fname args e = case e of
+    App "proveBool" [lhs] -> prove lhs (Con "True" [])
+    App "prove" [Con ":=:" [lhs,rhs]] -> prove lhs rhs
+    _ -> write $ "Error: makeProofDecl on nonsense expression " ++ prettyCore e
+  where
+    prove :: Expr -> Expr -> TM ()
+    prove lhs rhs = (mapM_ addProofDecl =<<) $ forM (nonemptyPowerset args) $
+       \indargs -> do z <- zeroClause indargs
+                      s <- succClause indargs
+                      return (ProofDecl fname (Induction indargs [z,s]))
+
+       where
+         zeroClause indargs = locally $ do
+           forM_ indargs (`addIndirection` (Con "Z" []))
+           lhs' <- translateExpr lhs
+           rhs' <- translateExpr rhs
+           qs   <- popQuantified
+           return [Conjecture (fname ++ "base" ++ concat indargs)
+                              (forall' qs $ lhs' === rhs')]
+         succClause indargs = locally $ do
+             skolems <- forM indargs skolem
+             ih <- do
+               lhs' <- translateExpr lhs
+               rhs' <- translateExpr rhs
+               qs <- popQuantified
+               return (Axiom (fname ++ "hyp" ++ concat indargs)
+                             (forall' qs $ lhs' === rhs'))
+             is <- do
+               zipWithM_ (\n s -> addIndirection n (Con "S" [Var s])) indargs skolems
+               lhs' <- translateExpr lhs
+               rhs' <- translateExpr rhs
+               qs <- popQuantified
+               return (Conjecture (fname ++ "step" ++ concat indargs)
+                                  (forall' qs $ lhs' === rhs'))
+             return [ih,is]
 
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.
+--   If this is a proof object, handle it accordingly.
+--   Most of that work is in Language.HFOL.ToFOL.ProofDecls
 translate :: Decl -> TM (Decl,[T.Decl])
 translate d@(Func fname args (Expr e)) = locally $ do
-    rhs <- translateExpr (App fname (map Var args))
-    lhs <- translateExpr e
-    qs  <- popQuantified
-    let f = Axiom fname $ forall' qs $ rhs === lhs
-    pm  <- getProofMode
-    if pm && (provable e || fname `elem` proveFunctions)
-         then do write $ "Proof definition " ++ fname
-                 write (prettyTPTP f)
-                 when (fname `notElem` proveFunctions) (addProofDecl f)
-                 return (d,[])
-         else do write (prettyTPTP f)
-                 return (d,[f])
+    pm <- getProofMode
+    case () of
+      () | pm && fname `elem` proveFunctions
+            -> do write $ "skipped proof definition " ++ fname
+                  return (d,[])
+         | pm && provable e
+            -> do makeProofDecls fname args e
+                  return (d,[])
+         | otherwise -> do
+            rhs <- translateExpr (App fname (map Var args))
+            lhs <- translateExpr e
+            qs  <- popQuantified
+            let f = Axiom fname $ forall' qs $ rhs === lhs
+            write (prettyTPTP f)
+            return (d,[f])
 
 translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
     write $ "translate " ++ prettyCore d

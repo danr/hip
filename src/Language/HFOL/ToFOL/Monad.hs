@@ -22,6 +22,7 @@ module Language.HFOL.ToFOL.Monad
        ,lookupArity
        ,lookupProj
        ,popQuantified
+       ,skolem
        ,addIndirection
        ,makeFunPtrName
        ,addFuns
@@ -39,6 +40,7 @@ import Data.Label.PureM
 import Language.HFOL.ToFOL.Core
 import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.Constructors
+import Language.HFOL.ToFOL.ProofDatatypes
 import Language.HFOL.Util (isOp)
 
 import qualified Language.TPTP as T
@@ -123,7 +125,7 @@ data St = St { _arities     :: Map Name Int
                -- ^ Namesupply, currently only used to rename infix operators
              , _proofMode   :: Bool
                -- ^ Is proof mode on?
-             , _proofDecls  :: [T.Decl]
+             , _proofDecls  :: [ProofDecl]
                -- ^ Proof declarations, i.e propositions to be proved
              } deriving (Show)
 $(mkLabels [''St])
@@ -133,12 +135,12 @@ getProofMode :: TM Bool
 getProofMode = TM $ gets proofMode
 
 -- | Add a proof declaration
-addProofDecl :: T.Decl -> TM ()
+addProofDecl :: ProofDecl -> TM ()
 addProofDecl d = TM $ modify proofDecls (d:)
 
 -- | Get all proof declarations
-getProofDecls :: TM [T.Decl]
-getProofDecls = TM $ gets proofDecls
+getProofDecls :: TM [ProofDecl]
+getProofDecls = TM $ reverse <$> gets proofDecls
 
 -- | Write a debug delimiter (a newline)
 writeDelimiter :: TM ()
@@ -209,13 +211,22 @@ lookupName n@(x:xs) = TM $ do
         return qv
 lookupName "" = error "lookupName on empty name"
 
+-- | Makes a new skolem variable for this name
+skolem :: Name -> TM Name
+skolem n = do
+  n' <- (n ++) . head <$> TM (gets namesupply)
+  TM $ modify namesupply tail
+  addFuns [(n',0)]
+  addIndirection n (Var n')
+  return n'
+
 -- | Add a new indirection
 addIndirection :: Name -> Expr -> TM ()
 addIndirection n e = TM $ do
     write' $ "indirection: " ++ n ++ " := " ++ prettyCore e
     mem <- M.member n <$> gets boundNames
-    if mem then write' "indirection already exists!"
-           else modify boundNames (M.insert n (Indirection e))
+    when (mem) $ write' "warn: indirection already exists, overwriting"
+    modify boundNames (M.insert n (Indirection e))
 
 -- | Pop and return the quantified variables
 popQuantified :: TM [VarName]

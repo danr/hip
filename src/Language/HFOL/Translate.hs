@@ -5,13 +5,14 @@ import Language.TPTP.Pretty
 import Language.HFOL.FromHaskell.FromHaskell
 import Language.HFOL.ToFOL.ToTPTP (toTPTP)
 import Language.HFOL.ToFOL.Pretty
+import Language.HFOL.ToFOL.ProofDatatypes
 import Language.HFOL.ToFOL.Parser
 import Language.HFOL.ToFOL.Latex
 
 import System.Environment (getArgs)
 import System.Exit (exitFailure,exitSuccess)
 
-import Control.Monad (when)
+import Control.Monad (when,forM_,zipWithM_)
 import Control.Applicative ((<$>))
 import Data.List (isSuffixOf)
 
@@ -37,16 +38,23 @@ main = do
       let proofMode = flag "-p"
       -- Translation to FOL
       let (funcAxiomsWithDef,extraAxioms,proofs,debug) = toTPTP proofMode ds
-          axioms = extraAxioms ++ proofs ++ concatMap snd funcAxiomsWithDef
+          axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
       -- Verbose output
       when (flag "-v") (mapM_ putStrLn debug)
       -- TPTP output
-      when (flag "-t" || not (flag "-l")) (putStrLn (prettyTPTP axioms))
+      when (flag "-t" || not (flag "-l") && not proofMode) (putStrLn (prettyTPTP axioms))
       -- Latex output
       when (flag "-l") $ do
-          putStrLn (latexHeader file (extraAxioms ++ proofs))
+          putStrLn (latexHeader file extraAxioms)
           mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
           putStrLn latexFooter
+      when proofMode $ do
+          forM_ proofs $ \(ProofDecl name (Induction args tdecls)) -> do
+             putStrLn $ "Prove " ++ name ++ " with induction on " ++ unwords args ++ ":"
+             forM_ tdecls $ \ts -> putStrLn (prettyTPTP ts)
+             zipWithM_ (\n ts -> writeFile ("prove/" ++ file ++ name ++ concat args ++ show n ++ ".tptp")
+                                          $ prettyTPTP (axioms ++ ts))
+                       [(0 :: Integer)..] tdecls
 
 printUsage :: IO ()
 printUsage = mapM_ putStrLn
