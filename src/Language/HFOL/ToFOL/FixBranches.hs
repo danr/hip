@@ -26,7 +26,7 @@ import Language.HFOL.Util
 import Control.Applicative
 import Control.Monad.State
 import Control.Arrow (second,(***))
-import Data.Maybe (listToMaybe,catMaybes)
+import Data.Maybe (listToMaybe,catMaybes,mapMaybe)
 import Language.HFOL.ToFOL.ArbitraryCore()
 --import Test.QuickCheck
 --import Test.QuickCheck.Arbitrary
@@ -35,6 +35,17 @@ import Language.HFOL.ToFOL.ArbitraryCore()
 --   and removes overlapping patterns
 fixBranches :: Expr -> [Branch] -> [Branch]
 fixBranches scrut = renameBranches . removeOverlap . addBottoms scrut
+
+-- | Removes the guards from PMGs that simply are otherwise or True,
+--   and the entire row if it is False
+removeOtherwise :: [Branch] -> [Branch]
+removeOtherwise = mapMaybe patternOtherwise
+  where
+    patternOtherwise :: Branch -> Maybe Branch
+    patternOtherwise (Guard p (Con "True" [])   :-> e) = Just (NoGuard p :-> e)
+    patternOtherwise (Guard p (Var "otherwise") :-> e) = Just (NoGuard p :-> e)
+    patternOtherwise (Guard p (Con "False" [])  :-> e) = Nothing
+    patternOtherwise b                                 = Just b
 
 -- | Rename all bindings in a list of branches
 renameBranches :: [Branch] -> [Branch]
