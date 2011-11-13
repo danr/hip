@@ -1,6 +1,6 @@
-data T 2;
-data Cons 2 Nil 0;
-data Succ 1 Zero 0;
+data List a = Cons a (List a) | Nil;
+data Nat = Succ Nat | Zero;
+data T a b = T a b;
 
 taily a b = case T a b of
   { T (Cons x xs) (Cons y ys) -> ys

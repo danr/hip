@@ -1,4 +1,4 @@
-data Cons 2 Nil 0;
+data List a = Cons a (List a) | Nil;
 
 if b t f = case b of
          { True -> t

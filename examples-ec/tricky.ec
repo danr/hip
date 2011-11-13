@@ -1,4 +1,4 @@
-data C 2 N 0;
+data L a = C a (L a) | N;
 
 anyAndFirst p q xs = case filter p xs of
     { C x _ | q x -> True

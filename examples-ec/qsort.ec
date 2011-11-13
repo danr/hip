@@ -1,6 +1,6 @@
-data T 2;
-data Cons 2 Nil 0;
-data Zero 0 Succ 1;
+data List a = Cons a (List a) | Nil;
+data Nat = Succ Nat | Zero;
+data T a b = T a b;
 
 filter p xs = case xs of
     { Cons y ys | p y -> Cons y (filter p ys)

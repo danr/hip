@@ -1,5 +1,5 @@
-data Zero 0 Succ 1;
-data T 2;
+data Nat = Succ Nat | Zero;
+data T a b = T a b;
 
 eq n m = case T n m of
            { T Zero     Zero     -> True

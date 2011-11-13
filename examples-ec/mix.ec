@@ -1,8 +1,6 @@
-
-data T 2;
-data T3 3;
-data Cons 2 Nil 0;
-data Zero 0 Succ 1;
+data List a = Cons a (List a) | Nil;
+data Nat = Succ Nat | Zero;
+data T a b = T a b;
 
 mix a b = case T a b of
                { T Zero y -> a

@@ -1,7 +1,7 @@
-data T 2;
-data A 0 B 0 C 0 D 0;
-data Cons 2 Nil 0;
-data J 1 N 0;
+data T a b = T a b;
+data W = A | B | C | D;
+data List a = Cons a (List a) | Nil;
+data M a = J a | N;
 
 t f p x = case f x of
           { T a b | p a -> A

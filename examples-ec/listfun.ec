@@ -1,6 +1,5 @@
-data Cons 2 Nil 0;
-data Succ 1 Zero 0;
-data T 2;
+data List a = Cons a (List a) | Nil;
+data Nat = Succ Nat | Zero;
 
 map f xs = case xs of
          { Cons x xs -> Cons (f x) (map f xs)

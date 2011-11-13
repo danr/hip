@@ -1,4 +1,4 @@
-data A 0 B 0 C 0;
+data T = A | B | C;
 
 conflict p x = case p x of
            { True -> A

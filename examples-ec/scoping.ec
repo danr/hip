@@ -1,5 +1,5 @@
-data T 2;
-data Cons 2 Nil 0;
+data List a = Cons a (List a) | Nil;
+data T a b = T a b;
 
 bugged p a b = case T a b of
             { T x y | p x -> x

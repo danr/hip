@@ -1,7 +1,7 @@
-data T 2;
-data Cons 2 Nil 0;
-data Zero 0 Succ 1;
-data U 0;
+data List a = Cons a (List a) | Nil;
+data Nat = Succ Nat | Zero;
+data T a b = T a b;
+data U = U;
 
 if b t f = case b of {
    True  -> t ;
