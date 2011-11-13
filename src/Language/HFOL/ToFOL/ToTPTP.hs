@@ -32,17 +32,16 @@ toTPTP p ds = runTM p $ do
                 proofs  <- getProofDecls
                 return (faxioms,extra,proofs,db)
   where
-    (funs,datatypes) =
-      let (funs',datatypes') = partition funcDecl ds
-      in  (map (funcName &&& length . funcArgs) funs'
-          ,[[(bottomName,0)]
-           ,[(trueName,0),(falseName,0)]
-           ,[(unitName,0)]
-           ,[(nilName,0),(consName,2)]
-           ] ++
-           [ [(tupleName n,n)] | n <- [2..5] ]
-           ++ filter (\d -> not p || d `notElem` proofDatatypes)
-                     (map dataCons datatypes'))
+    (fundecls,datadecls,typedecls) = partitionDecls ds
+    funs = map (funcName &&& length . funcArgs) fundecls
+    datatypes = [[(bottomName,0)]
+                ,[(trueName,0),(falseName,0)]
+                ,[(unitName,0)]
+                ,[(nilName,0),(consName,2)]
+                ] ++
+                [ [(tupleName n,n)] | n <- [2..5] ]
+                ++ filter (\d -> not p || d `notElem` proofDatatypes)
+                          (map conNameArity datadecls)
 
 -- | Translate an expression to a term
 translateExpr :: Expr -> TM Term

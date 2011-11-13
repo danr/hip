@@ -3,6 +3,7 @@ module Language.HFOL.ToFOL.Core where
 
 import Data.Data
 import Data.Generics.Uniplate.Data
+import Data.List (partition)
 
 type Name = String
 
@@ -18,8 +19,8 @@ data Decl = Func   { funcName :: Name
                    }
   deriving(Eq,Ord,Data,Typeable)
 
-data Cons = Cons { consName :: Name
-                 , consArgs :: [Type]
+data Cons = Cons { conName :: Name
+                 , conArgs :: [Type]
                  }
   deriving(Eq,Ord,Data,Typeable,Show)
 
@@ -74,6 +75,22 @@ funcDecl :: Decl -> Bool
 funcDecl Func{} = True
 funcDecl _      = False
 
+-- | Declaration is a data declaration
+dataDecl :: Decl -> Bool
+dataDecl Data{} = True
+dataDecl _      = False
+
+-- | Partition declarations into function-, data- and type declarations
+partitionDecls :: [Decl] -> ([Decl],[Decl],[Decl])
+partitionDecls ds =
+   let (funs,rest)   = partition funcDecl ds
+       (datas,types) = partition dataDecl rest
+   in  (funs,datas,types)
+
+conNameArity :: Decl -> [(Name,Int)]
+conNameArity (Data _ _ cs) = map (\(Cons n as) -> (n,length as)) cs
+conNameArity _             = error "conNameArity: Please report this bug."
+
 -- | The three kinds of patterns
 varPat,conPat,wildPat :: Pattern -> Bool
 varPat PVar{} = True
@@ -107,6 +124,10 @@ infixl `app`
 tapp :: Type -> Type -> Type
 tapp t (TyApp ts) = TyApp (t:ts)
 tapp t t2         = TyApp [t,t2]
+
+tconapp :: Type -> Type -> Maybe Type
+tconapp (TyCon n ts) t = Just (TyCon n (ts ++ [t]))
+tconapp _            t = Nothing
 
 infixr `tapp`
 

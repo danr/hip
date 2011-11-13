@@ -82,8 +82,10 @@ addDeclIndirection d = case d of
 
 fromDecl :: Decl -> FH ()
 fromDecl d = case d of
-  DataDecl _loc _dataornew _ctxt _name _tyvars qualcondecls _derives ->
-    (decl . Data) =<< mapM fromQualConDecl qualcondecls
+  DataDecl _loc _dataornew _ctxt name tyvarbinds qualcondecls _derives -> do
+       tyvars <- mapM fromTyVarBind tyvarbinds
+       cons   <- mapM fromQualConDecl qualcondecls
+       decl $ Data (fromName name) tyvars cons
   FunBind ms -> mapM_ fromMatches (groupBy ((==) `on` matchName) ms)
   PatBind{}  -> fatal $ "Internal error: PatBind in fromDecl"
   TypeSig{}  -> debug $ (prettyPrint d)

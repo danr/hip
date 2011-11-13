@@ -1,16 +1,19 @@
 module Language.HFOL.FromHaskell.Names where
 
 import Language.HFOL.FromHaskell.Monad
-import Language.HFOL.ToFOL.Core(Name)
+import qualified Language.HFOL.ToFOL.Core as C
+import Language.HFOL.ToFOL.Core (Name,tapp,tconapp,tycon0)
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,name)
 import Control.Monad
+import Control.Applicative
 
 -- Names ----------------------------------------------------------------------
-unitName,nilName,consName :: Name
+unitName,nilName,consName,listTypeName :: Name
 unitName = "()"
 nilName  = "[]"
 consName = ":"
+listTypeName = "[]"
 
 tupleName :: Int -> Name
 tupleName n = 'T':show n
@@ -42,13 +45,47 @@ fromSpecial Cons    = return ":"
 fromSpecial UnboxedSingleCon = do
   fatal "No handling of unboxed singleton constructor"
 
-fromQualConDecl :: QualConDecl -> FH (Name,Int)
+fromQualConDecl :: QualConDecl -> FH C.Cons
 fromQualConDecl (QualConDecl _loc _tyvars _cxtx condecl) = fromConDecl condecl
 
-fromConDecl :: ConDecl -> FH (Name,Int)
+fromConDecl :: ConDecl -> FH C.Cons
 fromConDecl c = case c of
-  ConDecl name bangts               -> return (fromName name,length bangts)
-  InfixConDecl _bangt1 name _bangt2 -> return (fromName name,2)
-  RecDecl name namedbangtypes       -> do
+  ConDecl name bangts ->
+    C.Cons (fromName name) <$> mapM fromBangType bangts
+  InfixConDecl bangt1 name bangt2 ->
+    C.Cons (fromName name) <$> mapM fromBangType [bangt1,bangt2]
+  RecDecl name namedbangtypes -> do
       warn $ "not creating projection declarations (" ++ fromName name ++ ")"
-      return (fromName name,length namedbangtypes)
+      C.Cons (fromName name) <$> mapM (fromBangType . snd) namedbangtypes
+
+fromBangType :: BangType -> FH C.Type
+fromBangType (UnBangedTy t) = fromType t
+fromBangType bt@(BangedTy t) = do warn $ "Ignoring bang on " ++ prettyPrint bt
+                                  fromType t
+fromBangType bt@(UnpackedTy t) = do warn $ "Ignoring unpacked on " ++ prettyPrint bt
+                                    fromType t
+
+fromType :: Type -> FH C.Type
+fromType ty = case ty of
+  TyFun t1 t2 -> tapp <$> fromType t1 <*> fromType t2
+  TyApp t1 t2 -> do r <- tconapp <$> fromType t1 <*> fromType t2
+                    case r of
+                       Just t -> return t
+                       Nothing -> fatal $ "Cannot handle type application" ++ prettyPrint ty
+  TyVar n -> return $ C.TyVar (fromName n)
+  TyList t -> C.TyCon listTypeName . return <$> fromType t
+  TyTuple b ts -> C.TyCon (tupleName (length ts)) <$> mapM fromType ts
+  TyCon qn -> tycon0 <$> fromQName qn
+  TyKind t k -> do warn $ "Ignoring kind on " ++ prettyPrint ty
+                   fromType t
+  TyForall{} -> fatal $ "Cannot handle forall: " ++ prettyPrint ty
+  TyParen t -> fromType t
+  TyInfix t1 qn t2 -> do t1' <- fromType t1
+                         n <- fromQName qn
+                         t2' <- fromType t2
+                         return (C.TyCon n [t1',t2'])
+
+fromTyVarBind :: TyVarBind -> FH Name
+fromTyVarBind t@(KindedVar n k) = do warn $ "Ignoring kind on " ++ prettyPrint t
+                                     return (fromName n)
+fromTyVarBind (UnkindedVar n) = return (fromName n)
