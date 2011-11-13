@@ -54,13 +54,19 @@ arbPat bottoms s = frequency
 
 instance Arbitrary Decl where
     arbitrary = frequency
-      [(9,do let args = choose (0,3) >>= flip replicateM arbName
+      [(2,do let args = choose (0,3) >>= flip replicateM arbName
              Func <$> arbName <*> args <*> arbitrary)
-      ,(1,do let cons = choose(0,2) >>= \n -> (,) <$> arbC n <*> return n
+      ,(1,do a <- choose (0,2)
              n <- choose (1,5)
-             Data <$> replicateM n cons)
-      ,(5,do TyDecl <$> arbName <*> arbitrary)
+             Data <$> arbC a <*> replicateM a arbName <*> replicateM n arbitrary)
+      ,(1,do TyDecl <$> arbName <*> arbitrary)
       ]
+
+instance Arbitrary Cons where
+    arbitrary = sized $ \s -> do
+      n <- choose (0,3)
+      Cons <$> arbC n <*> replicateM n (arbType s)
+
 
 instance Arbitrary Body where
     arbitrary = sized $ \s -> oneof

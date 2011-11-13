@@ -10,11 +10,18 @@ data Decl = Func   { funcName :: Name
                    , funcArgs :: [Name]
                    , funcBody :: Body
                    }
-          | Data   { dataCons :: [(Name,Int)] }
+          | Data   { dataName :: Name
+                   , dataArgs :: [Name]
+                   , dataCons :: [Cons] }
           | TyDecl { funcName :: Name
                    , declType :: Type
                    }
   deriving(Eq,Ord,Data,Typeable)
+
+data Cons = Cons { consName :: Name
+                 , consArgs :: [Type]
+                 }
+  deriving(Eq,Ord,Data,Typeable,Show)
 
 data Body = Case { caseScrutinee :: Expr
                  , caseBranches :: [Branch]

@@ -17,8 +17,12 @@ class P a where
 
 instance P Decl where
   p (Func n as b) = text n <+> hsep (map text as) <+> equals <+> p b <+> semi
-  p (Data cs) = text "data" <+> hsep [text c <+> int a | (c,a) <- cs] <+> semi
+  p (Data n as cs) = text "data" <+> text n <+> hsep (map text as) <+> equals
+                                 <+> hsep (punctuate (text " |") (map p cs)) <+> semi
   p (TyDecl n ty) = text n <+> text "::" <+> p ty <+> semi
+
+instance P Cons where
+  p (Cons n as) = text n <+> hsep (map (pty 1) as)
 
 instance P Type where
   p = pty 2

@@ -32,7 +32,7 @@ parseExpr :: String -> Expr
 parseExpr = parseFromGrammar exprGrammar
 
 parseType :: String -> Type
-parseType = parseFromGrammar tyGrammar
+parseType = parseFromGrammar (tyGrammar False)
 
 lg :: Grammar L.Tok Name
 lg = rule [ L.fromTok <@> L.lident ]
@@ -85,8 +85,8 @@ branchGrammar = do
 
   return br
 
-tyGrammar :: Grammar L.Tok Type
-tyGrammar = do
+tyGrammar :: Bool -> Grammar L.Tok Type
+tyGrammar parens = do
   rec
     l   <- lg
     u   <- ug
@@ -101,23 +101,25 @@ tyGrammar = do
                 , id    <@  L.LPar <#> t <# L.RPar
                 ]
     t3s <- several t3
-  return t
+  if parens then return t3
+            else return t
 
 declsGrammar :: Grammar L.Tok [Decl]
 declsGrammar = do
   rec
     l   <- lg
     u   <- ug
+    ls0 <- several0 l
 
     pp   <- patternGrammar True
     pps0 <- several0 pp
 
-    num <- rule [ L.getNum <@> L.number ]
-    c   <- rule [ (,)  <@> u <#> num ]
-    cs  <- several c
+    ts  <- several0 =<< tyGrammar True
+    c   <- rule [ Cons <@> u <#> ts ]
+    cs  <- severalInter L.Bar c
 
     d   <- rule [ func <@> l <#> pps0 <# L.Eq <#> b <# L.Semi
-                , Data <@  L.Data <#> cs <# L.Semi
+                , Data <@  L.Data <#> u <#> ls0 <# L.Eq <#> cs <# L.Semi
                 , TyDecl <@> l <# L.DoubleColon <#> t <# L.Semi  -- conflict?
                 ]
     ds  <- several d
@@ -127,7 +129,7 @@ declsGrammar = do
 
     e   <- exprGrammar
 
-    t   <- tyGrammar
+    t   <- tyGrammar False
 
     br  <- branchGrammar
     brs <- severalInter L.Semi br
