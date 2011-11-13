@@ -8,12 +8,26 @@ import Language.HFOL.ToFOL.Constructors
 prettyCore :: P a => a -> String
 prettyCore = render . p
 
+enclose :: Bool -> Doc -> Doc
+enclose True  = parens
+enclose False = id
+
 class P a where
   p :: a -> Doc
 
 instance P Decl where
   p (Func n as b) = text n <+> hsep (map text as) <+> equals <+> p b <+> semi
   p (Data cs) = text "data" <+> hsep [text c <+> int a | (c,a) <- cs] <+> semi
+  p (TyDecl n ty) = text n <+> text "::" <+> p ty <+> semi
+
+instance P Type where
+  p = pty 2
+
+pty :: Int -> Type -> Doc
+pty l (TyVar n) = text n
+pty l (TyApp ts) = enclose (l <= 1) $ hsep (punctuate (text " ->") (map (pty 1) ts))
+pty l (TyCon n ts) = enclose (l <= 1 && not (null ts))
+                   $ text n <+> hsep (map (pty 1) ts)
 
 instance P Body where
   p (Case e brs) = text "case" <+> p e <+> text "of" <+> lbrace
@@ -23,10 +37,6 @@ instance P Body where
 
 instance P Expr where
   p = pexpr 2
-
-enclose :: Bool -> Doc -> Doc
-enclose True  = parens
-enclose False = id
 
 pexpr :: Int -> Expr -> Doc
 pexpr l (App n es)   = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
@@ -60,3 +70,4 @@ instance Show Expr where show = prettyCore
 instance Show Branch where show = prettyCore
 instance Show PMG where show = prettyCore
 instance Show Pattern where show = prettyCore
+-- instance Show Type where show = prettyCore

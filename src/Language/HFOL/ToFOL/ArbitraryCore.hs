@@ -59,6 +59,7 @@ instance Arbitrary Decl where
       ,(1,do let cons = choose(0,2) >>= \n -> (,) <$> arbC n <*> return n
              n <- choose (1,5)
              Data <$> replicateM n cons)
+      ,(5,do TyDecl <$> arbName <*> arbitrary)
       ]
 
 instance Arbitrary Body where
@@ -69,6 +70,19 @@ instance Arbitrary Body where
                    return (Case e brs)
               , Expr <$> arbExpr s
               ]
+
+instance Arbitrary Type where
+    arbitrary = sized arbType
+
+arbType :: Int -> Gen Type
+arbType s = frequency
+          [(5,TyVar <$> arbName)
+          ,(2,TyCon <$> arbC 0 <*> pure [])
+          ,(s,tapp  <$> arbType s' <*> arbType s')
+          ,(s,do n <- choose (0,3)
+                 TyCon <$> arbC n <*> replicateM n (arbType s'))
+          ]
+  where s' = s `div` 2
 
 instance Arbitrary Expr where
     arbitrary = sized arbExpr

@@ -14,6 +14,7 @@ import Data.Data
 
 import qualified Language.HFOL.ToFOL.Lexer as L
 import Language.HFOL.ToFOL.Core
+import Language.HFOL.ToFOL.Pretty
 
 parseFromGrammar :: Data e => Grammar L.Tok e -> String -> e
 parseFromGrammar g = parse (mkDynamicParser constrWrapper g) . L.lex
@@ -29,6 +30,9 @@ parsePattern = parseFromGrammar (patternGrammar False)
 
 parseExpr :: String -> Expr
 parseExpr = parseFromGrammar exprGrammar
+
+parseType :: String -> Type
+parseType = parseFromGrammar tyGrammar
 
 lg :: Grammar L.Tok Name
 lg = rule [ L.fromTok <@> L.lident ]
@@ -81,6 +85,23 @@ branchGrammar = do
 
   return br
 
+tyGrammar :: Grammar L.Tok Type
+tyGrammar = do
+  rec
+    l   <- lg
+    u   <- ug
+    t   <- rule [ tapp <@> t2 <# L.Arrow <#> t
+                , id   <@> t2
+                ]
+    t2  <- rule [ TyCon <@> u <#> t3s
+                , id    <@> t3
+                ]
+    t3  <- rule [ TyVar <@> l
+                , tycon0 <@> u
+                , id    <@  L.LPar <#> t <# L.RPar
+                ]
+    t3s <- several t3
+  return t
 
 declsGrammar :: Grammar L.Tok [Decl]
 declsGrammar = do
@@ -96,13 +117,17 @@ declsGrammar = do
     cs  <- several c
 
     d   <- rule [ func <@> l <#> pps0 <# L.Eq <#> b <# L.Semi
-                , Data <@  L.Data <#> cs <# L.Semi ]
+                , Data <@  L.Data <#> cs <# L.Semi
+                , TyDecl <@> l <# L.DoubleColon <#> t <# L.Semi  -- conflict?
+                ]
     ds  <- several d
 
     b   <- rule [ Case <@  L.Case <#> e <# L.Of <# L.LBrace <#> brs <# L.RBrace
                 , Expr <@> e ]
 
     e   <- exprGrammar
+
+    t   <- tyGrammar
 
     br  <- branchGrammar
     brs <- severalInter L.Semi br

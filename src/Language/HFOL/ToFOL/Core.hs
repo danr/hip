@@ -6,11 +6,14 @@ import Data.Generics.Uniplate.Data
 
 type Name = String
 
-data Decl = Func { funcName :: Name
-                 , funcArgs :: [Name]
-                 , funcBody :: Body
-                 }
-          | Data { dataCons :: [(Name,Int)] }
+data Decl = Func   { funcName :: Name
+                   , funcArgs :: [Name]
+                   , funcBody :: Body
+                   }
+          | Data   { dataCons :: [(Name,Int)] }
+          | TyDecl { funcName :: Name
+                   , declType :: Type
+                   }
   deriving(Eq,Ord,Data,Typeable)
 
 data Body = Case { caseScrutinee :: Expr
@@ -40,6 +43,12 @@ data Pattern = PVar { patName :: Name }
              | PCon { patName :: Name , patArgs :: [Pattern] }
              | PWild
   deriving(Eq,Ord,Data,Typeable)
+
+-- Cannot handle type var applications, as f in : (a -> b) -> f a -> f b
+data Type = TyVar Name
+          | TyApp [Type]
+          | TyCon Name [Type]
+  deriving(Eq,Ord,Data,Typeable,Show)
 
 -- Auxiliary functions
 
@@ -88,6 +97,12 @@ app IsBottom{} _ = error "app on IsBottom"
 
 infixl `app`
 
+tapp :: Type -> Type -> Type
+tapp t (TyApp ts) = TyApp (t:ts)
+tapp t t2         = TyApp [t,t2]
+
+infixr `tapp`
+
 -- | Nullary constructor
 con0 :: Name -> Expr
 con0 n = Con n []
@@ -95,6 +110,10 @@ con0 n = Con n []
 -- | Nullary constructor pattern
 pcon0 :: Name -> Pattern
 pcon0 n = PCon n []
+
+-- | Nullary type constructor
+tycon0 :: Name -> Type
+tycon0 n = TyCon n []
 
 -- | Substitution
 subst :: Name -> Name -> Expr -> Expr
