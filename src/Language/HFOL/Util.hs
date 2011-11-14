@@ -1,5 +1,5 @@
 module Language.HFOL.Util
-       (selections,withPrevious,concatMapM,concatMaybe,isOp)
+       (selections,withPrevious,concatMapM,concatMaybe,isOp,putEither)
        where
 
 import Data.Maybe
@@ -19,6 +19,11 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 -- > withPrevious "abc" = [('a',""),('b',"a"),('c',"ab")]
 withPrevious :: [a] -> [(a,[a])]
 withPrevious xs = zip xs (inits xs)
+
+-- | If true, put in right, if false, put in left
+putEither :: Bool -> a -> Either a a
+putEither True  = Right
+putEither False = Left
 
 -- | Is this a haskell operator?
 isOp :: String -> Bool

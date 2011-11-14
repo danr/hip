@@ -22,8 +22,10 @@ module Language.HFOL.ToFOL.Monad
        ,lookupArity
        ,lookupProj
        ,lookupType
+       ,lookupConstructors
        ,popQuantified
-       ,skolem
+       ,forallUnbound
+       ,skolemize
        ,addIndirection
        ,makeFunPtrName
        ,addTypes
@@ -179,15 +181,18 @@ popDebug = TM $ do
 returnWithDebug :: TM a -> TM (a,Debug)
 returnWithDebug m = liftM2 (,) m popDebug
 
--- | Locally manipulate boundNames
+-- | Locally manipulate boundNames, and arities since skolem variables
+--   are registered as functions with arity 0
 locally :: TM a -> TM a
 locally (TM m) = TM (locally' m)
 
 locally' :: (MonadState St m) => m a -> m a
 locally' m = do
   boundNames' <- gets boundNames
+  arities'    <- gets arities
   r <- m
   puts boundNames boundNames'
+  puts arities    arities'
   return r
 
 -- | Insert /n/ elements to a map of /m/ elements
@@ -197,7 +202,7 @@ insertMany :: Ord k => [(k,v)] -> Map k v -> Map k v
 insertMany kvs m = foldr (uncurry M.insert) m kvs
 
 lookupType :: Name -> TM (Maybe Type)
-lookupType n = M.lookup n <$> gets types
+lookupType n = TM $ M.lookup n <$> gets types
 
 -- | Looks up if a name is a variable or a function/constructor
 lookupName :: Name -> TM Bound
@@ -220,12 +225,11 @@ lookupName n@(x:xs) = TM $ do
 lookupName "" = error "lookupName on empty name"
 
 -- | Makes a new skolem variable for this name
-skolem :: Name -> TM Name
-skolem n = do
-  n' <- (n ++) . head <$> TM (gets namesupply)
+skolemize :: Name -> TM Name
+skolemize n = do
+  n' <- ((n ++ "sk") ++) . head <$> TM (gets namesupply)
   TM $ modify namesupply tail
   addFuns [(n',0)]
-  addIndirection n (Var n')
   return n'
 
 -- | Add a new indirection
@@ -233,7 +237,7 @@ addIndirection :: Name -> Expr -> TM ()
 addIndirection n e = TM $ do
     write' $ "indirection: " ++ n ++ " := " ++ prettyCore e
     mem <- M.member n <$> gets boundNames
-    when (mem) $ write' "warn: indirection already exists, overwriting"
+    when mem $ write' "warn: indirection already exists, overwriting"
     modify boundNames (M.insert n (Indirection e))
 
 -- | Pop and return the quantified variables
@@ -243,13 +247,17 @@ popQuantified = TM $ do
   puts quantified S.empty
   return qs
 
+-- | Makes a forall-quantification over all unbound variables in the decl
+forallUnbound :: T.Formula -> TM T.Formula
+forallUnbound phi = forall' <$> popQuantified <*> pure phi
+
 -- | fromMaybe with unbound error message from a function
 fromUnbound :: String -> Name -> Maybe a -> a
 fromUnbound fn n = fromMaybe (error $ fn ++ ", unbound: " ++ n)
 
 -- | Looks up the constructors for a datatype
 lookupConstructors :: Name -> TM [Name]
-lookupConstructors c = TM $ (fromUnbound "lookupConstructors" c . M.lookup n)
+lookupConstructors c = TM $ (fromUnbound "lookupConstructors" c . M.lookup c)
                          <$> gets conFam
 
 -- | Looks up an arity of a function or constructor

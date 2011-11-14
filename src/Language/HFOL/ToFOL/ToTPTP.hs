@@ -65,17 +65,15 @@ translate d@(Func fname args (Expr e)) = locally $ do
          | otherwise -> do
             rhs <- translateExpr (App fname (map Var args))
             lhs <- translateExpr e
-            qs  <- popQuantified
-            let f = Axiom fname $ forall' qs $ rhs === lhs
+            f <- Axiom fname <$> forallUnbound (rhs === lhs)
             write (prettyTPTP f)
             return (d,[f])
 
 translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
     write $ "translate " ++ prettyCore d
     write   "branches fixed to:"
-    write $ prettyCore (Func fname args
-                                               (Case scrutinee
-                                                (fixBranches scrutinee brs)))
+    write $ prettyCore (Func fname args (Case scrutinee
+                                         (fixBranches scrutinee brs)))
     sequence
       [ do mf <- indented
                $ locally
@@ -127,11 +125,8 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
                                   " is equal to conditions!"
                           return Nothing
             Nothing -> do
-
-
               formula' <- formula `withConstraints` constr
-              qs <- popQuantified
-              return $ Just $ T.Axiom (fname ++ show num) (forall' qs formula')
+              Just . T.Axiom (fname ++ show num) <$> forallUnbound formula'
 translate d = error $ "translate on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the

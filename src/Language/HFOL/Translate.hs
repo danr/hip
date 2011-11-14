@@ -9,6 +9,7 @@ import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.ProofDatatypes
 import Language.HFOL.ToFOL.Parser
 import Language.HFOL.ToFOL.Latex
+import Language.HFOL.Util (putEither)
 
 import System.Environment (getArgs)
 import System.Exit (exitFailure,exitSuccess)
@@ -72,7 +73,9 @@ runProver f = do
         (words "1 eprover -tAuto -xAuto --memory-limit=1000 --tptp3-format -s"
                 ++ [f])
         ""
+--    putStrLn out
     case () of () | "Theorem" `isInfixOf` out            -> return Theorem
+                  | "Unsatisfiable" `isInfixOf` out      -> return Theorem
                   | "CounterSatisfiable" `isInfixOf` out -> return Falsifiable
                   | otherwise                            -> return Timeout
 
@@ -86,10 +89,6 @@ untilTrue f (x:xs) = do
        else untilTrue f xs
 untilTrue _ [] = return False
 
-putEither :: Bool -> a -> Either a a
-putEither True  = Right
-putEither False = Left
-
 proveAll :: FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
 proveAll file axioms proofs = do
   hSetBuffering stdout NoBuffering
@@ -101,6 +100,16 @@ proveAll file axioms proofs = do
   where
     axiomsStr = prettyTPTP axioms
     prove name pt = case pt of
+          NegInduction indargs decls -> do
+              putStr $ "\tnegated induction on " ++ unwords indargs ++ ": \n"
+              let fname = "prove/" ++ file ++ name ++ concat indargs ++ "negind.tptp"
+              writeFile fname (axiomsStr ++ prettyTPTP decls)
+--              mapM_ (putStrLn . prettyTPTP) decls
+              putStr "\t"
+              r <- echo (runProver fname)
+              if r == Theorem
+                  then putStrLn "\tTheorem!" >> return True
+                  else putStrLn "" >> return False
           Induction indargs parts -> do
               putStr $ "\tinduction on " ++ unwords indargs ++ ": \t"
               r <- forM parts $ \(IndPart indcons decls) -> do
@@ -111,10 +120,10 @@ proveAll file axioms proofs = do
               if all (== Theorem) r
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
-          Plain ts -> do
+          Plain decls -> do
               putStr "\tby definition.."
               let fname = "prove/" ++ file ++ name ++ "plain.tptp"
-              writeFile fname (axiomsStr ++ prettyTPTP ts)
+              writeFile fname (axiomsStr ++ prettyTPTP decls)
               r <- echo (runProver fname)
               if r == Theorem
                   then putStrLn "\tTheorem!" >> return True

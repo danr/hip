@@ -17,6 +17,7 @@ data ProofDecl = ProofDecl Name [ProofType]
   deriving (Eq,Ord,Show)
 
 data ProofType = Plain [T.Decl]
+               | NegInduction [Name] [T.Decl]
                | Induction [Name] [IndPart]
 
   deriving (Eq,Ord,Show)

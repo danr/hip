@@ -88,7 +88,8 @@ fromDecl d = case d of
        decl $ Data (fromName name) tyvars cons
   FunBind ms -> mapM_ fromMatches (groupBy ((==) `on` matchName) ms)
   PatBind{}  -> fatal $ "Internal error: PatBind in fromDecl"
-  TypeSig{}  -> debug $ (prettyPrint d)
+  TypeSig _loc names ty -> do ty' <- fromType ty
+                              mapM_ (\n -> decl $ TyDecl (fromName n) ty') names
   e -> do
     warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
     write $ indented (show e)

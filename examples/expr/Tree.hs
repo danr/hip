@@ -12,12 +12,13 @@ data Prop a
 prove :: Equals -> Prop
 prove x = Prove x
 
-data Tree a = Leaf | Node a | Branch (Tree a) a (Tree a)
+data T a = L | N a | B (T a) a (T a)
 
 mirror :: Tree a -> Tree a
-mirror Leaf = Leaf
-mirror (Node x) = Node x
-mirror (Branch l x r) = Branch (mirror l) x (mirror r)
+mirror L = L
+mirror (N x) = N x
+mirror (B l x r) = B (mirror l) x (mirror r)
 
-prop_mirror_idem :: Tree a -> Prop (Tree a)
+
+prop_mirror_idem :: T a -> Prop (T a)
 prop_mirror_idem t = prove (mirror (mirror t) :=: t)
