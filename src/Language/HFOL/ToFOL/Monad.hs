@@ -21,6 +21,7 @@ module Language.HFOL.ToFOL.Monad
        ,lookupName
        ,lookupArity
        ,lookupProj
+       ,lookupType
        ,popQuantified
        ,skolem
        ,addIndirection
@@ -195,6 +196,9 @@ locally' m = do
 insertMany :: Ord k => [(k,v)] -> Map k v -> Map k v
 insertMany kvs m = foldr (uncurry M.insert) m kvs
 
+lookupType :: Name -> TM (Maybe Type)
+lookupType n = M.lookup n <$> gets types
+
 -- | Looks up if a name is a variable or a function/constructor
 lookupName :: Name -> TM Bound
 lookupName n@(x:xs) = TM $ do
@@ -242,6 +246,11 @@ popQuantified = TM $ do
 -- | fromMaybe with unbound error message from a function
 fromUnbound :: String -> Name -> Maybe a -> a
 fromUnbound fn n = fromMaybe (error $ fn ++ ", unbound: " ++ n)
+
+-- | Looks up the constructors for a datatype
+lookupConstructors :: Name -> TM [Name]
+lookupConstructors c = TM $ (fromUnbound "lookupConstructors" c . M.lookup n)
+                         <$> gets conFam
 
 -- | Looks up an arity of a function or constructor
 lookupArity :: Name -> TM Int
