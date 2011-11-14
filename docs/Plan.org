@@ -106,20 +106,45 @@ But for each thing you want to prove, one will need to know every
 function and datatype it depends on.
 **** TODO Disable generation of unneccessary haskell-builtin datatypes
 Tuples, lists
-** TODO Bug Sven until registered on course
-** TODO Cabal project file
+** DONE Cabal project file
+CLOSED: [2011-11-08 Tue 16:59]
 * Week 46 (14 Nov - 20 Nov)
+** DONE Meeting with Koen
+CLOSED: [2011-11-14 Mon 14:49]
+
+Induction by well-ordering
+
+Induction by negation
+$$P(Empty) \rightarrow P(left(a)) \wedge P(right(a))$$
+$$\neg P(a)$$
+
+For admissible P:
+$$P(\bot) , P(0) , (\forall i . P(i) \rightarrow P(i^+)) \rightarrow$$
+$$\forall i \in \mathbb{N}^{finite}_{\bot} . P(i)$$
+Meta-theorem from Domain theory gives:
+$$\forall i \in \mathbb{N}_{\bot} . P(i)$$
+
+By negation:
+$$P(0) \wedge P(\bot) \rightarrow P(pred(a))$$
+
+Termination by well-ordering!
+
 ** Evaluation of proving techniques
 SCHEDULED: <2011-11-14 Mon>
 
-** Evaluate translation
+** TODO Bug Sven until registered on course
+SCHEDULED: <2011-11-15 Tue>
+
+** DONE Evaluate translation
+CLOSED: [2011-11-14 Mon 14:55]
 Do we need to add a larger part in the Haskell $\rightarrow$ Core
 translation?
-SCHEDULED: <2011-11-14 Mon>
+
+Answer : No, but types were added last week and that was
+a bit unplanned
 
 ** Continued work on proving
 SCHEDULED: <2011-11-15 Tue>
-
 * Week 47 (21 Nov - 27 Nov)
 ** Report proving techniques
 ** Report related work
