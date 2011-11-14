@@ -17,8 +17,11 @@ data ProofDecl = ProofDecl Name [ProofType]
   deriving (Eq,Ord,Show)
 
 data ProofType = Plain [T.Decl]
-               | Induction { inductionVars :: [Name]
-                           , inductionBase :: [T.Decl]
-                           , inductionStep :: [T.Decl]
-                           }
+               | Induction [IndPart]
+
+  deriving (Eq,Ord,Show)
+
+data IndPart = IndPart { indVarCon :: [(Name,Name)]
+                       , indDecls  :: [T.Decl]
+                       }
   deriving (Eq,Ord,Show)
