@@ -25,6 +25,7 @@ module Language.HFOL.ToFOL.Monad
        ,skolem
        ,addIndirection
        ,makeFunPtrName
+       ,addTypes
        ,addFuns
        ,addCons
        ,useFunPtr
@@ -98,6 +99,7 @@ initSt p = St { _arities     = M.empty
               , _namesupply  = [ show x | x <- [(0 :: Integer)..] ]
               , _proofMode   = p
               , _proofDecls  = []
+              , _types       = M.empty
               }
 
 -- | The type of debug messages
@@ -108,7 +110,7 @@ data St = St { _arities     :: Map Name Int
              , _conProj     :: Map Name [Name]
                -- ^ Projection functions for constructors
              , _conFam      :: Map Name [Name]
-               -- ^ The other constructors for a given constructor (unused)
+               -- ^ The constructors for a datatype
              , _datatypes   :: [[(Name,Int)]]
                -- ^ The datatypes in the program
              , _usedFunPtrs :: Set Name
@@ -127,6 +129,8 @@ data St = St { _arities     :: Map Name Int
                -- ^ Is proof mode on?
              , _proofDecls  :: [ProofDecl]
                -- ^ Proof declarations, i.e propositions to be proved
+             , _types       :: Map Name Type
+               -- ^ Types of functions and constructors
              } deriving (Show)
 $(mkLabels [''St])
 
@@ -264,21 +268,28 @@ addNameAndArity mk funs = do
    modify boundNames (insertMany [(n,mk (FunName n))| (n,_) <- funs])
    modify arities (insertMany funs)
 
+addTypes :: [(Name,Type)] -> TM ()
+addTypes ts = TM $ do
+  mapM_ (\(n,t) -> write' $ "addTypes: " ++ n ++ " :: " ++ show t) ts
+  modify types (insertMany ts)
+
 -- | Add functions name and arity
 addFuns :: [(Name,Int)] -> TM ()
 addFuns = TM . addNameAndArity FunVar
 
 -- | Add a datatype's constructor given the arities
 --   Projections are also generated, and added as functions
-addCons :: [[(Name,Int)]] -> TM ()
-addCons css = TM $ do
+addCons :: [Decl] -> TM ()
+addCons datadecls = TM $ do
      addNameAndArity ConVar (concat css)
-     modify conFam (insertMany fams)
      modify conProj (insertMany projs)
      modify datatypes (css ++)
      unTM (addFuns projfuns)
+     unTM (mapM_ addTypes (map conTypes datadecls))
+     modify conFam (insertMany fams)
   where
-    fams  = [ (c,cs')    | cs <- css, let cs' = map fst cs, c <- cs']
+    css   = map conNameArity datadecls
+    fams  = [ (n,map conName cs) | Data n _ cs <- datadecls ]
     projs = [ projName c | cs <- css, c <- cs]
 
     projfuns :: [(Name,Int)]

@@ -28,7 +28,7 @@ instance P Type where
   p = pty 2
 
 pty :: Int -> Type -> Doc
-pty l (TyVar n) = text n
+pty _ (TyVar n) = text n
 pty l (TyApp ts) = enclose (l <= 1) $ hsep (punctuate (text " ->") (map (pty 1) ts))
 pty l (TyCon n ts) = enclose (l <= 1 && not (null ts))
                    $ text n <+> hsep (map (pty 1) ts)
@@ -74,4 +74,4 @@ instance Show Expr where show = prettyCore
 instance Show Branch where show = prettyCore
 instance Show PMG where show = prettyCore
 instance Show Pattern where show = prettyCore
--- instance Show Type where show = prettyCore
+instance Show Type where show = prettyCore

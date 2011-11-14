@@ -3,8 +3,8 @@ module Language.HFOL.ToFOL.ProofDatatypes where
 import qualified Language.TPTP as T
 import Language.HFOL.ToFOL.Core
 
-proofDatatypes :: [[(Name,Int)]]
-proofDatatypes = [[("Prove",1)]]
+proofDatatypes :: [Name]
+proofDatatypes = ["Prop"]
 
 proveFunctions :: [Name]
 proveFunctions = ["prove","proveBool","given","givenBool"]
@@ -17,11 +17,11 @@ data ProofDecl = ProofDecl Name [ProofType]
   deriving (Eq,Ord,Show)
 
 data ProofType = Plain [T.Decl]
-               | Induction [IndPart]
+               | Induction [Name] [IndPart]
 
   deriving (Eq,Ord,Show)
 
-data IndPart = IndPart { indVarCon :: [(Name,Name)]
+data IndPart = IndPart { indVarCon :: [Name]
                        , indDecls  :: [T.Decl]
                        }
   deriving (Eq,Ord,Show)

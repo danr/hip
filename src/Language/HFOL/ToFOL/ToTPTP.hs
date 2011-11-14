@@ -7,6 +7,8 @@ import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.Monad
 import Language.HFOL.ToFOL.Constructors
 import Language.HFOL.ToFOL.ProofDatatypes
+import Language.HFOL.ToFOL.MakeProofs
+import Language.HFOL.ToFOL.TranslateExpr
 import Language.HFOL.Util
 import Language.HFOL.FromHaskell.Names
 import Language.TPTP hiding (Decl,Var)
@@ -17,7 +19,7 @@ import Control.Arrow ((&&&))
 import Control.Applicative
 import Control.Monad
 
-import Data.List (partition,intercalate,sort,find)
+import Data.List (intercalate,sort,find)
 import Data.Maybe (catMaybes)
 
 -- | Translates a program to TPTP, with its debug output
@@ -25,7 +27,8 @@ import Data.Maybe (catMaybes)
 toTPTP :: Bool -> [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[ProofDecl],Debug)
 toTPTP p ds = runTM p $ do
                 addFuns funs
-                addCons datatypes
+                addCons datadecls'
+                addTypes types
                 faxioms <- mapM translate (filter funcDecl ds)
                 extra   <- envStDecls
                 db      <- popDebug
@@ -33,85 +36,17 @@ toTPTP p ds = runTM p $ do
                 return (faxioms,extra,proofs,db)
   where
     (fundecls,datadecls,typedecls) = partitionDecls ds
-    funs = map (funcName &&& length . funcArgs) fundecls
-    datatypes = [[(bottomName,0)]
-                ,[(trueName,0),(falseName,0)]
-                ,[(unitName,0)]
-                ,[(nilName,0),(consName,2)]
-                ] ++
-                [ [(tupleName n,n)] | n <- [2..5] ]
-                ++ filter (\d -> not p || d `notElem` proofDatatypes)
-                          (map conNameArity datadecls)
-
--- | Translate an expression to a term
-translateExpr :: Expr -> TM Term
-translateExpr (Var n) = applyFun n []
-translateExpr e = applyFun (exprName e) =<< mapM translateExpr (exprArgs e)
-
--- | Apply a function/constructor name to an argument list
---   Follows the function definition if it is an indirection
---   Notice that this function works well on an empty argument list
-applyFun :: Name -> [Term] -> TM Term
-applyFun n as = do
-  b <- lookupName n
-  case b of
-    QuantVar x        -> return (appFold (T.Var x) as)
-    Indirection e     -> do t <- translateExpr e
-                            return (appFold t as)
-    (boundName -> fn) -> do
-      arity <- lookupArity n
-      if length as < arity
-        then -- Partial application
-          do useFunPtr n
-             return $ appFold (T.Fun (makeFunPtrName fn) []) as
-        else -- Function has enough arguments, and could possibly have more
-          do -- (for functions returning functions)
-             when (boundCon b && length as > arity) $ error $ "Internal error:"
-                 ++ " constructor " ++ n ++ "applied to too many arguments."
-             return $ appFold (T.Fun fn (take arity as)) (drop arity as)
-
-powerset :: [a] -> [[a]]
-powerset = filterM (const [False,True]) . reverse
-
--- So far, all arguments are assumed to be Nat with Z, S constructors :)
-makeProofDecls :: Name -> [Name] -> Expr -> TM ()
-makeProofDecls fname args e = case e of
-    App "proveBool" [lhs] -> prove lhs (Con "True" [])
-    App "prove" [Con ":=:" [lhs,rhs]] -> prove lhs rhs
-    _ -> write $ "Error: makeProofDecl onp nonsense expression " ++ prettyCore e
-  where
-    prove :: Expr -> Expr -> TM ()
-    prove lhs rhs = (addProofDecl . ProofDecl fname =<<) . forM (powerset args) $
-       \indargs -> if null indargs
-                      then Plain <$> zeroClause []
-                      else do z <- zeroClause indargs
-                              s <- succClause indargs
-                              return (Induction indargs z s)
-
-       where
-         zeroClause indargs = locally $ do
-           forM_ indargs (`addIndirection` (Con "Z" []))
-           lhs' <- translateExpr lhs
-           rhs' <- translateExpr rhs
-           qs   <- popQuantified
-           return [Conjecture (fname ++ "base" ++ concat indargs)
-                              (forall' qs $ lhs' === rhs')]
-         succClause indargs = locally $ do
-             skolems <- forM indargs skolem
-             ih <- do
-               lhs' <- translateExpr lhs
-               rhs' <- translateExpr rhs
-               qs <- popQuantified
-               return (Axiom (fname ++ "hyp" ++ concat indargs)
-                             (forall' qs $ lhs' === rhs'))
-             is <- do
-               zipWithM_ (\n s -> addIndirection n (Con "S" [Var s])) indargs skolems
-               lhs' <- translateExpr lhs
-               rhs' <- translateExpr rhs
-               qs <- popQuantified
-               return (Conjecture (fname ++ "step" ++ concat indargs)
-                                  (forall' qs $ lhs' === rhs'))
-             return [ih,is]
+    funs = map (declName &&& length . declArgs) fundecls
+    types = map (declName &&& declType) typedecls
+    datadecls' = [Data "empty"  [] [Cons bottomName []]
+                 ,Data "Bool"   [] [Cons trueName [],Cons falseName []]
+                 ,Data unitName [] [Cons unitName []]
+                 ,Data listTypeName ["a"] [Cons nilName [],Cons consName [TyVar "a",TyCon listTypeName [TyVar "a"]]]
+                 ] ++
+                 [Data (tupleName n) (take n tyvars) [Cons (tupleName n) (map TyVar (take n tyvars))]
+                 | n <- [2..5] ]
+                 ++ filter (\d -> not p || declName d `notElem` proofDatatypes) datadecls
+    tyvars = map return ['a'..]
 
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.

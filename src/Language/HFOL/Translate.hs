@@ -66,15 +66,15 @@ instance Show ProverResult where
 
 runProver :: FilePath -> IO ProverResult
 runProver f = do
-    (_exitcode,stdout,_stderr) <-
+    (_exitcode,out,_err) <-
       readProcessWithExitCode
         "timeout"
         (words "1 eprover -tAuto -xAuto --memory-limit=1000 --tptp3-format -s"
                 ++ [f])
         ""
-    case () of () | "Theorem" `isInfixOf` stdout            -> return Theorem
-                  | "CounterSatisfiable" `isInfixOf` stdout -> return Falsifiable
-                  | otherwise                               -> return Timeout
+    case () of () | "Theorem" `isInfixOf` out            -> return Theorem
+                  | "CounterSatisfiable" `isInfixOf` out -> return Falsifiable
+                  | otherwise                            -> return Timeout
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> putStr (show x) >> return x
@@ -101,21 +101,18 @@ proveAll file axioms proofs = do
   where
     axiomsStr = prettyTPTP axioms
     prove name pt = case pt of
-          Induction vars base step -> do
-              putStr $ "\tinduction on " ++ unwords vars ++ ":  \t"
-              let fbase = "prove/" ++ file ++ name ++ concat vars ++ "base.tptp"
-              writeFile fbase (axiomsStr ++ prettyTPTP base)
-              let fstep = "prove/" ++ file ++ name ++ concat vars ++ "step.tptp"
-              writeFile fstep (axiomsStr ++ prettyTPTP step)
-              putStr "base..."
-              b <- echo (runProver fbase)
-              putStr " step..."
-              s <- echo (runProver fstep)
-              if b == Theorem && s == Theorem
+          Induction indargs parts -> do
+              putStr $ "\tinduction on " ++ unwords indargs ++ ": \t"
+              r <- forM parts $ \(IndPart indcons decls) -> do
+                  let fname = "prove/" ++ file ++ name ++ concat indargs ++ concat indcons ++ ".tptp"
+                  writeFile fname (axiomsStr ++ prettyTPTP decls)
+                  putStr $ " " ++ unwords indcons ++ ".."
+                  echo (runProver fname)
+              if all (== Theorem) r
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
           Plain ts -> do
-              putStr "\tby definition... "
+              putStr "\tby definition.."
               let fname = "prove/" ++ file ++ name ++ "plain.tptp"
               writeFile fname (axiomsStr ++ prettyTPTP ts)
               r <- echo (runProver fname)

@@ -4,17 +4,18 @@ module Language.HFOL.ToFOL.Core where
 import Data.Data
 import Data.Generics.Uniplate.Data
 import Data.List (partition)
+import Control.Arrow ((&&&))
 
 type Name = String
 
-data Decl = Func   { funcName :: Name
-                   , funcArgs :: [Name]
+data Decl = Func   { declName :: Name
+                   , declArgs :: [Name]
                    , funcBody :: Body
                    }
-          | Data   { dataName :: Name
-                   , dataArgs :: [Name]
+          | Data   { declName :: Name
+                   , declArgs :: [Name]
                    , dataCons :: [Cons] }
-          | TyDecl { funcName :: Name
+          | TyDecl { declName :: Name
                    , declType :: Type
                    }
   deriving(Eq,Ord,Data,Typeable)
@@ -22,7 +23,7 @@ data Decl = Func   { funcName :: Name
 data Cons = Cons { conName :: Name
                  , conArgs :: [Type]
                  }
-  deriving(Eq,Ord,Data,Typeable,Show)
+  deriving(Eq,Ord,Data,Typeable)
 
 data Body = Case { caseScrutinee :: Expr
                  , caseBranches :: [Branch]
@@ -56,7 +57,7 @@ data Pattern = PVar { patName :: Name }
 data Type = TyVar Name
           | TyApp [Type]
           | TyCon Name [Type]
-  deriving(Eq,Ord,Data,Typeable,Show)
+  deriving(Eq,Ord,Data,Typeable)
 
 -- Auxiliary functions
 
@@ -89,7 +90,15 @@ partitionDecls ds =
 
 conNameArity :: Decl -> [(Name,Int)]
 conNameArity (Data _ _ cs) = map (\(Cons n as) -> (n,length as)) cs
-conNameArity _             = error "conNameArity: Please report this bug."
+conNameArity _             = error "conNameArity: Please report this error."
+
+conTypes :: Decl -> [(Name,Type)]
+conTypes (Data name vars cons) = map (conName &&& conType) cons
+  where
+    dataType = TyCon name (map TyVar vars)
+    conType (Cons name [])  = dataType
+    conType (Cons name tys) = TyApp (tys ++ [dataType])
+conTypes _ = error "conTypes: Please report this error."
 
 -- | The three kinds of patterns
 varPat,conPat,wildPat :: Pattern -> Bool
