@@ -76,9 +76,16 @@ instance PrettyTPTP Formula where
 pdecl :: String -> String -> Formula -> String
 pdecl n t f = "fof" ++ paren (n ++ "," ++ t ++ "," ++ prettyTPTP f) ++ "."
 
+declType :: Decl -> String
+declType Axiom{}      = "axiom"
+declType Conjecture{} = "conjecture"
+declType Question{}   = "question"
+declType NegConj{}    = "negated_conjecture"
+declType Lemma{}      = "lemma"
+declType Hypothesis{} = "hypothesis"
+
 instance PrettyTPTP Decl where
-    prettyTPTP (Axiom      n f) = pdecl (prettyName n) "axiom"      f
-    prettyTPTP (Conjecture n f) = pdecl (prettyName n) "conjecture" f
+    prettyTPTP d = pdecl (prettyName (declName d)) (declType d) (declFormula d)
 
 instance PrettyTPTP [Decl] where
     prettyTPTP ds = unlines (map prettyTPTP ds)

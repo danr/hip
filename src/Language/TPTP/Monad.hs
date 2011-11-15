@@ -14,6 +14,8 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,(===),(!=)
                            ,axiom
                            ,conjecture
+                           ,question
+                           ,lemma
                            ,forall'
                            ,exists'
                            ) where
@@ -89,6 +91,12 @@ axiom s f = Axiom s (run f)
 
 conjecture :: String -> M Formula -> Decl
 conjecture s f = Conjecture s (run f)
+
+question :: String -> M Formula -> Decl
+question s f = Question s (run f)
+
+lemma :: String -> M Formula -> Decl
+lemma s f = Lemma s (run f)
 
 class Quantifier t where
     quantifier

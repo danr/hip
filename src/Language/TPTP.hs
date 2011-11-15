@@ -51,8 +51,12 @@ infix  1 <=>
 (===) = \f g -> EqOp f (:==) g
 (!=)  = \f g -> EqOp f (:!=) g
 
-data Decl = Axiom      String Formula
-          | Conjecture String Formula
+data Decl = Axiom      { declName :: String , declFormula :: Formula }
+          | Conjecture { declName :: String , declFormula :: Formula }
+          | Question   { declName :: String , declFormula :: Formula }
+          | NegConj    { declName :: String , declFormula :: Formula }
+          | Lemma      { declName :: String , declFormula :: Formula }
+          | Hypothesis { declName :: String , declFormula :: Formula }
   deriving (Eq,Ord,Show)
 
 forall' :: [VarName] -> Formula -> Formula
