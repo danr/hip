@@ -43,10 +43,11 @@ type SkolemName = Name
 type LR a = Either a a
 
 prove :: Name -> [(Name,Type)] -> Expr -> Expr -> TM ()
-prove fname typedArgs lhs rhs = do
-   r <- forM (powerset (filter (concrete . snd) typedArgs)) proofByNegInduction
-   addProofDecl (ProofDecl fname r)
-
+prove fname typedArgs lhs rhs = locally $ do
+   simpleindbottom <- forM (filter (concrete . snd) typedArgs) (proofBySimpleInduction True)
+   neginds         <- forM (powerset (filter (concrete . snd) typedArgs)) proofByNegInduction
+   simpleind       <- forM (filter (concrete . snd) typedArgs) (proofBySimpleInduction False)
+   addProofDecl (ProofDecl fname (simpleindbottom ++ neginds ++ simpleind))
   where
     -- Can only do induction on concrete types obviously
     concrete TyCon{} = True
@@ -57,24 +58,43 @@ prove fname typedArgs lhs rhs = do
                      in  map (== t) (init ts)
     hyp _          = []
 
-    decorateArg :: (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
-    decorateArg (n,TyCon t _) = do
+    decorateArg :: Bool -> (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
+    decorateArg addBottom (n,TyCon t _) = do
        -- t is for instance Nat or List a
        -- cs is for instance (Zero :: Nat,Succ :: Nat -> Nat) or
        --                    (Nil :: [a],Cons :: a -> [a] -> [a])
-       cs <- lookupConstructors t
+       cs <- (if addBottom then ("Bottom":) else id) <$> lookupConstructors t
+
        lr <- forM cs $ \c -> do Just ct <- lookupType c
                                 let h = hyp ct
                                 return (putEither (or h) (c,h))
+
        write $ "decorateArg, " ++ n ++ " : " ++ show lr
        return (n,lr)
 
-    proofByNegInduction :: [(Name,Type)] -> TM ProofType
+    proofBySimpleInduction :: Bool -> (VarName,Type) -> TM ProofType
+    proofBySimpleInduction addBottom (v,t) = do
+        (_,cons) <- decorateArg addBottom (v,t)
+        parts <- mapM (uncurry (inductionPart v) . either id id) cons
+        return $ Induction addBottom [v] parts
+
+    inductionPart :: Name -> ConName -> [Rec] -> TM IndPart
+    inductionPart v c recArgs = do
+        skolems <- mapM (const (skolemize v)) recArgs
+        ih <- sequence [ Axiom (fname ++ "indhyp" ++ v ++ s)
+                             <$> instantiatePs [[(v,Var s)]]
+                       | (s,b) <- zip skolems recArgs, b ]
+        is <- Conjecture (fname ++ "indstep" ++ v)
+                     <$> instantiatePs [[(v,Con c (map Var skolems))]]
+        return (IndPart [c] (is:ih))
+
+    proofByNegInduction :: [(VarName,Type)] -> TM ProofType
     proofByNegInduction argSubset = locally $ do
-        args <- mapM decorateArg argSubset
+        args <- mapM (decorateArg True) argSubset
         skolems <- mapM (skolemize . fst) args
-        steps <- zipWithM inductionStep args skolems
+        steps <- zipWithM negInductionStep args skolems
         absurd <- Neg <$> instantiatePs [zipWith (\(v,_) sv -> (v,Var sv)) args skolems]
+        write $ "Proof by neg induction on " ++ show argSubset ++ " done."
         return $ NegInduction (map fst args)
                               [Axiom (fname ++ "negind") (foldr (/\) absurd steps)]
 {-        absurd <- Axiom (fname ++ "negind") . Neg
@@ -82,11 +102,12 @@ prove fname typedArgs lhs rhs = do
         return $ NegInduction (map fst args) (steps ++ [absurd])
 -}
 
-    inductionStep :: (VarName,[LR (ConName,[Rec])]) -> SkolemName -> TM T.Formula
-    inductionStep (v,cs) sv = do
+    negInductionStep :: (VarName,[LR (ConName,[Rec])]) -> SkolemName -> TM T.Formula
+    negInductionStep (v,cs) sv = do
         let (precedent,ancedents) = partitionEithers cs
             fixPre c r = [(v,Con c (map (\n -> Var (v ++ c ++ show n)) [1..length r]))]
             fixAnc c r = do projs <- lookupProj c
+                                   -- why does this if statement look like this?
                             return [ if b then [(v,App (funName proj) [Var sv])] else []
                                    | (proj,b) <- zip projs r, b
                                    ]

@@ -230,6 +230,7 @@ skolemize n = do
   n' <- ((n ++ "sk") ++) . head <$> TM (gets namesupply)
   TM $ modify namesupply tail
   addFuns [(n',0)]
+--  addIndirection n (Var n') -- foo?
   return n'
 
 -- | Add a new indirection

@@ -16,8 +16,8 @@ import System.Exit (exitFailure,exitSuccess)
 import System.Process (readProcessWithExitCode)
 import System.IO
 
-import Control.Monad (when,forM_,forM)
-import Control.Applicative ((<$>))
+import Control.Monad (when,forM_,forM,liftM)
+import Control.Applicative ((<$>),(<*>))
 import Data.List (isSuffixOf,isInfixOf)
 import Data.Either (partitionEithers)
 
@@ -89,6 +89,9 @@ untilTrue f (x:xs) = do
        else untilTrue f xs
 untilTrue _ [] = return False
 
+whileFalse :: Monad m => [a] -> (a -> m Bool) -> m Bool
+whileFalse xs p = not `liftM` untilTrue (liftM not . p) xs
+
 proveAll :: FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
 proveAll file axioms proofs = do
   hSetBuffering stdout NoBuffering
@@ -101,7 +104,7 @@ proveAll file axioms proofs = do
     axiomsStr = prettyTPTP axioms
     prove name pt = case pt of
           NegInduction indargs decls -> do
-              putStr $ "\tnegated induction on " ++ unwords indargs ++ ": \n"
+              putStr $ "\tnegated induction on " ++ unwords indargs ++ ": \t"
               let fname = "prove/" ++ file ++ name ++ concat indargs ++ "negind.tptp"
               writeFile fname (axiomsStr ++ prettyTPTP decls)
 --              mapM_ (putStrLn . prettyTPTP) decls
@@ -110,14 +113,15 @@ proveAll file axioms proofs = do
               if r == Theorem
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
-          Induction indargs parts -> do
-              putStr $ "\tinduction on " ++ unwords indargs ++ ": \t"
-              r <- forM parts $ \(IndPart indcons decls) -> do
+          Induction addBottom indargs parts -> do
+              putStr $ "\tinduction on " ++ (if addBottom then "" else "finite ") ++ unwords indargs ++ ": \t"
+              r <- whileFalse parts $ \(IndPart indcons decls) -> do
                   let fname = "prove/" ++ file ++ name ++ concat indargs ++ concat indcons ++ ".tptp"
                   writeFile fname (axiomsStr ++ prettyTPTP decls)
                   putStr $ " " ++ unwords indcons ++ ".."
-                  echo (runProver fname)
-              if all (== Theorem) r
+                  r <- echo (runProver fname)
+                  return (r == Theorem)
+              if r
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
           Plain decls -> do

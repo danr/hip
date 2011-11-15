@@ -5,6 +5,7 @@ module Language.HFOL.ToFOL.ParserInternals
        ,parseBranch
        ,parsePattern
        ,parseExpr
+       ,parseType
        )
        where
 
