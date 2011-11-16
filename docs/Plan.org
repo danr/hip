@@ -129,11 +129,9 @@ $$P(0) \wedge P(\bot) \rightarrow P(pred(a))$$
 
 Termination by well-ordering!
 
-** Evaluation of proving techniques
-SCHEDULED: <2011-11-14 Mon>
-
-** TODO Bug Sven until registered on course
-SCHEDULED: <2011-11-15 Tue>
+** DONE Bug Sven until registered on course
+Suzanna is handling the registration, and should be done soon.
+CLOSED: [2011-11-16 Wed 08:50] SCHEDULED: <2011-11-15 Tue>
 
 ** DONE Evaluate translation
 CLOSED: [2011-11-14 Mon 14:55]
@@ -143,8 +141,36 @@ translation?
 Answer : No, but types were added last week and that was
 a bit unplanned
 
-** Continued work on proving
-SCHEDULED: <2011-11-15 Tue>
+** TODO Update examples with the new
+** TODO Proving Work
+*** TODO Solve induction by depth problem
+*** TODO Simple induction on several variables
+Combine this with the auto-depth problem. This would be nice
+*** TODO Smarter handling if bottom can be proved or not
+Simple induction can answer if it was able to prove the bottom case or
+not.
+*** TODO Make an own timeout and able user to specify timeout
+*** TODO Run proofs in different threads
+*** TODO Add approximation lemma
+Either use this using typeclasses or simply add
+approxType :: Nat -> Type a -> Type a
+to the code
+
+This could be triggered by
+
+prop_map_iterate :: (a -> a) -> a -> Prop (Approx (List a))
+prop_map_iterate f x = prove (map f (iterate f x) :=: iterate f (f x))
+
+where type Approx a = a or some equivalent. Maybe it isn't necessary
+to add: no types are concrete so you only option is to use
+approximation lemma.
+*** TODO Fixpoint induction
+*** TODO Add lemmas from previous proofs
+For instance *-assoc for nat needs +-assoc for nat. Only
+add lemmas if they hold for bottom? Should the user specify
+which lemmas it needs to include?
+*** TODO Recursive structure of function -> induction principle
+A hard problem! Could also be used to show that functions terminate
 * Week 47 (21 Nov - 27 Nov)
 ** Report proving techniques
 ** Report related work
