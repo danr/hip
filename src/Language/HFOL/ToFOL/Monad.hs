@@ -337,7 +337,7 @@ makeVarNames n = take n (map VarName varNames)
 -- > appFold f [x,y,z] = app(app(app(f,x),y),z)
 -- > appFold f []      = f
 appFold :: Term -> [Term] -> Term
-appFold = foldl (\f x -> T.Fun (FunName "app") [f,x])
+appFold = foldl (\f x -> T.Fun (FunName "ptr.app") [f,x])
 
 -- | All FOL declarations from an environment and state
 envStDecls :: TM [T.Decl]
