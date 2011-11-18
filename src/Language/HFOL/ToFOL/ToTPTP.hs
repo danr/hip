@@ -11,7 +11,7 @@ import Language.HFOL.ToFOL.MakeProofs
 import Language.HFOL.ToFOL.TranslateExpr
 import Language.HFOL.Util
 import Language.HFOL.FromHaskell.Names
-import Language.TPTP hiding (Decl,Var)
+import Language.TPTP hiding (Decl,Var,declName)
 import Language.TPTP.Pretty
 import qualified Language.TPTP as T
 

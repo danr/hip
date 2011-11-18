@@ -45,9 +45,9 @@ type LR a = Either a a
 prove :: Name -> [(Name,Type)] -> Expr -> Expr -> TM ()
 prove fname typedArgs lhs rhs = locally $ do
    simpleindbottom <- forM (filter (concrete . snd) typedArgs) (proofBySimpleInduction True)
-   neginds         <- forM (powerset (filter (concrete . snd) typedArgs)) proofByNegInduction
+--   neginds         <- forM (powerset (filter (concrete . snd) typedArgs)) proofByNegInduction
    simpleind       <- forM (filter (concrete . snd) typedArgs) (proofBySimpleInduction False)
-   addProofDecl (ProofDecl fname (simpleindbottom ++ neginds ++ simpleind))
+   addProofDecl (ProofDecl fname (simpleindbottom ++ simpleind))
   where
     -- Can only do induction on concrete types obviously
     concrete TyCon{} = True

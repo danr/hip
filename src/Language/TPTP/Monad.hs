@@ -10,6 +10,7 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,trinary
                            ,predicate
                            ,relation
+                           ,trinaryRel
                            ,(==>),(&),(/\),(\/),(<=>)
                            ,(===),(!=)
                            ,axiom
@@ -62,6 +63,9 @@ predicate n = liftM (Rel (RelName n) . pure)
 
 relation :: String -> M Term -> M Term -> M Formula
 relation n = liftM2 (\x y -> Rel (RelName n) [x,y])
+
+trinaryRel :: String -> M Term -> M Term -> M Term -> M Formula
+trinaryRel n = liftM3 (\x y z -> Rel (RelName n) [x,y,z])
 
 mkBinOp :: BinOp
         -> M Formula -> M Formula -> M Formula
