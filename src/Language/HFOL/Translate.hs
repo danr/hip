@@ -11,15 +11,19 @@ import Language.HFOL.ToFOL.Parser
 import Language.HFOL.ToFOL.Latex
 import Language.HFOL.Util (putEither)
 
+
 import System.Environment (getArgs)
 import System.Exit (exitFailure,exitSuccess)
-import System.Process (readProcessWithExitCode)
 import System.IO
+
+
+import Language.HFOL.RunProver
 
 import Control.Monad (when,forM_,forM,liftM)
 import Control.Applicative ((<$>),(<*>))
-import Data.List (isSuffixOf,isInfixOf)
+import Data.List (isSuffixOf,isInfixOf,find)
 import Data.Either (partitionEithers)
+import Data.Char (isDigit)
 
 main :: IO ()
 main = do
@@ -53,31 +57,11 @@ main = do
           putStrLn (latexHeader file extraAxioms)
           mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
           putStrLn latexFooter
-      when proofMode $ proveAll file axioms proofs
-
-data ProverResult = Timeout
-                  | Theorem
-                  | Falsifiable
-  deriving (Eq,Ord)
-
-instance Show ProverResult where
-  show Timeout     = "timeout"
-  show Theorem     = "ok"
-  show Falsifiable = "false"
-
-runProver :: FilePath -> IO ProverResult
-runProver f = do
-    (_exitcode,out,_err) <-
-      readProcessWithExitCode
-        "timeout"
-        (words "1 eprover -tAuto -xAuto --memory-limit=1000 --tptp3-format -s"
-                ++ [f])
-        ""
---    putStrLn out
-    case () of () | "Theorem" `isInfixOf` out            -> return Theorem
-                  | "Unsatisfiable" `isInfixOf` out      -> return Theorem
-                  | "CounterSatisfiable" `isInfixOf` out -> return Falsifiable
-                  | otherwise                            -> return Timeout
+      let threads = case find (\xs -> take 1 xs == "-"
+                                   && all isDigit (drop 1 xs)) flags of
+                        Just n  -> read (drop 1 n)
+                        Nothing -> 1
+      when proofMode $ proveAll threads file axioms proofs
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> putStr (show x) >> return x
@@ -92,17 +76,21 @@ untilTrue _ [] = return False
 whileFalse :: Monad m => [a] -> (a -> m Bool) -> m Bool
 whileFalse xs p = not `liftM` untilTrue (liftM not . p) xs
 
-proveAll :: FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
-proveAll file axioms proofs = do
+proveAll :: Int -> FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
+proveAll threads file axioms proofs = do
+  putStrLn $ "Using " ++ show threads ++ " threads."
   hSetBuffering stdout NoBuffering
   (fails,ok) <- partitionEithers <$> (forM proofs $ \(ProofDecl name types) -> do
       putStrLn $ "Trying to prove " ++ name
       (`putEither` name) <$> untilTrue (prove name) types)
   putStrLn $ "Succeded : " ++ unwords ok
   putStrLn $ "Failed : " ++ unwords fails
+  putStrLn $ show (length ok) ++ "/" ++ show (length (ok ++ fails))
   where
     axiomsStr = prettyTPTP axioms
     prove name pt = case pt of
+
+{-
           NegInduction indargs decls -> do
               putStr $ "\tnegated induction on " ++ unwords indargs ++ ": \t"
               let fname = "prove/" ++ file ++ name ++ concat indargs ++ "negind.tptp"
@@ -113,18 +101,20 @@ proveAll file axioms proofs = do
               if r == Theorem
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
+-}
           Induction addBottom indargs parts -> do
-              putStr $ "\tinduction on " ++ (if addBottom then "" else "finite ") ++ unwords indargs ++ ": \t"
-              r <- whileFalse parts $ \(IndPart indcons decls) -> do
-                  let fname = "prove/" ++ file ++ name ++ concat indargs ++ concat indcons ++ ".tptp"
-                  writeFile fname (axiomsStr ++ prettyTPTP decls)
-                  putStr $ " " ++ unwords indcons ++ ".."
-                  r <- echo (runProver fname)
-                  return (r == Theorem)
-              if r
+              putStr $ "\tinduction on " ++ (if addBottom then "" else "finite ")
+                                         ++ unwords indargs ++ ": \t"
+              let probs = map (\(IndPart indcons decls) ->
+                                     (concat indcons
+                                     ,"prove/" ++ file ++ name ++ concat indargs
+                                               ++ concat indcons ++ ".tptp"
+                                     ,axiomsStr ++ prettyTPTP decls)) parts
+              res <- echo (runProvers threads probs)
+              if all ((== Theorem) . snd) res
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
-          Plain decls -> do
+{-          Plain decls -> do
               putStr "\tby definition.."
               let fname = "prove/" ++ file ++ name ++ "plain.tptp"
               writeFile fname (axiomsStr ++ prettyTPTP decls)
@@ -132,6 +122,7 @@ proveAll file axioms proofs = do
               if r == Theorem
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
+-}
 
 printUsage :: IO ()
 printUsage = mapM_ putStrLn

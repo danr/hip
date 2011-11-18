@@ -9,7 +9,6 @@ proveBool = proveBool
 (=:=) :: a -> a -> a
 (=:=) = (=:=)
 
-
 data Nat = S Nat | Z
 
 data Lam = Var Nat | Lam :@ Lam | Abs Nat Lam
