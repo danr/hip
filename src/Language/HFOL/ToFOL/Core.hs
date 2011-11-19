@@ -162,6 +162,22 @@ subst xold xnew = transform f
 substVars :: [(Name,Name)] -> Expr -> Expr
 substVars ns e = foldr (\(x,x') -> subst x x') e ns
 
+-- | Conrete types are types like Nat, Tree a, but not a or Nat -> Nat
+concreteType :: Type -> Bool
+concreteType TyCon{} = True
+concreteType _       = False
+
+-- | Which arguments to this constructor are recursive?
+--
+--   For example, Branch :: Tree a -> a -> Tree a -> Tree a is
+--   recursive in its first and third argument, as it is the same as
+--   the resulting type, so the result of this function will be
+--   [True,False,True]
+recursiveArgs :: Type -> [Bool]
+recursiveArgs (TyApp ts) = let resType = last ts
+                           in  map (== resType) (init ts)
+recursiveArgs _          = []
+
 {-
  Given a function name and the matrix of patterns and expressions,
  returns a function which cases on the arguments and branches

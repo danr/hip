@@ -18,11 +18,10 @@ import System.IO
 
 import Language.HFOL.RunProver
 
-import Control.Monad (when,forM_,forM,liftM)
-import Control.Applicative ((<$>),(<*>))
-import Data.List (isSuffixOf,isInfixOf,find)
+import Control.Monad
+import Control.Applicative
+import Data.List (isSuffixOf)
 import Data.Either (partitionEithers)
-import Data.Char (isDigit)
 
 data Params = Params { files     :: [FilePath]
                      , processes :: Int
@@ -34,6 +33,7 @@ data Params = Params { files     :: [FilePath]
                      }
   deriving (Show,Data,Typeable)
 
+params :: Params
 params = Params
   { files     = []      &= args &= typFile
   , processes = 4       &= help "Number of prover processes (default 4)"
@@ -66,10 +66,8 @@ main = do
       -- Output Core and terminate
       when core $ do mapM_ (putStrLn . prettyCore) ds
                      exitSuccess
-      -- Proof mode
-      let proofMode = not latex && not tptp
       -- Translation to FOL
-      let (funcAxiomsWithDef,extraAxioms,proofs,debug) = toTPTP proofMode ds
+      let (funcAxiomsWithDef,extraAxioms,proofs,debug) = toTPTP ds
           axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
       -- Verbose output
       whenLoud (mapM_ putStrLn debug)
@@ -115,7 +113,24 @@ proveAll processes timeout store file axioms proofs = do
   where
     axiomsStr = prettyTPTP axioms
     prove name pt = case pt of
-
+          Induction addBottom indargs parts -> do
+              whenLoud $ putStr $ "\n\tby induction on "
+                                    ++ (if addBottom then "" else "finite ")
+                                    ++ unwords indargs ++ ": \t"
+              let probs = map (\(IndPart indcons decls) ->
+                                     (concat indcons
+                                     ,file ++ name ++ concat indargs
+                                           ++ concat indcons ++ ".tptp"
+                                     ,axiomsStr ++ prettyTPTP decls)) parts
+              all ((== Theorem) . snd) <$>
+                  echo (runProvers processes timeout store probs)
+          ApproxLemma decls -> do
+              whenLoud $ putStr $ "\n\tby approximation lemma "
+              let prob = ("approx",file ++ name ++ "approx.tptp"
+                         ,axiomsStr ++ prettyTPTP decls)
+              all ((== Theorem) . snd) <$>
+                  echo (runProvers processes timeout store [prob])
+          _ -> return False
 {-
           NegInduction indargs decls -> do
               putStr $ "\tnegated induction on " ++ unwords indargs ++ ": \t"
@@ -128,17 +143,6 @@ proveAll processes timeout store file axioms proofs = do
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
 -}
-          Induction addBottom indargs parts -> do
-              whenLoud $ putStr $ "\n\tby induction on "
-                                    ++ (if addBottom then "" else "finite ")
-                                    ++ unwords indargs ++ ": \t"
-              let probs = map (\(IndPart indcons decls) ->
-                                     (concat indcons
-                                     ,file ++ name ++ concat indargs
-                                           ++ concat indcons ++ ".tptp"
-                                     ,axiomsStr ++ prettyTPTP decls)) parts
-              all ((== Theorem) . snd) <$>
-                  echo (runProvers processes timeout store probs)
 {-          Plain decls -> do
               putStr "\tby definition.."
               let fname = "prove/" ++ file ++ name ++ "plain.tptp"

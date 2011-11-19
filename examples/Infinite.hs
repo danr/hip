@@ -12,6 +12,7 @@ proveBool = proveBool
 (=:=) :: a -> a -> a
 (=:=) = (=:=)
 
+
 (.) :: (b -> c) -> (a -> b) -> a -> c
 (f . g) x = f (g x)
 
@@ -20,6 +21,7 @@ id x = x
 map :: (a -> b) -> [a] -> [b]
 map f []       = []
 map f (x : xs) = f x : map f xs
+
 
 concat :: [[a]] -> [a]
 concat [] = []
@@ -48,12 +50,15 @@ tail :: [a] -> [a]
 tail [x]    = []
 tail (x:xs) = x:tail xs
 
+
+
 prop_map_iterate :: (a -> a) -> a -> Prop [a]
 prop_map_iterate f x = prove (map f (iterate f x) =:= iterate f (f x))
 
 prop_filter_iterate :: (a -> Bool) -> (a -> a) -> a -> Prop [a]
-prop_filter_iterate p f x = prove (filter p (iterate f (f x)) =:=
+prop_filter_iterate p f x = prove (filter p    (iterate f (f x)) =:=
                                    filter (p . f) (iterate f x))
+
 
 prop_repeat_iterate :: a -> Prop [a]
 prop_repeat_iterate x = prove (repeat x =:= iterate id x)
@@ -110,7 +115,7 @@ prop_fmap_right f t = prove (fmap (f . id) t =:= fmap f t)
 
 prop_fmap_id :: (b -> c) -> (a -> b) -> Tree a -> Prop (Tree c)
 prop_fmap_id t = prove (fmap id t =:= t)
-
+n
 prop_mirror_involutive :: Tree a -> Prop (Tree a)
 prop_mirror_involutive t = prove (mirror (mirror t) =:= t)
 

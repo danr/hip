@@ -7,9 +7,6 @@ module Language.HFOL.ToFOL.Monad
        (TM()
        ,runTM
        ,Debug
-       ,getProofMode
-       ,addProofDecl
-       ,getProofDecls
        ,write
        ,writeDelimiter
        ,indented
@@ -26,6 +23,7 @@ module Language.HFOL.ToFOL.Monad
        ,popQuantified
        ,forallUnbound
        ,skolemize
+       ,skolemFun
        ,addIndirection
        ,makeFunPtrName
        ,addTypes
@@ -74,8 +72,8 @@ newtype TM a = TM { unTM :: State St a }
 
 -- | Runs a computation in an empty environment, with an empty state.
 --   The computation's result is returned with the updated state.
-runTM :: Bool -> TM a -> a
-runTM p (TM m) = evalState m (initSt p)
+runTM :: TM a -> a
+runTM (TM m) = evalState m initSt
 
 data Bound = QuantVar    { quantVar  :: VarName }
            | FunVar      { boundName :: FunName }
@@ -89,21 +87,19 @@ boundCon (ConVar _) = True
 boundCon _          = False
 
 -- | The empty state
-initSt :: Bool -> St
-initSt p = St { _arities     = M.empty
-              , _conProj     = M.empty
-              , _conFam      = M.empty
-              , _datatypes   = []
-              , _usedFunPtrs = S.empty
-              , _boundNames  = M.empty
-              , _quantified  = S.empty
-              , _debug       = []
-              , _debugIndent = 0
-              , _namesupply  = [ show x | x <- [(0 :: Integer)..] ]
-              , _proofMode   = p
-              , _proofDecls  = []
-              , _types       = M.empty
-              }
+initSt :: St
+initSt = St { _arities     = M.empty
+            , _conProj     = M.empty
+            , _conFam      = M.empty
+            , _datatypes   = []
+            , _usedFunPtrs = S.empty
+            , _boundNames  = M.empty
+            , _quantified  = S.empty
+            , _debug       = []
+            , _debugIndent = 0
+            , _namesupply  = [ show x | x <- [(0 :: Integer)..] ]
+            , _types       = M.empty
+            }
 
 -- | The type of debug messages
 type Debug = [String]
@@ -128,26 +124,10 @@ data St = St { _arities     :: Map Name Int
                -- ^ Indentation depth for debug messages
              , _namesupply  :: [Name]
                -- ^ Namesupply, currently only used to rename infix operators
-             , _proofMode   :: Bool
-               -- ^ Is proof mode on?
-             , _proofDecls  :: [ProofDecl]
-               -- ^ Proof declarations, i.e propositions to be proved
              , _types       :: Map Name Type
                -- ^ Types of functions and constructors
              } deriving (Show)
 $(mkLabels [''St])
-
--- | Are we currently in proof mode?
-getProofMode :: TM Bool
-getProofMode = TM $ gets proofMode
-
--- | Add a proof declaration
-addProofDecl :: ProofDecl -> TM ()
-addProofDecl d = TM $ modify proofDecls (d:)
-
--- | Get all proof declarations
-getProofDecls :: TM [ProofDecl]
-getProofDecls = TM $ reverse <$> gets proofDecls
 
 -- | Write a debug delimiter (a newline)
 writeDelimiter :: TM ()
@@ -189,10 +169,10 @@ locally (TM m) = TM (locally' m)
 locally' :: (MonadState St m) => m a -> m a
 locally' m = do
   boundNames' <- gets boundNames
-  arities'    <- gets arities
+--  arities'    <- gets arities
   r <- m
   puts boundNames boundNames'
-  puts arities    arities'
+--  puts arities    arities'
   return r
 
 -- | Insert /n/ elements to a map of /m/ elements
@@ -201,8 +181,16 @@ locally' m = do
 insertMany :: Ord k => [(k,v)] -> Map k v -> Map k v
 insertMany kvs m = foldr (uncurry M.insert) m kvs
 
+-- | Looks up the type for a registered function
 lookupType :: Name -> TM (Maybe Type)
 lookupType n = TM $ M.lookup n <$> gets types
+
+-- | Gets a name from the namesupply
+getName :: TM Name
+getName = TM $ do
+  n <- head <$> gets namesupply
+  modify namesupply tail
+  return n
 
 -- | Looks up if a name is a variable or a function/constructor
 lookupName :: Name -> TM Bound
@@ -213,8 +201,7 @@ lookupName n@(x:xs) = TM $ do
       Nothing -> do -- Variable is unbound, quantify over it
         q <- VarName <$> case () of
                    () | x == '_'  -> return ("W_" ++ xs)
-                      | isOp n    -> do v <- head <$> gets namesupply
-                                        modify namesupply tail
+                      | isOp n    -> do v <- unTM getName
                                         return ("OP_" ++ v)
                       | otherwise -> return (toUpper x:xs)
         let qv = QuantVar q
@@ -226,11 +213,14 @@ lookupName "" = error "lookupName on empty name"
 
 -- | Makes a new skolem variable for this name
 skolemize :: Name -> TM Name
-skolemize n = do
-  n' <- ((n ++ ".sk") ++) . head <$> TM (gets namesupply)
-  TM $ modify namesupply tail
-  addFuns [(n',0)]
---  addIndirection n (Var n') -- foo?
+skolemize = skolemFun 0
+
+-- | Makes a new skolem variable for this name with the specified
+--   arity when translated to an expression
+skolemFun :: Int -> Name -> TM Name
+skolemFun arity n = do
+  n' <- ((n ++ ".sk") ++) <$> getName
+  addFuns [(n',arity)]
   return n'
 
 -- | Add a new indirection

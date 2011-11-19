@@ -4,11 +4,13 @@ include('approx_lemma.ax').
 include('map.ax').
 include('iterate.ax').
 
+% fof(app_bottom,axiom,! [X] : (app(bottom,X) = X)).
+
 % ∀ f x . map f (iterate f x) = iterate f (f x)
 % Induction hypothesis
 fof(map_iterate_property,axiom,
 ![F,Xs]:       app(h,map(F,iterate(F,Xs))) = app(h,iterate(F,app(F,Xs))) ).
-
+1
 % Induction step
 fof(map_iterate_conjecture,conjecture,
 ![F,Xs]:       approx(h,map(F,iterate(F,Xs))) = approx(h,iterate(F,app(F,Xs))) ).
