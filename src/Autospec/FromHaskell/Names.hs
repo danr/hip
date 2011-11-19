@@ -35,13 +35,14 @@ fromQName (UnQual name) = return (fromName name)
 fromQName (Special special) = fromSpecial special
 
 fromSpecial :: SpecialCon -> FH Name
-fromSpecial UnitCon = return unitName
-fromSpecial ListCon = return nilName
+fromSpecial UnitCon = regData unitName >> return unitName
+fromSpecial ListCon = regData listTypeName >> return nilName
 fromSpecial FunCon  = warn "Using FunCon" >> return "->"
 fromSpecial (TupleCon b n) = do
   when (b == Unboxed) $ warn "No handling of unboxed tuples"
+  regData (tupleName n)
   return (tupleName n)
-fromSpecial Cons    = return ":"
+fromSpecial Cons    = regData listTypeName >> return ":"
 fromSpecial UnboxedSingleCon = do
   fatal "No handling of unboxed singleton constructor"
 

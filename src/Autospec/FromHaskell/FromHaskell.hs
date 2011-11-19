@@ -44,7 +44,26 @@ indented :: String -> String
 indented = unlines . map ("    " ++) . lines
 
 fromModule :: Module -> FH ()
-fromModule (Module _loc _name _pragmas _warns _ex _im decls) = fromDecls decls
+fromModule (Module _loc _name _pragmas _warns _ex _im decls) = do
+    fromDecls decls
+    builtinDatas
+
+
+-- Make builtin datatypes -----------------------------------------------------
+builtinDatas :: FH ()
+builtinDatas = do
+    datas <- getDatas
+    mapM_ decl $ flip map datas $ \d -> case d of
+        'T':n -> let tyvars = [1..] >>= flip replicateM ['a'..'z']
+                 in  C.Data d (take (read n) tyvars)
+                          [C.Cons d (map C.TyVar (take (read n) tyvars))]
+        _ | d == listTypeName
+            -> C.Data listTypeName ["a"]
+                      [C.Cons nilName []
+                      ,C.Cons consName [C.TyVar "a"
+                                       ,C.TyCon listTypeName [C.TyVar "a"]]]
+          | d == unitName -> C.Data unitName [] [C.Cons unitName []]
+        _ -> error $ "buildinDatas: Unrecognised builtin data: " ++ d
 
 -- Removing pattern binds -----------------------------------------------------
 
@@ -225,8 +244,9 @@ fromExp ex = case ex of
   Let bs e           -> localBindScope $ do
                             localScopeName "let" (fromBinds bs)
                             fromExp e
-  Tuple es           -> C.Con (tupleName (length es)) <$> mapM fromExp es
-  List es            -> listExp es
+  Tuple es           -> do regData (tupleName (length es))
+                           C.Con (tupleName (length es)) <$> mapM fromExp es
+  List es            -> regData listTypeName >> listExp es
   If e1 e2 e3        -> do warn $ "Assumes if :: Bool -> a -> a -> a in scope"
                            (app .) . app . app (C.Var "if")
                              <$> fromExp e1 <*> fromExp e2 <*> fromExp e3
@@ -265,8 +285,9 @@ fromPat pat = case pat of
                                    addBind n n' []
                                    return (C.PVar n')
                            else return (C.PVar n)
-  PTuple ps     -> PCon (tupleName (length ps)) <$> mapM fromPat ps
-  PList ps      -> listPattern ps
+  PTuple ps     -> do regData (tupleName (length ps))
+                      PCon (tupleName (length ps)) <$> mapM fromPat ps
+  PList ps      -> regData listTypeName >> listPattern ps
   PParen p      -> fromPat p
   PWildCard     -> return PWild
   PApp qname ps -> PCon <$> fromQName qname <*> mapM fromPat ps

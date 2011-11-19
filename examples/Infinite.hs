@@ -100,6 +100,10 @@ reverse :: [a] -> [a]
 reverse []     = []
 reverse (x:xs) = xs ++ [x]
 
+isTree :: Tree a -> Tree a
+isTree (Branch l x r) = Branch l x r
+isTree Empty = Empty
+
 prop_fmap_iterate :: (a -> a) -> a -> Prop (Tree a)
 prop_fmap_iterate f x = prove (fmap f (iterTree f f x) =:=
                                iterTree f f (f x))
@@ -114,8 +118,8 @@ prop_fmap_right :: (a -> b) -> Tree a -> Prop (Tree b)
 prop_fmap_right f t = prove (fmap (f . id) t =:= fmap f t)
 
 prop_fmap_id :: (b -> c) -> (a -> b) -> Tree a -> Prop (Tree c)
-prop_fmap_id t = prove (fmap id t =:= t)
-n
+prop_fmap_id t = prove (fmap id t =:= isTree t)
+
 prop_mirror_involutive :: Tree a -> Prop (Tree a)
 prop_mirror_involutive t = prove (mirror (mirror t) =:= t)
 
@@ -130,4 +134,3 @@ prop_fmap_map_toList t f = prove (map f (toList t) =:= toList (fmap f t))
 
 prop_mirror_traverse_rev :: Tree a -> Prop [a]
 prop_mirror_traverse_rev t = prove (reverse (traverse t) =:= traverse (mirror t))
-

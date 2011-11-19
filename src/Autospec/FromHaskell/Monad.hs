@@ -11,6 +11,8 @@ import Data.Label.PureM
 
 import qualified Data.Map as M
 import Data.Map (Map)
+import qualified Data.Set as S
+import Data.Set (Set)
 
 import Data.Label (mkLabels)
 import Data.Either (partitionEithers)
@@ -19,7 +21,8 @@ import Data.List (intercalate)
 data St = St { _namesupply :: [Int]
              , _binds      :: Map Name (Name,[Name])
               -- ^ An identifier to its scoped name and free vars
-             , _scope      :: [Name]
+             , _scope      :: Set Name
+             , _datatypes  :: Set Name
               -- ^ An identifier in scope
              }
 $(mkLabels [''St])
@@ -30,8 +33,15 @@ $(mkLabels [''Env])
 initSt :: St
 initSt = St { _namesupply = [0..]
             , _binds      = M.empty
-            , _scope      = []
+            , _scope      = S.empty
+            , _datatypes  = S.empty
             }
+
+regData :: Name -> FH ()
+regData = modify datatypes . S.insert
+
+getDatas :: FH [Name]
+getDatas = S.toList <$> gets datatypes
 
 initEnv :: Env
 initEnv = Env { _scopeName = [] }
@@ -64,18 +74,18 @@ localBindScope m = do
   return r
 
 addToScope :: Name -> FH ()
-addToScope = modify scope . (:)
+addToScope = modify scope . S.insert
 
 removeFromScope :: Name -> FH ()
 removeFromScope n = do
-  modify scope (filter (/= n))
+  modify scope (S.delete n)
   modify binds (M.delete n)
 
 inScope :: Name -> FH Bool
-inScope n = (n `elem`) <$> gets scope
+inScope n = S.member n <$> gets scope
 
 namesInScope :: FH [Name]
-namesInScope = liftM2 (++) (M.keys <$> gets binds) (gets scope)
+namesInScope = liftM2 (++) (M.keys <$> gets binds) (S.toList <$> gets scope)
 
 addBind :: Name -> Name -> [Name] -> FH ()
 addBind fname scopedfname args
