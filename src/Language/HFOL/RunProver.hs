@@ -22,37 +22,38 @@ instance Show ProverResult where
 type Problem = (String,FilePath,String)
 type Res     = (String,ProverResult)
 
-runProvers :: Int -> [Problem] -> IO [Res]
-runProvers t problems = do
+runProvers :: Int -> Int -> Maybe FilePath -> [Problem] -> IO [Res]
+runProvers processes timeout store problems = do
   probChan <- newChan
   mapM_ (writeChan probChan) problems
   resChan <- newChan
-  ts <- replicateM t (forkIO (worker probChan resChan))
+  ps <- replicateM processes $
+             forkIO (worker timeout store probChan resChan)
   res <- getResults (length problems) resChan
-  mapM_ killThread ts
+  mapM_ killThread ps
   return res
 
 getResults :: Int -> Chan Res -> IO [Res]
-getResults 0 ch = return []
+getResults 0 _  = return []
 getResults n ch = do
     rest <- getResults (n-1) ch
     res  <- readChan ch
     rest `seq` return (res : rest)
 
-worker :: Chan Problem -> Chan Res -> IO ()
-worker probChan resChan = forever $ do
+worker :: Int -> Maybe FilePath -> Chan Problem -> Chan Res -> IO ()
+worker timeout store probChan resChan = forever $ do
   (name,fname,str) <- readChan probChan
---  putStrLn $ "Working on " ++ name
+--   putStrLn $ "Working on " ++ name
   mvar <- newEmptyMVar
   pvar <- newEmptyMVar
   tid <- forkIO $ runProver str mvar pvar
-  kid <- forkIO $ do threadDelay 300000
+  kid <- forkIO $ do threadDelay (timeout * 1000)
                      pid <- takeMVar pvar
                      killThread tid
                      terminateProcess pid
 --                     putStrLn $ name ++ "killed"
                      putMVar mvar Timeout
---  writeFile fname str
+  maybe (return ()) (\d -> writeFile (d ++ fname) str) store
   r <- takeMVar mvar
   killThread kid
   killThread tid

@@ -17,12 +17,13 @@ executable          autospec
 
     build-depends: base                          >= 4    && < 5
                  , process                       >= 1.0.1.1
-                 , uniplate
+                 , uniplate                      >= 1.6
                  , Grempa                        >= 0.2
-                 , haskell-src-exts
+                 , haskell-src-exts              >= 1.11.1
                  , mtl                           >= 2.0
                  , pretty                        >= 1.0
                  , QuickCheck                    >= 2.0
                  , th-lift                       >= 0.5
                  , fclabels                      >= 1.0
                  , containers                    >= 0.4
+                 , cmdargs                       >= 0.9

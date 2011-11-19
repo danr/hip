@@ -227,7 +227,7 @@ lookupName "" = error "lookupName on empty name"
 -- | Makes a new skolem variable for this name
 skolemize :: Name -> TM Name
 skolemize n = do
-  n' <- ((n ++ "sk") ++) . head <$> TM (gets namesupply)
+  n' <- ((n ++ ".sk") ++) . head <$> TM (gets namesupply)
   TM $ modify namesupply tail
   addFuns [(n',0)]
 --  addIndirection n (Var n') -- foo?

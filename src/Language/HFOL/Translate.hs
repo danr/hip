@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
 module Main where
 
 import qualified Language.TPTP as T
@@ -8,14 +9,12 @@ import Language.HFOL.ToFOL.ToTPTP (toTPTP)
 import Language.HFOL.ToFOL.Pretty
 import Language.HFOL.ToFOL.ProofDatatypes
 import Language.HFOL.ToFOL.Parser
-import Language.HFOL.ToFOL.Latex
+import Language.HFOL.ToFOL.Latex hiding (latex)
 import Language.HFOL.Util (putEither)
 
-
-import System.Environment (getArgs)
+import System.Console.CmdArgs
 import System.Exit (exitFailure,exitSuccess)
 import System.IO
-
 
 import Language.HFOL.RunProver
 
@@ -25,46 +24,68 @@ import Data.List (isSuffixOf,isInfixOf,find)
 import Data.Either (partitionEithers)
 import Data.Char (isDigit)
 
+data Params = Params { files     :: [FilePath]
+                     , processes :: Int
+                     , store     :: Maybe FilePath
+                     , timeout   :: Int
+                     , latex     :: Bool
+                     , tptp      :: Bool
+                     , core      :: Bool
+                     }
+  deriving (Show,Data,Typeable)
+
+params = Params
+  { files     = []      &= args &= typFile
+  , processes = 4       &= help "Number of prover processes (default 4)"
+  , store     = Nothing &= opt (Just "proving/") &= typDir
+                        &= help "Store all tptp files in a directory (default proving/)"
+  , timeout   = 500     &= help "Timout of provers in milliseconds (default 500)" &= name "t"
+  , latex     = False   &= help "Generate latex output and terminate"
+  , tptp      = False   &= help "Generate tptp output and terminate" &= name "f"
+  , core      = False   &= help "Translate hs to core and terminate"
+  }
+  &= summary "autospec v0.1 Dan Rosén danr@student.gu.se"
+  &= program "autospec"
+  &= verbosity
+
 main :: IO ()
 main = do
-  args <- getArgs
-  case args of
-    [] -> printUsage
-    file:flags -> do
-      let flag = (`elem` flags)
+  Params{..} <- cmdArgs params
+  when (null files) $ do
+      putStrLn "No input files. Run with --help to see possible flags"
+      exitFailure
+  whenLoud $ putStrLn "Verbose output"
+  forM_ files $ \file -> do
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
                                 then parseHaskell <$> readFile file
                                 else flip (,) []  <$> parseFile file
       ds <- either (\estr -> putStrLn estr >> exitFailure) return eitherds
       -- Output debug of translation
-      when (flag "-d") (mapM_ putStrLn hsdebug)
-      -- Output Core
-      when (flag "-c" || flag "-ct") (mapM_ (putStrLn . prettyCore) ds)
+      whenLoud (mapM_ putStrLn hsdebug)
       -- Output Core and terminate
-      when (flag "-ct") exitSuccess
+      when core $ do mapM_ (putStrLn . prettyCore) ds
+                     exitSuccess
       -- Proof mode
-      let proofMode = flag "-p"
+      let proofMode = not latex && not tptp
       -- Translation to FOL
       let (funcAxiomsWithDef,extraAxioms,proofs,debug) = toTPTP proofMode ds
           axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
       -- Verbose output
-      when (flag "-v") (mapM_ putStrLn debug)
+      whenLoud (mapM_ putStrLn debug)
       -- TPTP output
-      when (flag "-t" || not (flag "-l") && not proofMode) (putStrLn (prettyTPTP axioms))
+      when tptp $ do putStrLn (prettyTPTP axioms)
+                     exitSuccess
       -- Latex output
-      when (flag "-l") $ do
+      when latex $ do
           putStrLn (latexHeader file extraAxioms)
           mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
           putStrLn latexFooter
-      let threads = case find (\xs -> take 1 xs == "-"
-                                   && all isDigit (drop 1 xs)) flags of
-                        Just n  -> read (drop 1 n)
-                        Nothing -> 1
-      when proofMode $ proveAll threads file axioms proofs
+          exitSuccess
+      proveAll processes timeout store file axioms proofs
 
 echo :: Show a => IO a -> IO a
-echo mx = mx >>= \x -> putStr (show x) >> return x
+echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
 
 untilTrue :: Monad m => (a -> m Bool) -> [a] -> m Bool
 untilTrue f (x:xs) = do
@@ -76,16 +97,21 @@ untilTrue _ [] = return False
 whileFalse :: Monad m => [a] -> (a -> m Bool) -> m Bool
 whileFalse xs p = not `liftM` untilTrue (liftM not . p) xs
 
-proveAll :: Int -> FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
-proveAll threads file axioms proofs = do
-  putStrLn $ "Using " ++ show threads ++ " threads."
+proveAll :: Int -> Int -> Maybe FilePath
+         -> FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
+proveAll processes timeout store file axioms proofs = do
+  whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
+                putStrLn $ "Timeout is " ++ show timeout
+                putStrLn $ "Store directory is " ++ show store
   hSetBuffering stdout NoBuffering
   (fails,ok) <- partitionEithers <$> (forM proofs $ \(ProofDecl name types) -> do
-      putStrLn $ "Trying to prove " ++ name
-      (`putEither` name) <$> untilTrue (prove name) types)
-  putStrLn $ "Succeded : " ++ unwords ok
-  putStrLn $ "Failed : " ++ unwords fails
-  putStrLn $ show (length ok) ++ "/" ++ show (length (ok ++ fails))
+      whenNormal $ putStr $ "Trying to prove " ++ name ++ " "
+      r <- untilTrue (prove name) types
+      whenNormal $ putStrLn (if r then "\tTheorem!" else "")
+      return (putEither r name))
+  whenNormal $ putStrLn $ "Succeded : " ++ unwords ok
+  whenNormal $ putStrLn $ "Failed : " ++ unwords fails
+  putStrLn $ file ++ ": " ++ show (length ok) ++ "/" ++ show (length (ok ++ fails))
   where
     axiomsStr = prettyTPTP axioms
     prove name pt = case pt of
@@ -103,17 +129,16 @@ proveAll threads file axioms proofs = do
                   else putStrLn "" >> return False
 -}
           Induction addBottom indargs parts -> do
-              putStr $ "\tinduction on " ++ (if addBottom then "" else "finite ")
-                                         ++ unwords indargs ++ ": \t"
+              whenLoud $ putStr $ "\n\tby induction on "
+                                    ++ (if addBottom then "" else "finite ")
+                                    ++ unwords indargs ++ ": \t"
               let probs = map (\(IndPart indcons decls) ->
                                      (concat indcons
-                                     ,"prove/" ++ file ++ name ++ concat indargs
-                                               ++ concat indcons ++ ".tptp"
+                                     ,file ++ name ++ concat indargs
+                                           ++ concat indcons ++ ".tptp"
                                      ,axiomsStr ++ prettyTPTP decls)) parts
-              res <- echo (runProvers threads probs)
-              if all ((== Theorem) . snd) res
-                  then putStrLn "\tTheorem!" >> return True
-                  else putStrLn "" >> return False
+              all ((== Theorem) . snd) <$>
+                  echo (runProvers processes timeout store probs)
 {-          Plain decls -> do
               putStr "\tby definition.."
               let fname = "prove/" ++ file ++ name ++ "plain.tptp"
@@ -123,23 +148,4 @@ proveAll threads file axioms proofs = do
                   then putStrLn "\tTheorem!" >> return True
                   else putStrLn "" >> return False
 -}
-
-printUsage :: IO ()
-printUsage = mapM_ putStrLn
-  [ "Usage:"
-  , "    autospec filename [flags]"
-  , ""
-  , "First argument is filename"
-  , "    suffix: hs then it is assumed to be haskell"
-  , "    other suffix is Core"
-  , "Flags:"
-  , "-d    show debug from Haskell->Core translation"
-  , "-c    output Core"
-  , "-ct   output Core and terminate"
-  , "-v    verbose output of Core->FOL translation"
-  , "-t    output TPTP (default, supressed with latex output)"
-  , "-l    output FOL as Latex"
-  ]
-
-
 
