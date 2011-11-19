@@ -289,12 +289,12 @@ addFuns = TM . addNameAndArity FunVar
 --   Projections are also generated, and added as functions
 addCons :: [Decl] -> TM ()
 addCons datadecls = TM $ do
-     addNameAndArity ConVar (concat css)
-     modify conProj (insertMany projs)
-     modify datatypes (css ++)
-     unTM (addFuns projfuns)
-     unTM (mapM_ addTypes (map conTypes datadecls))
-     modify conFam (insertMany fams)
+    addNameAndArity ConVar (concat css)
+    modify conProj (insertMany projs)
+    modify datatypes (css ++)
+    unTM (addFuns projfuns)
+    unTM (mapM_ addTypes (map conTypes datadecls))
+    modify conFam (insertMany fams)
   where
     css   = map conNameArity datadecls
     fams  = [ (n,map conName cs) | Data n _ cs <- datadecls ]

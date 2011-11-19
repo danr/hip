@@ -63,8 +63,8 @@ approximate ty = do
     let tyname = case ty of TyCon n _ -> n
                             TyVar{}   -> error "approximate on tyvar"
                             TyApp{}   -> error "approximate on tyapp"
-        n = "approx." ++ tyname
-        f = "approx.f"
+        n = "approx"
+        f = "f"
         pf = PVar f
     cons <- lookupConstructors tyname
     matrix <- forM cons $ \c -> do
@@ -109,8 +109,8 @@ prove fname typedArgs resTy lhs rhs = locally $ do
     proofByApproxLemma :: TM ProofType
     proofByApproxLemma = locally $ do
          (approx,approxAxioms) <- approximate resTy
-         let f = "approx.f"
-         addFuns [(f,1)]
+         let f = "a.f"
+         addFuns [(f,0)]
 --         fs <- skolemFun 1 f
 --         addIndirection f (Var fs)
          hyp <- locally $ do

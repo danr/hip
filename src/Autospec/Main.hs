@@ -5,7 +5,7 @@ import qualified Language.TPTP as T
 import Language.TPTP.Pretty
 
 import Autospec.FromHaskell.FromHaskell
-import Autospec.ToFOL.ToTPTP (toTPTP)
+import Autospec.ToFOL.ToTPTP
 import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.ToFOL.Parser
@@ -62,25 +62,36 @@ main = do
                                 else flip (,) []  <$> parseFile file
       ds <- either (\estr -> putStrLn estr >> exitFailure) return eitherds
       -- Output debug of translation
-      whenLoud (mapM_ putStrLn hsdebug)
+      whenLoud $ do mapM_ putStrLn hsdebug
+                    putStrLn "Haskell translation complete"
       -- Output Core and terminate
       when core $ do mapM_ (putStrLn . prettyCore) ds
                      exitSuccess
-      -- Translation to FOL
-      let (funcAxiomsWithDef,extraAxioms,proofs,debug) = toTPTP ds
-          axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
-      -- Verbose output
-      whenLoud (mapM_ putStrLn debug)
-      -- TPTP output
-      when tptp $ do putStrLn (prettyTPTP axioms)
-                     exitSuccess
-      -- Latex output
-      when latex $ do
-          putStrLn (latexHeader file extraAxioms)
-          mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
-          putStrLn latexFooter
-          exitSuccess
-      proveAll processes timeout store file axioms proofs
+      -- Don't prove anything, just dump translations
+      if tptp || latex then do
+          -- Translation to FOL
+          let (funcAxiomsWithDef,extraAxioms,debug) = dumpTPTP ds
+              axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
+          -- Verbose output
+          whenLoud (mapM_ putStrLn debug)
+          -- TPTP output
+          when tptp $ do putStrLn (prettyTPTP axioms)
+                         exitSuccess
+          -- Latex output
+          when latex $ do
+              putStrLn (latexHeader file extraAxioms)
+              mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
+              putStrLn latexFooter
+              exitSuccess
+        else do
+           -- Prove everything
+           whenLoud $ putStrLn "Preparing proofs..."
+           let (proofs,debug) = prepareProofs ds
+           -- Verbose output
+           whenLoud $ putStrLn "Done preparing proofs"
+           whenLoud $ mapM_ putStrLn debug
+
+           proveAll processes timeout store file proofs
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
@@ -96,23 +107,24 @@ whileFalse :: Monad m => [a] -> (a -> m Bool) -> m Bool
 whileFalse xs p = not `liftM` untilTrue (liftM not . p) xs
 
 proveAll :: Int -> Int -> Maybe FilePath
-         -> FilePath -> [T.Decl] -> [ProofDecl] -> IO ()
-proveAll processes timeout store file axioms proofs = do
+         -> FilePath -> [([T.Decl],ProofDecl)] -> IO ()
+proveAll processes timeout store file proofs = do
   whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
                 putStrLn $ "Timeout is " ++ show timeout
                 putStrLn $ "Store directory is " ++ show store
   hSetBuffering stdout NoBuffering
-  (fails,ok) <- partitionEithers <$> (forM proofs $ \(ProofDecl name types) -> do
-      whenNormal $ putStr $ "Trying to prove " ++ name ++ " "
-      r <- untilTrue (prove name) types
-      whenNormal $ putStrLn (if r then "\tTheorem!" else "")
-      return (putEither r name))
+  (fails,ok) <- partitionEithers <$> (forM proofs $
+      \(axioms,(ProofDecl name types)) -> do
+           let axiomsStr = prettyTPTP axioms
+           whenNormal $ putStr $ "Trying to prove " ++ name ++ " "
+           r <- untilTrue (prove axiomsStr name) types
+           whenNormal $ putStrLn (if r then "\tTheorem!" else "")
+           return (putEither r name))
   whenNormal $ putStrLn $ "Succeded : " ++ unwords ok
   whenNormal $ putStrLn $ "Failed : " ++ unwords fails
   putStrLn $ file ++ ": " ++ show (length ok) ++ "/" ++ show (length (ok ++ fails))
   where
-    axiomsStr = prettyTPTP axioms
-    prove name pt = case pt of
+    prove axiomsStr name pt = case pt of
           Induction addBottom indargs parts -> do
               whenLoud $ putStr $ "\n\tby induction on "
                                     ++ (if addBottom then "" else "finite ")

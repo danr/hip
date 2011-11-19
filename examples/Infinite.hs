@@ -12,7 +12,6 @@ proveBool = proveBool
 (=:=) :: a -> a -> a
 (=:=) = (=:=)
 
-
 (.) :: (b -> c) -> (a -> b) -> a -> c
 (f . g) x = f (g x)
 
@@ -21,7 +20,6 @@ id x = x
 map :: (a -> b) -> [a] -> [b]
 map f []       = []
 map f (x : xs) = f x : map f xs
-
 
 concat :: [[a]] -> [a]
 concat [] = []

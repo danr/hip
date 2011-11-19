@@ -2,12 +2,13 @@ module Autospec.ToFOL.NecessaryDefinitions where
 
 import Autospec.ToFOL.ParserInternals
 import Autospec.ToFOL.Core
+import Autospec.ToFOL.Constructors
 
 import qualified Data.Set as S
 import Data.Set (Set)
 import Data.List
 import Data.Maybe
-import Control.Arrow ((***))
+import Control.Arrow ((***),second)
 
 import Data.Generics.Uniplate.Operations
 
@@ -29,7 +30,8 @@ instance FC Pattern where
 
 instance FC Branch where
   usedFC (NoGuard p :-> e) = (S.difference >< S.union) (usedFC e) (usedFC p)
-  usedFC (Guard p g :-> e) = (S.difference >< S.union)
+  usedFC (Guard p g :-> e) = second (S.insert trueName) $
+                                 (S.difference >< S.union)
                                  ((S.union >< S.union) (usedFC e) (usedFC g))
                                  (usedFC p)
 

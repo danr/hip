@@ -121,7 +121,7 @@ addMatchesScope [] = fatal "Empty funmatches"
 addMatchesScope ms@(m:_) = do
     let n = fromName (matchName m)
     addToScope n
-    debug $ "addMatchesScope: " ++ n ++ " added to scope."
+--    debug $ "addMatchesScope: " ++ n ++ " added to scope."
 
 -- Add indirections (second pass)
 addMatchesIndirection :: [Match] -> FH ()
@@ -132,8 +132,8 @@ addMatchesIndirection ms@(m:_) = do
     scopedname <- scopePrefix n
 
     scope <- namesInScope
-    debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
-            ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
+--    debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
+--            ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
 
     addBind n scopedname fvs
 
@@ -146,8 +146,8 @@ fromMatches ms@(m:_) = do
                                   <$> lookupBind n
 
     scope <- namesInScope
-    debug $ "fromMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
-            ++ " (in scope: " ++ unwords scope ++ ")"
+--    debug $ "fromMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
+--            ++ " (in scope: " ++ unwords scope ++ ")"
 
     localBindScope $ do
       -- All free variables are arguments to this function

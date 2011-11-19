@@ -46,7 +46,7 @@ worker timeout store probChan resChan = forever $ do
 --   putStrLn $ "Working on " ++ name
   mvar <- newEmptyMVar
   pvar <- newEmptyMVar
-  tid <- forkIO $ runProver str mvar pvar
+  tid <- length str `seq` forkIO $ runProver str mvar pvar
   kid <- forkIO $ do threadDelay (timeout * 1000)
                      pid <- takeMVar pvar
                      killThread tid
