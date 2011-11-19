@@ -1,10 +1,10 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleContexts, UndecidableInstances #-}
-module Language.HFOL.ToFOL.ArbitraryCore where
+module Autospec.ToFOL.ArbitraryCore where
 
 -- Orphan instances for the rescue!
 
-import Language.HFOL.ToFOL.Constructors
-import Language.HFOL.ToFOL.Core
+import Autospec.ToFOL.Constructors
+import Autospec.ToFOL.Core
 import Test.QuickCheck
 import Data.Char
 import Control.Monad

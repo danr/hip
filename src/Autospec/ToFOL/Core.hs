@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Language.HFOL.ToFOL.Core where
+module Autospec.ToFOL.Core where
 
 import Data.Data
 import Data.Generics.Uniplate.Data

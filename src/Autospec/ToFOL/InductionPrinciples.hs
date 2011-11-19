@@ -1,8 +1,8 @@
-module Language.HFOL.ToFOL.InductionPrinciples where
+module Autospec.ToFOL.InductionPrinciples where
 
-import Language.HFOL.ToFOL.Core
-import Language.HFOL.ToFOL.ParserInternals
-import Language.HFOL.ToFOL.Pretty
+import Autospec.ToFOL.Core
+import Autospec.ToFOL.ParserInternals
+import Autospec.ToFOL.Pretty
 
 import Data.List
 import Data.Maybe (fromMaybe)

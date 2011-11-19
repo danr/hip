@@ -1,4 +1,4 @@
-module Language.HFOL.RunProver where
+module Autospec.RunProver where
 
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar

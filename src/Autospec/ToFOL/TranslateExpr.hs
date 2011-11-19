@@ -1,8 +1,8 @@
 {-# LANGUAGE ViewPatterns #-}
-module Language.HFOL.ToFOL.TranslateExpr where
+module Autospec.ToFOL.TranslateExpr where
 
-import Language.HFOL.ToFOL.Core
-import Language.HFOL.ToFOL.Monad
+import Autospec.ToFOL.Core
+import Autospec.ToFOL.Monad
 import Language.TPTP hiding (Decl,Var)
 import qualified Language.TPTP as T
 

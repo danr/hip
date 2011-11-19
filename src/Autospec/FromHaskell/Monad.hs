@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving,FlexibleContexts,TemplateHaskell #-}
-module Language.HFOL.FromHaskell.Monad where
+module Autospec.FromHaskell.Monad where
 
-import Language.HFOL.ToFOL.Core as C
+import Autospec.ToFOL.Core as C
 import Language.Haskell.Exts as H hiding (Name,Decl)
 
 import Control.Applicative

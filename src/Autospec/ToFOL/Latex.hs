@@ -1,11 +1,11 @@
 -- This module is only to be used for TPTP produced by the HFOL.ToFOL->TPTP tool
-module Language.HFOL.ToFOL.Latex where
+module Autospec.ToFOL.Latex where
 
 import Language.TPTP
-import Language.HFOL.Util (isOp)
+import Autospec.Util (isOp)
 
-import qualified Language.HFOL.ToFOL.Core as C
-import Language.HFOL.ToFOL.Pretty
+import qualified Autospec.ToFOL.Core as C
+import Autospec.ToFOL.Pretty
 
 import Control.Monad.State
 import Control.Applicative

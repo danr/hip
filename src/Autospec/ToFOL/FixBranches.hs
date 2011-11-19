@@ -6,7 +6,7 @@
                           This function needs more testing
 
 -}
-module Language.HFOL.ToFOL.FixBranches
+module Autospec.ToFOL.FixBranches
 {-
        (fixBranches,moreSpecificPatterns,nameWilds
        ,addGuardConds,guardCondition
@@ -17,17 +17,17 @@ module Language.HFOL.ToFOL.FixBranches
 -}
  where
 
-import Language.HFOL.ToFOL.Core
--- import Language.HFOL.ToFOL.Pretty
-import Language.HFOL.ToFOL.ParserInternals
-import Language.HFOL.ToFOL.Constructors
+import Autospec.ToFOL.Core
+-- import Autospec.ToFOL.Pretty
+import Autospec.ToFOL.ParserInternals
+import Autospec.ToFOL.Constructors
 
-import Language.HFOL.Util
+import Autospec.Util
 import Control.Applicative
 import Control.Monad.State
 import Control.Arrow (second,(***))
 import Data.Maybe (listToMaybe,catMaybes,mapMaybe)
-import Language.HFOL.ToFOL.ArbitraryCore()
+import Autospec.ToFOL.ArbitraryCore()
 --import Test.QuickCheck
 --import Test.QuickCheck.Arbitrary
 

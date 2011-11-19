@@ -4,19 +4,19 @@ module Main where
 import qualified Language.TPTP as T
 import Language.TPTP.Pretty
 
-import Language.HFOL.FromHaskell.FromHaskell
-import Language.HFOL.ToFOL.ToTPTP (toTPTP)
-import Language.HFOL.ToFOL.Pretty
-import Language.HFOL.ToFOL.ProofDatatypes
-import Language.HFOL.ToFOL.Parser
-import Language.HFOL.ToFOL.Latex hiding (latex)
-import Language.HFOL.Util (putEither)
+import Autospec.FromHaskell.FromHaskell
+import Autospec.ToFOL.ToTPTP (toTPTP)
+import Autospec.ToFOL.Pretty
+import Autospec.ToFOL.ProofDatatypes
+import Autospec.ToFOL.Parser
+import Autospec.ToFOL.Latex hiding (latex)
+import Autospec.Util (putEither)
 
 import System.Console.CmdArgs
 import System.Exit (exitFailure,exitSuccess)
 import System.IO
 
-import Language.HFOL.RunProver
+import Autospec.RunProver
 
 import Control.Monad
 import Control.Applicative

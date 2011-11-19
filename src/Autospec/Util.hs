@@ -1,4 +1,4 @@
-module Language.HFOL.Util
+module Autospec.Util
        (selections,withPrevious,concatMapM,concatMaybe,isOp,putEither)
        where
 

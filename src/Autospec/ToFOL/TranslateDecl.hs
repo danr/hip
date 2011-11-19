@@ -1,12 +1,12 @@
 {-# LANGUAGE ParallelListComp #-}
-module Language.HFOL.ToFOL.TranslateDecl where
+module Autospec.ToFOL.TranslateDecl where
 
-import Language.HFOL.ToFOL.Core
-import Language.HFOL.ToFOL.FixBranches
-import Language.HFOL.ToFOL.Pretty
-import Language.HFOL.ToFOL.Monad
-import Language.HFOL.ToFOL.TranslateExpr
-import Language.HFOL.Util
+import Autospec.ToFOL.Core
+import Autospec.ToFOL.FixBranches
+import Autospec.ToFOL.Pretty
+import Autospec.ToFOL.Monad
+import Autospec.ToFOL.TranslateExpr
+import Autospec.Util
 import Language.TPTP hiding (Decl,Var,declName)
 import Language.TPTP.Pretty
 import qualified Language.TPTP as T
@@ -20,7 +20,7 @@ import Data.Maybe (catMaybes)
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.
 --   If this is a proof object, handle it accordingly.
---   Most of that work is in Language.HFOL.ToFOL.ProofDecls
+--   Most of that work is in Autospec.ToFOL.ProofDecls
 translate :: Decl -> TM (Decl,[T.Decl])
 translate d@(Func fname args (Expr e)) = locally $ do
     rhs <- translateExpr (App fname (map Var args))

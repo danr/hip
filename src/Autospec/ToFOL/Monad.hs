@@ -3,7 +3,7 @@
              TypeOperators,
              ParallelListComp,
              FlexibleContexts #-}
-module Language.HFOL.ToFOL.Monad
+module Autospec.ToFOL.Monad
        (TM()
        ,runTM
        ,Debug
@@ -39,11 +39,11 @@ import Control.Category
 import Data.Label (mkLabels)
 import Data.Label.PureM
 
-import Language.HFOL.ToFOL.Core
-import Language.HFOL.ToFOL.Pretty
-import Language.HFOL.ToFOL.Constructors
-import Language.HFOL.ToFOL.ProofDatatypes
-import Language.HFOL.Util (isOp)
+import Autospec.ToFOL.Core
+import Autospec.ToFOL.Pretty
+import Autospec.ToFOL.Constructors
+import Autospec.ToFOL.ProofDatatypes
+import Autospec.Util (isOp)
 
 import qualified Language.TPTP as T
 import Language.TPTP hiding (Decl,Var)

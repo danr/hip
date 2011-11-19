@@ -1,17 +1,17 @@
-module Language.HFOL.FromHaskell.FromHaskell (parseHaskell,run) where
+module Autospec.FromHaskell.FromHaskell (parseHaskell,run) where
 
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,app)
 
-import qualified Language.HFOL.ToFOL.Core as C
-import Language.HFOL.ToFOL.Core hiding (Decl)
+import qualified Autospec.ToFOL.Core as C
+import Autospec.ToFOL.Core hiding (Decl)
 
-import Language.HFOL.FromHaskell.Names
-import Language.HFOL.FromHaskell.Monad
-import Language.HFOL.FromHaskell.Vars
+import Autospec.FromHaskell.Names
+import Autospec.FromHaskell.Monad
+import Autospec.FromHaskell.Vars
 
-import Language.HFOL.Util (concatMapM)
-import Language.HFOL.ToFOL.Pretty
+import Autospec.Util (concatMapM)
+import Autospec.ToFOL.Pretty
 
 import Control.Applicative
 import Control.Monad

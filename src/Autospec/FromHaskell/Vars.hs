@@ -1,11 +1,11 @@
-module Language.HFOL.FromHaskell.Vars
+module Autospec.FromHaskell.Vars
        (freeVars,freeVarss
        ,boundVars,boundVarss) where
 
-import qualified Language.HFOL.ToFOL.Core as C
+import qualified Autospec.ToFOL.Core as C
 import Language.Haskell.Exts
-import Language.HFOL.FromHaskell.Monad
-import Language.HFOL.FromHaskell.Names
+import Autospec.FromHaskell.Monad
+import Autospec.FromHaskell.Names
 
 import Data.Set as S
 

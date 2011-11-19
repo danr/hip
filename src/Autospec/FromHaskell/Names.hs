@@ -1,8 +1,8 @@
-module Language.HFOL.FromHaskell.Names where
+module Autospec.FromHaskell.Names where
 
-import Language.HFOL.FromHaskell.Monad
-import qualified Language.HFOL.ToFOL.Core as C
-import Language.HFOL.ToFOL.Core (Name,tapp,tconapp,tycon0)
+import Autospec.FromHaskell.Monad
+import qualified Autospec.ToFOL.Core as C
+import Autospec.ToFOL.Core (Name,tapp,tconapp,tycon0)
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,name)
 import Control.Monad

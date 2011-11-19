@@ -13,7 +13,7 @@ homepage:           github.com/danr/autospec
 executable          autospec
     ghc-options:    -Wall -threaded -O2
     hs-source-dirs: src
-    main-is:        Language/HFOL/Translate.hs
+    main-is:        Autospec/Main.hs
 
     build-depends: base                          >= 4    && < 5
                  , process                       >= 1.0.1.1

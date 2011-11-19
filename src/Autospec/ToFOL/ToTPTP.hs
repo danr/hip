@@ -1,14 +1,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, ViewPatterns, ParallelListComp #-}
-module Language.HFOL.ToFOL.ToTPTP where
+module Autospec.ToFOL.ToTPTP where
 
-import Language.HFOL.ToFOL.Core
-import Language.HFOL.ToFOL.Monad
-import Language.HFOL.ToFOL.Constructors
-import Language.HFOL.ToFOL.ProofDatatypes
-import Language.HFOL.ToFOL.MakeProofs
-import Language.HFOL.ToFOL.TranslateDecl
+import Autospec.ToFOL.Core
+import Autospec.ToFOL.Monad
+import Autospec.ToFOL.Constructors
+import Autospec.ToFOL.ProofDatatypes
+import Autospec.ToFOL.MakeProofs
+import Autospec.ToFOL.TranslateDecl
 
-import Language.HFOL.FromHaskell.Names
+import Autospec.FromHaskell.Names
 import qualified Language.TPTP as T
 
 import Control.Arrow ((&&&))

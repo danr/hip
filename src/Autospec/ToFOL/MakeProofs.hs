@@ -1,13 +1,13 @@
-module Language.HFOL.ToFOL.MakeProofs where
+module Autospec.ToFOL.MakeProofs where
 
-import Language.HFOL.ToFOL.TranslateExpr
-import Language.HFOL.ToFOL.TranslateDecl
-import Language.HFOL.ToFOL.Core
-import Language.HFOL.ToFOL.Monad
-import Language.HFOL.ToFOL.Pretty
-import Language.HFOL.Util (putEither,concatMapM)
+import Autospec.ToFOL.TranslateExpr
+import Autospec.ToFOL.TranslateDecl
+import Autospec.ToFOL.Core
+import Autospec.ToFOL.Monad
+import Autospec.ToFOL.Pretty
+import Autospec.Util (putEither,concatMapM)
 
-import Language.HFOL.ToFOL.ProofDatatypes
+import Autospec.ToFOL.ProofDatatypes
 
 import Language.TPTP hiding (Decl,Var,VarName)
 import Language.TPTP.Pretty

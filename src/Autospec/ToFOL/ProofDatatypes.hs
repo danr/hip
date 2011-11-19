@@ -1,7 +1,7 @@
-module Language.HFOL.ToFOL.ProofDatatypes where
+module Autospec.ToFOL.ProofDatatypes where
 
 import qualified Language.TPTP as T
-import Language.HFOL.ToFOL.Core
+import Autospec.ToFOL.Core
 
 proofDatatypes :: [Name]
 proofDatatypes = ["Prop"]
