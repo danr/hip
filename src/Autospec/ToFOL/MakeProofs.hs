@@ -58,24 +58,22 @@ type TyName  = Name
 type SkolemName = Name
 type LR a = Either a a
 
-approximate :: Type -> TM (Name,[T.Decl])
-approximate ty = do
+approximate :: Name -> Type -> TM (Name,[T.Decl])
+approximate f ty = do
     let tyname = case ty of TyCon n _ -> n
                             TyVar{}   -> error "approximate on tyvar"
                             TyApp{}   -> error "approximate on tyapp"
         n = "approx"
-        f = "f"
-        pf = PVar f
     cons <- lookupConstructors tyname
     matrix <- forM cons $ \c -> do
                  Just ct <- lookupType c
                  let recs = recursiveArgs ct
                      args = [ 'a':show i | (i,_) <- zip [(0 :: Int)..] recs ]
-                 return ([pf,PCon c (map PVar args)] -- f (C x1 .. xn)
+                 return ([PCon c (map PVar args)] -- f (C x1 .. xn)
                         ,Nothing                     -- no guard
                         ,Con c [ if rec then App f [Var arg] else Var arg
                                | (rec,arg) <- zip recs args ])
-    addFuns [(n,2)]
+    addFuns [(n,1)]
     let decl = funcMatrix n matrix
     write $ prettyCore decl
     (_,axioms) <- translate decl
@@ -109,18 +107,16 @@ prove fname typedArgs resTy lhs rhs = locally $ do
 
     proofByApproxLemma :: TM ProofType
     proofByApproxLemma = locally $ do
-         (approx,approxAxioms) <- approximate resTy
          let f = "a.f"
-         addFuns [(f,0)]
---         fs <- skolemFun 1 f
---         addIndirection f (Var fs)
+         addFuns [(f,1)]
+         (approx,approxAxioms) <- approximate f resTy
          hyp <- locally $ do
                    lhs' <- translateExpr (App f [lhs])
                    rhs' <- translateExpr (App f [rhs])
                    forallUnbound (lhs' === rhs')
          step <- locally $ do
-                   lhs' <- translateExpr (App approx [Var f,lhs])
-                   rhs' <- translateExpr (App approx [Var f,rhs])
+                   lhs' <- translateExpr (App approx [lhs])
+                   rhs' <- translateExpr (App approx [rhs])
                    forallUnbound (lhs' === rhs')
          write $ "Approx lemma hyp:  " ++ prettyTPTP hyp
          write $ "Approx lemma step: " ++ prettyTPTP step
