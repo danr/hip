@@ -158,6 +158,10 @@ prop_map_iterate f x = prove (map f (iterate f x) :=: iterate f (f x))
 where type Approx a = a or some equivalent. Maybe it isn't necessary
 to add: no types are concrete so you only option is to use
 approximation lemma.
+*** DONE Make an own timeout and able user to specify timeout
+*** DONE Run proofs in different threads
+Still some work to do here: this only sparks thread for a single
+proof technique (approx lemma
 
 * Week 47 (21 Nov - 27 Nov)
 ** DONE Prepare meeting with Koen
@@ -277,17 +281,39 @@ supplied, all applicable techniques should be tried.
 *** Stats of which proof techniques could solve which problems
 *** Work on NWERC problems!
 ** Proving work
-*** TODO Simple induction on several variables
-    Combine this with the auto-depth problem. This would be nicep
-*** TODO Smarter handling if bottom can be proved or not
+*** TODO Make threading work correctly
+*** TODO Smarter handling if bottom cannot be proved
 Simple induction can answer if it was able to prove the bottom case or
 not.
-*** DONE Make an own timeout and able user to specify timeout
-*** DONE Run proofs in different threads
-Still some work to do here: this only sparks thread for a single
-proof technique (approx lemma
-*** TODO Approximation lemma with "skolem functions"
+*** TODO Tell the prover how long time it will have.
+Koen said that this is important for vampire, does eprover have the
+same functionality?
+*** TODO Simple induction on several variables
+Combine this with the auto-depth problem. This would be nice
+*** DONE Approximation lemma with "skolem functions"
+CLOSED: [2011-11-21 Mon 15:50]
 *** TODO Fixpoint induction
+To prove P(f) = ! [xs] : lhs(f) = rhs(f):
+
+Prove P(bottom_n) where bottom_n is a function with same arity as f
+defined as bottom_n(..) = bottom.
+
+If f is the function we do fixpoint induction over, defined as
+
+f xs = chi(f,xs) + other definitions which, at a first implementation,
+may not call f to make things simple. Then define redefine f as:
+
+f xs = chi(f',xs)  where f' is fresh and same arity as f.
+
+Then all you need to show is P(f') => P(f).
+
+Machinery needed:
+**** Make bottom_n
+**** Instantiate P with a function
+**** Make f xs = chi(f',xs) from f xs
+**** Find all called functions from lhs and rhs to find fixpoint candidates
+**** Check if a function is recursive in itself
+(otherwise fixpoint induction typically won't work)
 *** TODO Add lemmas from previous proofs
 For instance *-assoc for nat needs +-assoc for nat. Only
 add lemmas if they hold for bottom? Should the user specify
