@@ -160,7 +160,8 @@ to add: no types are concrete so you only option is to use
 approximation lemma.
 
 * Week 47 (21 Nov - 27 Nov)
-** Meeting with Koen
+** DONE Prepare meeting with Koen
+CLOSED: [2011-11-21 Mon 15:16]
 *** Last week's work:
 **** Depth machine on natural numbers
 **** Examples were updated
@@ -175,6 +176,106 @@ approximation lemma.
 **** Where can I get more examples from?
 **** I need to work on other things this week (NWERC (wee!), Domain Theory)
 **** Still haven't done any report... Take a minor break from coding and do mainly reporting this week?
+** DONE Meeting with Koen
+*** Approximation lemma solution
+Don't introduce a new pointer name, rather introduce a new function
+with arity 1. Approximation lemma for lists then becomes:
+
+approx([]) = []
+approx(x:xs) = x : h xs
+
+Hypothesis: axiom , h lhs = h rhs
+Step: conjecture , approx lhs = approx rhs
+
+Futhermore, it is possible to inline the whole definition of approx
+instead of treating this as a function.
+*** Negated induction nat machine
+~P(a)
+a = zero | P(pred(a))
+a = zero | a = succ(zero) | P(pred(pred(a))
+% ^ P(pred(a)) comes from above if a = succ(zero)
+
+...
+
+~P(a)
+Q(x,y)    => a = x    | Q(succ(x),pred(y))
+Q(zero,y) => a = zero | P(pred(y))
+Q(zero,a)
+
+(I think I remember correctly)
+However, this is pretty difficult to generalize to datatypes with
+
+*** Fixpoint induction solution
+plus (S n) m = S (plus n m)
+
+then rewrite plus with a newly created plus' with arity 2 like this:
+
+plus (S n) m = S (plus' n m)
+
+Then in order to prove some P which uses plus:
+
+P(bottom) & (P(plus') => P(plus))
+*** More examples needed
+**** More interesting recursion
+**** Using the nice pattern-matching compiler
+**** Weird datatypes
+Like the domain for lambda calculus:
+
+data D = Fun (D -> D) | Bottom
+compile :: Expr -> D
+*** Lexicographic induction
+(x,y) <= (x',y') iff x <= x' | (x = x' & y <= y')
+
+This does not give a normal "induction matrix", but these proof
+obligations:
+
+P(zero)
+![y,y'] : P(x,y) => P(suc(x),y')     % or y == y'?
+![x] : P(x,y) => P(x,suc(y))
+
+Um, is this right? I'm a bit confused now.
+*** Symmetric induction for commutativity
+P(zero,zero)
+P(m,zero) => P(suc(m),zero)
+P(zero,n) => P(zero,suc(n))
+P(m,n) & P(suc(m),n) & P(m,suc(n)) => P(suc(m),suc(n))
+
+For trees data T = T * T | L the two * case is:
+axioms: P(a,c)
+        P(a,d)
+        P(b,c)
+        P(b,d)
+        P(a*b,c)
+        P(a*b,d)
+        P(a,c*d)
+        P(b,c*d)
+negated_conjecture: ~ P(a*b,c*d)
+*** Recursion induction (Plotkin)
+To prove x + y = y + x try to prove it with +~ defined as
+
++~ = flip +
+
+From the equations for + we get this to prove:
+
+zero  +~ y = y , ie, y + zero = y
+
+suc x +~ y = suc (x +~ y), ie, y + suc x = suc (y + x),
+
+which is exactly the movesuc lemma. And if these two are proved (by
+induction) we get by Recursion Induction that x + y = y + x. Nice!
+*** Try vampire prover
+Koen also talked about the author of Prover9 and the memory ceremony
+for him and his work on Otter.
+*** Agda in the report
+It is nice to say that Agda was used to verify that some things were
+provable before implementing proof techniques. Like the proof for plus
+commmutativity without lemma.
+*** Make and remove user specifications of tecniques
+Figure out a way for the user to specify which proving techniques she
+would like to use. But these should always be optional and if none are
+supplied, all applicable techniques should be tried.
+*** Stats of which proof techniques could solve which problems
+*** Work on NWERC problems!
 ** Proving work
 *** TODO Simple induction on several variables
     Combine this with the auto-depth problem. This would be nicep
@@ -185,8 +286,7 @@ not.
 *** DONE Run proofs in different threads
 Still some work to do here: this only sparks thread for a single
 proof technique (approx lemma
-*** TODO Approximation lemma with Nats instead
-Some proofs take exteremly long time (> 1 min) with approximate with function
+*** TODO Approximation lemma with "skolem functions"
 *** TODO Fixpoint induction
 *** TODO Add lemmas from previous proofs
 For instance *-assoc for nat needs +-assoc for nat. Only
@@ -196,7 +296,6 @@ which lemmas it needs to include?
 A hard problem! Could also be used to show that functions terminate
 ** Report proving techniques
 ** Report related work
-
 * Week 48 (28 Nov - 4 Dec)
 ** Work on proving
 

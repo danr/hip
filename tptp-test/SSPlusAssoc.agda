@@ -30,4 +30,4 @@ suc x +' y = suc (x +' y)
 +-comm (suc x) zero    = cong suc (+-comm x zero)
 +-comm zero    (suc y) = cong suc (+-comm zero y)
 +-comm (suc x) (suc y) = cong suc (+-comm x (suc y)) ⟨ trans ⟩
-                         cong suc (cong suc (+-comm y x) ⟨ trans ⟩ (+-comm (suc x) y))
+                         cong suc (cong suc (sym (+-comm x y)) ⟨ trans ⟩ (+-comm (suc x) y))

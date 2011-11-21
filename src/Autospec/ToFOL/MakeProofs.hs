@@ -87,8 +87,9 @@ prove fname typedArgs resTy lhs rhs = locally $ do
     simpleindbottom <- forM indargs (proofBySimpleInduction True)
 --   neginds         <- forM indargs proofByNegInduction
     simpleind       <- forM indargs (proofBySimpleInduction False)
-    approx          <- proofByApproxLemma
-    return $ ProofDecl fname (approx : simpleindbottom ++ simpleind)
+    approx          <- if concreteType resTy then (:[]) <$> proofByApproxLemma
+                                             else return []
+    return $ ProofDecl fname (approx ++ simpleindbottom ++ simpleind)
   where
     decorateArg :: Bool -> (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
     decorateArg addBottom (n,TyCon t _) = do
