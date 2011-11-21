@@ -88,6 +88,7 @@ partitionDecls ds =
        (datas,types) = partition dataDecl rest
    in  (funs,datas,types)
 
+
 conNameArity :: Decl -> [(Name,Int)]
 conNameArity (Data _ _ cs) = map (\(Cons n as) -> (n,length as)) cs
 conNameArity _             = error "conNameArity: Please report this error."

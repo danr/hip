@@ -141,20 +141,14 @@ translation?
 Answer : No, but types were added last week and that was
 a bit unplanned
 
-** TODO Update examples with the new
-** TODO Proving Work
-*** TODO Solve induction by depth problem
-*** TODO Simple induction on several variables
-Combine this with the auto-depth problem. This would be nice
-*** TODO Smarter handling if bottom can be proved or not
-Simple induction can answer if it was able to prove the bottom case or
-not.
-*** TODO Make an own timeout and able user to specify timeout
-*** TODO Run proofs in different threads
-*** TODO Add approximation lemma
+** DONE Update examples with the new
+** DONE Proving Work
+*** DONE Solve induction by depth problem
+*** DONE Add approximation lemma
 Either use this using typeclasses or simply add
 approxType :: Nat -> Type a -> Type a
 to the code
+Solved by generating the approximation code. This was really simple.
 
 This could be triggered by
 
@@ -164,6 +158,35 @@ prop_map_iterate f x = prove (map f (iterate f x) :=: iterate f (f x))
 where type Approx a = a or some equivalent. Maybe it isn't necessary
 to add: no types are concrete so you only option is to use
 approximation lemma.
+
+* Week 47 (21 Nov - 27 Nov)
+** Meeting with Koen
+*** Last week's work:
+**** Depth machine on natural numbers
+**** Examples were updated
+**** Proofs in different threads
+**** Updated argument handling
+**** Remove unnecessary definitions when proving
+**** Approximation lemma
+*** Questions:
+**** How to do induction on several variables easy
+**** How to do induction on more advanced datatypes than Nat in more than one depth
+**** How to handle fixpoint induction easily
+**** Where can I get more examples from?
+**** I need to work on other things this week (NWERC (wee!), Domain Theory)
+**** Still haven't done any report... Take a minor break from coding and do mainly reporting this week?
+** Proving work
+*** TODO Simple induction on several variables
+    Combine this with the auto-depth problem. This would be nicep
+*** TODO Smarter handling if bottom can be proved or not
+Simple induction can answer if it was able to prove the bottom case or
+not.
+*** DONE Make an own timeout and able user to specify timeout
+*** DONE Run proofs in different threads
+Still some work to do here: this only sparks thread for a single
+proof technique (approx lemma
+*** TODO Approximation lemma with Nats instead
+Some proofs take exteremly long time (> 1 min) with approximate with function
 *** TODO Fixpoint induction
 *** TODO Add lemmas from previous proofs
 For instance *-assoc for nat needs +-assoc for nat. Only
@@ -171,7 +194,6 @@ add lemmas if they hold for bottom? Should the user specify
 which lemmas it needs to include?
 *** TODO Recursive structure of function -> induction principle
 A hard problem! Could also be used to show that functions terminate
-* Week 47 (21 Nov - 27 Nov)
 ** Report proving techniques
 ** Report related work
 

@@ -37,7 +37,7 @@ params :: Params
 params = Params
   { files     = []      &= args &= typFile
   , processes = 4       &= help "Number of prover processes (default 4)"
-  , store     = Nothing &= opt (Just "proving/") &= typDir
+  , store     = Nothing &= opt  "proving/" &= typDir
                         &= help "Store all tptp files in a directory (default proving/)"
   , timeout   = 500     &= help "Timout of provers in milliseconds (default 500)" &= name "t"
   , latex     = False   &= help "Generate latex output and terminate"

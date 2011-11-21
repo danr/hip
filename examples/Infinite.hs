@@ -48,8 +48,6 @@ tail :: [a] -> [a]
 tail [x]    = []
 tail (x:xs) = x:tail xs
 
-
-
 prop_map_iterate :: (a -> a) -> a -> Prop [a]
 prop_map_iterate f x = prove (map f (iterate f x) =:= iterate f (f x))
 
