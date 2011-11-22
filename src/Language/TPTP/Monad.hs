@@ -10,10 +10,13 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,trinary
                            ,predicate
                            ,relation
+                           ,trinaryRel
                            ,(==>),(&),(/\),(\/),(<=>)
                            ,(===),(!=)
                            ,axiom
                            ,conjecture
+                           ,question
+                           ,lemma
                            ,forall'
                            ,exists'
                            ) where
@@ -61,6 +64,9 @@ predicate n = liftM (Rel (RelName n) . pure)
 relation :: String -> M Term -> M Term -> M Formula
 relation n = liftM2 (\x y -> Rel (RelName n) [x,y])
 
+trinaryRel :: String -> M Term -> M Term -> M Term -> M Formula
+trinaryRel n = liftM3 (\x y z -> Rel (RelName n) [x,y,z])
+
 mkBinOp :: BinOp
         -> M Formula -> M Formula -> M Formula
 mkBinOp op = liftM2 (\f g -> BinOp f op g)
@@ -89,6 +95,12 @@ axiom s f = Axiom s (run f)
 
 conjecture :: String -> M Formula -> Decl
 conjecture s f = Conjecture s (run f)
+
+question :: String -> M Formula -> Decl
+question s f = Question s (run f)
+
+lemma :: String -> M Formula -> Decl
+lemma s f = Lemma s (run f)
 
 class Quantifier t where
     quantifier

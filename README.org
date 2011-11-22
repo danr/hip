@@ -25,12 +25,12 @@ First Order Logic and use Automated Theorem Provers.
 ** Source contents
 *** Language.TPTP
 The TPTP library used in this project
-*** Language.HFOL
+*** Autospec
 Everything concerning Haskell -> FOL translation
-**** Language.HFOL.FromHaskell
+**** Autospec.FromHaskell
 From Haskell to Core
-**** Language.HFOL.ToFOL
-From Core to FOL
+**** Autospec.ToFOL
+From Core to FOL. Here are also the modules that makes proofs.
 *** Test.QuickSpec
 The QuickSpec library made my Nick Smallbone and Koen Claessen
 

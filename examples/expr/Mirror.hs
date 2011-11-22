@@ -26,14 +26,19 @@ instance Arbitrary Nat where
           x <- choose (0,s)
           return (nats !! x)
 
+otherwise = True
+
 mirror :: Expr -> Expr
 mirror (Add e1 e2) = Add (mirror e2) (mirror e1)
 mirror (Mul e1 e2) = Mul (mirror e2) (mirror e1)
 mirror (IsZero e)  = IsZero (mirror e)
 mirror e           = e
 
+prove x = x
+x =:= y = (x,y)
+
 prop_mirror :: Expr -> Bool
-prop_mirror e = e == mirror (mirror e)
+prop_mirror e = prove (e =:= mirror (mirror e))
 
 plus x Z     = x
 plus x (S y) = S (plus x y)
@@ -45,7 +50,7 @@ size (IsZero e)  = size e
 size (Val _)     = S Z
 
 prop_mirror_size :: Expr -> Bool
-prop_mirror_size e = size e == size (mirror e)
+prop_mirror_size e = prove (size e =:= size (mirror e))
 
 times x Z     = Z
 times x (S y) = (x `times` y) `plus` x
@@ -53,9 +58,10 @@ times x (S y) = (x `times` y) `plus` x
 eval :: Expr -> Nat
 eval (Add e1 e2) = eval e1 `plus` eval e2
 eval (Mul e1 e2) = eval e1 `times` eval e2
-eval (IsZero e)  | eval e == Z = S Z
-                 | otherwise   = Z
+eval (IsZero e) = case eval e of
+                    Z -> S Z
+                    _ -> Z
 eval (Val n) = n
 
 prop_mirror_eval :: Expr -> Bool
-prop_mirror_eval e = eval e == eval (mirror e)
+prop_mirror_eval e = prove (eval e =:= eval (mirror e))
