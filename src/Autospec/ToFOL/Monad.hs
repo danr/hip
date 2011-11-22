@@ -395,5 +395,8 @@ ptrDecls as = map mkDecl . S.toList
                 $ appFold (Fun (FunName (makePtrName fn)) []) (map T.Var xs)
                   ===
                   Fun (FunName fn) (map T.Var xs)
-      where arity = as M.! fn
+      where arity = case M.lookup fn as of
+                         Just a  -> a
+                         Nothing -> 0 -- error $ "pointer to " ++ fn
+                                      --   ++ " with unknown arity!"
             xs    = makeVarNames arity

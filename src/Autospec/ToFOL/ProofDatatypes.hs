@@ -17,15 +17,15 @@ data ProofType = Plain
                | FiniteSimpleInduction { indVar :: Name }
                | SimpleInduction       { indVar :: Name }
                | ApproxLemma
-               | FixpointInduction
+               | FixpointInduction     { fixFun :: Name }
   deriving (Eq,Ord)
 
 instance Show ProofType where
-  show Plain                     = "Plain"
+  show Plain                     = "plain"
   show (FiniteSimpleInduction v) = "finite simple induction on " ++ v
   show (SimpleInduction v)       = "simple induction on " ++ v
   show ApproxLemma               = "approximation lemma"
-  show FixpointInduction         = "fix point induction"
+  show (FixpointInduction f)     = "fix point induction on " ++ f
 
 proofTypeFile :: ProofType -> String
 proofTypeFile pt = case pt of
@@ -33,7 +33,7 @@ proofTypeFile pt = case pt of
   FiniteSimpleInduction v -> "finitesimplind" ++ v
   SimpleInduction v       -> "simpleind" ++ v
   ApproxLemma             -> "approx"
-  FixpointInduction       -> "fix"
+  FixpointInduction f     -> "fix" ++ f
 
 data ProofDecl = ProofDecl { proofName  :: Name
                            , proofType  :: ProofType
@@ -49,3 +49,6 @@ data ProofPart = ProofPart { partName  :: Name
 
 extendProofDecls :: [T.Decl] -> ProofDecl -> ProofDecl
 extendProofDecls ts pd = pd { proofDecls = proofDecls pd ++ ts }
+
+extendProofPart :: [T.Decl] -> ProofPart -> ProofPart
+extendProofPart ts pp = pp { partDecls = partDecls pp ++ ts }

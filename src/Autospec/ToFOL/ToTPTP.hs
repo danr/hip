@@ -90,7 +90,7 @@ prepareProofs ds = second concat $ unzip (concatMap processDecl proofDecls)
               Just sigty ->
                 let (fsd,csd)    = usedFC d
                     typesFromSig = getTypes sigty
-                    (fs,cs') = iterateFCs (fsd S.\\ S.fromList proveFunctions)
+                    (fs,cs')  = iterateFCs (fsd S.\\ S.fromList proveFunctions)
                     cs        = S.insert bottomName $ csd `S.union` cs'
                     datadecls = filterDatas typesFromSig cs dataDecls
                     fundecls  = filterFuns  fs funDecls

@@ -157,13 +157,37 @@ pcon0 n = PCon n []
 tycon0 :: Name -> Type
 tycon0 n = TyCon n []
 
+-- | Which variables does a pattern bind?
+patternBinds :: Pattern -> [Name]
+patternBinds p = [ x | PCon x _ <- universe p ]
+
 -- | Substitution
 subst :: Name -> Name -> Expr -> Expr
 subst xold xnew = transform f
   where f (Var x)    | x == xold = Var xnew
         f (App x as) | x == xold = App xnew as
-        f e       = e
+        f e = e
 
+-- | Substitute in a body
+substBody :: Name -> Name -> Body -> Body
+substBody xold xnew (Expr e) = Expr (subst xold xnew e)
+substBody xold xnew (Case e brs) = Case (subst xold xnew e) $
+                                      map (substBranch xold xnew) brs
+
+-- | Substitute in a branch
+substBranch :: Name -> Name -> Branch -> Branch
+substBranch xold xnew b@(Guard p g :-> e)
+  | xold `elem` patternBinds p = b
+  | otherwise = Guard p (subst xold xnew g) :-> subst xold xnew e
+substBranch xold xnew b@(NoGuard p :-> e)
+  | xold `elem` patternBinds p = b
+  | otherwise = NoGuard p :-> subst xold xnew e
+
+-- | Substitute the function body
+substFunDeclBody :: Name -> Name -> Decl -> Decl
+substFunDeclBody xold xnew d = d { funcBody = substBody xold xnew (funcBody d) }
+
+-- | Substitute a list of variables
 substVars :: [(Name,Name)] -> Expr -> Expr
 substVars ns e = foldr (\(x,x') -> subst x x') e ns
 
@@ -196,7 +220,7 @@ recursiveArgs _          = []
 
  f u1 ... un = case Tn u1 .. un of
                    Tn p11 ... p1n | g1 -> e1
-                   ...
+                   ...p
                    Tn pk1 ... pkn | gk -> ek
 
  The corresponding function call is

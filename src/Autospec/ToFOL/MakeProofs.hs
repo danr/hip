@@ -7,6 +7,7 @@ import Autospec.ToFOL.Constructors
 import Autospec.ToFOL.Monad
 import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.ProofDatatypes
+import Autospec.ToFOL.NecessaryDefinitions
 import Autospec.Util (putEither,concatMapM)
 
 import Language.TPTP hiding (Decl,Var,VarName,declName)
@@ -16,8 +17,11 @@ import qualified Language.TPTP as T
 import Control.Applicative
 import Control.Monad
 
+import Data.Maybe (fromMaybe)
 import Data.Either (partitionEithers)
 import Control.Arrow ((&&&))
+
+import qualified Data.Set as S
 
 powerset :: [a] -> [[a]]
 powerset = map reverse . filterM (const [False,True]) . reverse
@@ -67,7 +71,7 @@ prove fundecls resTy fname typedArgs lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
         simpleindbottom = map (proofBySimpleInduction True) indargs
         simpleind       = map (proofBySimpleInduction False) indargs
-    in  proofByApproxLemma ++ simpleindbottom ++ simpleind
+    in  proofByFixpointInduction -- proofByApproxLemma ++ simpleindbottom ++ simpleind
   where
     accompanyParts :: ProofType -> TM [ProofPart] -> TM ProofDecl
     accompanyParts prooftype partsm = do
@@ -76,6 +80,16 @@ prove fundecls resTy fname typedArgs lhs rhs =
         faxioms <- concatMapM (fmap snd . translate) fundecls
         parts   <- partsm
         return $ ProofDecl fname prooftype faxioms parts
+
+    accompanyPartsWithDecls :: ProofType -> [([Decl],TM [ProofPart])] -> TM ProofDecl
+    accompanyPartsWithDecls prooftype tup = ProofDecl fname prooftype [] <$>
+        (flip concatMapM tup (\(fundecls',partms) -> do
+            let funs = map (declName &&& length . declArgs) fundecls'
+            addFuns funs
+            locally $ do
+                parts   <- partms
+                faxioms <- concatMapM (fmap snd . translate) fundecls'
+                return $ map (extendProofPart faxioms) parts))
 
     decorateArg :: Bool -> (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
     decorateArg addBottom (n,TyCon t _) = do
@@ -109,10 +123,10 @@ prove fundecls resTy fname typedArgs lhs rhs =
     inductionPart :: Name -> ConName -> [Rec] -> TM ProofPart
     inductionPart v c recArgs = do
         skolems <- mapM (const (skolemize v)) recArgs
-        ih <- sequence [ Axiom (fname ++ "indhyp" ++ v ++ s)
+        ih <- sequence [ Axiom ("indhyp" ++ v ++ s)
                              <$> instantiatePs [[(v,Var s)]]
                        | (s,b) <- zip skolems recArgs, b ]
-        is <- Conjecture (fname ++ "indstep" ++ v)
+        is <- Conjecture ("indstep" ++ v)
                      <$> instantiatePs [[(v,Con c (map Var skolems))]]
         return (ProofPart c (is:ih))
 
@@ -142,13 +156,46 @@ prove fundecls resTy fname typedArgs lhs rhs =
              dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
              dbproof $ "Approx lemma step: " ++ prettyTPTP step
              return $ [ProofPart "step"
-                                 (Axiom (fname ++ "approxhyp") hyp
-                                 :Conjecture (fname ++ "approxstep") step
+                                 (Axiom ("approxhyp") hyp
+                                 :Conjecture ("approxstep") step
                                  :approxAxioms)]
        | otherwise = []
 
-    proofByFixpointInduction :: TM ProofType
-    proofByFixpointInduction = undefined
+    instantiateP :: [(VarName,VarName)] -> TM T.Formula
+    instantiateP binds = locally $ do
+         lhs' <- translateExpr (substVars binds lhs)
+         rhs' <- translateExpr (substVars binds rhs)
+         forallUnbound (lhs' === rhs')
+
+    proofByFixpointInduction :: [TM ProofDecl]
+    proofByFixpointInduction =
+        flip map fs $ \f -> accompanyPartsWithDecls (FixpointInduction f) $
+            let f' = f ++ "."
+                fundeclsBase = bottomFun (arityLookup f) : fundecls
+                fundeclsStep = map (substFunDeclBody f f') fundecls
+            in  [(fundeclsBase,do
+                   addFuns [(bottomFunName,arityLookup f)]
+                   pbottom <- instantiateP [(f,bottomFunName)]
+                   return $ [ProofPart "base" [Conjecture "fixbase" pbottom]])
+                ,(fundeclsStep,do
+                   addFuns [(f',arityLookup f)]
+                   phyp <- instantiateP [(f,f')]
+                   pstep <- instantiateP []
+                   return $ [ProofPart "step" [Axiom      "fixhyp"  phyp
+                                              ,Conjecture "fixstep" pstep
+                                              ]])
+               ]
+      where fs = S.toList ((fst (usedFC lhs) `S.union` fst (usedFC lhs))
+                           S.\\ S.fromList (map fst typedArgs))
+            bottomFunName = "const.bottom"
+            bottomFun n   = Func (bottomFunName)
+                                 (take n ([1..] >>= flip replicateM ['a'..'z']))
+                                 (Expr (Var bottomName))
+            arityLookup f =
+                 fromMaybe (error $ "proofByFixpoint induction " ++
+                                    "on non-existent function" ++ f)
+               $ lookup f
+               $ map (declName &&& length . declArgs) fundecls
 
 approximate :: Name -> Type -> TM (Name,[T.Decl])
 approximate f ty = do
@@ -163,7 +210,7 @@ approximate f ty = do
                  let recs = recursiveArgs ct
                      args = [ 'a':show i | (i,_) <- zip [(0 :: Int)..] recs ]
                  return ([PCon c (map PVar args)] -- f (C x1 .. xn)
-                        ,Nothing                     -- no guard
+                        ,Nothing                  -- no guard
                         ,Con c [ if rec then App f [Var arg] else Var arg
                                | (rec,arg) <- zip recs args ])
     addFuns [(n,1)]
