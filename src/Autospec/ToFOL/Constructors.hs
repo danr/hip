@@ -4,7 +4,7 @@ import Autospec.ToFOL.Core
 
 -- | The name for bottom
 bottomName :: Name
-bottomName = "Bottom"
+bottomName = "_|_"
 
 -- | The bottom pattern
 bottomP :: Pattern

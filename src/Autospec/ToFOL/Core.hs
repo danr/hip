@@ -81,6 +81,10 @@ dataDecl :: Decl -> Bool
 dataDecl Data{} = True
 dataDecl _      = False
 
+typeDecl :: Decl -> Bool
+typeDecl TyDecl{} = True
+typeDecl _        = False
+
 -- | Partition declarations into function-, data- and type declarations
 partitionDecls :: [Decl] -> ([Decl],[Decl],[Decl])
 partitionDecls ds =

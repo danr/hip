@@ -174,10 +174,10 @@ locally (TM m) = TM (locally' m)
 locally' :: (MonadState St m) => m a -> m a
 locally' m = do
   boundNames' <- gets boundNames
---  arities'    <- gets arities
+  arities'    <- gets arities
   r <- m
   puts boundNames boundNames'
---  puts arities    arities'
+  puts arities    arities'
   return r
 
 -- | Insert /n/ elements to a map of /m/ elements

@@ -14,10 +14,10 @@ import Autospec.Util
 
 import qualified Language.TPTP as T
 
-import Control.Arrow ((&&&),(***))
+import Control.Arrow ((&&&),(***),second)
 import Control.Applicative
 
-import Data.List (partition,nub)
+import Data.List (partition,nub,find)
 import Data.Maybe (catMaybes,fromMaybe)
 import Control.Monad
 
@@ -62,61 +62,52 @@ partitionProofDecls = partition isProofDecl
             fname `elem` proveFunctions || provable e
        isProofDecl _ = False
 
-prepareProofs :: [Decl] -> ([([T.Decl],ProofDecl)],[Msg])
-prepareProofs ds =
-    let (res,dbs) = unzip (map processDecl proofDecls)
-    in  (catMaybes res,concat dbs)
-  where
-    processDecl :: Decl -> (Maybe ([T.Decl],ProofDecl),[Msg])
-    processDecl d = runTM $ do
-       dbproof $ prettyCore d
-       addTypes types
-       mty <- lookupType (declName d)
-       r <- case mty of
-           Nothing -> do warn $ "Cannot prove " ++ declName d ++
-                                "without type signature"
-                         return Nothing
-           Just sigty -> do
-             let (fsd,csd)    = usedFC d
-                 getTypes :: Type -> [Name]
-                 getTypes ty  = case ty of
-                                   TyApp ts   -> concatMap getTypes ts
-                                   TyCon t ts -> t : concatMap getTypes ts
-                                   TyVar _    -> []
-                 typesFromSig = getTypes sigty
-                 (fs,cs') = iterateFCs (fsd S.\\ S.fromList proveFunctions)
-                 cs        = S.insert bottomName $ csd `S.union` cs'
-                 datadecls = filterDatas typesFromSig cs dataDecls
-                 fundecls  = filterFuns  fs funDecls
-                 funs      = map (declName &&& length . declArgs) funDecls
-             addFuns funs
-             dbproof $ declName d ++ ": " ++ show fs ++ " , " ++ show cs
-             addCons datadecls
-             faxioms <- concatMapM (fmap snd . translate) fundecls
-             extra   <- envStDecls
-             mproof  <- makeProofDecl d
-             if mproof == Nothing
-                 then dbproof $ "Nothing produced for " ++ declName d
-                 else dbproof $ "Proof decl produced for " ++ declName d
-             return ((,) (faxioms ++ extra) <$> mproof)
+getTypes :: Type -> [Name]
+getTypes ty  = case ty of
+                  TyApp ts   -> concatMap getTypes ts
+                  TyCon t ts -> t : concatMap getTypes ts
+                  TyVar _    -> []
 
-       dbproof "Popping debug..."
-       db      <- popDebug
-       return (r,db)
+filterDatas :: [Name] -> Set Name -> [Decl] -> [Decl]
+filterDatas typesFromSig cs =
+    filter (\d -> any ((`S.member` cs) . conName) (dataCons d) ||
+                  declName d `elem` typesFromSig)
+
+filterFuns :: Set Name -> [Decl] -> [Decl]
+filterFuns fs = filter ((`S.member` fs) . declName)
+
+prepareProofs :: [Decl] -> ([ProofDecl],[Msg])
+prepareProofs ds = second concat $ unzip (concatMap processDecl proofDecls)
+  where
+    processDecl :: Decl -> [(ProofDecl,[Msg])]
+    processDecl d
+      | declName d `elem` proveFunctions = []
+      | otherwise =
+          let fname = declName d
+              mty = declType <$> find ((fname ==) . declName) typeDecls
+          in case mty of
+              Nothing -> []
+              Just sigty ->
+                let (fsd,csd)    = usedFC d
+                    typesFromSig = getTypes sigty
+                    (fs,cs') = iterateFCs (fsd S.\\ S.fromList proveFunctions)
+                    cs        = S.insert bottomName $ csd `S.union` cs'
+                    datadecls = filterDatas typesFromSig cs dataDecls
+                    fundecls  = filterFuns  fs funDecls
+                    pdms      = makeProofDecls fundecls sigty d
+                in  flip map pdms $ \pdm -> runTM $ do
+                        addTypes types
+                        addCons datadecls
+                        pd    <- pdm
+                        extra <- envStDecls
+                        db    <- popDebug
+                        return (extendProofDecls extra pd,db)
 
     ProcessedDecls{..} = processDecls ds
     types = map (declName &&& declType) typeDecls
 
     usedFCmap :: Map Name (Set Name,Set Name)
     usedFCmap = M.fromList [ (declName d,usedFC d) | d <- funDecls ]
-
-    filterDatas :: [Name] -> Set Name -> [Decl] -> [Decl]
-    filterDatas typesFromSig cs =
-        filter (\d -> any ((`S.member` cs) . conName) (dataCons d) ||
-                      declName d `elem` typesFromSig)
-
-    filterFuns :: Set Name -> [Decl] -> [Decl]
-    filterFuns fs = filter ((`S.member` fs) . declName)
 
     iterateFCs :: Set Name -> (Set Name,Set Name)
     iterateFCs fs | S.null newfs = (fs,cs)

@@ -84,7 +84,7 @@ main = do
               axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
           -- Verbose output
           when dbfol $ mapM_ print (filter (sourceIs ToFOL) debug)
-          -- Warinings
+          -- Warnings
           whenNormal $ mapM_ print (filter isWarning debug)
           -- TPTP output
           when tptp $ do putStrLn (prettyTPTP axioms)
@@ -96,15 +96,16 @@ main = do
               putStrLn latexFooter
               exitSuccess
         else do
-           -- Prove everything
-           whenLoud $ putStrLn "Preparing proofs..."
-           let (proofs,debug) = prepareProofs ds
-           -- Verbose output
-           when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
-           -- Print warnings
-           whenNormal $ mapM_ print (filter isWarning debug)
-           whenLoud $ putStrLn "Done preparing proofs"
-           proveAll processes timeout output file proofs
+          -- Prove everything
+          whenLoud $ putStrLn "Preparing proofs..."
+          let (proofs,debug) = prepareProofs ds
+          -- Verbose output
+          when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
+          when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
+          -- Print warnings
+          whenNormal $ mapM_ print (filter isWarning debug)
+          whenLoud $ putStrLn "Done preparing proofs"
+          proveAll processes timeout output file proofs
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
@@ -120,62 +121,33 @@ whileFalse :: Monad m => [a] -> (a -> m Bool) -> m Bool
 whileFalse xs p = not `liftM` untilTrue (liftM not . p) xs
 
 proveAll :: Int -> Int -> Maybe FilePath
-         -> FilePath -> [([T.Decl],ProofDecl)] -> IO ()
+         -> FilePath -> [ProofDecl] -> IO ()
 proveAll processes timeout output file proofs = do
   whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
                 putStrLn $ "Timeout is " ++ show timeout
                 putStrLn $ "Output directory is " ++ show output
   hSetBuffering stdout NoBuffering
   (fails,ok) <- partitionEithers <$> (forM proofs $
-      \(axioms,(ProofDecl name types)) -> do
+      \(ProofDecl fname proofType axioms parts) -> do
            let axiomsStr = prettyTPTP axioms
-           whenNormal $ putStr $ "Trying to prove " ++ name ++ " "
-           r <- untilTrue (prove axiomsStr name) types
+           whenNormal $ putStr $ "Trying " ++ fname
+                              ++ " using " ++ show proofType ++ ": "
+           r <- prove axiomsStr proofType fname parts
            whenNormal $ putStrLn (if r then "\tTheorem!" else "")
-           return (putEither r name))
+           return (putEither r fname))
   whenNormal $ putStrLn $ "Succeded : " ++ unwords ok
   whenNormal $ putStrLn $ "Failed : " ++ unwords fails
   putStrLn $ file ++ ": " ++ show (length ok) ++ "/"
                           ++ show (length (ok ++ fails)) -- list homomorphism!
   where
-    prove axiomsStr name pt = case pt of
-          Induction addBottom indargs parts -> do
-              whenLoud $ putStr $ "\n\tby induction on "
-                                    ++ (if addBottom then "" else "finite ")
-                                    ++ unwords indargs ++ ": \t"
-              let probs = map (\(IndPart indcons decls) ->
-                                     (concat indcons
-                                     ,file ++ name ++ concat indargs
-                                           ++ concat indcons ++ ".tptp"
-                                     ,axiomsStr ++ prettyTPTP decls)) parts
+    prove :: String -> ProofType -> String -> [ProofPart] -> IO Bool
+    prove axiomsStr proofType name parts = do
+              let probs = flip map parts $ \(ProofPart partname decls) ->
+                            (partname
+                            ,file ++ "_" ++ name ++ "_"
+                                  ++ proofTypeFile proofType ++ "_"
+                                  ++ partname ++ ".tptp"
+                            ,axiomsStr ++ prettyTPTP decls)
               all ((== Theorem) . snd) <$>
                   echo (runProvers processes timeout output probs)
-          ApproxLemma decls -> do
-              whenLoud $ putStr $ "\n\tby approximation lemma "
-              let prob = ("approx",file ++ name ++ "approx.tptp"
-                         ,axiomsStr ++ prettyTPTP decls)
-              all ((== Theorem) . snd) <$>
-                  echo (runProvers processes timeout output [prob])
-          _ -> return False
-{-
-          NegInduction indargs decls -> do
-              putStr $ "\tnegated induction on " ++ unwords indargs ++ ": \t"
-              let fname = "prove/" ++ file ++ name ++ concat indargs ++ "negind.tptp"
-              writeFile fname (axiomsStr ++ prettyTPTP decls)
---              mapM_ (putStrLn . prettyTPTP) decls
-              putStr "\t"
-              r <- echo (runProver fname)
-              if r == Theorem
-                  then putStrLn "\tTheorem!" >> return True
-                  else putStrLn "" >> return False
--}
-{-          Plain decls -> do
-              putStr "\tby definition.."
-              let fname = "prove/" ++ file ++ name ++ "plain.tptp"
-              writeFile fname (axiomsStr ++ prettyTPTP decls)
-              r <- echo (runProver fname)
-              if r == Theorem
-                  then putStrLn "\tTheorem!" >> return True
-                  else putStrLn "" >> return False
--}
 
