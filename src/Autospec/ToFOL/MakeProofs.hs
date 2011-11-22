@@ -28,26 +28,22 @@ unprop t             = t
 makeProofDecl :: Decl -> TM (Maybe ProofDecl)
 makeProofDecl (Func fname args (Expr e))
   | fname `elem` proveFunctions = do
-      write $ "skipped proof definition " ++ fname
+      dbproof $ "skipped proof definition " ++ fname
       return Nothing
   | otherwise = do
-      mty <- lookupType fname
-      case mty of
-        Nothing -> do write $ "Error: Cannot prove without type signature"
-                      return Nothing
-        Just t  -> do
-          let typedArgs = case t of TyApp ts -> zip args ts
-                                    _        -> []
-              resTy     = unprop $ case t of TyApp ts -> last ts
-                                             t'       -> t'
-          case e of
-            App "proveBool" [lhs] -> Just <$> prove fname typedArgs resTy
-                                                   lhs (Con "True" [])
-            App "prove" [as] -> do let [lhs,rhs] = exprArgs as
-                                   Just <$> prove fname typedArgs resTy lhs rhs
-            _  -> do write $ "Error: makeProofDecl on " ++ prettyCore e
-                     return Nothing
-makeProofDecl d = do write $ "Error: makeProofDecl on " ++ prettyCore d
+      Just t <- lookupType fname
+      let typedArgs = case t of TyApp ts -> zip args ts
+                                _        -> []
+          resTy     = unprop $ case t of TyApp ts -> last ts
+                                         t'       -> t'
+      case e of
+        App "proveBool" [lhs] -> Just <$> prove fname typedArgs resTy
+                                                lhs (Con "True" [])
+        App "prove" [App _ [lhs,rhs]] -> Just <$> prove fname typedArgs
+                                                        resTy lhs rhs
+        _  -> do warn $ "Cannot prove anything about " ++ prettyCore e
+                 return Nothing
+makeProofDecl d = do warn $ "Cannot prove anything about " ++ prettyCore d
                      return Nothing
 
 type Rec = Bool
@@ -63,7 +59,8 @@ approximate f ty = do
     let tyname = case ty of TyCon n _ -> n
                             TyVar{}   -> error "approximate on tyvar"
                             TyApp{}   -> error "approximate on tyapp"
-        n = "approx"
+    let n = "approx"
+    dbproof "Lookup constructors from approximate"
     cons <- lookupConstructors tyname
     matrix <- forM cons $ \c -> do
                  Just ct <- lookupType c
@@ -75,7 +72,7 @@ approximate f ty = do
                                | (rec,arg) <- zip recs args ])
     addFuns [(n,1)]
     let decl = funcMatrix n matrix
-    write $ prettyCore decl
+    dbproof $ prettyCore decl
     (_,axioms) <- translate decl
     return (n,axioms)
 
@@ -85,8 +82,7 @@ prove fname typedArgs resTy lhs rhs = locally $ do
     simpleindbottom <- forM indargs (proofBySimpleInduction True)
 --   neginds         <- forM indargs proofByNegInduction
     simpleind       <- forM indargs (proofBySimpleInduction False)
-    approx          <- if concreteType resTy then (:[]) <$> proofByApproxLemma
-                                             else return []
+    approx          <- proofByApproxLemma
     return $ ProofDecl fname (approx ++ simpleindbottom ++ simpleind)
   where
     decorateArg :: Bool -> (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
@@ -94,35 +90,41 @@ prove fname typedArgs resTy lhs rhs = locally $ do
        -- t is for instance Nat or List a
        -- cs is for instance (Zero :: Nat,Succ :: Nat -> Nat) or
        --                    (Nil :: [a],Cons :: a -> [a] -> [a])
+       dbproof "Lookup constructors from decorateArg"
        cs <- (if addBottom then ("Bottom":) else id) <$> lookupConstructors t
 
        lr <- forM cs $ \c -> do Just ct <- lookupType c
                                 let h = recursiveArgs ct
                                 return (putEither (or h) (c,h))
 
-       write $ "decorateArg, " ++ n ++ " : " ++ show lr
+       dbproof $ "decorateArg, " ++ n ++ " : " ++ show lr
        return (n,lr)
     decorateArg _ (n,t) = error $ "decorateArg " ++ n
                               ++ " on non-concrete type " ++ show t
 
-    proofByApproxLemma :: TM ProofType
-    proofByApproxLemma = locally $ do
-         let f = "a.f"
-         addFuns [(f,1)]
-         (approx,approxAxioms) <- approximate f resTy
-         hyp <- locally $ do
-                   lhs' <- translateExpr (App f [lhs])
-                   rhs' <- translateExpr (App f [rhs])
-                   forallUnbound (lhs' === rhs')
-         step <- locally $ do
-                   lhs' <- translateExpr (App approx [lhs])
-                   rhs' <- translateExpr (App approx [rhs])
-                   forallUnbound (lhs' === rhs')
-         write $ "Approx lemma hyp:  " ++ prettyTPTP hyp
-         write $ "Approx lemma step: " ++ prettyTPTP step
-         return $ ApproxLemma (Axiom (fname ++ "approxhyp") hyp
-                              :Conjecture (fname ++ "approxstep") step
-                              :approxAxioms)
+    proofByFixpointInduction :: TM ProofType
+    proofByFixpointInduction = undefined
+
+    proofByApproxLemma :: TM [ProofType]
+    proofByApproxLemma
+       | concreteType resTy = locally $ do
+             let f = "a.f"
+             addFuns [(f,1)]
+             (approx,approxAxioms) <- approximate f resTy
+             hyp <- locally $ do
+                       lhs' <- translateExpr (App f [lhs])
+                       rhs' <- translateExpr (App f [rhs])
+                       forallUnbound (lhs' === rhs')
+             step <- locally $ do
+                       lhs' <- translateExpr (App approx [lhs])
+                       rhs' <- translateExpr (App approx [rhs])
+                       forallUnbound (lhs' === rhs')
+             dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
+             dbproof $ "Approx lemma step: " ++ prettyTPTP step
+             return $ [ApproxLemma (Axiom (fname ++ "approxhyp") hyp
+                                  :Conjecture (fname ++ "approxstep") step
+                                  :approxAxioms)]
+       | otherwise = return []
 
     proofBySimpleInduction :: Bool -> (VarName,Type) -> TM ProofType
     proofBySimpleInduction addBottom (v,t) = do
@@ -146,7 +148,7 @@ prove fname typedArgs resTy lhs rhs = locally $ do
         skolems <- mapM (skolemize . fst) args
         steps <- zipWithM negInductionStep args skolems
         absurd <- Neg <$> instantiatePs [zipWith (\(v,_) sv -> (v,Var sv)) args skolems]
-        write $ "Proof by neg induction on " ++ show argSubset ++ " done."
+        dbproof $ "Proof by neg induction on " ++ show argSubset ++ " done."
         return $ NegInduction (map fst args)
                               [Axiom (fname ++ "negind") (foldr (/\) absurd steps)]
 {-        absurd <- Axiom (fname ++ "negind") . Neg

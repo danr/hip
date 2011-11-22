@@ -6,8 +6,9 @@
 module Autospec.ToFOL.Monad
        (TM()
        ,runTM
-       ,Debug
        ,write
+       ,warn
+       ,dbproof
        ,writeDelimiter
        ,indented
        ,popDebug
@@ -43,6 +44,7 @@ import Autospec.ToFOL.Core
 import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.Constructors
 import Autospec.ToFOL.ProofDatatypes
+import Autospec.Messages
 import Autospec.Util (isOp)
 
 import qualified Language.TPTP as T
@@ -101,9 +103,6 @@ initSt = St { _arities     = M.empty
             , _types       = M.empty
             }
 
--- | The type of debug messages
-type Debug = [String]
-
 data St = St { _arities     :: Map Name Int
                -- ^ Arity of functions and constructors
              , _conProj     :: Map Name [Name]
@@ -118,7 +117,7 @@ data St = St { _arities     :: Map Name Int
                -- ^ TPTP name of funs/costr and quantified variables
              , _quantified  :: Set VarName
                -- ^ Variables to quantify over
-             , _debug       :: Debug
+             , _debug       :: [Msg]
                -- ^ Debug messages
              , _debugIndent :: Int
                -- ^ Indentation depth for debug messages
@@ -140,7 +139,13 @@ write = TM . write'
 write' :: (MonadState St m) => String -> m ()
 write' s = do
   i <- gets debugIndent
-  modify debug ((replicate (i*2) ' ' ++ s):)
+  modify debug (dbfolMsg (replicate (i*2) ' ' ++ s):)
+
+warn :: String -> TM ()
+warn s = TM $ modify debug (warnMsg s:)
+
+dbproof :: String -> TM ()
+dbproof s = TM $ modify debug (dbproofMsg s:)
 
 -- | Do an action with indented debug messages
 indented :: TM a -> TM a
@@ -151,14 +156,14 @@ indented (TM m) = TM $ do
   return r
 
 -- | Pop and return the debug messages
-popDebug :: TM Debug
+popDebug :: TM [Msg]
 popDebug = TM $ do
   r <- reverse <$> gets debug
   puts debug []
   return r
 
 -- | Perform an action and pop its debug messages and return in a tuple
-returnWithDebug :: TM a -> TM (a,Debug)
+returnWithDebug :: TM a -> TM (a,[Msg])
 returnWithDebug m = liftM2 (,) m popDebug
 
 -- | Locally manipulate boundNames, and arities since skolem variables

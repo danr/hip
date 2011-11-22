@@ -20,6 +20,7 @@ data ProofType = Plain [T.Decl]
                | NegInduction [Name] [T.Decl]
                | Induction Bool [Name] [IndPart]
                | ApproxLemma [T.Decl]
+               | FixpointInduction { base :: [T.Decl], ind :: [T.Decl] }
   deriving (Eq,Ord,Show)
 
 data IndPart = IndPart { indVarCon :: [Name]

@@ -10,13 +10,14 @@ import Autospec.FromHaskell.Names
 import Autospec.FromHaskell.Monad
 import Autospec.FromHaskell.Vars
 
+import Autospec.Messages
 import Autospec.Util (concatMapM)
 import Autospec.ToFOL.Pretty
 
 import Control.Applicative
 import Control.Monad
 
-import Data.List (groupBy,(\\))
+import Data.List (groupBy,(\\),intercalate)
 import Data.Function (on)
 import Data.Maybe (fromMaybe)
 
@@ -26,14 +27,14 @@ run f = do
   case r of
     ParseOk m -> do
       let (res,msgs) = runFH (fromModule m)
-      mapM_ putStrLn msgs
+      mapM_ print msgs
       putStrLn ""
       case res of
         Left err -> putStrLn err
         Right ds -> mapM_ (putStrLn . prettyCore) ds
     ParseFailed loc s -> putStrLn $ show loc ++ ": " ++ s
 
-parseHaskell :: String -> (Either String [C.Decl],[String])
+parseHaskell :: String -> (Either String [C.Decl],[Msg])
 parseHaskell s =
   let r = parseModule s in
   case r of
@@ -41,7 +42,12 @@ parseHaskell s =
     ParseFailed loc s -> (Left ("Parse fail " ++ show loc ++ ": " ++ s),[])
 
 indented :: String -> String
-indented = unlines . map ("    " ++) . lines
+indented = intercalate "\n" . map ("    " ++) . lines . dropWhitestuff
+  where
+    dropWhitestuff s
+       | length (filter (== '\n') s) <= 1 = dropWhile (`elem` " \n\t") s
+       | otherwise = s
+
 
 fromModule :: Module -> FH ()
 fromModule (Module _loc _name _pragmas _warns _ex _im decls) = do
@@ -110,8 +116,8 @@ fromDecl d = case d of
   TypeSig _loc names ty -> do ty' <- fromType ty
                               mapM_ (\n -> decl $ TyDecl (fromName n) ty') names
   e -> do
-    warn $ "Nothing produced for declaration: \n" ++ indented (prettyPrint e)
-    write $ indented (show e)
+    warn $ "Nothing produced for declaration: "
+           ++ indented (prettyPrint e) -- ++ indented (show e)
 
 -- Functions --------------------------------------------------------------------
 

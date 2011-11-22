@@ -23,12 +23,12 @@ type Problem = (String,FilePath,String)
 type Res     = (String,ProverResult)
 
 runProvers :: Int -> Int -> Maybe FilePath -> [Problem] -> IO [Res]
-runProvers processes timeout store problems = do
+runProvers processes timeout output problems = do
   probChan <- newChan
   mapM_ (writeChan probChan) problems
   resChan <- newChan
   ps <- replicateM processes $
-             forkIO (worker timeout store probChan resChan)
+             forkIO (worker timeout output probChan resChan)
   res <- getResults (length problems) resChan
   mapM_ killThread ps
   return res
@@ -41,7 +41,7 @@ getResults n ch = do
     rest `seq` return (res : rest)
 
 worker :: Int -> Maybe FilePath -> Chan Problem -> Chan Res -> IO ()
-worker timeout store probChan resChan = forever $ do
+worker timeout output probChan resChan = forever $ do
   (name,fname,str) <- readChan probChan
 --   putStrLn $ "Working on " ++ name
   mvar <- newEmptyMVar
@@ -53,7 +53,7 @@ worker timeout store probChan resChan = forever $ do
                      terminateProcess pid
 --                     putStrLn $ name ++ "killed"
                      putMVar mvar Timeout
-  maybe (return ()) (\d -> writeFile (d ++ fname) str) store
+  maybe (return ()) (\d -> writeFile (d ++ fname) str) output
   r <- takeMVar mvar
   killThread kid
   killThread tid

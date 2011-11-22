@@ -445,3 +445,7 @@ prop_map_id xs = prove (map id xs =:= xs)
 prop_filter_double_pred :: (a -> Bool) -> (a -> Bool) -> [a] -> Prop [a]
 prop_filter_double_pred p q xs = prove (filter p (filter q xs) =:=
                                         filter (\x -> p x && q x) xs)
+
+prop_len_plus_list_homomorphism :: [a] -> [a] -> Prop Nat
+prop_len_plus_list_homomorphism xs ys =
+  prove (len (xs ++ ys) =:= len xs + len ys)

@@ -80,7 +80,7 @@ instance FV Decl where
     PatBind loc p mtype rhs bs -> case p of
       PVar n -> fv (Match loc n [] mtype rhs bs)
       _      -> fatal $ "FV on top level pattern: " ++ show p
-    _ -> warn ("Assumes decl: " ++ show d ++ " contains no FV") >> none
+    _ -> debug ("Assumes decl: " ++ show d ++ " contains no FV") >> none
 
 instance FV Match where
   fv (Match _loc n ps _mtype rhs bs) = do
@@ -138,7 +138,7 @@ instance BV Decl where
     PatBind _loc p _mtype _rhs _bs -> case p of
       PVar n -> retName n
       _ -> fatal $ "BV on top level pattern: " ++ show p
-    _ -> warn ("Assumes decl: " ++ show d ++ " contains no BV") >> none
+    _ -> debug ("Assumes decl: " ++ show d ++ " contains no BV") >> none
 
 instance BV Match where
   -- Handle binds?

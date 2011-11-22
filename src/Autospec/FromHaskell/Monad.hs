@@ -2,6 +2,8 @@
 module Autospec.FromHaskell.Monad where
 
 import Autospec.ToFOL.Core as C
+import Autospec.Messages
+
 import Language.Haskell.Exts as H hiding (Name,Decl)
 
 import Control.Applicative
@@ -46,14 +48,14 @@ getDatas = S.toList <$> gets datatypes
 initEnv :: Env
 initEnv = Env { _scopeName = [] }
 
-newtype FH a = FH (ErrorT String (RWS Env [Either String Decl] St) a)
+newtype FH a = FH (ErrorT String (RWS Env [Either Msg Decl] St) a)
   deriving(Functor,Applicative,Monad
-          ,MonadWriter [Either String Decl]
+          ,MonadWriter [Either Msg Decl]
           ,MonadReader Env
           ,MonadState St
           ,MonadError String)
 
-runFH :: FH () -> (Either String [Decl],[String])
+runFH :: FH () -> (Either String [Decl],[Msg])
 runFH (FH m) = case evalRWS (runErrorT m) initEnv initSt of
   (r,w) -> let (msgs,decls) = partitionEithers w
            in  (case r of
@@ -113,11 +115,11 @@ newUnique = do
   puts namesupply xs
   return x
 
-write :: String -> FH ()
-write = tell . return . Left
+_write :: Msg -> FH ()
+_write = tell . return . Left
 
 warn :: String -> FH ()
-warn = write . ("Warning: " ++)
+warn = _write . warnMsg
 
 fatal :: String -> FH a
 fatal = throwError . ("Fatal: " ++)
@@ -126,4 +128,4 @@ decl :: Decl -> FH ()
 decl = tell . return . Right
 
 debug :: String -> FH ()
-debug = write . ("Debug: " ++)
+debug = _write . dbfhMsg
