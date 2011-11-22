@@ -84,10 +84,8 @@ prepareProofs ds =
                                    TyCon t ts -> t : concatMap getTypes ts
                                    TyVar _    -> []
                  typesFromSig = getTypes sigty
-             dbproof "Iterating FCs"
-             (fs,cs')  <- iterateFCs (fsd S.\\ S.fromList proveFunctions)
-             dbproof "Iteration complete"
-             let cs        = S.insert bottomName $ csd `S.union` cs'
+                 (fs,cs') = iterateFCs (fsd S.\\ S.fromList proveFunctions)
+                 cs        = S.insert bottomName $ csd `S.union` cs'
                  datadecls = filterDatas typesFromSig cs dataDecls
                  fundecls  = filterFuns  fs funDecls
                  funs      = map (declName &&& length . declArgs) funDecls
@@ -120,12 +118,9 @@ prepareProofs ds =
     filterFuns :: Set Name -> [Decl] -> [Decl]
     filterFuns fs = filter ((`S.member` fs) . declName)
 
-    iterateFCs :: Set Name -> TM (Set Name,Set Name)
-    iterateFCs fs | S.null newfs = return (fs,cs)
-                  | otherwise    = dbproof (show fs') >> iterateFCs fs'
-                                {- let (fs'',cs') = iterateFCs fs'
-                                   in  (S.unions [fs,fs',fs'']
-                                       ,S.unions [cs,cs']) -}
+    iterateFCs :: Set Name -> (Set Name,Set Name)
+    iterateFCs fs | S.null newfs = (fs,cs)
+                  | otherwise    = iterateFCs (fs `S.union` fs')
         -- Get the new functions from here
         where fs',cs :: Set Name
               (fs',cs) = (S.unions *** S.unions)
