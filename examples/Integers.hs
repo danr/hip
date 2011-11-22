@@ -4,6 +4,7 @@ module Integers where
 
 import Prelude ()
 
+infix 1 =:=
 type Prop a = a
 prove = prove
 (=:=) = (=:=)
