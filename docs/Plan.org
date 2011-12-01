@@ -3,7 +3,13 @@
 #+EMAIL:     danr@student.gu.se
 #+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
-#+LATEX_HEADER: \usepackage{fullpage}
+#+LATEX_HEADER: \usepackage{fullpage,listings,courier}
+
+\lstdefinestyle{numbers}{numberstyle=\tiny}
+\lstset{basicstyle=\ttfamily}
+\lstset{showstringspaces=false}
+\lstloadlanguages{haskell,tptp}
+
 
 * Github repo
 [[http://github.com/danr/autospec/][Link to the github repository.]]
@@ -61,11 +67,15 @@ be stored to avoid recalulation and to avoid termination issues.
 *** TODO Tidy up code and comment
 *** TODO Generate code and test
 *** TODO Pattern binds
+#+BEGIN_SRC haskell
 (x,y) = e
+#+END_SRC
 Here, x and y can occur in e. This can be translated with
+#+BEGIN_SRC haskell
 e' x y = e
 x = case e' x y of (x,y) -> x
 y = case e' x y of (x,y) -> y
+#+END_SRC
 In a let/where stmt there can of course be more free variables in e.
 *** Future plans:
 Just a reminder what is not currently subject for translation
@@ -159,8 +169,10 @@ Solved by generating the approximation code. This was really simple.
 
 This could be triggered by
 
+#+BEGIN_SRC haskell
 prop_map_iterate :: (a -> a) -> a -> Prop (Approx (List a))
 prop_map_iterate f x = prove (map f (iterate f x) :=: iterate f (f x))
+#+END_SRC
 
 where type Approx a = a or some equivalent. Maybe it isn't necessary
 to add: no types are concrete so you only option is to use
@@ -192,8 +204,10 @@ CLOSED: [2011-11-21 Mon 15:16]
 Don't introduce a new pointer name, rather introduce a new function
 with arity 1. Approximation lemma for lists then becomes:
 
+#+BEGIN_SRC haskell
 approx([]) = []
 approx(x:xs) = x : h xs
+#+END_SRC
 
 Hypothesis: axiom , h lhs = h rhs
 Step: conjecture , approx lhs = approx rhs
@@ -201,17 +215,21 @@ Step: conjecture , approx lhs = approx rhs
 Futhermore, it is possible to inline the whole definition of approx
 instead of treating this as a function.
 *** Negated induction nat machine
+#+BEGIN_SRC tptp
 ~P(a)
 a = zero | P(pred(a))
 a = zero | a = succ(zero) | P(pred(pred(a))
 % ^ P(pred(a)) comes from above if a = succ(zero)
+#+END_SRC
 
 ...
 
+#+BEGIN_SRC tptp
 ~P(a)
 Q(x,y)    => a = x    | Q(succ(x),pred(y))
 Q(zero,y) => a = zero | P(pred(y))
 Q(zero,a)
+#+END_SRC
 
 (I think I remember correctly)
 However, this is pretty difficult to generalize to datatypes with
@@ -232,26 +250,33 @@ P(bottom) & (P(plus') => P(plus))
 **** Weird datatypes
 Like the domain for lambda calculus:
 
+#+BEGIN_SRC haskell
 data D = Fun (D -> D) | Bottom
 compile :: Expr -> D
+#+END_SRC
 *** Lexicographic induction
-(x,y) <= (x',y') iff x <= x' | (x = x' & y <= y')
+$(x,y) \le (x',y')$ iff $x \le x' \vee (x = x' & y \le y')$
 
 This does not give a normal "induction matrix", but these proof
 obligations:
 
+#+BEGIN_SRC tptp
 P(zero)
-![y,y'] : P(x,y) => P(suc(x),y')     % or y == y'?
+![y,y'] : P(x,y) => P(suc(x),y')      or y == y'?
 ![x] : P(x,y) => P(x,suc(y))
+#+END_SRC
 
 Um, is this right? I'm a bit confused now.
 *** Symmetric induction for commutativity
+#+BEGIN_SRC tptp
 P(zero,zero)
 P(m,zero) => P(suc(m),zero)
 P(zero,n) => P(zero,suc(n))
 P(m,n) & P(suc(m),n) & P(m,suc(n)) => P(suc(m),suc(n))
+#+END_SRC
 
 For trees data T = T * T | L the two * case is:
+#+BEGIN_SRC tptp
 axioms: P(a,c)
         P(a,d)
         P(b,c)
@@ -261,6 +286,7 @@ axioms: P(a,c)
         P(a,c*d)
         P(b,c*d)
 negated_conjecture: ~ P(a*b,c*d)
+#+END_SRC
 *** Recursion induction (Plotkin)
 To prove x + y = y + x try to prove it with +~ defined as
 

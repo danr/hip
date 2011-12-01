@@ -69,9 +69,8 @@ prove :: [Decl]
       -- ^ Resulting instructions how to do proof declarations for this
 prove fundecls resTy fname typedArgs lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
-        simpleindbottom = map (proofBySimpleInduction True) indargs
-        simpleind       = map (proofBySimpleInduction False) indargs
-    in  proofByFixpointInduction -- proofByApproxLemma ++ simpleindbottom ++ simpleind
+        simpleind       = map proofBySimpleInduction indargs
+    in  proofByFixpointInduction ++ proofByApproxLemma ++ simpleind
   where
     accompanyParts :: ProofType -> TM [ProofPart] -> TM ProofDecl
     accompanyParts prooftype partsm = do
@@ -91,13 +90,13 @@ prove fundecls resTy fname typedArgs lhs rhs =
                 faxioms <- concatMapM (fmap snd . translate) fundecls'
                 return $ map (extendProofPart faxioms) parts))
 
-    decorateArg :: Bool -> (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
-    decorateArg addBottom (n,TyCon t _) = do
+    decorateArg :: (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
+    decorateArg (n,TyCon t _) = do
        -- t is for instance Nat or List a
        -- cs is for instance (Zero :: Nat,Succ :: Nat -> Nat) or
        --                    (Nil :: [a],Cons :: a -> [a] -> [a])
        dbproof "Lookup constructors from decorateArg"
-       cs <- (if addBottom then (bottomName:) else id) <$> lookupConstructors t
+       cs <- (bottomName:) <$> lookupConstructors t
 
        lr <- forM cs $ \c -> do
                  mct <- lookupType c
@@ -109,16 +108,14 @@ prove fundecls resTy fname typedArgs lhs rhs =
 
        dbproof $ "decorateArg, " ++ n ++ " : " ++ show lr
        return (n,lr)
-    decorateArg _ (n,t) = error $ "decorateArg " ++ n
+    decorateArg (n,t) = error $ "decorateArg " ++ n
                               ++ " on non-concrete type " ++ show t
 
-    proofBySimpleInduction :: Bool -> (VarName,Type) -> TM ProofDecl
-    proofBySimpleInduction addBottom (v,t) = accompanyParts proofType $ do
-        (_,cons) <- decorateArg addBottom (v,t)
+    proofBySimpleInduction :: (VarName,Type) -> TM ProofDecl
+    proofBySimpleInduction (v,t) = accompanyParts (SimpleInduction v) $ do
+        (_,cons) <- decorateArg (v,t)
         mapM (uncurry (inductionPart v) . either id id) cons
       where
-        proofType | addBottom = SimpleInduction v
-                  | otherwise = FiniteSimpleInduction v
 
     inductionPart :: Name -> ConName -> [Rec] -> TM ProofPart
     inductionPart v c recArgs = do
@@ -128,7 +125,7 @@ prove fundecls resTy fname typedArgs lhs rhs =
                        | (s,b) <- zip skolems recArgs, b ]
         is <- Conjecture ("indstep" ++ v)
                      <$> instantiatePs [[(v,Con c (map Var skolems))]]
-        return (ProofPart c (is:ih))
+        return (ProofPart c (is:ih) (if c == bottomName then InfiniteFail else Fail))
 
     instantiatePs :: [[(VarName,Expr)]] -> TM T.Formula
     instantiatePs bindss = locally $ do
@@ -155,7 +152,7 @@ prove fundecls resTy fname typedArgs lhs rhs =
                        forallUnbound (lhs' === rhs')
              dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
              dbproof $ "Approx lemma step: " ++ prettyTPTP step
-             return $ [ProofPart "step"
+             return $ [proofPart "step"
                                  (Axiom ("approxhyp") hyp
                                  :Conjecture ("approxstep") step
                                  :approxAxioms)]
@@ -176,12 +173,12 @@ prove fundecls resTy fname typedArgs lhs rhs =
             in  [(fundeclsBase,do
                    addFuns [(bottomFunName,arityLookup f)]
                    pbottom <- instantiateP [(f,bottomFunName)]
-                   return $ [ProofPart "base" [Conjecture "fixbase" pbottom]])
+                   return $ [proofPart "base" [Conjecture "fixbase" pbottom]])
                 ,(fundeclsStep,do
                    addFuns [(f',arityLookup f)]
                    phyp <- instantiateP [(f,f')]
                    pstep <- instantiateP []
-                   return $ [ProofPart "step" [Axiom      "fixhyp"  phyp
+                   return $ [proofPart "step" [Axiom      "fixhyp"  phyp
                                               ,Conjecture "fixstep" pstep
                                               ]])
                ]

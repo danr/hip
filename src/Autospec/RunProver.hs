@@ -19,8 +19,16 @@ instance Show ProverResult where
   show Falsifiable = "false"
   show Unknown     = "?"
 
-type Problem = (String,FilePath,String)
-type Res     = (String,ProverResult)
+type Problem = Principle String
+type Res     = Principle ProverResult
+
+
+
+data Problem = Problem { problemType     :: ProofType
+                       , problemName     :: Name
+                       , problemAxioms   :: String
+                       , problemFilepath :: FilePath
+                       }
 
 runProvers :: Int -> Int -> Maybe FilePath -> [Problem] -> IO [Res]
 runProvers processes timeout output problems = do

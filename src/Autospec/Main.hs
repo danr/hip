@@ -130,19 +130,18 @@ proveAll processes timeout output file proofs = do
   (fails,ok) <- partitionEithers <$> (forM proofs $
       \(ProofDecl fname proofType axioms parts) -> do
            let axiomsStr = prettyTPTP axioms
-           whenNormal $ putStr $ "Trying " ++ fname
-                              ++ " using " ++ show proofType ++ ": "
+           whenNormal $ putStr $ fname ++ ", " ++ show proofType ++ ": "
            r <- prove axiomsStr proofType fname parts
            whenNormal $ putStrLn (if r then "\tTheorem!" else "")
            return (putEither r fname))
   whenNormal $ putStrLn $ "Succeded : " ++ unwords ok
   whenNormal $ putStrLn $ "Failed : " ++ unwords fails
   putStrLn $ file ++ ": " ++ show (length ok) ++ "/"
-                          ++ show (length (ok ++ fails)) -- list homomorphism!
+                          ++ show (length (ok ++ fails))
   where
     prove :: String -> ProofType -> String -> [ProofPart] -> IO Bool
     prove axiomsStr proofType name parts = do
-              let probs = flip map parts $ \(ProofPart partname decls) ->
+              let probs = flip map parts $ \(ProofPart partname decls failure) ->
                             (partname
                             ,file ++ "_" ++ name ++ "_"
                                   ++ proofTypeFile proofType ++ "_"
