@@ -39,6 +39,7 @@ proofTypeFile pt = case pt of
 data Principle k = Principle { principleName  :: Name
                              , principleType  :: ProofType
                              , principleDecor :: k
+                             , principleCode  :: String
                              , principleParts :: [Part k]
                              }
   deriving (Eq,Ord,Show,Functor)
@@ -53,7 +54,7 @@ data Part k = Part { partName  :: Name
 
 type ProofPart = Part [T.Decl]
 
-proofDecl :: Name -> ProofType -> [T.Decl] -> [ProofPart] -> ProofDecl
+proofDecl :: Name -> ProofType -> [T.Decl] -> String -> [ProofPart] -> ProofDecl
 proofDecl = Principle
 
 proofPart :: Name -> [T.Decl] -> ProofPart

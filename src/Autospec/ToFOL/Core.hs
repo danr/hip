@@ -220,7 +220,7 @@ recursiveArgs _          = []
 
  f u1 ... un = case Tn u1 .. un of
                    Tn p11 ... p1n | g1 -> e1
-                   ...p
+                   ...
                    Tn pk1 ... pkn | gk -> ek
 
  The corresponding function call is

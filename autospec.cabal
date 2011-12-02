@@ -25,5 +25,5 @@ executable          autospec
                  , QuickCheck                    >= 2.0
                  , th-lift                       >= 0.5
                  , fclabels                      >= 1.0
-                 , containers                    >= 0.4
+                 , containers                    >= 0.3
                  , cmdargs                       >= 0.9

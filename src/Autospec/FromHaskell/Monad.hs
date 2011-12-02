@@ -4,7 +4,7 @@ module Autospec.FromHaskell.Monad where
 import Autospec.ToFOL.Core as C
 import Autospec.Messages
 
-import Language.Haskell.Exts as H hiding (Name,Decl)
+import Language.Haskell.Exts as H hiding (Name,Decl,binds)
 
 import Control.Applicative
 import Control.Monad.Error

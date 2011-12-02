@@ -21,8 +21,8 @@ import System.IO
 import Control.Monad
 import Control.Applicative
 import Data.Function
-import Data.List (isSuffixOf,groupBy)
-import Data.Either (partitionEithers)
+import Data.Ord (comparing)
+import Data.List (isSuffixOf,groupBy,find,sortBy)
 
 data Params = Params { files     :: [FilePath]
                      , processes :: Int
@@ -129,40 +129,18 @@ proveAll processes timeout output file proofs = do
                 putStrLn $ "Output directory is " ++ show output
   hSetBuffering stdout NoBuffering
   res <- runProvers processes timeout output (map (fmap prettyTPTP) proofs)
-  let resgroups = groupBy ((==) `on` principleName) res
-  forM_ resgroups $ \grp@(Principle name _ _ _:_) -> do
-      putStrLn $ "\n" ++ name ++ ": " ++ show (statusFromGroup grp)
-      forM_ grp $ \(Principle name ptype res parts) -> do
+  let resgroups = groupBy ((==) `on` principleName)
+                $ sortBy  (comparing principleName) res
+  forM_ resgroups $ \grp@(Principle name _ _ _ _:_) -> do
+      let Just (Principle _ _ _ pstr _) = find ((name ==) . principleName) proofs
+      putStrLn $ "\n" ++ name
+      putStrLn $ pstr
+      putStrLn $ "Status: " ++ show (statusFromGroup grp)
+      forM_ grp $ \(Principle name ptype res _ parts) -> do
            putStrLn $ "    " ++ show ptype ++ ": " ++ show res
            putStr "        "
            forM_ parts $ \(Part pname pres _) ->
                putStr $ pname ++ ": " ++ show pres ++ " "
            putStrLn ""
-
-
-
-{-
-  (fails,ok) <- partitionEithers <$> (forM proofs $
-      \(ProofDecl fname proofType axioms parts) -> do
-           let axiomsStr = prettyTPTP axioms
-           whenNormal $ putStr $ fname ++ ", " ++ show proofType ++ ": "
-           r <- prove axiomsStr proofType fname parts
-           whenNormal $ putStrLn (if r then "\tTheorem!" else "")
-           return (putEither r fname))
-  whenNormal $ putStrLn $ "Succeded : " ++ unwords ok
-  whenNormal $ putStrLn $ "Failed : " ++ unwords fails
-  putStrLn $ file ++ ": " ++ show (length ok) ++ "/"
-                          ++ show (length (ok ++ fails))
-  where
-    prove :: String -> ProofType -> String -> [ProofPart] -> IO Bool
-    prove axiomsStr proofType name parts = do
-              let probs = flip map parts $ \(ProofPart partname decls failure) ->
-                            (partname
-                            ,file ++ "_" ++ name ++ "_"
-                                  ++ proofTypeFile proofType ++ "_"
-                                  ++ partname ++ ".tptp"
-                            ,axiomsStr ++ prettyTPTP decls)
-              all ((== Theorem) . snd) <$>
-                  echo (runProvers processes timeout output probs)
-
--}
+   -- Statistics
+   -- Theorems/FiniteTheorems/All

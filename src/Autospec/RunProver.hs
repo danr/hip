@@ -51,7 +51,7 @@ runProvers processes timeout output problems = do
     probChan <- newChan
     sequence_ [ writeChan probChan ((name,ptype)
                                    ,Part partName (str ++ str') pfail)
-              | Principle name ptype str parts <- problems
+              | Principle name ptype str _ parts <- problems
               , Part partName str' pfail <- parts
               ]
 --    mapM_ (writeChan probChan) problems
@@ -73,7 +73,7 @@ getResults ch probs = do
  --   putStrLn "Getting from chan..."
     map fromJust . takeWhile isJust <$> getChanContents out
   where probmap = M.fromList [ ((n,t),length parts)
-                             | Principle n t _ parts <- probs
+                             | Principle n t _  _ parts <- probs
                              ]
 
 flattenRes :: Part ProverResult -> ProverResult
@@ -92,7 +92,12 @@ resFromParts :: [Part ProverResult] -> ProverResult
 resFromParts = combineRes . map flattenRes
 
 statusFromGroup :: [Res] -> ProverResult
-statusFromGroup = combineRes . map principleDecor
+statusFromGroup (map principleDecor -> rs)
+   | any (Theorem ==) rs       = Theorem
+   | any (FiniteTheorem ==) rs = FiniteTheorem
+   | any (Falsifiable ==) rs   = Falsifiable
+   | any (Unknown ==) rs       = Unknown
+   | otherwise                 = Timeout
 
 getResults' :: ResChan
             -> OutChan      -- ^ We need this channel to get some laziness
@@ -115,6 +120,7 @@ getResults' ch out = mif (M.null <$> gets fst)
                                   lift $ writeChan out $ Just $
                                       Principle (fst desc) (snd desc)
                                                 (resFromParts parts)
+                                                (error "getResults': pretty proof lost")
                                                 parts
          Nothing        -> error $ "Problem " ++ show desc ++ "not left in map?!"
     getResults' ch out

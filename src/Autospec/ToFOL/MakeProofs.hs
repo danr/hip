@@ -72,16 +72,19 @@ prove fundecls resTy fname typedArgs lhs rhs =
         simpleind       = map proofBySimpleInduction indargs
     in  proofByFixpointInduction ++ proofByApproxLemma ++ simpleind
   where
+    pstr :: String
+    pstr = prettyCore lhs ++ " = " ++ prettyCore rhs
+
     accompanyParts :: ProofType -> TM [ProofPart] -> TM ProofDecl
     accompanyParts prooftype partsm = do
         let funs = map (declName &&& length . declArgs) fundecls
         addFuns funs
         faxioms <- concatMapM (fmap snd . translate) fundecls
         parts   <- partsm
-        return $ proofDecl fname prooftype faxioms parts
+        return $ proofDecl fname prooftype faxioms pstr parts
 
     accompanyPartsWithDecls :: ProofType -> [([Decl],TM [ProofPart])] -> TM ProofDecl
-    accompanyPartsWithDecls prooftype tup = proofDecl fname prooftype [] <$>
+    accompanyPartsWithDecls prooftype tup = proofDecl fname prooftype [] pstr <$>
         (flip concatMapM tup (\(fundecls',partms) -> do
             let funs = map (declName &&& length . declArgs) fundecls'
             addFuns funs
