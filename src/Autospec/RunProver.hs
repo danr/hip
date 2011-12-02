@@ -1,71 +1,146 @@
+{-# LANGUAGE ViewPatterns #-}
+-- This module could probably be done very generically, as a framework
+-- for spawning of a lot of processes to yield results, and combine
+-- them. Nice hackage package? Also, processes could be spawned on
+-- many different computers, as MPI for C++.
 module Autospec.RunProver where
+
+import Autospec.Util (mif)
+import Autospec.ToFOL.ProofDatatypes
+import Autospec.ToFOL.Core
 
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Control.Concurrent
 import Control.Monad
+import Control.Arrow (first,second)
+import Control.Monad.State
+import Control.Applicative
 
 import System.Process
 import System.IO
 import System.Exit
 import Data.List
+import Data.Maybe
 
-data ProverResult = Timeout | Theorem | Falsifiable | Unknown
+import qualified Data.Map as M
+import Data.Map (Map)
+
+import System.Console.CmdArgs
+
+-- Finite Theorem is actually not a result from the prover
+data ProverResult = Timeout | Theorem | Falsifiable | Unknown | FiniteTheorem
   deriving (Eq,Ord)
 
 instance Show ProverResult where
-  show Timeout     = "timeout"
-  show Theorem     = "ok"
-  show Falsifiable = "false"
-  show Unknown     = "?"
+  show Timeout       = "timeout"
+  show Theorem       = "Theorem"
+  show Falsifiable   = "False"
+  show Unknown       = "???"
+  show FiniteTheorem = "Finite Theorem"
 
+type ProbDesc = (Name,ProofType)
 type Problem = Principle String
 type Res     = Principle ProverResult
 
-
-
-data Problem = Problem { problemType     :: ProofType
-                       , problemName     :: Name
-                       , problemAxioms   :: String
-                       , problemFilepath :: FilePath
-                       }
+type ResChan  = Chan (ProbDesc,Part ProverResult)
+type ProbChan = Chan (ProbDesc,Part String)
 
 runProvers :: Int -> Int -> Maybe FilePath -> [Problem] -> IO [Res]
 runProvers processes timeout output problems = do
-  probChan <- newChan
-  mapM_ (writeChan probChan) problems
-  resChan <- newChan
-  ps <- replicateM processes $
-             forkIO (worker timeout output probChan resChan)
-  res <- getResults (length problems) resChan
-  mapM_ killThread ps
-  return res
+    probChan <- newChan
+    sequence_ [ writeChan probChan ((name,ptype)
+                                   ,Part partName (str ++ str') pfail)
+              | Principle name ptype str parts <- problems
+              , Part partName str' pfail <- parts
+              ]
+--    mapM_ (writeChan probChan) problems
+    resChan <- newChan
+    ps <- replicateM processes $
+               forkIO (worker timeout output probChan resChan)
+    res <- getResults resChan problems
+    mapM_ killThread ps
+    return res
 
-getResults :: Int -> Chan Res -> IO [Res]
-getResults 0 _  = return []
-getResults n ch = do
-    rest <- getResults (n-1) ch
-    res  <- readChan ch
-    rest `seq` return (res : rest)
+type OutChan = Chan (Maybe Res)
 
-worker :: Int -> Maybe FilePath -> Chan Problem -> Chan Res -> IO ()
+getResults :: ResChan -> [Problem] -> IO [Res]
+getResults ch probs = do
+    out <- newChan
+    -- I was once able to fork this in another thread,
+    -- but now it gives mea a thread blocked indefinitely in MVar operation
+    evalStateT (getResults' ch out) (probmap,M.empty)
+ --   putStrLn "Getting from chan..."
+    map fromJust . takeWhile isJust <$> getChanContents out
+  where probmap = M.fromList [ ((n,t),length parts)
+                             | Principle n t _ parts <- probs
+                             ]
+
+flattenRes :: Part ProverResult -> ProverResult
+flattenRes (Part _ Timeout InfiniteFail) = FiniteTheorem
+flattenRes (Part _ r _)                = r
+
+combineRes :: [ProverResult] -> ProverResult
+combineRes rs
+   | all ((Theorem ==))                                 rs = Theorem
+   | all ((||) <$> (Theorem ==) <*> (FiniteTheorem ==)) rs = FiniteTheorem
+   | any (Falsifiable ==)                               rs = Falsifiable
+   | any (Unknown ==)                                   rs = Unknown
+   | otherwise                                             = Timeout
+
+resFromParts :: [Part ProverResult] -> ProverResult
+resFromParts = combineRes . map flattenRes
+
+statusFromGroup :: [Res] -> ProverResult
+statusFromGroup = combineRes . map principleDecor
+
+getResults' :: ResChan
+            -> OutChan      -- ^ We need this channel to get some laziness
+            -> StateT (Map ProbDesc Int,Map ProbDesc [Part ProverResult])
+                      IO
+                      ()
+getResults' ch out = mif (M.null <$> gets fst)
+                         (lift $ writeChan out Nothing) $ do
+    (desc@(name,ptype),res) <- lift $ readChan ch
+    let alterFun Nothing   = Just [res]
+        alterFun (Just rs) = Just (res:rs)
+    modify (second (M.alter alterFun desc))
+    left <- M.lookup desc <$> gets fst
+    lift $ whenLoud $ putStrLn $ name ++ ", " ++ show ptype ++ ": " ++ show (partDecor res)
+    case left of
+         Just x | x > 1 -> modify (first (M.adjust pred desc))
+                | otherwise -> do modify (first (M.delete desc))
+                                  Just parts <- M.lookup desc <$> gets snd
+--                                  lift $ putStrLn "Writing to chan..."
+                                  lift $ writeChan out $ Just $
+                                      Principle (fst desc) (snd desc)
+                                                (resFromParts parts)
+                                                parts
+         Nothing        -> error $ "Problem " ++ show desc ++ "not left in map?!"
+    getResults' ch out
+
+worker :: Int -> Maybe FilePath -> ProbChan -> ResChan -> IO ()
 worker timeout output probChan resChan = forever $ do
-  (name,fname,str) <- readChan probChan
---   putStrLn $ "Working on " ++ name
-  mvar <- newEmptyMVar
-  pvar <- newEmptyMVar
-  tid <- length str `seq` forkIO $ runProver str mvar pvar
-  kid <- forkIO $ do threadDelay (timeout * 1000)
-                     pid <- takeMVar pvar
-                     killThread tid
-                     terminateProcess pid
---                     putStrLn $ name ++ "killed"
-                     putMVar mvar Timeout
-  maybe (return ()) (\d -> writeFile (d ++ fname) str) output
-  r <- takeMVar mvar
-  killThread kid
-  killThread tid
-  writeChan resChan (name,r)
+    (desc@(name,ptype),Part pname str pfail) <- readChan probChan
+--     putStrLn $ "Working on " ++ name
+    mvar <- newEmptyMVar
+    pvar <- newEmptyMVar
+    tid <- length str `seq` forkIO $ runProver str mvar pvar
+    kid <- forkIO $ do threadDelay (timeout * 1000)
+                       pid <- takeMVar pvar
+                       killThread tid
+                       terminateProcess pid
+--                       putStrLn $ name ++ "killed"
+                       putMVar mvar Timeout
+    -- No handling of storing tptp messasges
+    let fname = name ++ "_" ++
+                proofTypeFile ptype ++ "_" ++
+                pname ++ ".tptp"
+    maybe (return ()) (\d -> writeFile (d ++ fname) str) output
+    res <- takeMVar mvar
+    killThread kid
+    killThread tid
+    writeChan resChan (desc,Part pname res pfail)
 
 runProver :: String -> MVar ProverResult -> MVar ProcessHandle -> IO ()
 runProver str mvar pvar = do

@@ -1,5 +1,5 @@
 module Autospec.Util
-       (selections,withPrevious,concatMapM,concatMaybe,isOp,putEither)
+       (selections,withPrevious,concatMapM,concatMaybe,isOp,putEither,mif)
        where
 
 import Data.Maybe
@@ -48,3 +48,9 @@ concatMaybe' ms | any isNothing ms = Nothing
 -- | Test equality of implementations
 prop_concats :: [Maybe [Bool]] -> Bool
 prop_concats ms = concatMaybe ms == concatMaybe' ms
+
+-- | Monadic if
+mif :: Monad m => m Bool -> m a -> m a -> m a
+mif mb mt mf = do
+   b <- mb
+   if b then mt else mf

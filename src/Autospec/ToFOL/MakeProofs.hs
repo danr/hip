@@ -78,10 +78,10 @@ prove fundecls resTy fname typedArgs lhs rhs =
         addFuns funs
         faxioms <- concatMapM (fmap snd . translate) fundecls
         parts   <- partsm
-        return $ ProofDecl fname prooftype faxioms parts
+        return $ proofDecl fname prooftype faxioms parts
 
     accompanyPartsWithDecls :: ProofType -> [([Decl],TM [ProofPart])] -> TM ProofDecl
-    accompanyPartsWithDecls prooftype tup = ProofDecl fname prooftype [] <$>
+    accompanyPartsWithDecls prooftype tup = proofDecl fname prooftype [] <$>
         (flip concatMapM tup (\(fundecls',partms) -> do
             let funs = map (declName &&& length . declArgs) fundecls'
             addFuns funs
@@ -125,7 +125,7 @@ prove fundecls resTy fname typedArgs lhs rhs =
                        | (s,b) <- zip skolems recArgs, b ]
         is <- Conjecture ("indstep" ++ v)
                      <$> instantiatePs [[(v,Con c (map Var skolems))]]
-        return (ProofPart c (is:ih) (if c == bottomName then InfiniteFail else Fail))
+        return (Part c (is:ih) (if c == bottomName then InfiniteFail else Fail))
 
     instantiatePs :: [[(VarName,Expr)]] -> TM T.Formula
     instantiatePs bindss = locally $ do

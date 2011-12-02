@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 module Autospec.ToFOL.ProofDatatypes where
 
 import qualified Language.TPTP as T
@@ -38,9 +39,9 @@ proofTypeFile pt = case pt of
 data Principle k = Principle { principleName  :: Name
                              , principleType  :: ProofType
                              , principleDecor :: k
-                             , principleParts :: [ProofPart]
+                             , principleParts :: [Part k]
                              }
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord,Show,Functor)
 
 type ProofDecl = Principle [T.Decl]
 
@@ -48,18 +49,21 @@ data Part k = Part { partName  :: Name
                    , partDecor :: k
                    , partFail  :: Failure
                    }
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord,Show,Functor)
 
 type ProofPart = Part [T.Decl]
 
+proofDecl :: Name -> ProofType -> [T.Decl] -> [ProofPart] -> ProofDecl
+proofDecl = Principle
+
 proofPart :: Name -> [T.Decl] -> ProofPart
-proofPart n d = ProofPart n d Fail
+proofPart n d = Part n d Fail
 
 extendProofDecls :: [T.Decl] -> ProofDecl -> ProofDecl
-extendProofDecls ts pd = pd { proofDecls = proofDecls pd ++ ts }
+extendProofDecls ts pd = pd { principleDecor = principleDecor pd ++ ts }
 
 extendProofPart :: [T.Decl] -> ProofPart -> ProofPart
-extendProofPart ts pp = pp { partDecls = partDecls pp ++ ts }
+extendProofPart ts pp = pp { partDecor = partDecor pp ++ ts }
 
 extendPrinciple :: Part k -> Principle k -> Principle k
-extendPrinciple pt pd = pd { principleParts = principleParts ++ [pt] }
+extendPrinciple pt pd = pd { principleParts = principleParts pd ++ [pt] }

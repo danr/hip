@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable, RecordWildCards, ViewPatterns #-}
 module Main where
 
 import qualified Language.TPTP as T
@@ -20,7 +20,8 @@ import System.IO
 
 import Control.Monad
 import Control.Applicative
-import Data.List (isSuffixOf)
+import Data.Function
+import Data.List (isSuffixOf,groupBy)
 import Data.Either (partitionEithers)
 
 data Params = Params { files     :: [FilePath]
@@ -127,6 +128,20 @@ proveAll processes timeout output file proofs = do
                 putStrLn $ "Timeout is " ++ show timeout
                 putStrLn $ "Output directory is " ++ show output
   hSetBuffering stdout NoBuffering
+  res <- runProvers processes timeout output (map (fmap prettyTPTP) proofs)
+  let resgroups = groupBy ((==) `on` principleName) res
+  forM_ resgroups $ \grp@(Principle name _ _ _:_) -> do
+      putStrLn $ "\n" ++ name ++ ": " ++ show (statusFromGroup grp)
+      forM_ grp $ \(Principle name ptype res parts) -> do
+           putStrLn $ "    " ++ show ptype ++ ": " ++ show res
+           putStr "        "
+           forM_ parts $ \(Part pname pres _) ->
+               putStr $ pname ++ ": " ++ show pres ++ " "
+           putStrLn ""
+
+
+
+{-
   (fails,ok) <- partitionEithers <$> (forM proofs $
       \(ProofDecl fname proofType axioms parts) -> do
            let axiomsStr = prettyTPTP axioms
@@ -150,3 +165,4 @@ proveAll processes timeout output file proofs = do
               all ((== Theorem) . snd) <$>
                   echo (runProvers processes timeout output probs)
 
+-}
