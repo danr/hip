@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 -- This module is only to be used for TPTP produced by the HFOL.ToFOL->TPTP tool
 module Autospec.ToFOL.Latex where
 
@@ -74,7 +75,7 @@ class Latex a where
   latex :: a -> State Bool String
 
 instance Latex Decl where
-  latex (declFormula -> phi) = latex (declFormula phi)
+  latex (declFormula -> phi) = latex phi
 
 quantifier :: Bool -> [VarName] -> Formula -> State Bool String
 quantifier fa xs phi = do
