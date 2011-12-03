@@ -405,6 +405,40 @@ postulate : forall x y . x < y == True -> y < x == False
 #+END_SRC haskell
 However, Nat has a sorting... I guess we cannot prove that sort sorts
 without having lemmas for < <= etc.
+** Properties with pointers
+If you want to show
+#+BEGIN_SRC haskell
+id = curry . uncurry
+#+END_SRC
+There will be no proof found. It would be nice if you could add
+#+BEGIN_SRC tptp
+fof(appbottom,axiom,! [X] : ('ptr.app'('_|_',X) = '_|_')).
+fof(extequality,axiom,! [F,G,X] : (('ptr.app'(F,X) = 'ptr.app'(G,X)) => F = G)).
+#+END_SRC
+But extequality (with or without bottom) leads to inconsistencies.
+appbottom in itself does not seem to lead inconsistencies, but it does
+not help at this point.
+
+Futhermore, the property is not necessarily true:
+#+BEGIN_SRC haskell
+Prelude> (uncurry . curry) (\(a,b) -> 1) undefined
+1
+Prelude> id (\(a,b) -> 1) undefined
+ * Exception: Prelude.undefined
+Prelude> id (\(~(a,b)) -> 1) undefined
+1
+#+END_SRC
+But with the definitions I had in Functions.hs was more strict
+definitions of uncurry/curry:
+#+BEGIN_SRC haskell
+Functions Prelude> (uncurry . curry) (\(a,b) -> 1) undefined
+*Exception: Prelude.undefined
+Functions Prelude> (uncurry . curry) (\(~(a,b)) -> 1) undefined
+*Exception: Prelude.undefined
+*Functions Prelude> id (\(~(a,b)) -> 1) undefined
+1
+#+END_SRC
+
 * Week 49 (5 Dec - 11 Dec)
 ** Report work
 
