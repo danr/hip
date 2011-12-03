@@ -330,18 +330,23 @@ varNames = [1..] >>= flip replicateM "XYZWVU"
 makeVarNames :: Int -> [VarName]
 makeVarNames n = take n (map VarName varNames)
 
+-- | The name of pointer application
+ptrapp :: FunName
+ptrapp = FunName "@"
+
 -- | Fold the function app over the arguments
 --
 -- > appFold f [x,y,z] = app(app(app(f,x),y),z)
 -- > appFold f []      = f
 appFold :: Term -> [Term] -> Term
-appFold = foldl (\f x -> T.Fun (FunName "ptr.app") [f,x])
+appFold = foldl (\f x -> T.Fun ptrapp [f,x])
 
 -- | All FOL declarations from an environment and state
 envStDecls :: TM [T.Decl]
 envStDecls = TM $ do
   s <- get
-  return $ projDecls (_conProj s) ++
+  return $ extEquality : appBottom :
+           projDecls (_conProj s) ++
            ptrDecls (_arities s) (_usedFunPtrs s) ++
            disjDecls (_datatypes s)
 
@@ -399,3 +404,20 @@ ptrDecls as = map (uncurry mkDecl) . S.toList
                   ===
                   Fun (FunName fn) (map T.Var xs)
       where xs    = makeVarNames arity
+
+-- | Extensional equality
+extEquality :: T.Decl
+extEquality = Axiom "exteq"
+   $ forall' [fv,gv]
+      $ (forall' [xv] $ appFold f [x] === appFold g [x])
+        ==> (f === g)
+  where vars@[fv,gv,xv] = map VarName ["F","G","X"]
+        [f,g,x]         = map T.Var vars
+
+-- | Application with bottom gives bottom
+appBottom :: T.Decl
+appBottom = Axiom "appbottom"
+   $ forall' [xv] $ appFold bottom [x] === bottom
+  where xv = VarName "X"
+        x  = T.Var xv
+        bottom = Fun (FunName bottomName) []

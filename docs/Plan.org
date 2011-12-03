@@ -439,6 +439,12 @@ Functions Prelude> (uncurry . curry) (\(~(a,b)) -> 1) undefined
 1
 #+END_SRC
 
+Is this a better definition of extensional equality?
+#+BEGIN_SRC tptp
+fof(exteq,axiom,! [F,G]: ( (! [X] : (app(F,X) = app(G,X))) => F = G)).
+#+END_SRC
+Probably :)
+
 * Week 49 (5 Dec - 11 Dec)
 ** Report work
 
