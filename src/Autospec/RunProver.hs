@@ -120,7 +120,7 @@ getResults' ch out = mif (M.null <$> gets fst)
                          (lift $ writeChan out Nothing) $ do
     (desc@(name,ptype),res) <- lift $ readChan ch
     let alterFun Nothing   = Just [res]
-        alterFun (Just rs) = Just (res:rs)
+        alterFun (Just rs) = Just (rs ++ [res])
     modify (second (M.alter alterFun desc))
     left <- M.lookup desc <$> gets fst
     lift $ whenLoud $ putStrLn $ name ++ ", " ++ show ptype ++ ": " ++ show (partDecor res)

@@ -111,8 +111,9 @@ data St = St { _arities     :: Map Name Int
                -- ^ The constructors for a datatype
              , _datatypes   :: [[(Name,Int)]]
                -- ^ The datatypes in the program
-             , _usedFunPtrs :: Set Name
-               -- ^ Which functions we need to produce ptr conversions for
+             , _usedFunPtrs :: Set (Name,Int)
+               -- ^ Which functions we need to produce ptr conversions for, and what
+               --   arity they had at the time
              , _boundNames  :: Map Name Bound
                -- ^ TPTP name of funs/costr and quantified variables
              , _quantified  :: Set VarName
@@ -317,7 +318,9 @@ addCons datadecls = TM $ do
 
 -- | Mark a pointer as used
 useFunPtr :: Name -> TM ()
-useFunPtr fn = TM $ modify usedFunPtrs (S.insert fn)
+useFunPtr fn = TM $ do
+    arity <- unTM $ lookupArity fn
+    modify usedFunPtrs (S.insert (fn,arity))
 
 -- | A list of nice variable names
 varNames :: [String]
@@ -387,16 +390,12 @@ projDecls = concatMap (uncurry mkDecl) . M.toList
             xs    = makeVarNames arity
 
 -- | Make pointer declarations
-ptrDecls :: Map Name Int -> Set Name -> [T.Decl]
-ptrDecls as = map mkDecl . S.toList
+ptrDecls :: Map Name Int -> Set (Name,Int) -> [T.Decl]
+ptrDecls as = map (uncurry mkDecl) . S.toList
   where
-    mkDecl fn = Axiom ("ptr" ++ fn)
+    mkDecl fn arity = Axiom ("ptr" ++ fn)
               $ forall' xs
                 $ appFold (Fun (FunName (makePtrName fn)) []) (map T.Var xs)
                   ===
                   Fun (FunName fn) (map T.Var xs)
-      where arity = case M.lookup fn as of
-                         Just a  -> a
-                         Nothing -> 0 -- error $ "pointer to " ++ fn
-                                      --   ++ " with unknown arity!"
-            xs    = makeVarNames arity
+      where xs    = makeVarNames arity

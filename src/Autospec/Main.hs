@@ -63,6 +63,7 @@ main = do
       exitFailure
   whenLoud $ putStrLn "Verbose output"
   forM_ files $ \file -> do
+      when (file /= head files) $ putStrLn ""
       when (length files > 1) $ putStrLn file
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
