@@ -7,6 +7,8 @@ import Autospec.Util (isOp)
 import qualified Autospec.ToFOL.Core as C
 import Autospec.ToFOL.Pretty
 
+import Autospec.ToFOL.Constructors
+
 import Control.Monad.State
 import Control.Applicative
 
@@ -72,8 +74,7 @@ class Latex a where
   latex :: a -> State Bool String
 
 instance Latex Decl where
-  latex (Axiom _ phi)      = latex phi
-  latex (Conjecture _ phi) = latex phi
+  latex (declFormula -> phi) = latex (declFormula phi)
 
 quantifier :: Bool -> [VarName] -> Formula -> State Bool String
 quantifier fa xs phi = do
@@ -131,8 +132,8 @@ instance Latex Formula where
     return (relName r ++ "(" ++ intercalate "," as' ++ ")")
 
 showFunName :: FunName -> String
-showFunName (FunName "Bottom") = "\\bot"
-showFunName (FunName f)        = escape f
+showFunName (FunName f) | f == bottomName = "\\bot"
+                        | otherwise       = escape f
 
 parenTerm :: Term -> String -> String
 parenTerm (Fun _ (_:_)) s = "(" ++ s ++ ")"
