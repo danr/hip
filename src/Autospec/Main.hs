@@ -10,7 +10,7 @@ import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.ToFOL.Parser
 import Autospec.ToFOL.Latex hiding (latex)
-import Autospec.Util (putEither)
+import Autospec.Util (groupSortedOn)
 import Autospec.RunProver
 import Autospec.Messages
 
@@ -22,7 +22,7 @@ import Control.Monad
 import Control.Applicative
 import Data.Function
 import Data.Ord (comparing)
-import Data.List (isSuffixOf,groupBy,find,sortBy)
+import Data.List (isSuffixOf,groupBy,find,sortBy,genericLength)
 
 data Params = Params { files     :: [FilePath]
                      , processes :: Int
@@ -63,6 +63,7 @@ main = do
       exitFailure
   whenLoud $ putStrLn "Verbose output"
   forM_ files $ \file -> do
+      when (length files > 1) $ putStrLn file
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
                                 then parseHaskell <$> readFile file
@@ -111,36 +112,35 @@ main = do
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
 
-untilTrue :: Monad m => (a -> m Bool) -> [a] -> m Bool
-untilTrue f (x:xs) = do
-  r <- f x
-  if r then return True
-       else untilTrue f xs
-untilTrue _ [] = return False
-
-whileFalse :: Monad m => [a] -> (a -> m Bool) -> m Bool
-whileFalse xs p = not `liftM` untilTrue (liftM not . p) xs
-
 proveAll :: Int -> Int -> Maybe FilePath
          -> FilePath -> [ProofDecl] -> IO ()
 proveAll processes timeout output file proofs = do
-  whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
-                putStrLn $ "Timeout is " ++ show timeout
-                putStrLn $ "Output directory is " ++ show output
-  hSetBuffering stdout NoBuffering
-  res <- runProvers processes timeout output (map (fmap prettyTPTP) proofs)
-  let resgroups = groupBy ((==) `on` principleName)
-                $ sortBy  (comparing principleName) res
-  forM_ resgroups $ \grp@(Principle name _ _ _ _:_) -> do
-      let Just (Principle _ _ _ pstr _) = find ((name ==) . principleName) proofs
-      putStrLn $ "\n" ++ name
-      putStrLn $ pstr
-      putStrLn $ "Status: " ++ show (statusFromGroup grp)
-      forM_ grp $ \(Principle name ptype res _ parts) -> do
-           putStrLn $ "    " ++ show ptype ++ ": " ++ show res
-           putStr "        "
-           forM_ parts $ \(Part pname pres _) ->
-               putStr $ pname ++ ": " ++ show pres ++ " "
-           putStrLn ""
-   -- Statistics
-   -- Theorems/FiniteTheorems/All
+    whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
+                  putStrLn $ "Timeout is " ++ show timeout
+                  putStrLn $ "Output directory is " ++ show output
+    hSetBuffering stdout NoBuffering
+    res <- runProvers processes timeout output (map (fmap prettyTPTP) proofs)
+    let resgroups :: [[Res]]
+        resgroups = groupSortedOn principleName res
+    whenNormal $ forM_ resgroups $ \grp@(Principle name _ _ _ _:_) -> do
+        let Just (Principle _ _ _ pstr _) = find ((name ==) . principleName) proofs
+        putStrLn $ "\n" ++ name
+        putStrLn $ pstr
+        putStrLn $ "Status: " ++ show (statusFromGroup grp)
+        forM_ grp $ \(Principle name ptype res _ parts) -> do
+             putStrLn $ "    " ++ show ptype ++ ": " ++ show res
+             putStr "        "
+             forM_ parts $ \(Part pname pres _) ->
+                 putStr $ pname ++ ": " ++ show pres ++ " "
+             putStrLn ""
+    -- Statistics
+    -- Theorems/FiniteTheorems/All
+    whenNormal $ putStrLn ""
+    let proverres = groupSortedOn statusFromGroup resgroups
+        n         = genericLength resgroups :: Double
+        pad x s   = replicate (x - length s) ' '
+    forM_ proverres $ \pgrp@(grp:_) -> do
+         let res = statusFromGroup grp
+         putStrLn $ show res
+                 ++ ":" ++ pad 18 (show res) ++ show (length pgrp)
+                 ++ "\t(" ++ take 5 (show (genericLength pgrp / n * 100)) ++ "%)"
