@@ -36,6 +36,26 @@ prop_nonidentity x = prove (const x =:= id)
 uncurry :: (a -> b -> c) -> (a,b) -> c
 uncurry f (a,b) = f a b
 
+fst (x,y) = x
+snd (x,y) = y
+
+uncurry' :: (a -> b -> c) -> (a,b) -> c
+uncurry' f t = f (fst t) (snd t)
+
+prop_uncurry_equal :: Prop ((a -> b -> c) -> (a,b) -> c)
+prop_uncurry_equal = prove (uncurry =:= uncurry')
+
+prop_uncurry_f_equal :: (a -> b -> c) -> Prop ((a,b) -> c)
+prop_uncurry_f_equal f = prove (uncurry f =:= uncurry' f)
+
+-- Only true for finite tuples, by induction (!)
+-- Do we need approximation lemma for functions for the two above?
+prop_uncurry_f_tuple_equal :: (a -> b -> c) -> (a,b) -> Prop c
+prop_uncurry_f_tuple_equal f t = prove (uncurry f t =:= uncurry' f t)
+
+prop_uncurry_f_unboxedtuple_equal :: (a -> b -> c) -> a -> b -> Prop c
+prop_uncurry_f_unboxedtuple_equal f a b = prove (uncurry f (a,b) =:= uncurry' f (a,b))
+
 curry :: ((a,b) -> c) -> a -> b -> c
 curry f a b = f (a,b)
 
@@ -57,3 +77,15 @@ prop_comp_assocl f g h = prove (((f . g) . h) =:= (f . (g . h)))
 
 prop_comp_assoc :: (c -> d) -> (b -> c) -> (a -> b) -> Prop (a -> d)
 prop_comp_assoc f g h = prove (((f ... g) ... h) =:= (f ... (g ... h)))
+
+prop_left_idl :: (a -> b) -> Prop (a -> b)
+prop_left_idl f = prove (f . id =:= f)
+
+prop_right_idl :: (a -> b) -> Prop (a -> b)
+prop_right_idl f = prove (id . f =:= f)
+
+prop_left_id :: (a -> b) -> Prop (a -> b)
+prop_left_id f = prove (f ... id =:= f)
+
+prop_right_id :: (a -> b) -> Prop (a -> b)
+prop_right_id f = prove (id ... f =:= f)
