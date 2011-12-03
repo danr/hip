@@ -49,7 +49,6 @@ return x s = (x,s)
 returnl :: a -> State s a
 returnl x = \s -> (x,s)
 
-
 -- Bind without lambda --------------------------------------------------------
 
 prop_return_left1 :: (s -> (a,s)) -> Prop (s -> (a,s))
@@ -158,4 +157,61 @@ prop_left_kliesli f = prove ((return >=> f) =:= f)
 
 prop_assoc_kliesli :: (a -> State s b) -> (b -> State s c) -> (c -> State s d) -> Prop (a -> State s d)
 prop_assoc_kliesli f g h = prove (((f >=> g) >=> h) =:= (f >=> (g >=> h)))
+
+-- Let's join and fmap these beasts -------------------------------------------
+
+id x = x
+
+fmap1l f m = m `bind1l` (\x -> return (f x))
+join1l n = n `bind1l` id
+fmap2l f m = m `bind2l` (\x -> return (f x))
+join2l n = n `bind2l` id
+fmap3l f m = m `bind3l` (\x -> return (f x))
+join3l n = n `bind3l` id
+fmap1 f m = m `bind1` (\x -> return (f x))
+join1 n = n `bind1` id
+fmap2 f m = m `bind2` (\x -> return (f x))
+join2 n = n `bind2` id
+fmap3 f m = m `bind3` (\x -> return (f x))
+join3 n = n `bind3` id
+
+prop_fmap_id1l :: Prop (a -> (a,s))
+prop_fmap_id1l = prove (fmap1l id =:= id)
+prop_fmap_id2l :: Prop (a -> (a,s))
+prop_fmap_id2l = prove (fmap2l id =:= id)
+prop_fmap_id3l :: Prop (a -> (a,s))
+prop_fmap_id3l = prove (fmap3l id =:= id)
+prop_fmap_id1 :: Prop (a -> (a,s))
+prop_fmap_id1 = prove (fmap1 id =:= id)
+prop_fmap_id2 :: Prop (a -> (a,s))
+prop_fmap_id2 = prove (fmap2 id =:= id)
+prop_fmap_id3 :: Prop (a -> (a,s))
+prop_fmap_id3 = prove (fmap3 id =:= id)
+
+-- Let's just go with the non-lambda definition
+(f . g) x = f (g x)
+
+prop_fmap_comp1l :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
+prop_fmap_comp1l f g = prove (fmap1l (f . g) =:= fmap1l f . fmap1l g)
+prop_fmap_comp2l :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
+prop_fmap_comp2l f g = prove (fmap2l (f . g) =:= fmap2l f . fmap2l g)
+prop_fmap_comp3l :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
+prop_fmap_comp3l f g = prove (fmap3l (f . g) =:= fmap3l f . fmap3l g)
+prop_fmap_comp1 :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
+prop_fmap_comp1 f g = prove (fmap1 (f . g) =:= fmap1 f . fmap1 g)
+prop_fmap_comp2 :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
+prop_fmap_comp2 f g = prove (fmap2 (f . g) =:= fmap2 f . fmap2 g)
+prop_fmap_comp3 :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
+prop_fmap_comp3 f g = prove (fmap3 (f . g) =:= fmap3 f . fmap3 g)
+
+
+
+{- more properties for later :)
+
+return . f = fmap f . return
+
+join . fmap join = join . join
+join . fmap return = join . return = id
+join . fmap (fmap f) = fmap f . join
+-}
 
