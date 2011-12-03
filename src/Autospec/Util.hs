@@ -1,9 +1,12 @@
 module Autospec.Util
-       (selections,withPrevious,concatMapM,concatMaybe,isOp,putEither,mif)
+       (selections,withPrevious,concatMapM,concatMaybe
+       ,isOp,putEither,mif,countBy,groupSortedOn)
        where
 
 import Data.Maybe
 import Data.List
+import Data.Function
+import Data.Ord
 import Test.QuickCheck
 
 -- | Pair up a list with its previous and next elements
@@ -54,3 +57,11 @@ mif :: Monad m => m Bool -> m a -> m a -> m a
 mif mb mt mf = do
    b <- mb
    if b then mt else mf
+
+-- | Count the number of occurences satisfying the predicate
+countBy :: (a -> Bool) -> [a] -> Int
+countBy = (length .) . filter
+
+groupSortedOn :: (Eq b,Ord b) => (a -> b) -> [a] -> [[a]]
+groupSortedOn f = groupBy ((==) `on` f)
+                . sortBy (comparing f)

@@ -18,3 +18,6 @@ prop_malins_identity x y = prove (const id x y =:= flip const x y)
 
 prop_mikaels_identity :: (a -> b) -> a -> Prop b
 prop_mikaels_identity f x = prove (id f x =:= f x)
+
+prop_dans_nonidentity :: a -> a -> Prop a
+prop_dans_nonidentity x y = prove (const x =:= id x)

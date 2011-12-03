@@ -18,7 +18,6 @@ import Control.Applicative
 import Control.Monad
 
 import Data.Maybe (fromMaybe)
-import Data.Either (partitionEithers)
 import Control.Arrow ((&&&))
 
 import qualified Data.Set as S
@@ -69,8 +68,10 @@ prove :: [Decl]
       -- ^ Resulting instructions how to do proof declarations for this
 prove fundecls resTy fname typedArgs lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
-        simpleind       = map proofBySimpleInduction indargs
-    in  proofByFixpointInduction ++ proofByApproxLemma ++ simpleind
+    in  plainProof ++
+        proofByFixpointInduction ++
+        proofByApproxLemma ++
+        map proofBySimpleInduction indargs
   where
     pstr :: String
     pstr = prettyCore lhs ++ " = " ++ prettyCore rhs
@@ -118,7 +119,6 @@ prove fundecls resTy fname typedArgs lhs rhs =
     proofBySimpleInduction (v,t) = accompanyParts (SimpleInduction v) $ do
         (_,cons) <- decorateArg (v,t)
         mapM (uncurry (inductionPart v) . either id id) cons
-      where
 
     inductionPart :: Name -> ConName -> [Rec] -> TM ProofPart
     inductionPart v c recArgs = do
@@ -139,6 +139,7 @@ prove fundecls resTy fname typedArgs lhs rhs =
             return (lhs' === rhs')
          forallUnbound (foldr1 (/\) clauses)
 
+    -- Returns in the List monad instead of the Maybe monad
     proofByApproxLemma :: [TM ProofDecl]
     proofByApproxLemma
        | concreteType resTy = return $ accompanyParts ApproxLemma $ do
@@ -161,11 +162,19 @@ prove fundecls resTy fname typedArgs lhs rhs =
                                  :approxAxioms)]
        | otherwise = []
 
+    plainProof :: [TM ProofDecl]
+    plainProof
+        | any (concreteType . snd) typedArgs = []
+        | otherwise =
+            return $ accompanyParts Plain $ do
+            p <- instantiateP []
+            return $ [Part "plain" [Conjecture "plain" p] EpicFail]
+
     instantiateP :: [(VarName,VarName)] -> TM T.Formula
     instantiateP binds = locally $ do
-         lhs' <- translateExpr (substVars binds lhs)
-         rhs' <- translateExpr (substVars binds rhs)
-         forallUnbound (lhs' === rhs')
+        lhs' <- translateExpr (substVars binds lhs)
+        rhs' <- translateExpr (substVars binds rhs)
+        forallUnbound (lhs' === rhs')
 
     proofByFixpointInduction :: [TM ProofDecl]
     proofByFixpointInduction =

@@ -28,22 +28,57 @@ import Data.Map (Map)
 
 import System.Console.CmdArgs
 
--- Finite Theorem is actually not a result from the prover
-data ProverResult = Timeout | Theorem | Falsifiable | Unknown | FiniteTheorem
+data Result = Theorem          -- ^ Theroem
+            | Countersat       -- ^ Countersatisfiable
+            | Timeout          -- ^ Timeout
+            | Unknown          -- ^ Unknown message from prover
+            | FiniteTheorem    -- ^ This is a theorem for finitevalues
+            | Inconsistent     -- ^ If we both have Theorem and Countersat
+            | None             -- ^ No information when flattened
   deriving (Eq,Ord)
 
-instance Show ProverResult where
-  show Timeout       = "timeout"
+instance Show Result where
   show Theorem       = "Theorem"
-  show Falsifiable   = "False"
-  show Unknown       = "???"
+  show Countersat    = "Countersatisfiable"
+  show Timeout       = "Timeout"
+  show Unknown       = "??"
   show FiniteTheorem = "Finite Theorem"
+  show Inconsistent  = "INCONSISTENT"
+  show None          = "None"
+
+flattenRes :: Part Result -> Result
+flattenRes (Part _ Timeout    InfiniteFail) = FiniteTheorem
+flattenRes (Part _ None       InfiniteFail) = FiniteTheorem
+flattenRes (Part _ Countersat EpicFail)     = Countersat
+flattenRes (Part _ Countersat InfiniteFail) = FiniteTheorem
+flattenRes (Part _ Countersat Fail)         = None
+flattenRes (Part _ r _)                     = r
+
+combineRes :: [Result] -> Result
+combineRes rs
+   | all ((Theorem ==))                                 rs = Theorem
+   | all ((||) <$> (Theorem ==) <*> (FiniteTheorem ==)) rs = FiniteTheorem
+   | all (Countersat ==)                                rs = Countersat
+   | any (Unknown ==)                                   rs = Unknown
+   | otherwise                                             = None
+
+resFromParts :: [Part Result] -> Result
+resFromParts = combineRes . map flattenRes
+
+statusFromGroup :: [Res] -> Result
+statusFromGroup (map principleDecor -> rs)
+   | any (Countersat ==) rs && any (Theorem ==) rs = Inconsistent
+   | any (Theorem ==) rs       = Theorem
+   | any (FiniteTheorem ==) rs = FiniteTheorem
+   | any (Countersat ==) rs    = Countersat
+   | any (Unknown ==) rs       = Unknown
+   | otherwise                 = None
 
 type ProbDesc = (Name,ProofType)
 type Problem = Principle String
-type Res     = Principle ProverResult
+type Res     = Principle Result
 
-type ResChan  = Chan (ProbDesc,Part ProverResult)
+type ResChan  = Chan (ProbDesc,Part Result)
 type ProbChan = Chan (ProbDesc,Part String)
 
 runProvers :: Int -> Int -> Maybe FilePath -> [Problem] -> IO [Res]
@@ -76,32 +111,9 @@ getResults ch probs = do
                              | Principle n t _  _ parts <- probs
                              ]
 
-flattenRes :: Part ProverResult -> ProverResult
-flattenRes (Part _ Timeout InfiniteFail) = FiniteTheorem
-flattenRes (Part _ r _)                = r
-
-combineRes :: [ProverResult] -> ProverResult
-combineRes rs
-   | all ((Theorem ==))                                 rs = Theorem
-   | all ((||) <$> (Theorem ==) <*> (FiniteTheorem ==)) rs = FiniteTheorem
-   | any (Falsifiable ==)                               rs = Falsifiable
-   | any (Unknown ==)                                   rs = Unknown
-   | otherwise                                             = Timeout
-
-resFromParts :: [Part ProverResult] -> ProverResult
-resFromParts = combineRes . map flattenRes
-
-statusFromGroup :: [Res] -> ProverResult
-statusFromGroup (map principleDecor -> rs)
-   | any (Theorem ==) rs       = Theorem
-   | any (FiniteTheorem ==) rs = FiniteTheorem
-   | any (Falsifiable ==) rs   = Falsifiable
-   | any (Unknown ==) rs       = Unknown
-   | otherwise                 = Timeout
-
 getResults' :: ResChan
             -> OutChan      -- ^ We need this channel to get some laziness
-            -> StateT (Map ProbDesc Int,Map ProbDesc [Part ProverResult])
+            -> StateT (Map ProbDesc Int,Map ProbDesc [Part Result])
                       IO
                       ()
 getResults' ch out = mif (M.null <$> gets fst)
@@ -117,8 +129,8 @@ getResults' ch out = mif (M.null <$> gets fst)
                 | otherwise -> do modify (first (M.delete desc))
                                   Just parts <- M.lookup desc <$> gets snd
 --                                  lift $ putStrLn "Writing to chan..."
-                                  lift $ writeChan out $ Just $
-                                      Principle (fst desc) (snd desc)
+                                  lift $ writeChan out $ Just $ uncurry
+                                       Principle desc
                                                 (resFromParts parts)
                                                 (error "getResults': pretty proof lost")
                                                 parts
@@ -148,7 +160,7 @@ worker timeout output probChan resChan = forever $ do
     killThread tid
     writeChan resChan (desc,Part pname res pfail)
 
-runProver :: String -> MVar ProverResult -> MVar ProcessHandle -> IO ()
+runProver :: String -> MVar Result -> MVar ProcessHandle -> IO ()
 runProver str mvar pvar = do
 --    putStrLn "Running prover"
 
@@ -168,7 +180,7 @@ runProver str mvar pvar = do
     _ <- forkIO $ length output `seq` putMVar outMVar ()
 
     -- now write and flush any input
-    when (not (null str)) $ do hPutStr inh str; hFlush inh
+    unless (null str) $ do hPutStr inh str; hFlush inh
     hClose inh -- done with stdin
 
     -- wait on the output
@@ -188,7 +200,7 @@ runProver str mvar pvar = do
 
     let r | "Theorem" `isInfixOf` out            = Theorem
           | "Unsatisfiable" `isInfixOf` out      = Theorem
-          | "CounterSatisfiable" `isInfixOf` out = Falsifiable
+          | "CounterSatisfiable" `isInfixOf` out = Countersat
           | otherwise                            = Unknown
     putMVar mvar r
 
