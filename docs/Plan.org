@@ -314,18 +314,26 @@ supplied, all applicable techniques should be tried.
 *** Stats of which proof techniques could solve which problems
 *** Work on NWERC problems!
 ** Proving work
-*** TODO Make threading work correctly
-*** TODO Smarter handling if bottom cannot be proved
+*** DONE Make threading work correctly
+CLOSED: [2011-12-02 Fri 17:00]
+*** DONE Smarter handling if bottom cannot be proved
+CLOSED: [2011-12-02 Fri 17:00]
 Simple induction can answer if it was able to prove the bottom case or
 not.
 *** TODO Tell the prover how long time it will have.
 Koen said that this is important for vampire, does eprover have the
 same functionality?
+
+Eprover has --cpu-limit and --soft-cpu-limit that with arguments
+in seconds. Cpu-limit only terminates the program, and soft cpu limit
+prints out unprocesses clauses. This could or could not give a hint
+on where the prover got stuck.
 *** TODO Simple induction on several variables
 Combine this with the auto-depth problem. This would be nice
 *** DONE Approximation lemma with "skolem functions"
 CLOSED: [2011-11-21 Mon 15:50]
-*** TODO Fixpoint induction
+*** DONE Fixpoint induction
+CLOSED: [2011-11-22 Tue 17:20]
 To prove P(f) = ! [xs] : lhs(f) = rhs(f):
 
 Prove P(bottom_n) where bottom_n is a function with same arity as f
@@ -356,8 +364,47 @@ A hard problem! Could also be used to show that functions terminate
 ** Report proving techniques
 ** Report related work
 * Week 48 (28 Nov - 4 Dec)
-** Work on proving
+** Statistics
+On how many problems were proved, and which techniques succeeded.
 
+** Fixpoint induction on all subsets of recursive functions
+prove (x + y == y + x)
+
+** Fixpoint induction for terminating programs
+Koen's conjecture is if f is a termiatring program, then lfp f = gfp f
+and we have the following rule
+
+$$
+\exists a . a \le fix f \rightarrow P(a)
+\, \wegde \,
+P(x) \rightarrow P(f x)
+$$
+$$ \Rightarrow P(fix f) $$
+
+Then it holds for finite, total values.
+
+Let the user specify when a function is terminating for sure, by some
+notation:
+#+BEGIN_SRC haskell
+terminates = (+)
+#+END_SRC haskell
+
+** Induction in several variables, and in more depth
+This should also fire the definition of integers (data Z = P Nat | N Nat)
+
+** Examples
+*** Hinze's last paper about coinduction
+*** Dixon's PhD thesis
+*** Moa's paper "Conjecture Synthesis for Inductive Theories"
+*** Examples from Critics
+*** Examples with postulated sorting
+Postulate < in terms of == True.
+#+BEGIN_SRC haskell
+postulate : forall x y . x < y == True & y < z == True -> x < y == True
+postulate : forall x y . x < y == True -> y < x == False
+#+END_SRC haskell
+However, Nat has a sorting... I guess we cannot prove that sort sorts
+without having lemmas for < <= etc.
 * Week 49 (5 Dec - 11 Dec)
 ** Report work
 
