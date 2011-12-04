@@ -389,6 +389,11 @@ notation:
 terminates = (+)
 #+END_SRC haskell
 
+** Fixpoint induction on different functions
+$$P(\bot,\bot) \, \wedge \, P(x,y) \rightarrow P(f x,f y)$$
+$$ \Rightarrow P(fix f,fix g)$$
+Notice that the two $\bot$ can be of different arity
+
 ** Induction in several variables, and in more depth
 This should also fire the definition of integers (data Z = P Nat | N Nat)
 
@@ -405,7 +410,8 @@ postulate : forall x y . x < y == True -> y < x == False
 #+END_SRC haskell
 However, Nat has a sorting... I guess we cannot prove that sort sorts
 without having lemmas for < <= etc.
-** Properties with pointers
+** DONE Properties with pointers
+CLOSED: [2011-12-03 Sat 17:00]
 If you want to show
 #+BEGIN_SRC haskell
 id = curry . uncurry
