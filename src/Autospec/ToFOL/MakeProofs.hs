@@ -20,6 +20,7 @@ import Control.Monad
 import Data.Maybe (fromMaybe)
 import Control.Arrow ((&&&))
 
+import Data.Set (Set)
 import qualified Data.Set as S
 
 powerset :: [a] -> [[a]]
@@ -29,19 +30,19 @@ unProp :: Type -> Type
 unProp (TyCon _ [t]) = t
 unProp t             = t
 
-makeProofDecls :: [Decl] -> Type -> Decl -> [TM ProofDecl]
-makeProofDecls fundecls ty (Func fname args (Expr e)) = do
+makeProofDecls :: [Decl] -> Set Name -> Type -> Decl -> [TM ProofDecl]
+makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
     let typedArgs = case ty of TyApp ts -> zip args ts
                                _        -> []
         resTy     = unProp $ case ty of TyApp ts -> last ts
                                         t        -> t
         prove' :: Expr -> Expr -> [TM ProofDecl]
-        prove' = prove fundecls resTy fname typedArgs
+        prove' = prove fundecls recfuns resTy fname typedArgs
     case e of
       App "proveBool" [lhs]         -> prove' lhs (Con "True" [])
       App "prove" [App _ [lhs,rhs]] -> prove' lhs rhs
       _  -> []
-makeProofDecls _ _ _ = []
+makeProofDecls _ _ _ _ = []
 
 type Rec = Bool
 
@@ -54,6 +55,8 @@ type LR a = Either a a
 prove :: [Decl]
       -- ^ The function definitions in the file. The reason why this is
       --   here is because fixpoint induction needs to change some definitions
+      -> Set Name
+      -- ^ Which functions are recursive. Needed for fixpoint induction
       -> Type
       -- ^ The result type of the property
       -> Name
@@ -66,7 +69,7 @@ prove :: [Decl]
       -- ^ RHS
       -> [TM ProofDecl]
       -- ^ Resulting instructions how to do proof declarations for this
-prove fundecls resTy fname typedArgs lhs rhs =
+prove fundecls recfuns resTy fname typedArgs lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
     in  plainProof ++
         proofByFixpointInduction ++
@@ -194,8 +197,9 @@ prove fundecls resTy fname typedArgs lhs rhs =
                                               ,Conjecture "fixstep" pstep
                                               ]])
                ]
-      where fs = S.toList ((fst (usedFC lhs) `S.union` fst (usedFC lhs))
-                           S.\\ S.fromList (map fst typedArgs))
+      where fs = S.toList $ ((fst (usedFC lhs) `S.union` fst (usedFC lhs))
+                               S.\\ S.fromList (map fst typedArgs))
+                             `S.intersection` recfuns
             bottomFunName = "const.bottom"
             bottomFun n   = Func (bottomFunName)
                                  (take n ([1..] >>= flip replicateM ['a'..'z']))

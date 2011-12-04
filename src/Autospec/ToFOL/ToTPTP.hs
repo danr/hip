@@ -94,8 +94,9 @@ prepareProofs ds = second concat $ unzip (concatMap processDecl proofDecls)
                     cs        = S.insert bottomName $ csd `S.union` cs'
                     datadecls = filterDatas typesFromSig cs dataDecls
                     fundecls  = filterFuns  fs funDecls
-                    pdms      = makeProofDecls fundecls sigty d
+                    pdms      = makeProofDecls fundecls recursiveFuns sigty d
                 in  flip map pdms $ \pdm -> runTM $ do
+                        dbproof $ "Recursive functions: " ++ show recursiveFuns
                         addTypes types
                         addCons datadecls
                         pd    <- pdm
@@ -117,6 +118,18 @@ prepareProofs ds = second concat $ unzip (concatMap processDecl proofDecls)
               (fs',cs) = (S.unions *** S.unions)
                          (unzip (map safeLookup (S.toList fs)))
               newfs = fs' S.\\ fs
+
+    recursiveFuns :: Set Name
+    recursiveFuns = S.fromList
+        [ name
+        | d@(Func name args body) <- funDecls
+        , let namecalls = fst (usedFCmap M.! name)
+              -- ^ Which functions this function calls
+              theycall  = fst (iterateFCs namecalls)
+              -- ^ All functions they call. If name is member
+              --   there then there is a mutual recursion
+        , selfRecursive d || name `S.member` theycall
+        ]
 
     safeLookup :: Name -> (Set Name,Set Name)
     safeLookup f = fromMaybe (S.empty,S.empty) (M.lookup f usedFCmap)

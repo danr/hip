@@ -16,6 +16,11 @@ import Data.Generics.Uniplate.Operations
 declsWith :: [Name] -> [Decl] -> [Decl]
 declsWith ns ds = undefined
 
+-- | Is this function is self-recursive?
+selfRecursive :: Decl -> Bool
+selfRecursive (Func name args body) = name `S.member` fst (usedFC body)
+selfRecursive _ = error "selfRecursive: on non-function declaration"
+
 -- Funs and Cons
 class FC a where
    usedFC :: a -> (Set Name,Set Name)
