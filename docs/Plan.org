@@ -364,52 +364,10 @@ A hard problem! Could also be used to show that functions terminate
 ** Report proving techniques
 ** Report related work
 * Week 48 (28 Nov - 4 Dec)
-** Statistics
+** DONE Statistics
+CLOSED: [2011-12-05 Mon 11:30]
 On how many problems were proved, and which techniques succeeded.
 
-** Fixpoint induction on all subsets of recursive functions
-prove (x + y == y + x)
-
-** Fixpoint induction for terminating programs
-Koen's conjecture is if f is a termiatring program, then lfp f = gfp f
-and we have the following rule
-
-$$
-\exists a . a \le fix f \rightarrow P(a)
-\, \wegde \,
-P(x) \rightarrow P(f x)
-$$
-$$ \Rightarrow P(fix f) $$
-
-Then it holds for finite, total values.
-
-Let the user specify when a function is terminating for sure, by some
-notation:
-#+BEGIN_SRC haskell
-terminates = (+)
-#+END_SRC haskell
-
-** Fixpoint induction on different functions
-$$P(\bot,\bot) \, \wedge \, P(x,y) \rightarrow P(f x,f y)$$
-$$ \Rightarrow P(fix f,fix g)$$
-Notice that the two $\bot$ can be of different arity
-
-** Induction in several variables, and in more depth
-This should also fire the definition of integers (data Z = P Nat | N Nat)
-
-** Examples
-*** Hinze's last paper about coinduction
-*** Dixon's PhD thesis
-*** Moa's paper "Conjecture Synthesis for Inductive Theories"
-*** Examples from Critics
-*** Examples with postulated sorting
-Postulate < in terms of == True.
-#+BEGIN_SRC haskell
-postulate : forall x y . x < y == True & y < z == True -> x < y == True
-postulate : forall x y . x < y == True -> y < x == False
-#+END_SRC haskell
-However, Nat has a sorting... I guess we cannot prove that sort sorts
-without having lemmas for < <= etc.
 ** DONE Properties with pointers
 CLOSED: [2011-12-03 Sat 17:00]
 If you want to show
@@ -452,8 +410,113 @@ fof(exteq,axiom,! [F,G]: ( (! [X] : (app(F,X) = app(G,X))) => F = G)).
 Probably :)
 
 * Week 49 (5 Dec - 11 Dec)
-** Report work
+** Meeting with Koen
+*** Recursion-induction
+if f is defined as F(f'), and g=G(g'), then if we prove that
+g=F(g'), then we know that F(f') <= F(g'). If both g and and f
+terminate, then <= is an equivalence. So this only works for
+terminating propertes. We need some way to flag terminating functions.
 
+It is also not really sure what it means for a Haskell function to
+terminate. We could have that a function terminates for all finite
+input, as then map terminates, but also take n terminates for all
+finite n, regardless of size of the input list. So it is not
+completely obvious what it means to be a terminating Haskell function.
+*** Induction over (f : A -> B) -> P f
+Let's say we want to prove $P(f)$ where
+$f : \mathbb{N} \rightarrow \mathbb{N}$.
+
+To show
+$$\forall f.P(f)$$
+then we can do
+$$\forall n.\forall f : \mathbb{N} \rightarrow
+                        \mathbb{N} \cap {0..n}$$
+If P is admissible.
+
+To by induction, maybe we can do (Koen)
+#+BEGIN_SRC haskell
+P(\x -> 0)
+
+P(f) => P(\x.if x == a then S (f x) else f x)
+#+END_SRC
+i.e we raise it at one exclusive point.
+*** Extensional equality and seq
+With seq it is possible to distinguish these two functions:
+#+BEGIN_SRC haskell
+f = bottom
+g = \x -> bottom
+#+END_SRC
+by doing this
+#+BEGIN_SRC haskell
+f `seq` () = bottom
+g `seq` () = ()
+#+END_SRC
+But seq is the only function that can do this. We can use extensional
+equality and Prop (a -> b) ~= a -> Prop b if restrict ourselves to
+Haskell without seq. Alternatively, this could be done with a flag,
+--enable-seq, that prevenst Prop (a -> b) => a -> Prop b and
+extensional equality.
+*** Irrefutable patterns
+#+BEGIN_SRC haskell
+fst (x,y) = x
+snd (x,y) = y
+uncurry1 f t      = f (fst t) (snd t)
+uncurry2 f (x,y)  = f x y
+uncurry3 f ~(x,y) = f x y
+#+END_SRC
+Here, uncurry1 and uncurry3 are equal, but uncurry2 is too strict.
+
+** TODO Make Prop testable.
+Also put this in some AutoPrelude. Then we can remove prove,
+and just make =:= be the function.
+** TODO Add disproving
+=/= could do for that.
+** TODO Fixpoint induction on all subsets of recursive functions
+prove (x + y == y + x)
+
+** TODO Fixpoint induction for terminating programs
+Koen's conjecture is if f is a termiatring program, then lfp f = gfp f
+and we have the following rule
+
+$$
+\exists a . a \le fix f \rightarrow P(a)
+\, \wegde \,
+P(x) \rightarrow P(f x)
+$$
+$$ \Rightarrow P(fix f) $$
+
+Then it holds for finite, total values.
+
+Let the user specify when a function is terminating for sure, by some
+notation:
+#+BEGIN_SRC haskell
+terminates = (+)
+#+END_SRC haskell
+
+** TODO Fixpoint induction on different functions
+$$P(\bot,\bot) \, \wedge \, P(x,y) \rightarrow P(f x,f y)$$
+$$ \Rightarrow P(fix f,fix g)$$
+Notice that the two $\bot$ can be of different arity
+
+** TODO Induction in several variables, and in more depth
+This should also fire the definition of integers (data Z = P Nat | N Nat)
+
+** TODO Examples
+*** TODO Hinze's last papers about coinduction
+*** TODO Dixon's PhD thesis
+*** TODO Moa's paper "Conjecture Synthesis for Inductive Theories"
+*** TODO Examples from Critics
+*** TODO Examples with postulated sorting
+Postulate < in terms of == True.
+#+BEGIN_SRC haskell
+postulate : forall x y . x < y == True & y < z == True -> x < y == True
+postulate : forall x y . x < y == True -> y < x == False
+#+END_SRC haskell
+However, Nat has a sorting... I guess we cannot prove that sort sorts
+without having lemmas for < <= etc.
+
+** Report work
+Write report! :S
 * Week 50 (12 Dec - 18 Dec)
 ** First draft of report complete.
 Should have all necessary parts.
