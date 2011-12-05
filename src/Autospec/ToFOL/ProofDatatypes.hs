@@ -17,18 +17,21 @@ provable _          = False
 data ProofType = Plain
                | SimpleInduction       { indVar :: Name }
                | ApproxLemma
+               | FiniteApproxLemma
                | FixpointInduction     { fixFun :: Name }
   deriving (Eq,Ord)
 
 data Failure = Fail          -- ^ If this property fails, then the whole proof techinque fails
              | InfiniteFail  -- ^ If this property fails, it's just the infinite case that fails
              | EpicFail      -- ^ If this property is Countersatisfiable, then the conjecture fails
+             | FiniteSuccess -- ^ If this property succeeds, it only counts as a finite success
   deriving (Eq,Ord,Show)
 
 instance Show ProofType where
   show Plain                 = "plain"
   show (SimpleInduction v)   = "simple induction on " ++ v
   show ApproxLemma           = "approximation lemma"
+  show FiniteApproxLemma     = "finite approx lemma"
   show (FixpointInduction f) = "fixed point induction on " ++ f
 
 proofTypeFile :: ProofType -> String
@@ -36,15 +39,19 @@ proofTypeFile pt = case pt of
   Plain               -> "plain"
   SimpleInduction v   -> "simpleind" ++ v
   ApproxLemma         -> "approx"
+  FiniteApproxLemma   -> "finapprox"
   FixpointInduction f -> "fix" ++ f
 
 proofTypes :: [ProofType]
-proofTypes = [Plain,SimpleInduction "",ApproxLemma,FixpointInduction ""]
+proofTypes = [Plain,SimpleInduction ""
+             ,ApproxLemma,FiniteApproxLemma
+             ,FixpointInduction ""]
 
 liberalEq :: ProofType -> ProofType -> Bool
 liberalEq Plain Plain                             = True
 liberalEq SimpleInduction{} SimpleInduction{}     = True
 liberalEq ApproxLemma ApproxLemma                 = True
+liberalEq FiniteApproxLemma FiniteApproxLemma     = True
 liberalEq FixpointInduction{} FixpointInduction{} = True
 liberalEq _ _                                     = False
 
@@ -52,6 +59,7 @@ liberalShow :: ProofType -> String
 liberalShow Plain               = "plain"
 liberalShow SimpleInduction{}   = "simple induction"
 liberalShow ApproxLemma         = "approximation lemma"
+liberalShow FiniteApproxLemma   = "finite approx lemma"
 liberalShow FixpointInduction{} = "fixed point induction"
 
 data Principle k = Principle { principleName  :: Name

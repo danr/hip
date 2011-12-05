@@ -8,6 +8,7 @@ module Autospec.RunProver where
 import Autospec.Util (mif)
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.ToFOL.Core
+import Autospec.Results
 
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
@@ -28,55 +29,7 @@ import Data.Map (Map)
 
 import System.Console.CmdArgs
 
-data Result = Theorem          -- ^ Theroem
-            | Countersat       -- ^ Countersatisfiable
-            | Timeout          -- ^ Timeout
-            | Unknown          -- ^ Unknown message from prover
-            | FiniteTheorem    -- ^ This is a theorem for finitevalues
-            | Inconsistent     -- ^ If we both have Theorem and Countersat
-            | None             -- ^ No information when flattened
-  deriving (Eq,Ord)
-
-instance Show Result where
-  show Theorem       = "Theorem"
-  show Countersat    = "Countersatisfiable"
-  show Timeout       = "Timeout"
-  show Unknown       = "??"
-  show FiniteTheorem = "Finite Theorem"
-  show Inconsistent  = "INCONSISTENT"
-  show None          = "None"
-
-flattenRes :: Part Result -> Result
-flattenRes (Part _ Timeout    InfiniteFail) = FiniteTheorem
-flattenRes (Part _ None       InfiniteFail) = FiniteTheorem
-flattenRes (Part _ Countersat EpicFail)     = Countersat
-flattenRes (Part _ Countersat InfiniteFail) = FiniteTheorem
-flattenRes (Part _ Countersat Fail)         = None
-flattenRes (Part _ r _)                     = r
-
-combineRes :: [Result] -> Result
-combineRes rs
-   | all ((Theorem ==))                                 rs = Theorem
-   | all ((||) <$> (Theorem ==) <*> (FiniteTheorem ==)) rs = FiniteTheorem
-   | all (Countersat ==)                                rs = Countersat
-   | any (Unknown ==)                                   rs = Unknown
-   | otherwise                                             = None
-
-resFromParts :: [Part Result] -> Result
-resFromParts = combineRes . map flattenRes
-
-statusFromGroup :: [Res] -> Result
-statusFromGroup (map principleDecor -> rs)
-   | any (Countersat ==) rs && any (Theorem ==) rs = Inconsistent
-   | any (Theorem ==) rs       = Theorem
-   | any (FiniteTheorem ==) rs = FiniteTheorem
-   | any (Countersat ==) rs    = Countersat
-   | any (Unknown ==) rs       = Unknown
-   | otherwise                 = None
-
 type ProbDesc = (Name,ProofType)
-type Problem = Principle String
-type Res     = Principle Result
 
 type ResChan  = Chan (ProbDesc,Part Result)
 type ProbChan = Chan (ProbDesc,Part String)

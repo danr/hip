@@ -13,6 +13,7 @@ import Autospec.ToFOL.Latex hiding (latex)
 import Autospec.Util (groupSortedOn)
 import Autospec.RunProver
 import Autospec.Messages
+import Autospec.Results
 
 import System.Console.CmdArgs
 import System.Exit (exitFailure,exitSuccess)

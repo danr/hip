@@ -152,27 +152,41 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
             return (lhs' `equals` rhs')
          forallUnbound (foldr1 (/\) clauses)
 
+    approxSteps :: TM (Formula,Formula,[T.Decl])
+    approxSteps = do
+        let f = "a.f"
+        addFuns [(f,1)]
+        (approx,approxAxioms) <- approximate f resTy
+        hyp <- locally $ do
+                  lhs' <- translateExpr (App f [lhs])
+                  rhs' <- translateExpr (App f [rhs])
+                  forallUnbound (lhs' `equals` rhs')
+        step <- locally $ do
+                  lhs' <- translateExpr (App approx [lhs])
+                  rhs' <- translateExpr (App approx [rhs])
+                  forallUnbound (lhs' `equals` rhs')
+        dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
+        dbproof $ "Approx lemma step: " ++ prettyTPTP step
+        return (hyp,step,approxAxioms)
+
     -- Returns in the List monad instead of the Maybe monad
     proofByApproxLemma :: [TM ProofDecl]
     proofByApproxLemma
-       | concreteType resTy = return $ accompanyParts ApproxLemma $ do
-             let f = "a.f"
-             addFuns [(f,1)]
-             (approx,approxAxioms) <- approximate f resTy
-             hyp <- locally $ do
-                       lhs' <- translateExpr (App f [lhs])
-                       rhs' <- translateExpr (App f [rhs])
-                       forallUnbound (lhs' `equals` rhs')
-             step <- locally $ do
-                       lhs' <- translateExpr (App approx [lhs])
-                       rhs' <- translateExpr (App approx [rhs])
-                       forallUnbound (lhs' `equals` rhs')
-             dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
-             dbproof $ "Approx lemma step: " ++ prettyTPTP step
-             return $ [proofPart "step"
+       | concreteType resTy =
+             [accompanyParts ApproxLemma $ do
+                   (hyp,step,approxAxioms) <- approxSteps
+                   return $ [proofPart "step"
                                  (Axiom ("approxhyp") hyp
                                  :Conjecture ("approxstep") step
                                  :approxAxioms)]
+             ,accompanyParts FiniteApproxLemma $ do
+                   (hyp,step,approxAxioms) <- approxSteps
+                   return $ [Part "step"
+                                 (Axiom ("approxhyp") hyp
+                                 :Conjecture ("approxstep") step
+                                 :init approxAxioms)
+                                 FiniteSuccess]
+             ]
        | otherwise = []
 
     plainProof :: [TM ProofDecl]
