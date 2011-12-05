@@ -3,13 +3,18 @@
 module Nat where
 
 import AutoPrelude
-import Prelude ()
+import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
-type Prop a = a
-prove = prove
-proveBool = proveBool
-(=:=) = (=:=)
+data Nat = Z | S Nat
+  deriving (Eq,Ord,Show)
 
+instance Arbitrary Nat where
+  arbitrary =
+    let nats = iterate S Z
+    in  (nats !!) `fmap` choose (0,25)
+
+Z       + y = y
+S Z     + y = S y
 S (S x) + y = S (S x + y)
 
 Z       * _ = Z
@@ -74,11 +79,11 @@ prop_right_distrib x y z
 
 prop_idem_plus :: Nat -> Prop Nat
 prop_idem_plus x
-  = x + x =:= x
+  = x + x =/= x
 
 prop_idem_mul :: Nat -> Prop Nat
 prop_idem_mul x
-  = x * x =:= x
+  = x * x =/= x
 
 prop_minus_zeroish :: Nat -> Nat -> Prop Nat
 prop_minus_zeroish n m
@@ -111,3 +116,25 @@ prop_minus_plus n m
 prop_lt_suc  :: Nat -> Nat -> Prop Bool
 prop_lt_suc i m
   = proveBool (i < S (m + i))
+
+main = do
+  quickCheck (printTestCase "prop_assoc_plus" prop_assoc_plus)
+  quickCheck (printTestCase "prop_assoc_mul" prop_assoc_mul)
+  quickCheck (printTestCase "prop_right_identity_plus" prop_right_identity_plus)
+  quickCheck (printTestCase "prop_left_identity_plus" prop_left_identity_plus)
+  quickCheck (printTestCase "prop_right_identity_mul" prop_right_identity_mul)
+  quickCheck (printTestCase "prop_left_identity_mul" prop_left_identity_mul)
+  quickCheck (printTestCase "prop_add_comm" prop_add_comm)
+  quickCheck (printTestCase "prop_mul_comm" prop_mul_comm)
+  quickCheck (printTestCase "prop_left_distrib" prop_left_distrib)
+  quickCheck (printTestCase "prop_right_distrib" prop_right_distrib)
+  quickCheck (printTestCase "prop_idem_plus" prop_idem_plus)
+  quickCheck (printTestCase "prop_idem_mul" prop_idem_mul)
+  quickCheck (printTestCase "prop_minus_zeroish" prop_minus_zeroish)
+  quickCheck (printTestCase "prop_minus_absorbish" prop_minus_absorbish)
+  quickCheck (printTestCase "prop_minus_distribish" prop_minus_distribish)
+  quickCheck (printTestCase "prop_le_succ_plus" prop_le_succ_plus)
+  quickCheck (printTestCase "prop_le_plus" prop_le_plus)
+  quickCheck (printTestCase "prop_le_plus_sym" prop_le_plus_sym)
+  quickCheck (printTestCase "prop_minus_plus" prop_minus_plus)
+  quickCheck (printTestCase "prop_lt_suc" prop_lt_suc)

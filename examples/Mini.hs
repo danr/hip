@@ -14,7 +14,7 @@ data Nat = Z | S Nat
 
 -- Disprove
 prop_zero_is_one :: Prop Nat
-prop_zero_is_one = Z =:= S Z
+prop_zero_is_one = Z =/= S Z
 
 -- Induction on x. Also holds in the presence of bottoms
 prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat

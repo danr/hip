@@ -3,25 +3,19 @@
 module Integers where
 
 import AutoPrelude
-import Prelude ()
+import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
-data Nat = S Nat | Z deriving (Show)
+data Nat = Z | S Nat deriving (Eq,Show)
 
-{-
 instance Arbitrary Nat where
   arbitrary =
     let nats = iterate S Z
-    in sized $ \s -> do
-          x <- choose (0,s)
-          return (nats !! x)
--}
+    in  (nats !!) `fmap` choose (0,50)
 
-data Integ = P Nat | N Nat deriving (Show)
+data Integ = P Nat | N Nat deriving (Show,Eq)
 
-{-
 instance Arbitrary Integ where
-  arbitrary = oneof [P <$> arbitrary,N <$> arbitrary]
-  -}
+  arbitrary = oneof [P `fmap` arbitrary,N `fmap` arbitrary]
 
 eqnat Z Z = True
 eqnat (S m) (S n) = True
@@ -90,10 +84,8 @@ abs' (N n) = S n
 
 data Sign = Pos | Neg deriving (Eq,Show)
 
-{-
 instance Arbitrary Sign where
   arbitrary = elements [Pos,Neg]
-  -}
 
 opposite Pos = Neg
 opposite Neg = Pos
@@ -109,6 +101,12 @@ prop_sign_ident_left s = s *% Pos =:= s
 
 prop_sign_ident_right :: Sign -> Prop Sign
 prop_sign_ident_right s = Pos *% s =:= s
+
+prop_sign_opposite_involutive :: Sign -> Prop Sign
+prop_sign_opposite_involutive s = opposite (opposite s) =:= s
+
+prop_sign_triple :: Sign -> Prop Sign
+prop_sign_triple s = s *% (s *% s) =:= s
 
 sign :: Integ -> Sign
 sign (P _) = Pos
@@ -133,5 +131,22 @@ prop_mul_assoc x y z = (x *! (y *! z)) =:= ((x *! y) *! z)
 
 prop_mul_comm :: Integ -> Integ -> Prop Integ
 prop_mul_comm x y = (x *! y) =:= (y *! x)
+
+main = do
+  quickCheck (printTestCase "prop_neg_involutive" prop_neg_involutive)
+  quickCheck (printTestCase "prop_add_ident_left" prop_add_ident_left)
+  quickCheck (printTestCase "prop_add_ident_right" prop_add_ident_right)
+  quickCheck (printTestCase "prop_add_assoc" prop_add_assoc)
+  quickCheck (printTestCase "prop_add_comm" prop_add_comm)
+  quickCheck (printTestCase "prop_add_inv_left" prop_add_inv_left)
+  quickCheck (printTestCase "prop_add_inv_right" prop_add_inv_right)
+  quickCheck (printTestCase "prop_sign_assoc" prop_sign_assoc)
+  quickCheck (printTestCase "prop_sign_ident_left" prop_sign_ident_left)
+  quickCheck (printTestCase "prop_sign_opposite_involutive" prop_sign_opposite_involutive)
+  quickCheck (printTestCase "prop_sign_triple" prop_sign_triple)
+  quickCheck (printTestCase "prop_mul_ident_left" prop_mul_ident_left)
+  quickCheck (printTestCase "prop_mul_ident_right" prop_mul_ident_right)
+  quickCheck (printTestCase "prop_mul_assoc" prop_mul_assoc)
+  quickCheck (printTestCase "prop_mul_comm" prop_mul_comm)
 
 

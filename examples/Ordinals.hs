@@ -4,11 +4,10 @@ import AutoPrelude
 import Prelude (show,Show)
 import qualified Prelude as P
 
-type Prop a = a
-prove = prove
-proveBool = proveBool
-(=:=) = (=:=)
+data Nat = Z | S Nat deriving (P.Show)
 
+Z     + y = y
+(S x) + y = S (x + y)
 
 Z     * _ = Z
 (S x) * y = y + (x * y)
