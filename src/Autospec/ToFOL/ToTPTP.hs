@@ -77,8 +77,11 @@ filterFuns :: Set Name -> [Decl] -> [Decl]
 filterFuns fs = filter ((`S.member` fs) . declName)
 
 prepareProofs :: [Decl] -> ([ProofDecl],[Msg])
-prepareProofs ds = second concat $ unzip (concatMap processDecl proofDecls)
+prepareProofs ds = second ((extraDebug ++) . concat)
+                 $ unzip (concatMap processDecl proofDecls)
   where
+    extraDebug = [dbproofMsg $ "Recursive functions: " ++ show recursiveFuns]
+
     processDecl :: Decl -> [(ProofDecl,[Msg])]
     processDecl d
       | declName d `elem` proveFunctions = []
@@ -96,7 +99,7 @@ prepareProofs ds = second concat $ unzip (concatMap processDecl proofDecls)
                     fundecls  = filterFuns  fs funDecls
                     pdms      = makeProofDecls fundecls recursiveFuns sigty d
                 in  flip map pdms $ \pdm -> runTM $ do
-                        dbproof $ "Recursive functions: " ++ show recursiveFuns
+                        dbproof $ fname
                         addTypes types
                         addCons datadecls
                         pd    <- pdm

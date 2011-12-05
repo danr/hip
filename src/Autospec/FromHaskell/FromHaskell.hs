@@ -21,7 +21,7 @@ import Data.List (groupBy,(\\),intercalate)
 import Data.Function (on)
 import Data.Maybe (fromMaybe)
 
-fixs = infix_ 0 ["=:="]
+fixs = infix_ 0 ["=:=","=/="]
 
 parseMode :: ParseMode
 parseMode = defaultParseMode { fixities = fmap (fixs ++)

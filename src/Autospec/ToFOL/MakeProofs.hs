@@ -36,12 +36,14 @@ makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
                                _        -> []
         resTy     = unProp $ case ty of TyApp ts -> last ts
                                         t        -> t
-        prove' :: Expr -> Expr -> [TM ProofDecl]
+        prove' :: Bool -> Expr -> Expr -> [TM ProofDecl]
         prove' = prove fundecls recfuns resTy fname typedArgs
     case e of
-      App "proveBool" [lhs]             -> prove' lhs (Con "True" [])
-      App "prove" [App "=:=" [lhs,rhs]] -> prove' lhs rhs
-      App "=:=" [lhs,rhs]               -> prove' lhs rhs
+      App "proveBool" [lhs]             -> prove' False lhs (Con "True" [])
+      App "prove" [App "=:=" [lhs,rhs]] -> prove' False lhs rhs
+      App "=:=" [lhs,rhs]               -> prove' False lhs rhs
+      App "prove" [App "=/=" [lhs,rhs]] -> prove' True  lhs rhs
+      App "=/=" [lhs,rhs]               -> prove' True  lhs rhs
       _  -> []
 makeProofDecls _ _ _ _ = []
 
@@ -64,13 +66,15 @@ prove :: [Decl]
       -- ^ Name of the property
       -> [(Name,Type)]
       -- ^ Arguments together with type
+      -> Bool
+      -- ^ Disprove instead of proving
       -> Expr
       -- ^ LHS
       -> Expr
       -- ^ RHS
       -> [TM ProofDecl]
       -- ^ Resulting instructions how to do proof declarations for this
-prove fundecls recfuns resTy fname typedArgs lhs rhs =
+prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
     in  plainProof ++
         proofByFixpointInduction ++
@@ -78,7 +82,12 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
         map proofBySimpleInduction indargs
   where
     pstr :: String
-    pstr = prettyCore lhs ++ " = " ++ prettyCore rhs
+    pstr = prettyCore lhs ++
+           (if disprove then " !" else " ") ++
+           "= " ++ prettyCore rhs
+
+    equals | disprove  = (!=)
+           | otherwise = (===)
 
     accompanyParts :: ProofType -> TM [ProofPart] -> TM ProofDecl
     accompanyParts prooftype partsm = do
@@ -140,7 +149,7 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
             mapM_ (uncurry addIndirection) binds
             lhs' <- translateExpr lhs
             rhs' <- translateExpr rhs
-            return (lhs' === rhs')
+            return (lhs' `equals` rhs')
          forallUnbound (foldr1 (/\) clauses)
 
     -- Returns in the List monad instead of the Maybe monad
@@ -153,11 +162,11 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
              hyp <- locally $ do
                        lhs' <- translateExpr (App f [lhs])
                        rhs' <- translateExpr (App f [rhs])
-                       forallUnbound (lhs' === rhs')
+                       forallUnbound (lhs' `equals` rhs')
              step <- locally $ do
                        lhs' <- translateExpr (App approx [lhs])
                        rhs' <- translateExpr (App approx [rhs])
-                       forallUnbound (lhs' === rhs')
+                       forallUnbound (lhs' `equals` rhs')
              dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
              dbproof $ "Approx lemma step: " ++ prettyTPTP step
              return $ [proofPart "step"
@@ -178,7 +187,7 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
     instantiateP binds = locally $ do
         lhs' <- translateExpr (substVars binds lhs)
         rhs' <- translateExpr (substVars binds rhs)
-        forallUnbound (lhs' === rhs')
+        forallUnbound (lhs' `equals` rhs')
 
     proofByFixpointInduction :: [TM ProofDecl]
     proofByFixpointInduction =

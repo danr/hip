@@ -8,7 +8,7 @@ proofDatatypes :: [Name]
 proofDatatypes = ["Prop"]
 
 proveFunctions :: [Name]
-proveFunctions = ["prove","proveBool","given","givenBool","=:="]
+proveFunctions = ["prove","proveBool","given","givenBool","=:=","=/="]
 
 provable :: Expr -> Bool
 provable (App f es) = f `elem` proveFunctions || any provable es
