@@ -11,9 +11,6 @@ proveBool = proveBool
 otherwise = True
 infix 1 =:=
 
-otherwise :: Bool
-otherwise = True
-
 data Nat = Z | S Nat
 
 Z     == Z     = True

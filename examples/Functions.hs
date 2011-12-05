@@ -72,20 +72,23 @@ f ... g = \x -> f (g x)
 prop_comp_equal :: Prop ((b -> c) -> (a -> b) -> a -> c)
 prop_comp_equal = prove ((.) =:= (...))
 
-prop_comp_assocl :: (c -> d) -> (b -> c) -> (a -> b) -> Prop (a -> d)
-prop_comp_assocl f g h = prove (((f . g) . h) =:= (f . (g . h)))
-
 prop_comp_assoc :: (c -> d) -> (b -> c) -> (a -> b) -> Prop (a -> d)
-prop_comp_assoc f g h = prove (((f ... g) ... h) =:= (f ... (g ... h)))
+prop_comp_assoc f g h = prove (((f . g) . h) =:= (f . (g . h)))
 
-prop_left_idl :: (a -> b) -> Prop (a -> b)
-prop_left_idl f = prove (f . id =:= f)
+prop_comp_assoc' :: (c -> d) -> (b -> c) -> (a -> b) -> a -> Prop d
+prop_comp_assoc' f g h a = prove (((f . g) . h) a =:= (f . (g . h)) a)
 
-prop_right_idl :: (a -> b) -> Prop (a -> b)
-prop_right_idl f = prove (id . f =:= f)
+prop_comp_assocl :: (c -> d) -> (b -> c) -> (a -> b) -> Prop (a -> d)
+prop_comp_assocl f g h = prove (((f ... g) ... h) =:= (f ... (g ... h)))
 
 prop_left_id :: (a -> b) -> Prop (a -> b)
-prop_left_id f = prove (f ... id =:= f)
+prop_left_id f = prove (f . id =:= f)
 
 prop_right_id :: (a -> b) -> Prop (a -> b)
-prop_right_id f = prove (id ... f =:= f)
+prop_right_id f = prove (id . f =:= f)
+
+prop_left_idl :: (a -> b) -> Prop (a -> b)
+prop_left_idl f = prove (f ... id =:= f)
+
+prop_right_idl :: (a -> b) -> Prop (a -> b)
+prop_right_idl f = prove (id ... f =:= f)

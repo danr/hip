@@ -51,6 +51,7 @@ prop_fmap_comp' :: (b -> c) -> (a -> b) -> Maybe a -> Prop (Maybe c)
 prop_fmap_comp' f g x = prove (fmap (f . g) x =:= (fmap f . fmap g) x)
 
 -- Fmap / return law ----------------------------------------------------------
+-- (return is a natural transformation)
 
 prop_fmap_return :: (a -> b) -> Prop (a -> Maybe b)
 prop_fmap_return f = prove (return . f =:= fmap f . return)
