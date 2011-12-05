@@ -466,10 +466,12 @@ uncurry3 f ~(x,y) = f x y
 #+END_SRC
 Here, uncurry1 and uncurry3 are equal, but uncurry2 is too strict.
 
-** TODO Make Prop testable.
+** DONE Make Prop testable.
+CLOSED: [2011-12-05 Mon 15:45]
 Also put this in some AutoPrelude. Then we can remove prove,
 and just make =:= be the function.
-** TODO Add disproving
+** DONE Add disproving
+CLOSED: [2011-12-05 Mon 15:45]
 =/= could do for that.
 ** TODO Fixpoint induction on all subsets of recursive functions
 prove (x + y == y + x)
