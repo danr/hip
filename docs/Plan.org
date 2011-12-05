@@ -505,7 +505,15 @@ This should also fire the definition of integers (data Z = P Nat | N Nat)
 
 ** TODO Examples
 *** TODO Hinze's last papers about coinduction
+A lot of interesting stuff in his papers
 *** TODO Dixon's PhD thesis
+Nat and Ordinals with exponentials
+
+A noticeable difference with my work and this is Dixon combines
+finding lemmas (by rippling for instance) and the way to prove
+them. (Or so it seems) The advantage of our approach is that we do not
+need to worry HOW to prove something, the ATP will take care of that,
+only WHAT to prove.
 *** TODO Moa's paper "Conjecture Synthesis for Inductive Theories"
 *** TODO Examples from Critics
 *** TODO Examples with postulated sorting
