@@ -3,7 +3,7 @@
 module Nat where
 
 import AutoPrelude
-import Prelude (Eq,Ord,Show,iterate,(!!),return,Bool(..),($))
+import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
 data Nat = Z | S Nat
   deriving (Eq,Ord,Show)
@@ -11,9 +11,7 @@ data Nat = Z | S Nat
 instance Arbitrary Nat where
   arbitrary =
     let nats = iterate S Z
-    in sized $ \s -> do
-          x <- choose (0,s)
-          return (nats !! x)
+    in  (nats !!) `fmap` choose (0,25)
 
 Z     == Z     = True
 Z     == _     = False
