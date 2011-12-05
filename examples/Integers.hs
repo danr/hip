@@ -2,6 +2,7 @@
 -- Agda standard library, which is proved to be a commutative ring
 module Integers where
 
+import AutoPrelude
 import Prelude ()
 
 data Nat = S Nat | Z deriving (Show)

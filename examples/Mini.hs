@@ -1,6 +1,7 @@
 -- Some examples of Nats and Lists
 module Mini where
 
+import AutoPrelude
 import Prelude ()
 
 Z     + y = y

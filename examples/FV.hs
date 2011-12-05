@@ -1,5 +1,6 @@
 module FV where
 
+import AutoPrelude
 
 (=:=) :: a -> a -> a
 (=:=) = (=:=)

@@ -2,6 +2,7 @@
 -- and accumulator-based multiplication
 module Nat where
 
+import AutoPrelude
 import Prelude ()
 
 data Nat = Z | S Nat

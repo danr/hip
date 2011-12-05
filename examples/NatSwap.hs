@@ -2,6 +2,7 @@
 -- multiplication
 module Nat where
 
+import AutoPrelude
 import Prelude ()
 
 type Prop a = a

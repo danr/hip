@@ -1,6 +1,7 @@
 -- Properties come from QuickSpec
 module Lists where
 
+import AutoPrelude
 import Prelude ()
 
 (++) :: [a] -> [a] -> [a]

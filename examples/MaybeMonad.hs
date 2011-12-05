@@ -3,6 +3,7 @@
 -- do approximation lemma or induction
 module MaybeMonad where
 
+import AutoPrelude
 import Prelude ()
 
 data Maybe a = Just a | Nothing

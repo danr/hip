@@ -1,6 +1,7 @@
 -- Lists and functions, many properties come from QuickSpec
 module ListFunctions where
 
+import AutoPrelude
 import Prelude (Bool(..))
 
 

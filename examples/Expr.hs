@@ -1,5 +1,6 @@
 module Expr where
 
+import AutoPrelude
 data Expr = Add Expr Expr
           | Mul Expr Expr
           | IsZero Expr

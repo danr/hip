@@ -1,5 +1,6 @@
 module Ordinals where
 
+import AutoPrelude
 import Prelude (show,Show)
 import qualified Prelude as P
 

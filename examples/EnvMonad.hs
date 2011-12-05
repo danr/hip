@@ -1,6 +1,7 @@
 -- No properties of local yet
 module EnvMonad where
 
+import AutoPrelude
 import Prelude ()
 
 type Env e a = e -> a

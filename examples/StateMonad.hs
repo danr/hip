@@ -1,6 +1,7 @@
 -- Does not yet check put/get properties!
 module StateMonad where
 
+import AutoPrelude
 import Prelude ()
 
 

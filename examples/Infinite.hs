@@ -1,6 +1,7 @@
 -- Properties of infinite objects
 module Infinity where
 
+import AutoPrelude
 import Prelude (Bool(..))
 
 

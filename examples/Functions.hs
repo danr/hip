@@ -1,8 +1,7 @@
 module Functions where
 
+import AutoPrelude
 import Prelude ()
-
-
 
 const x y = x
 flip f x y = f y x

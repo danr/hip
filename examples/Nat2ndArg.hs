@@ -2,6 +2,7 @@
 -- second argument
 module Nat where
 
+import AutoPrelude
 import Prelude ()
 
 data Nat = Z | S Nat

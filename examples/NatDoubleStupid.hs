@@ -2,6 +2,7 @@
 -- but production in normal speed
 module Nat where
 
+import AutoPrelude
 import Prelude ()
 
 type Prop a = a

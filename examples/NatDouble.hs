@@ -1,6 +1,7 @@
 -- Properties of Natural numbers, with recursion at "double speed"
 module Nat where
 
+import AutoPrelude
 import Prelude ()
 
 type Prop a = a
