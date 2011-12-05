@@ -7,12 +7,7 @@ type Prop a = a
 prove = prove
 proveBool = proveBool
 (=:=) = (=:=)
-infix 1 =:=
 
-data Nat = Z | S Nat deriving (P.Show)
-
-Z     + y = y
-(S x) + y = S (x + y)
 
 Z     * _ = Z
 (S x) * y = y + (x * y)
@@ -30,31 +25,31 @@ Suc x ** y = y ++ (x ** y)
 Lim f ** y = Lim (\n -> f n ** y)
 
 prop_zero_is_one :: Prop Ord
-prop_zero_is_one = prove (Zero =:= Suc Zero)
+prop_zero_is_one = Zero =:= Suc Zero
 
 prop_assoc_plus :: Ord -> Ord -> Ord -> Prop Ord
 prop_assoc_plus x y z
-  = prove (x ++ (y ++ z) =:= (x ++ y) ++ z)
+  = x ++ (y ++ z) =:= (x ++ y) ++ z
 
 prop_assoc_mul :: Ord -> Ord -> Ord -> Prop Ord
 prop_assoc_mul x y z
-  = prove (x ** (y ** z) =:= (x ** y) ** z)
+  = x ** (y ** z) =:= (x ** y) ** z
 
 prop_right_identity_plus :: Ord -> Prop Ord
 prop_right_identity_plus x
-  = prove (x ++ Zero =:= x)
+  = x ++ Zero =:= x
 
 prop_left_identity_plus :: Ord -> Prop Ord
 prop_left_identity_plus x
-  = prove (Zero ++ x =:= x)
+  = Zero ++ x =:= x
 
 prop_right_identity_mul :: Ord -> Prop Ord
 prop_right_identity_mul x
-  = prove (x ** Suc Zero =:= x)
+  = x ** Suc Zero =:= x
 
 prop_left_identity_mul :: Ord -> Prop Ord
 prop_left_identity_mul x
-  = prove (Suc Zero ** x =:= x)
+  = Suc Zero ** x =:= x
 
 
 {-

@@ -5,12 +5,7 @@ module IWC where
 
 data Nat = S Nat | Z
 
-infix 1 =:=
-type Prop a = a
-prove :: a -> Prop a
-prove = prove
-proveBool :: a -> Prop Bool
-proveBool = proveBool
+
 (=:=) :: a -> a -> a
 (=:=) = (=:=)
 
@@ -27,7 +22,7 @@ even (S (S x)) = even x
 (x:xs) `app` ys = x : (xs `app` ys)
 
 prop_evenLengthAppend :: [a] -> [a] -> Prop [a]
-prop_evenLengthAppend xs ys = prove (even (len (xs `app` ys)) =:=
+prop_evenLengthAppend xs ys = even (len (xs `app` ys) =:=
                                      even (len (ys `app` xs)))
 
 rotate Z     xs     = xs
@@ -35,14 +30,14 @@ rotate (S n) []     = []
 rotate (S n) (x:xs) = rotate n (xs `app` [x])
 
 prop_rotateLength :: [a] -> Prop [a]
-prop_rotateLength xs = prove (rotate (len xs) xs =:= xs)
+prop_rotateLength xs = rotate (len xs) xs =:= xs
 
 prop_appAssoc :: [a] -> [a] -> [a] -> Prop [a]
-prop_appAssoc xs ys zs = prove (((xs `app` ys) `app` zs) =:=
+prop_appAssoc xs ys zs = ((xs `app` ys) `app` zs =:=
                                 (xs `app` (ys `app` zs)))
 
 prop_rotateLength2 :: [a] -> [a] -> Prop [a]
-prop_rotateLength2 xs ys = prove (rotate (len xs) (xs `app` ys)
+prop_rotateLength2 xs ys = rotate (len xs) (xs `app` ys
                                               =:= (ys `app` xs))
 
 plus x Z     = x
@@ -68,7 +63,7 @@ sum' x (S y) f | S y `lt` x = Z
                | otherwise  = f (S y) `plus` sum' x y f
 
 prop_binomialTheorems :: Nat -> Nat -> Prop Nat
-prop_binomialTheorems x n = prove (exp (S x) n =:= sum' Z n (\i -> choose n i `times` exp x i))
+prop_binomialTheorems x n = exp (S x) n =:= sum' Z n (\i -> choose n i `times` exp x i)
 
 minus n Z = n
 minus (S n) (S k) = minus n k
@@ -77,14 +72,14 @@ minus Z k = Z
 {-
 prop_chooseLemma :: Nat -> Nat -> Prop Nat
 prop_chooseLemma n k = givenBool (k `lt` n)
-                     $ prove (choose n k =:= choose n (n `minus` k))
+                     $ choose n k =:= choose n (n `minus` k)
 -}
 
 prop_sumLemma :: Nat -> Nat -> (Nat -> Nat) -> (Nat -> Nat) -> Prop Nat
-prop_sumLemma n m f g = prove (sum' n m (\i -> f i `plus` g i) =:= sum' n m f `plus` sum' n m g)
+prop_sumLemma n m f g = sum' n m (\i -> f i `plus` g i) =:= sum' n m f `plus` sum' n m g
 
 prop_sumLemma2 :: Nat -> Nat -> Nat -> (Nat -> Nat) -> Prop Nat
-prop_sumLemma2 n m t f = prove (sum' n m (\i -> t `times` f i) =:= t `times` sum' n m f)
+prop_sumLemma2 n m t f = sum' n m (\i -> t `times` f i) =:= t `times` sum' n m f
 
 evenm Z     = True
 evenm (S n) = oddm n
@@ -97,7 +92,7 @@ evenr (S Z) = False
 evenr (S (S x)) = evenr x
 
 prop_evenEq :: Nat -> Prop Bool
-prop_evenEq n = prove (evenm n =:= evenr n)
+prop_evenEq n = evenm n =:= evenr n
 
 is6 (S (S (S (S (S (S Z)))))) = True
 is6 _                         = False
@@ -113,4 +108,4 @@ newSplit (a:x) w d | is6 d     = w `app` newSplit (a:x) [] Z
                    | otherwise = newSplit x (w `app` [a]) (S d)
 
 prop_split :: [a] -> [a] -> Prop [a]
-prop_split x w = prove (newSplit x w (len w) =:= splitList x w)
+prop_split x w = newSplit x w (len w) =:= splitList x w

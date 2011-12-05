@@ -89,7 +89,6 @@ runProvers processes timeout output problems = do
               | Principle name ptype str _ parts <- problems
               , Part partName str' pfail <- parts
               ]
---    mapM_ (writeChan probChan) problems
     resChan <- newChan
     ps <- replicateM processes $
                forkIO (worker timeout output probChan resChan)
@@ -103,7 +102,7 @@ getResults :: ResChan -> [Problem] -> IO [Res]
 getResults ch probs = do
     out <- newChan
     -- I was once able to fork this in another thread,
-    -- but now it gives mea a thread blocked indefinitely in MVar operation
+    -- but now it gives me a thread blocked indefinitely in MVar operation
     evalStateT (getResults' ch out) (probmap,M.empty)
  --   putStrLn "Getting from chan..."
     map fromJust . takeWhile isJust <$> getChanContents out
@@ -128,7 +127,6 @@ getResults' ch out = mif (M.null <$> gets fst)
          Just x | x > 1 -> modify (first (M.adjust pred desc))
                 | otherwise -> do modify (first (M.delete desc))
                                   Just parts <- M.lookup desc <$> gets snd
---                                  lift $ putStrLn "Writing to chan..."
                                   lift $ writeChan out $ Just $ uncurry
                                        Principle desc
                                                 (resFromParts parts)
@@ -140,17 +138,20 @@ getResults' ch out = mif (M.null <$> gets fst)
 worker :: Int -> Maybe FilePath -> ProbChan -> ResChan -> IO ()
 worker timeout output probChan resChan = forever $ do
     (desc@(name,ptype),Part pname str pfail) <- readChan probChan
---     putStrLn $ "Working on " ++ name
     mvar <- newEmptyMVar
     pvar <- newEmptyMVar
     tid <- length str `seq` forkIO $ runProver str mvar pvar
     kid <- forkIO $ do threadDelay (timeout * 1000)
-                       pid <- takeMVar pvar
+                       (pid,outThread) <- takeMVar pvar
                        killThread tid
+                       killThread outThread
                        terminateProcess pid
---                       putStrLn $ name ++ "killed"
+{-                       exitCode <- getProcessExitCode pid
+                       unless (exitCode == Nothing) $ do
+                           putStrLn $ "Process didn't actually die, trying again..."
+                           terminateProcess pid
+-}
                        putMVar mvar Timeout
-    -- No handling of storing tptp messasges
     let fname = name ++ "_" ++
                 proofTypeFile ptype ++ "_" ++
                 pname ++ ".tptp"
@@ -160,10 +161,8 @@ worker timeout output probChan resChan = forever $ do
     killThread tid
     writeChan resChan (desc,Part pname res pfail)
 
-runProver :: String -> MVar Result -> MVar ProcessHandle -> IO ()
+runProver :: String -> MVar Result -> MVar (ProcessHandle,ThreadId) -> IO ()
 runProver str mvar pvar = do
---    putStrLn "Running prover"
-
     let cmd = "eprover"
         args = words "-tAuto -xAuto --memory-limit=1000 --tptp3-format -s"
 
@@ -172,18 +171,19 @@ runProver str mvar pvar = do
                                        std_out = CreatePipe,
                                        std_err = Inherit }
 
-    putMVar pvar pid
-
     -- fork off a thread to start consuming the output
     output  <- hGetContents outh
     outMVar <- newEmptyMVar
-    _ <- forkIO $ length output `seq` putMVar outMVar ()
+    outThread <- forkIO $ length output `seq` putMVar outMVar ()
+
+    -- store pid and out thread
+    putMVar pvar (pid,outThread)
 
     -- now write and flush any input
     unless (null str) $ do hPutStr inh str; hFlush inh
     hClose inh -- done with stdin
 
-    -- wait on the output
+    -- wait on the output (do we nede to close this handle?)
     takeMVar outMVar
     hClose outh
 
@@ -193,10 +193,9 @@ runProver str mvar pvar = do
     out <- case ex of
      ExitSuccess   -> return output
      ExitFailure r ->
-       error ("readProcess: " ++ cmd ++
-                                     ' ':unwords (map show args) ++
-                                     " (exit " ++ show r ++ ")")
-
+       error ("runProver: " ++ cmd ++
+                            ' ':unwords (map show args) ++
+                            " (exit " ++ show r ++ ")")
 
     let r | "Theorem" `isInfixOf` out            = Theorem
           | "Unsatisfiable" `isInfixOf` out      = Theorem

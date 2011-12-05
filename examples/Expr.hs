@@ -1,10 +1,4 @@
-
-infix 1 =:=
-type Prop a = a
-prove = prove
-(=:=) = (=:=)
-otherwise = True
-infix 1 =:=
+module Expr where
 
 data Expr = Add Expr Expr
           | Mul Expr Expr
@@ -21,7 +15,7 @@ mirror (IsZero e)  = IsZero (mirror e)
 mirror e           = e
 
 prop_mirror :: Expr -> Prop Expr
-prop_mirror e = prove (e =:= mirror (mirror e))
+prop_mirror e = e =:= mirror (mirror e)
 
 plus x Z     = x
 plus x (S y) = S (plus x y)
@@ -45,7 +39,7 @@ eval (Val n) = n
 
 -- These probably need assoc and identity lemmas
 prop_mirror_size :: Expr -> Prop Nat
-prop_mirror_size e = prove (size e =:= size (mirror e))
+prop_mirror_size e = size e =:= size (mirror e)
 
 prop_mirror_eval :: Expr -> Prop Expr
-prop_mirror_eval e = prove (eval e =:= eval (mirror e))
+prop_mirror_eval e = eval e =:= eval (mirror e)

@@ -39,8 +39,9 @@ makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
         prove' :: Expr -> Expr -> [TM ProofDecl]
         prove' = prove fundecls recfuns resTy fname typedArgs
     case e of
-      App "proveBool" [lhs]         -> prove' lhs (Con "True" [])
-      App "prove" [App _ [lhs,rhs]] -> prove' lhs rhs
+      App "proveBool" [lhs]             -> prove' lhs (Con "True" [])
+      App "prove" [App "=:=" [lhs,rhs]] -> prove' lhs rhs
+      App "=:=" [lhs,rhs]               -> prove' lhs rhs
       _  -> []
 makeProofDecls _ _ _ _ = []
 

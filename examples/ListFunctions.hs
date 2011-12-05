@@ -3,12 +3,7 @@ module ListFunctions where
 
 import Prelude (Bool(..))
 
-infix 1 =:=
-type Prop a = a
-prove :: a -> Prop a
-prove = prove
-proveBool :: a -> Prop Bool
-proveBool = proveBool
+
 (=:=) :: a -> a -> a
 (=:=) = (=:=)
 
@@ -177,11 +172,11 @@ zipConcat x xs (y:ys) = (x, y) : zip xs ys
 
 prop_01 :: Nat -> [a] -> Prop [a]
 prop_01 n xs
-  = prove (take n xs ++ drop n xs =:= xs)
+  = take n xs ++ drop n xs =:= xs
 
 prop_02 :: Nat -> [Nat] -> [Nat] -> Prop Nat
 prop_02 n xs ys
-  = prove (count n xs + count n ys =:= count n (xs ++ ys))
+  = count n xs + count n ys =:= count n (xs ++ ys)
 
 prop_03 :: Nat -> [Nat] -> [Nat] -> Prop Bool
 prop_03 n xs ys
@@ -189,35 +184,35 @@ prop_03 n xs ys
 
 prop_04 :: Nat -> [Nat] -> Prop Nat
 prop_04 n xs
-  = prove (S (count n xs) =:= count n (n : xs))
+  = S (count n xs) =:= count n (n : xs)
 
 prop_11 :: [a] -> Prop [a]
 prop_11 xs
-  = prove (drop Z xs =:= xs)
+  = drop Z xs =:= xs
 
 prop_12 :: Nat -> (a -> b) -> [a] -> Prop [b]
 prop_12 n f xs
-  = prove (drop n (map f xs) =:= map f (drop n xs))
+  = drop n (map f xs) =:= map f (drop n xs)
 
 prop_13 :: Nat -> a -> [a] -> Prop [a]
 prop_13 n x xs
-  = prove (drop (S n) (x : xs) =:= drop n xs)
+  = drop (S n) (x : xs) =:= drop n xs
 
 prop_14 :: (a -> Bool) -> [a] -> [a] -> Prop [a]
 prop_14 p xs ys
-  = prove (filter p (xs ++ ys) =:= (filter p xs) ++ (filter p ys))
+  = filter p (xs ++ ys) =:= (filter p xs) ++ (filter p ys)
 
 prop_15 :: Nat -> [Nat] -> Prop Nat
 prop_15 x xs
-  = prove (len (ins x xs) =:= S (len xs))
+  = len (ins x xs) =:= S (len xs)
 
 prop_19 :: Nat -> [Nat] -> Prop Nat
 prop_19 n xs
-  = prove (len (drop n xs) =:= len xs - n)
+  = len (drop n xs) =:= len xs - n
 
 prop_20 :: [Nat] -> Prop Nat
 prop_20 xs
-  = prove (len (sort xs) =:= len xs)
+  = len (sort xs) =:= len xs
 
 {-
 prop_26 x xs ys
@@ -243,11 +238,11 @@ prop_30 x xs
 
 prop_35 :: [a] -> Prop [a]
 prop_35 xs
-  = prove (dropWhile (\_ -> False) xs =:= xs)
+  = dropWhile (\_ -> False) xs =:= xs
 
 prop_36 :: [a] -> Prop [a]
 prop_36 xs
-  = prove (takeWhile (\_ -> True) xs =:= xs)
+  = takeWhile (\_ -> True) xs =:= xs
 
 prop_37 :: Nat -> [Nat] -> Prop Bool
 prop_37 x xs
@@ -255,111 +250,111 @@ prop_37 x xs
 
 prop_38 :: Nat -> [Nat] -> Prop Nat
 prop_38 n xs
-  = prove (count n (xs ++ [n]) =:= S (count n xs))
+  = count n (xs ++ [n]) =:= S (count n xs)
 
 prop_39 :: Nat -> Nat -> [Nat] -> Prop Nat
 prop_39 n x xs
-  = prove (count n [x] + count n xs =:= count n (x:xs))
+  = count n [x] + count n xs =:= count n (x:xs)
 
 prop_40 :: [a] -> Prop [a]
 prop_40 xs
-  = prove (take Z xs =:= [])
+  = take Z xs =:= []
 
 prop_41 :: Nat -> (a -> b) -> [a] -> Prop [b]
 prop_41 n f xs
-  = prove (take n (map f xs) =:= map f (take n xs))
+  = take n (map f xs) =:= map f (take n xs)
 
 prop_42 :: Nat -> a -> [a] -> Prop [a]
 prop_42 n x xs
-  = prove (take (S n) (x:xs) =:= x : (take n xs))
+  = take (S n) (x:xs) =:= x : (take n xs)
 
 prop_43 :: (a -> Bool) -> [a] -> Prop [a]
 prop_43 p xs
-  = prove (takeWhile p xs ++ dropWhile p xs =:= xs)
+  = takeWhile p xs ++ dropWhile p xs =:= xs
 
 prop_44 :: a -> [a] -> [b] -> Prop [(a,b)]
 prop_44 x xs ys
-  = prove (zip (x:xs) ys =:= zipConcat x xs ys)
+  = zip (x:xs) ys =:= zipConcat x xs ys
 
 prop_45 :: a -> b -> [a] -> [b] -> Prop [(a,b)]
 prop_45 x y xs ys
-  = prove (zip (x:xs) (y:ys) =:= (x, y) : zip xs ys)
+  = zip (x:xs) (y:ys) =:= (x, y) : zip xs ys
 
 prop_46 :: [a] -> Prop [(b,a)]
 prop_46 xs
-  = prove (zip [] xs =:= [])
+  = zip [] xs =:= []
 
 {-
 prop_48 xs
   = given (xs == [] =:= False)
-  $ prove (butlast xs ++ [last xs] =:= xs)
+  $ butlast xs ++ [last xs] =:= xs
 -}
 
 prop_49 :: [a] -> [a] -> Prop [a]
 prop_49 xs ys
-  = prove (butlast (xs ++ ys) =:= butlastConcat xs ys)
+  = butlast (xs ++ ys) =:= butlastConcat xs ys
 
 prop_50 :: [a] -> Prop [a]
 prop_50 xs
-  = prove (butlast xs =:= take (len xs - S Z) xs)
+  = butlast xs =:= take (len xs - S Z) xs
 
 prop_51 :: [a] -> a -> Prop [a]
 prop_51 xs x
-  = prove (butlast (xs ++ [x]) =:= xs)
+  = butlast (xs ++ [x]) =:= xs
 
 prop_52 :: Nat -> [Nat] -> Prop Nat
 prop_52 n xs
-  = prove (count n xs =:= count n (rev xs))
+  = count n xs =:= count n (rev xs)
 
 prop_53 :: Nat -> [Nat] -> Prop Nat
 prop_53 n xs
-  = prove (count n xs =:= count n (sort xs))
+  = count n xs =:= count n (sort xs)
 
 prop_55 :: Nat -> [a] -> [a] -> Prop [a]
 prop_55 n xs ys
-  = prove (drop n (xs ++ ys) =:= drop n xs ++ drop (n - len xs) ys)
+  = drop n (xs ++ ys) =:= drop n xs ++ drop (n - len xs) ys
 
 prop_56 :: Nat -> Nat -> [a] -> Prop [a]
 prop_56 n m xs
-  = prove (drop n (drop m xs) =:= drop (n + m) xs)
+  = drop n (drop m xs) =:= drop (n + m) xs
 
 prop_57 :: Nat -> Nat -> [a] -> Prop [a]
 prop_57 n m xs
-  = prove (drop n (take m xs) =:= take (m - n) (drop n xs))
+  = drop n (take m xs) =:= take (m - n) (drop n xs)
 
 prop_58 :: Nat -> [a] -> [b] -> Prop [(a,b)]
 prop_58 n xs ys
-  = prove (drop n (zip xs ys) =:= zip (drop n xs) (drop n ys))
+  = drop n (zip xs ys) =:= zip (drop n xs) (drop n ys)
 
 {-
 prop_59 xs ys
   = givenBool (ys == [])
-  $ prove (last (xs ++ ys) =:= last xs)
+  $ last (xs ++ ys) =:= last xs
 
 prop_60 xs ys
   = given (ys == [] =:= False)
-  $ prove (last (xs ++ ys) =:= last ys)
+  $ last (xs ++ ys) =:= last ys
 -}
 
 prop_61 :: [Nat] -> [Nat] -> Prop Nat
 prop_61 xs ys
-  = prove (last (xs ++ ys) =:= lastOfTwo xs ys)
+  = last (xs ++ ys) =:= lastOfTwo xs ys
 
 {-
 prop_62 xs x
   = given (xs == [] =:= False)
-  $ prove (last (x:xs) =:= last xs)
+  $ last (x:xs) =:= last xs
 -}
 
 {-
 prop_63 (n :: Nat) xs
   = givenBool (n < len xs)
-  $ prove (last (drop n xs) =:= last xs)
+  $ last (drop n xs) =:= last xs
 -}
 
 prop_64 :: Nat -> [Nat] -> Prop Nat
 prop_64 x xs
-  = prove (last (xs ++ [x]) =:= x)
+  = last (xs ++ [x]) =:= x
 
 prop_66 :: (a -> Bool) -> [a] -> Prop Bool
 prop_66 p xs
@@ -368,7 +363,7 @@ prop_66 p xs
 
 prop_67 :: [a] -> Prop Nat
 prop_67 xs
-  = prove (len (butlast xs) =:= len xs - S Z)
+  = len (butlast xs) =:= len xs - S Z
 
 prop_68 :: Nat -> [Nat] -> Prop Bool
 prop_68 n xs
@@ -377,29 +372,29 @@ prop_68 n xs
 {-
 prop_71 x y xs
   = given (x == y =:= False)
-  $ prove (elem x (ins y xs) =:= elem x xs)
+  $ elem x (ins y xs) =:= elem x xs
 -}
 
 prop_72 :: Nat -> [a] -> Prop [a]
 prop_72 i xs
-  = prove (rev (drop i xs) =:= take (len xs - i) (rev xs))
+  = rev (drop i xs) =:= take (len xs - i) (rev xs)
 
 prop_73 :: (a -> Bool) -> [a] -> Prop [a]
 prop_73 p xs
-  = prove (rev (filter p xs) =:= filter p (rev xs))
+  = rev (filter p xs) =:= filter p (rev xs)
 
 prop_74 :: Nat -> [a] -> Prop [a]
 prop_74 i xs
-  = prove (rev (take i xs) =:= drop (len xs - i) (rev xs))
+  = rev (take i xs) =:= drop (len xs - i) (rev xs)
 
 prop_75 :: Nat -> Nat -> [Nat] -> Prop Nat
 prop_75 n m xs
-  = prove (count n xs + count n [m] =:= count n (m : xs))
+  = count n xs + count n [m] =:= count n (m : xs)
 
 {-
 prop_76 n m xs
   = given (n == m =:= False)
-  $ prove (count n (xs ++ [m]) =:= count n xs)
+  $ count n (xs ++ [m]) =:= count n xs
 
 prop_77 x xs
   = givenBool (sorted xs)
@@ -412,40 +407,40 @@ prop_78 xs
 
 prop_80 :: Nat -> [a] -> [a] -> Prop [a]
 prop_80 n xs ys
-  = prove (take n (xs ++ ys) =:= take n xs ++ take (n - len xs) ys)
+  = take n (xs ++ ys) =:= take n xs ++ take (n - len xs) ys
 
 prop_81 :: Nat -> Nat -> [a] -> Prop [a]
 prop_81 n m xs
-  = prove (take n (drop m xs) =:= drop m (take (n + m) xs))
+  = take n (drop m xs) =:= drop m (take (n + m) xs)
 
 prop_82 :: Nat -> [a] -> [b] -> Prop [(a,b)]
 prop_82 n xs ys
-  = prove (take n (zip xs ys) =:= zip (take n xs) (take n ys))
+  = take n (zip xs ys) =:= zip (take n xs) (take n ys)
 
 prop_83 :: [a] -> [a] -> [b] -> Prop [(a,b)]
 prop_83 xs ys zs
-  = prove (zip (xs ++ ys) zs =:=
+  = zip (xs ++ ys zs =:=
            zip xs (take (len xs) zs) ++ zip ys (drop (len xs) zs))
 
 prop_84 :: [a] -> [b] -> [b] -> Prop [(a,b)]
 prop_84 xs ys zs
-  = prove (zip xs (ys ++ zs) =:=
+  = zip xs (ys ++ zs =:=
            zip (take (len ys) xs) ys ++ zip (drop (len ys) xs) zs)
 
 prop_85 :: [a] -> [b] -> Prop [(a,b)]
 prop_85 xs ys
-  = prove (zip (rev xs) (rev ys) =:= rev (zip xs ys))
+  = zip (rev xs) (rev ys) =:= rev (zip xs ys)
 
 prop_map_compose :: (b -> c) -> (a -> b) -> [a] -> Prop [c]
-prop_map_compose f g xs = prove (map (f . g) xs =:= map f (map g xs))
+prop_map_compose f g xs = map (f . g) xs =:= map f (map g xs)
 
 prop_map_id :: [a] -> Prop [a]
-prop_map_id xs = prove (map id xs =:= xs)
+prop_map_id xs = map id xs =:= xs
 
 prop_filter_double_pred :: (a -> Bool) -> (a -> Bool) -> [a] -> Prop [a]
-prop_filter_double_pred p q xs = prove (filter p (filter q xs) =:=
+prop_filter_double_pred p q xs = filter p (filter q xs =:=
                                         filter (\x -> p x && q x) xs)
 
 prop_len_plus_list_homomorphism :: [a] -> [a] -> Prop Nat
 prop_len_plus_list_homomorphism xs ys =
-  prove (len (xs ++ ys) =:= len xs + len ys)
+  len (xs ++ ys) =:= len xs + len ys

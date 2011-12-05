@@ -1,11 +1,6 @@
 module FV where
 
-infix 1 =:=
-type Prop a = a
-prove :: a -> Prop a
-prove = prove
-proveBool :: a -> Prop Bool
-proveBool = proveBool
+
 (=:=) :: a -> a -> a
 (=:=) = (=:=)
 
@@ -60,4 +55,4 @@ v `freeIn` e = go e []
     go (Abs x e)  env = go e (x:env)
 
 prop_free :: Lam -> Nat -> Prop Bool
-prop_free e v = prove (v `mem` freeVars e =:= v `freeIn` e)
+prop_free e v = v `mem` freeVars e =:= v `freeIn` e

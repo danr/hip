@@ -4,11 +4,6 @@ module Integers where
 
 import Prelude ()
 
-infix 1 =:=
-type Prop a = a
-prove = prove
-(=:=) = (=:=)
-
 data Nat = S Nat | Z deriving (Show)
 
 {-
@@ -42,7 +37,7 @@ neg (P Z)     = P Z
 neg (N n)     = P (S n)
 
 prop_neg_involutive :: Integ -> Prop Integ
-prop_neg_involutive x = prove (x =:= neg (neg x))
+prop_neg_involutive x = x =:= neg (neg x)
 
 -- Natural addition
 x +. Z     = x
@@ -66,22 +61,22 @@ P m +! P n = P (m +. n)
 zero = P Z
 
 prop_add_ident_left :: Integ -> Prop Integ
-prop_add_ident_left x = prove (x =:= zero +! x)
+prop_add_ident_left x = x =:= zero +! x
 
 prop_add_ident_right :: Integ -> Prop Integ
-prop_add_ident_right x = prove (x =:= x +! zero)
+prop_add_ident_right x = x =:= x +! zero
 
 prop_add_assoc :: Integ -> Integ -> Integ -> Prop Integ
-prop_add_assoc x y z = prove ((x +! (y +! z)) =:= ((x +! y) +! z))
+prop_add_assoc x y z = (x +! (y +! z)) =:= ((x +! y) +! z)
 
 prop_add_comm :: Integ -> Integ -> Prop Integ
-prop_add_comm x y = prove ((x +! y) =:= (y +! x))
+prop_add_comm x y = (x +! y) =:= (y +! x)
 
 prop_add_inv_left :: Integ -> Prop Integ
-prop_add_inv_left x = prove (neg x +! x =:= zero)
+prop_add_inv_left x = neg x +! x =:= zero
 
 prop_add_inv_right :: Integ -> Prop Integ
-prop_add_inv_right x = prove (x +! neg x =:= zero)
+prop_add_inv_right x = x +! neg x =:= zero
 
 -- Integer subtraction
 N m -! N n = n -. m
@@ -106,13 +101,13 @@ Pos *% x = x
 Neg *% x = opposite x
 
 prop_sign_assoc :: Sign -> Sign -> Sign -> Prop Sign
-prop_sign_assoc s t u = prove ((s *% (t *% u)) =:= ((s *% t) *% u))
+prop_sign_assoc s t u = (s *% (t *% u)) =:= ((s *% t) *% u)
 
 prop_sign_ident_left :: Sign -> Prop Sign
-prop_sign_ident_left s = prove (s *% Pos =:= s)
+prop_sign_ident_left s = s *% Pos =:= s
 
 prop_sign_ident_right :: Sign -> Prop Sign
-prop_sign_ident_right s = prove (Pos *% s =:= s)
+prop_sign_ident_right s = Pos *% s =:= s
 
 sign :: Integ -> Sign
 sign (P _) = Pos
@@ -127,15 +122,15 @@ i *! j = (sign i *% sign j) <| (abs' i *. abs' j)
 one = P (S Z)
 
 prop_mul_ident_left :: Integ -> Prop Integ
-prop_mul_ident_left x = prove (x =:= one *! x)
+prop_mul_ident_left x = x =:= one *! x
 
 prop_mul_ident_right :: Integ -> Prop Integ
-prop_mul_ident_right x = prove (x =:= x *! one)
+prop_mul_ident_right x = x =:= x *! one
 
 prop_mul_assoc :: Integ -> Integ -> Integ -> Prop Integ
-prop_mul_assoc x y z = prove ((x *! (y *! z)) =:= ((x *! y) *! z))
+prop_mul_assoc x y z = (x *! (y *! z)) =:= ((x *! y) *! z)
 
 prop_mul_comm :: Integ -> Integ -> Prop Integ
-prop_mul_comm x y = prove ((x *! y) =:= (y *! x))
+prop_mul_comm x y = (x *! y) =:= (y *! x)
 
 

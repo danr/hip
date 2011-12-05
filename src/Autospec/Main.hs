@@ -19,10 +19,14 @@ import System.Exit (exitFailure,exitSuccess)
 import System.IO
 
 import Control.Monad
+import Control.Monad.State
 import Control.Applicative
 import Data.Function
 import Data.Ord (comparing)
-import Data.List (isSuffixOf,groupBy,find,sortBy,genericLength)
+import Data.List (isSuffixOf,groupBy,find,sortBy)
+
+import qualified Data.Map as M
+import Data.Map (Map)
 
 data Params = Params { files     :: [FilePath]
                      , processes :: Int
@@ -137,11 +141,31 @@ proveAll processes timeout output file proofs = do
     -- Statistics
     -- Theorems/FiniteTheorems/All
     whenNormal $ putStrLn ""
-    let proverres = groupSortedOn statusFromGroup resgroups
-        n         = genericLength resgroups :: Double
+    let proverres :: [[[Res]]]
+        proverres = groupSortedOn statusFromGroup resgroups
+        n         = length resgroups
         pad x s   = replicate (x - length s) ' '
     forM_ proverres $ \pgrp@(grp:_) -> do
          let res = statusFromGroup grp
-         putStrLn $ show res
-                 ++ ":" ++ pad 18 (show res) ++ show (length pgrp)
-                 ++ "\t(" ++ take 5 (show (genericLength pgrp / n * 100)) ++ "%)"
+         when (res /= None) $ do
+             putStrLn $ show res ++ ":" ++ pad 20 (show res)
+                     ++ show (length pgrp)
+                     ++ "/" ++ show n
+             let statsList = M.toList (stats pgrp res)
+             forM_ statsList $ \(pt,m) -> when (m > 0) $ do
+                 let str = liberalShow pt
+                 putStrLn $ "     " ++ str ++ ": " ++ pad 21 str
+                          ++ show m ++ "/" ++ show (length pgrp)
+
+stats :: [[Res]] -> Result -> Map ProofType Int
+stats ress r = execState (mapM_ statFromProp ress)
+                         (M.fromList (zip proofTypes (repeat 0)))
+  where
+    -- All these come from the same property
+    statFromProp :: [Res] -> State (Map ProofType Int) ()
+    statFromProp res = forM_ proofTypes $ \pt -> do
+        let y = any (\(Principle _ pt' r' _ _) ->
+                    pt' `liberalEq` pt && r == r') res
+        when y $ modify (M.adjust succ pt)
+
+

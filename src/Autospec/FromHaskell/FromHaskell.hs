@@ -21,9 +21,15 @@ import Data.List (groupBy,(\\),intercalate)
 import Data.Function (on)
 import Data.Maybe (fromMaybe)
 
+fixs = infix_ 0 ["=:="]
+
+parseMode :: ParseMode
+parseMode = defaultParseMode { fixities = fmap (fixs ++)
+                                               (fixities defaultParseMode) }
+
 run :: FilePath -> IO ()
 run f = do
-  r <- parseFile f
+  r <- parseFileWithMode parseMode f
   case r of
     ParseOk m -> do
       let (res,msgs) = runFH (fromModule m)
@@ -36,7 +42,7 @@ run f = do
 
 parseHaskell :: String -> (Either String [C.Decl],[Msg])
 parseHaskell s =
-  let r = parseModule s in
+  let r = parseModuleWithMode parseMode s in
   case r of
     ParseOk     m     -> runFH (fromModule m)
     ParseFailed loc s -> (Left ("Parse fail " ++ show loc ++ ": " ++ s),[])
@@ -51,8 +57,14 @@ indented = intercalate "\n" . map ("    " ++) . lines . dropWhitestuff
 
 fromModule :: Module -> FH ()
 fromModule (Module _loc _name _pragmas _warns _ex _im decls) = do
-    fromDecls decls
+    fromDecls (removeMain decls)
     builtinDatas
+
+removeMain :: [Decl] -> [Decl]
+removeMain = filter (not . isMain)
+  where
+    isMain (PatBind _ (H.PVar (Ident "main")) _ _ _) = True
+    isMain _ = False
 
 
 -- Make builtin datatypes -----------------------------------------------------

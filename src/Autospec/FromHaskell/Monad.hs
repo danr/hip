@@ -35,7 +35,7 @@ $(mkLabels [''Env])
 initSt :: St
 initSt = St { _namesupply = [0..]
             , _binds      = M.empty
-            , _scope      = S.empty
+            , _scope      = S.fromList ["prove","=:="]
             , _datatypes  = S.empty
             }
 
