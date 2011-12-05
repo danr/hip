@@ -311,6 +311,114 @@ prop_T49 x y    = proveBool (x `elem` isort y --> x `elem` y)
 prop_T50 :: Nat -> [Nat] -> Prop Nat
 prop_T50 x y    = count x (isort y) =:= count x y
 
+prop_L1 :: Nat -> Nat -> Prop Nat
+prop_L1 x y         = x + S y =:= S (x + y)
+
+prop_L2 :: [a] -> a -> [a] -> Prop Nat
+prop_L2 x y z       = length (x ++ (y:z)) =:= S (length (x ++ z))
+
+prop_L3 :: [a] -> a -> Prop Nat
+prop_L3 x y         = length (x ++ [y]) =:= S (length x)
+
+prop_L4 :: Nat -> a -> [a] -> Nat -> Prop [a]
+prop_L4 x y z w     = drop (S w) (drop x (y:z)) =:= drop w (drop x z)
+
+prop_L5 :: a -> a -> [a] -> Nat -> Nat -> Prop [a]
+prop_L5 x y z w v   = drop (S v) (drop (S w) (x:y:z)) =:= drop (S v) (drop w (x:z))
+
+prop_L6 :: Nat -> a -> [a] -> Nat -> Nat -> Prop [a]
+prop_L6 x y z w v   = drop (S v) (drop w (drop x (y:z))) =:= drop v (drop w (drop x z))
+
+prop_L7 :: a -> a -> [a] -> Nat -> Nat -> Nat -> Prop [a]
+prop_L7 x y z w v u = drop (S u) (drop v (drop (S w) (x:y:z))) =:= drop (S u) (drop v (drop w (x:z)))
+
+prop_L8 :: [a] -> a -> Prop [a]
+prop_L8 x y         = rev (x ++ ([y])) =:= y:rev x
+
+prop_L9 :: [a] -> [a] -> a -> Prop [a]
+prop_L9 x y z       = rev (x ++ (y ++ [z])) =:= z:rev (x ++ y)
+
+prop_L10 :: [a] -> a -> Prop [a]
+prop_L10 x y        = rev ((x ++ [y]) ++ []) =:= y:rev (x ++ [])
+
+prop_L11 :: [a] -> a -> [a] -> Prop [a]
+prop_L11 x y z      = (x ++ [y]) ++ z =:= x ++ (y:z)
+
+prop_L12 :: Nat -> [Nat] -> Prop Bool
+prop_L12 x y        = proveBool (sorted y --> sorted (insert x y))
+
+prop_L13 :: [a] -> [a] -> a -> Prop [a]
+prop_L13 x y z      = (x ++ y) ++ [z] =:= x ++ (y ++ [z])
+
+prop_L14 :: a -> a -> [a] -> [a] -> Prop Bool
+prop_L14 x y z w    = proveBool (even (length (w ++ z)) <=> even (length (w ++ (x:y:z))))
+
+prop_L15 :: a -> a -> [a] -> [a] -> Prop Nat
+prop_L15 x y z w    = length (w ++ (x:y:z)) =:= S (S (length (w ++ z)))
+
+prop_L16 :: Nat -> Nat -> Prop Bool
+prop_L16 x y        = proveBool (even (x + y) <=> even (x + S (S y)))
+
+prop_L17 :: Nat -> Nat -> Prop Nat
+prop_L17 x y        = x + S (S y) =:= S (S (x + y))
+
+prop_L18 :: Nat -> [Nat] -> Prop Nat
+prop_L18 x y        = length (insert x y) =:= S (length y)
+
+prop_L19 :: Nat -> Nat -> [Nat] -> Prop Bool
+prop_L19 x y z      = proveBool (x /= y --> (x `elem` insert y z --> x `elem` z))
+
+prop_L20 :: Nat -> [Nat] -> Prop Nat
+prop_L20 x y        = count x (insert x y) =:= S (count x y)
+
+prop_L21 :: Nat -> Nat -> [Nat] -> Prop Bool
+prop_L21 x y z      = proveBool (x /= y --> (count x (insert y z)) == count x z)
+
+prop_L22 :: [a] -> [a] -> [a] -> Prop [a]
+prop_L22 x y z      = (x ++ y) ++ z =:= x ++ (y ++ z)
+
+prop_L23 :: Nat -> Nat -> Nat -> Prop Nat
+prop_L23 x y z      = (x * y) * z =:= x * (y * z)
+
+prop_L24 :: Nat -> Nat -> Nat -> Prop Nat
+prop_L24 x y z      = (x + y) + z =:= x + (y + z)
+
+prop_G1 :: [a] -> [a] -> Prop [a]
+prop_G1 x y         = rev x ++ y =:= qrev x y
+
+prop_G2 :: [a] -> [a] -> Prop [a]
+prop_G2 x y         = revflat x ++ y =:= qrevflat x y
+
+prop_G3 :: [a] -> [a] -> Prop [a]
+prop_G3 x y         = rev (qrev x y) =:= rev y ++ x
+
+prop_G4 :: [a] -> [a] -> Prop [a]
+prop_G4 x y         = rev (qrev x (rev y)) =:= y ++ x
+
+prop_G5 :: [a] -> [a] -> Prop [a]
+prop_G5 x y         = rev (rev x ++ y) =:= rev y ++ x
+
+prop_G6 :: [a] -> [a] -> Prop [a]
+prop_G6 x y         = rev (rev x ++ rev y) =:= y ++ x
+
+prop_G7 :: [a] -> [a] -> Prop [a]
+prop_G7 x y         = qrev (qrev x y) [] =:= rev y ++ x
+
+prop_G8 :: [a] -> [a] -> Prop [a]
+prop_G8 x y         = qrev (qrev x (rev y)) [] =:= y ++ x
+
+prop_G9 :: [a] -> [a] -> Prop [a]
+prop_G9 x y         = rotate (length x) (x ++ y) =:= y ++ x
+
+prop_G10 :: Nat -> Nat -> Prop Nat
+prop_G10 x y        = fac x * y =:= qfac x y
+
+prop_G11 :: Nat -> Nat -> Nat -> Prop Nat
+prop_G11 x y z      = x * y + z =:= mult x y z
+
+prop_G12 :: Nat -> Nat -> Nat -> Prop Nat
+prop_G12 x y z      = exp x y * z =:= qexp x y z
+
 main = do
   quickCheck (printTestCase "prop_T1" (prop_T1 :: Nat -> Prop Nat))
   quickCheck (printTestCase "prop_T2" (prop_T2 :: [Int] -> [Int] -> Prop Nat))
@@ -362,3 +470,39 @@ main = do
   quickCheck (printTestCase "prop_T48" (prop_T48 :: [Nat] -> Prop Nat))
   quickCheck (printTestCase "prop_T49" (prop_T49 :: Nat -> [Nat] -> Prop Bool))
   quickCheck (printTestCase "prop_T50" (prop_T50 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_L1" (prop_L1 :: Nat -> Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_L2" (prop_L2 :: [Int] -> Int -> [Int] -> Prop Nat))
+  quickCheck (printTestCase "prop_L3" (prop_L3 :: [Int] -> Int -> Prop Nat))
+  quickCheck (printTestCase "prop_L4" (prop_L4 :: Nat -> Int -> [Int] -> Nat -> Prop [Int]))
+  quickCheck (printTestCase "prop_L5" (prop_L5 :: Int -> Int -> [Int] -> Nat -> Nat -> Prop [Int]))
+  quickCheck (printTestCase "prop_L6" (prop_L6 :: Nat -> Int -> [Int] -> Nat -> Nat -> Prop [Int]))
+  quickCheck (printTestCase "prop_L7" (prop_L7 :: Int -> Int -> [Int] -> Nat -> Nat -> Nat -> Prop [Int]))
+  quickCheck (printTestCase "prop_L8" (prop_L8 :: [Int] -> Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_L9" (prop_L9 :: [Int] -> [Int] -> Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_L10" (prop_L10 :: [Int] -> Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_L11" (prop_L11 :: [Int] -> Int -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_L12" (prop_L12 :: Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_L13" (prop_L13 :: [Int] -> [Int] -> Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_L14" (prop_L14 :: Int -> Int -> [Int] -> [Int] -> Prop Bool))
+  quickCheck (printTestCase "prop_L15" (prop_L15 :: Int -> Int -> [Int] -> [Int] -> Prop Nat))
+  quickCheck (printTestCase "prop_L16" (prop_L16 :: Nat -> Nat -> Prop Bool))
+  quickCheck (printTestCase "prop_L17" (prop_L17 :: Nat -> Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_L18" (prop_L18 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_L19" (prop_L19 :: Nat -> Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_L20" (prop_L20 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_L21" (prop_L21 :: Nat -> Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_L22" (prop_L22 :: [Int] -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_L23" (prop_L23 :: Nat -> Nat -> Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_L24" (prop_L24 :: Nat -> Nat -> Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_G1" (prop_G1 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G2" (prop_G2 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G3" (prop_G3 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G4" (prop_G4 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G5" (prop_G5 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G6" (prop_G6 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G7" (prop_G7 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G8" (prop_G8 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G9" (prop_G9 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_G10" (prop_G10 :: Nat -> Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_G11" (prop_G11 :: Nat -> Nat -> Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_G12" (prop_G12 :: Nat -> Nat -> Nat -> Prop Nat))
