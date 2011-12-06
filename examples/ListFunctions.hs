@@ -4,10 +4,6 @@ module ListFunctions where
 import AutoPrelude
 import Prelude (Bool(..))
 
-
-(=:=) :: a -> a -> a
-(=:=) = (=:=)
-
 data Nat = Z | S Nat
 
 Z     == Z     = True

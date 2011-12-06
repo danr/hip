@@ -36,3 +36,17 @@ prop_even,prop_odd :: Nat -> Bool
 prop_even = (==) <$> even <*> evenFix
 prop_odd  = (==) <$> odd  <*> oddFix
 
+-- Single fix -----------------------------------------------------------------
+evenSinglFixMe :: (Nat -> Bool) -> Nat -> Bool
+evenSinglFixMe evenUnRec Z     = True
+evenSinglFixMe evenUnRec (S x) = not (oddWhere x)
+  where
+    oddWhere Z     = True
+    oddWhere (S x) = not (evenUnRec x)
+
+evenSingl :: Nat -> Bool
+evenSingl = fix evenSinglFixMe
+
+prop_evenSingl :: Nat -> Bool
+prop_evenSingl = (==) <$> evenSingl <*> evenFix
+

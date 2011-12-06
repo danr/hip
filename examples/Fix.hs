@@ -1,4 +1,4 @@
-module MutualFix where
+module Fix where
 
 import AutoPrelude
 import Prelude (fmap,(!!),Eq,Show,Bool(..),(.),iterate)
@@ -44,3 +44,19 @@ prop_even,prop_odd :: Nat -> Prop Bool
 prop_even x = even x =:= evenFix x
 prop_odd  x = odd x  =:= oddFix x
 
+-- Single fix -----------------------------------------------------------------
+evenSinglFixMe :: (Nat -> Bool) -> Nat -> Bool
+evenSinglFixMe evenUnRec Z     = True
+evenSinglFixMe evenUnRec (S x) = not (oddWhere x)
+  where
+    oddWhere Z     = True
+    oddWhere (S x) = not (evenUnRec x)
+
+evenSingl :: Nat -> Bool
+evenSingl = fix evenSinglFixMe
+
+prop_evenSingl :: Nat -> Prop Bool
+prop_evenSingl x = evenSingl x =:= even x
+
+prop_evenSinglFix :: Nat -> Prop Bool
+prop_evenSinglFix x = evenSingl x =:= evenFix x

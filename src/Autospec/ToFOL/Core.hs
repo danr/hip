@@ -191,6 +191,10 @@ substFunDeclBody xold xnew d = d { funcBody = substBody xold xnew (funcBody d) }
 substVars :: [(Name,Name)] -> Expr -> Expr
 substVars ns e = foldr (\(x,x') -> subst x x') e ns
 
+-- | Substitute a list of variables in the body
+substVarsBody :: [(Name,Name)] -> Body -> Body
+substVarsBody ns e = foldr (\(x,x') -> substBody x x') e ns
+
 -- | Conrete types are types like Nat, Tree a, but not a or Nat -> Nat
 concreteType :: Type -> Bool
 concreteType TyCon{} = True

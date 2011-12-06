@@ -515,7 +515,8 @@ them. (Or so it seems) The advantage of our approach is that we do not
 need to worry HOW to prove something, the ATP will take care of that,
 only WHAT to prove.
 *** TODO Moa's paper "Conjecture Synthesis for Inductive Theories"
-*** TODO Examples from Critics
+*** DONE Examples from Critics
+CLOSED: [2011-12-05 Mon 23:26]
 *** TODO Examples with postulated sorting
 Postulate < in terms of == True.
 #+BEGIN_SRC haskell

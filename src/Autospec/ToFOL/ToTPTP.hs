@@ -22,9 +22,9 @@ import Data.Maybe (catMaybes,fromMaybe)
 import Control.Monad
 
 import qualified Data.Map as M
+import Data.Map (Map)
 import qualified Data.Set as S
 import Data.Set (Set)
-import Data.Map (Map)
 
 data ProcessedDecls = ProcessedDecls { proofDecls :: [Decl]
                                      , funDecls   :: [Decl]
@@ -93,7 +93,7 @@ prepareProofs ds = second ((extraDebug ++) . concat)
               Just sigty ->
                 let (fsd,csd)    = usedFC d
                     typesFromSig = getTypes sigty
-                    (fs,cs')  = iterateFCs (fsd S.\\ S.fromList proveFunctions)
+                    (fs,cs')  = compIterateFCs (fsd S.\\ S.fromList proveFunctions)
                     cs        = S.insert bottomName $ csd `S.union` cs'
                     datadecls = filterDatas typesFromSig cs dataDecls
                     fundecls  = filterFuns  fs funDecls
@@ -110,17 +110,11 @@ prepareProofs ds = second ((extraDebug ++) . concat)
     ProcessedDecls{..} = processDecls ds
     types = map (declName &&& declType) typeDecls
 
+    compIterateFCs :: Set Name -> (Set Name,Set Name)
+    compIterateFCs = iterateFCs funDecls
+
     usedFCmap :: Map Name (Set Name,Set Name)
     usedFCmap = M.fromList [ (declName d,usedFC d) | d <- funDecls ]
-
-    iterateFCs :: Set Name -> (Set Name,Set Name)
-    iterateFCs fs | S.null newfs = (fs,cs)
-                  | otherwise    = iterateFCs (fs `S.union` fs')
-        -- Get the new functions from here
-        where fs',cs :: Set Name
-              (fs',cs) = (S.unions *** S.unions)
-                         (unzip (map safeLookup (S.toList fs)))
-              newfs = fs' S.\\ fs
 
     recursiveFuns :: Set Name
     recursiveFuns = S.fromList
@@ -128,12 +122,9 @@ prepareProofs ds = second ((extraDebug ++) . concat)
         | d@(Func name args body) <- funDecls
         , let namecalls = fst (usedFCmap M.! name)
               -- ^ Which functions this function calls
-              theycall  = fst (iterateFCs namecalls)
+              theycall  = fst (compIterateFCs namecalls)
               -- ^ All functions they call. If name is member
               --   there then there is a mutual recursion
         , selfRecursive d || name `S.member` theycall
         ]
-
-    safeLookup :: Name -> (Set Name,Set Name)
-    safeLookup f = fromMaybe (S.empty,S.empty) (M.lookup f usedFCmap)
 

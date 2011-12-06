@@ -10,7 +10,7 @@ include('iterate.ax').
 % Induction hypothesis
 fof(map_iterate_property,axiom,
 ![F,Xs]:       app(h,map(F,iterate(F,Xs))) = app(h,iterate(F,app(F,Xs))) ).
-1
+
 % Induction step
 fof(map_iterate_conjecture,conjecture,
 ![F,Xs]:       approx(h,map(F,iterate(F,Xs))) = approx(h,iterate(F,app(F,Xs))) ).
