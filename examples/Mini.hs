@@ -46,9 +46,9 @@ prop_add_comm :: Nat -> Nat -> Prop Nat
 prop_add_comm x y
   = x + y =:= y + x
 
-prop_left_distrib :: Nat -> Nat -> Nat -> Prop Nat
-prop_left_distrib x y z
-  = x * (y + z) =:= (x * y) + (x * z)
+--prop_left_distrib :: Nat -> Nat -> Nat -> Prop Nat
+--prop_left_distrib x y z
+--  = x * (y + z) =:= (x * y) + (x * z)
 
 map :: (a -> b) -> [a] -> [b]
 map f []       = []

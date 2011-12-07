@@ -21,7 +21,6 @@ module Autospec.ToFOL.Monad
        ,lookupProj
        ,lookupType
        ,lookupConstructors
-       ,popQuantified
        ,forallUnbound
        ,skolemize
        ,skolemFun
@@ -45,7 +44,7 @@ import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.Constructors
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.Messages
-import Autospec.Util (isOp)
+import Autospec.Util (isOp,putEither)
 
 import qualified Language.TPTP as T
 import Language.TPTP hiding (Decl,Var)
@@ -54,9 +53,10 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.State hiding (gets,modify)
 
+import Data.Either (partitionEithers)
 import Data.Maybe
 import Data.List
-import Data.Char (toUpper)
+import Data.Char
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -116,8 +116,10 @@ data St = St { _arities     :: Map Name Int
                --   arity they had at the time
              , _boundNames  :: Map Name Bound
                -- ^ TPTP name of funs/costr and quantified variables
-             , _quantified  :: Set VarName
-               -- ^ Variables to quantify over
+             , _quantified  :: Set (Either VarName VarName)
+               -- ^ Variables to quantify over.
+               --   Left: Existential quantification,
+               --   Right: Universal quantification
              , _debug       :: [Msg]
                -- ^ Debug messages
              , _debugIndent :: Int
@@ -205,17 +207,32 @@ lookupName n@(x:xs) = TM $ do
     case mn of
       Just b  -> return b
       Nothing -> do -- Variable is unbound, quantify over it
-        q <- VarName <$> case () of
-                   () | x == '_'  -> return ("W_" ++ xs)
-                      | isOp n    -> do v <- unTM getName
-                                        return ("OP_" ++ v)
-                      | otherwise -> return (toUpper x:xs)
+        let ok c = isAlphaNum c || c == '_'
+        q <- VarName <$>
+                if isAlpha x && all ok n
+                      then return (toUpper x:xs)
+                      else do v <- unTM getName
+                              return ("Q_" ++ v)
         let qv = QuantVar q
         write' $ "New quantified variable " ++ show q ++ " for " ++ n
         modify boundNames (M.insert n qv)
-        modify quantified (S.insert q)
+        let existsQual = anySuf `isSuffixOf` n
+        modify quantified (S.insert (putEither (not existsQual) q))
         return qv
 lookupName "" = error "lookupName on empty name"
+
+-- | Pop and return the quantified variables
+popQuantified :: TM [Either VarName VarName]
+popQuantified = TM $ do
+  qs <- S.toList <$> gets quantified
+  puts quantified S.empty
+  return qs
+
+-- | Makes a forall-quantification over all unbound variables in the decl
+forallUnbound :: T.Formula -> TM T.Formula
+forallUnbound phi = do
+  (ex,fa) <- partitionEithers <$> popQuantified
+  return $ exists' ex (forall' fa phi)
 
 -- | Makes a new skolem variable for this name
 skolemize :: Name -> TM Name
@@ -237,16 +254,6 @@ addIndirection n e = TM $ do
     when mem $ write' "warn: indirection already exists, overwriting"
     modify boundNames (M.insert n (Indirection e))
 
--- | Pop and return the quantified variables
-popQuantified :: TM [VarName]
-popQuantified = TM $ do
-  qs <- S.toList <$> gets quantified
-  puts quantified S.empty
-  return qs
-
--- | Makes a forall-quantification over all unbound variables in the decl
-forallUnbound :: T.Formula -> TM T.Formula
-forallUnbound phi = forall' <$> popQuantified <*> pure phi
 
 -- | fromMaybe with unbound error message from a function
 fromUnbound :: String -> Name -> Maybe a -> a

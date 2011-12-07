@@ -1,10 +1,12 @@
+{-# LANGUAGE RecordWildCards #-}
 module Autospec.ToFOL.FixpointInduction where
 
 import Autospec.ToFOL.ParserInternals
 import Autospec.ToFOL.Core
 import Autospec.ToFOL.Pretty
-import Autospec.Util
 import Autospec.ToFOL.NecessaryDefinitions
+import Autospec.ToFOL.Constructors
+import Autospec.Util
 
 import Control.Arrow
 import Control.Monad
@@ -12,7 +14,10 @@ import Control.Monad
 import qualified Data.Set as S
 import Data.Set (Set)
 
+import Data.Generics.Uniplate.Data
+
 import Data.Maybe
+import Data.List
 
 exampleCode :: [Decl]
 exampleCode = parseDecls $ concatMap (++ ";")
@@ -34,6 +39,10 @@ exampleCode2 = parseDecls $ unlines
  , "                  } ;"
  ]
 
+unRec = ".unRec"
+
+fixMe = ".fixMe"
+
 -- Lifts the functions up for suitable fixpoint induction Assumes all
 -- decls are fundecls, and that the functions are recursive.
 --
@@ -52,19 +61,110 @@ fixate fs ds = mapMaybe mod ds
     rs      = callers ds fset
 
     fsUnRec :: [(Name,Name)]
-    fsUnRec = map (id &&& (++ ".unRec")) fs
+    fsUnRec = map (id &&& (++ unRec)) fs
+
+    fsFixMe :: [(Name,Name)]
+    fsFixMe = map (id &&& (++ fixMe)) fs
 
     restNames :: [(Name,Name)]
     restNames = map (id &&& (++ ".copy")) (S.toList (rs S.\\ fset))
 
-    substList :: [(Name,Name)]
-    substList = fsUnRec ++ restNames
+    bodyList :: [(Name,Name)]
+    bodyList = fsUnRec ++ restNames
+
+    nameList :: [(Name,Name)]
+    nameList = fsFixMe ++ restNames
 
     mod :: Decl -> Maybe Decl
     mod (Func name args body) = do
         guard (not $ S.null $ rs `S.intersection` (S.insert name (usedFs body)))
         return $ Func (fromMaybe (error $ "fixate: " ++ name ++ "lost")
-                                 (lookup name substList))
+                                 (lookup name nameList))
                       args
-                      (substVarsBody substList body)
+                      (substVarsBody bodyList body)
     mod _ = Nothing
+
+type ExprTup = (Expr,Expr)
+
+data FixProof = FixProof { baseDecls :: [Decl]
+                         , stepDecls :: [Decl]
+                         , base :: ExprTup
+                         , anyt :: ExprTup
+                         , hyp  :: ExprTup
+                         , step :: ExprTup
+                         , fixedFuns :: [Name]
+                         }
+
+instance Show FixProof where
+  show (FixProof {..}) = unlines $
+     [ "baseDecls: "
+     , unlines (map show baseDecls)
+     , "stepDecls: "
+     , unlines (map show stepDecls)
+     , "base: " ++ showTup base
+     , "anyt: " ++ showTup anyt
+     , "hyp:  " ++ showTup hyp
+     , "step: " ++ showTup step
+     , "fixed functions: " ++ unwords fixedFuns
+     ]
+     where showTup (l,r) = show l ++ " = " ++ show r
+
+powSubst :: [(Name,Name)] -> Expr -> [Expr]
+powSubst m = transformM f
+  where f e@(Var x)    = [e] ++ [Var x'    | Just x' <- [lookup x m]]
+        f e@(App x as) = [e] ++ [App x' as | Just x' <- [lookup x m]]
+        f e = [e]
+
+testPowSubst = mapM_ print
+             $ powSubst [("f","h"),("g","k")]
+                        (parseExpr "f (g (f x (f y)))")
+
+proofByFixpoint :: [Decl] -> Set Name -> Expr -> Expr -> [FixProof]
+proofByFixpoint ds recset lhs rhs =
+     zipWith5 mkFixProof (candidates (bottomFunName . arityLookup))
+                         (candidates (++ anySuf))
+                         (candidates (++ unRec))
+                         (candidates (++ fixMe))
+                         [0..]
+  where
+    funcset :: Set Name
+    funcset = eqNameSet lhs rhs `S.intersection` recset
+
+    functions :: [Name]
+    functions = S.toList $ funcset
+
+    eqNameSet :: Expr -> Expr -> Set Name
+    eqNameSet l r = (usedFs l `S.union` usedFs r)
+
+    candidates :: (Name -> Name) -> [(Expr,Expr)]
+    candidates f = drop 1 [ (l,r) | l <- cand lhs, r <- cand rhs ]
+      where cand = powSubst (map (id &&& f) functions)
+
+    mkFixProof :: ExprTup -> ExprTup -> ExprTup -> ExprTup -> Int -> FixProof
+    mkFixProof base anyt hyp step@(l,r) x = FixProof
+        { baseDecls = [ bottomFun n | n <- nub (map arityLookup fixedFuns) ]
+        , stepDecls = fixate fixedFuns ds
+        , base = base
+        , anyt = anyt
+        , hyp  = hyp
+        , step = step
+        , fixedFuns = show x : fixedFuns
+        }
+      where
+        fixedFuns = map (reverse . drop (length fixMe) . reverse)
+                  . filter (fixMe `isSuffixOf`)
+                  . S.toList
+                  $ eqNameSet l r
+
+    bottomFunName n = "const.bottom" ++ show n
+    bottomFun n     = Func (bottomFunName n)
+                           (vars n)
+                           (Expr (Var bottomName))
+
+    vars n = take n ([1..] >>= flip replicateM ['a'..'z'])
+
+    arityLookup f =
+         fromMaybe (error $ "proofByFixpoint induction " ++
+                            "on non-existent function" ++ f)
+       $ lookup f
+       $ map (declName &&& length . declArgs) ds

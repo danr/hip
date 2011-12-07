@@ -15,10 +15,11 @@ provable (App f es) = f `elem` proveFunctions || any provable es
 provable _          = False
 
 data ProofType = Plain
-               | SimpleInduction       { indVar :: Name }
+               | SimpleInduction         { indVar :: Name }
                | ApproxLemma
-               | FiniteApproxLemma
-               | FixpointInduction     { fixFun :: Name }
+               | FixpointInduction       { fixFuns :: [Name] }
+               | FiniteFixpointInduction { fixFuns :: [Name] }
+
   deriving (Eq,Ord)
 
 data Failure = Fail          -- ^ If this property fails, then the whole proof techinque fails
@@ -28,39 +29,40 @@ data Failure = Fail          -- ^ If this property fails, then the whole proof t
   deriving (Eq,Ord,Show)
 
 instance Show ProofType where
-  show Plain                 = "plain"
-  show (SimpleInduction v)   = "simple induction on " ++ v
-  show ApproxLemma           = "approximation lemma"
-  show FiniteApproxLemma     = "finite approx lemma"
-  show (FixpointInduction f) = "fixed point induction on " ++ f
+  show Plain                       = "plain"
+  show (SimpleInduction v)         = "simple induction on " ++ v
+  show ApproxLemma                 = "approximation lemma"
+  show (FixpointInduction f)       = "fixed point induction on " ++ unwords f
+  show (FiniteFixpointInduction f) = "finite fixed point induction on " ++ unwords f
 
 proofTypeFile :: ProofType -> String
 proofTypeFile pt = case pt of
-  Plain               -> "plain"
-  SimpleInduction v   -> "simpleind" ++ v
-  ApproxLemma         -> "approx"
-  FiniteApproxLemma   -> "finapprox"
-  FixpointInduction f -> "fix" ++ f
+  Plain                     -> "plain"
+  SimpleInduction v         -> "simpleind" ++ v
+  ApproxLemma               -> "approx"
+  FixpointInduction f       -> "fix" ++ concat f
+  FiniteFixpointInduction f -> "finfix" ++ concat f
 
 proofTypes :: [ProofType]
 proofTypes = [Plain,SimpleInduction ""
-             ,ApproxLemma,FiniteApproxLemma
-             ,FixpointInduction ""]
+             ,ApproxLemma
+             ,FixpointInduction []
+             ,FiniteFixpointInduction []]
 
 liberalEq :: ProofType -> ProofType -> Bool
-liberalEq Plain Plain                             = True
-liberalEq SimpleInduction{} SimpleInduction{}     = True
-liberalEq ApproxLemma ApproxLemma                 = True
-liberalEq FiniteApproxLemma FiniteApproxLemma     = True
-liberalEq FixpointInduction{} FixpointInduction{} = True
-liberalEq _ _                                     = False
+liberalEq Plain Plain                                         = True
+liberalEq SimpleInduction{} SimpleInduction{}                 = True
+liberalEq ApproxLemma ApproxLemma                             = True
+liberalEq FixpointInduction{} FixpointInduction{}             = True
+liberalEq FiniteFixpointInduction{} FiniteFixpointInduction{} = True
+liberalEq _ _                                                 = False
 
 liberalShow :: ProofType -> String
-liberalShow Plain               = "plain"
-liberalShow SimpleInduction{}   = "simple induction"
-liberalShow ApproxLemma         = "approximation lemma"
-liberalShow FiniteApproxLemma   = "finite approx lemma"
-liberalShow FixpointInduction{} = "fixed point induction"
+liberalShow Plain                     = "plain"
+liberalShow SimpleInduction{}         = "simple induction"
+liberalShow ApproxLemma               = "approximation lemma"
+liberalShow FixpointInduction{}       = "fixed point induction"
+liberalShow FiniteFixpointInduction{} = "finite fixed point induction"
 
 data Principle k = Principle { principleName  :: Name
                              , principleType  :: ProofType

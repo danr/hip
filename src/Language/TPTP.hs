@@ -65,4 +65,4 @@ forall' xs phi = Forall xs phi
 
 exists' :: [VarName] -> Formula -> Formula
 exists' [] phi = phi
-exists' xs phi = Forall xs phi
+exists' xs phi = Exists xs phi

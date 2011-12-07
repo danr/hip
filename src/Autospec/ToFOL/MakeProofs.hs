@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Autospec.ToFOL.MakeProofs where
 
 import Autospec.ToFOL.TranslateExpr
@@ -8,6 +9,7 @@ import Autospec.ToFOL.Monad
 import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.ToFOL.NecessaryDefinitions
+import Autospec.ToFOL.FixpointInduction
 import Autospec.Util (putEither,concatMapM)
 
 import Language.TPTP hiding (Decl,Var,VarName,declName)
@@ -97,7 +99,9 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
         parts   <- partsm
         return $ proofDecl fname prooftype faxioms pstr parts
 
-    accompanyPartsWithDecls :: ProofType -> [([Decl],TM [ProofPart])] -> TM ProofDecl
+    accompanyPartsWithDecls :: ProofType
+                            -> [([Decl],TM [ProofPart])]
+                            -> TM ProofDecl
     accompanyPartsWithDecls prooftype tup = proofDecl fname prooftype [] pstr <$>
         (flip concatMapM tup (\(fundecls',partms) -> do
             let funs = map (declName &&& length . declArgs) fundecls'
@@ -165,8 +169,8 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
                   lhs' <- translateExpr (App approx [lhs])
                   rhs' <- translateExpr (App approx [rhs])
                   forallUnbound (lhs' `equals` rhs')
-        dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
-        dbproof $ "Approx lemma step: " ++ prettyTPTP step
+--        dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
+--        dbproof $ "Approx lemma step: " ++ prettyTPTP step
         return (hyp,step,approxAxioms)
 
     -- Returns in the List monad instead of the Maybe monad
@@ -179,13 +183,6 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
                                  (Axiom ("approxhyp") hyp
                                  :Conjecture ("approxstep") step
                                  :approxAxioms)]
-             ,accompanyParts FiniteApproxLemma $ do
-                   (hyp,step,approxAxioms) <- approxSteps
-                   return $ [Part "step"
-                                 (Axiom ("approxhyp") hyp
-                                 :Conjecture ("approxstep") step
-                                 :init approxAxioms)
-                                 FiniteSuccess]
              ]
        | otherwise = []
 
@@ -204,35 +201,56 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
         forallUnbound (lhs' `equals` rhs')
 
     proofByFixpointInduction :: [TM ProofDecl]
-    proofByFixpointInduction =
-        flip map fs $ \f -> accompanyPartsWithDecls (FixpointInduction f) $
-            let f' = f ++ "."
-                fundeclsBase = bottomFun (arityLookup f) : fundecls
-                fundeclsStep = map (substFunDeclBody f f') fundecls
-            in  [(fundeclsBase,do
-                   addFuns [(bottomFunName,arityLookup f)]
-                   pbottom <- instantiateP [(f,bottomFunName)]
-                   return $ [proofPart "base" [Conjecture "fixbase" pbottom]])
-                ,(fundeclsStep,do
-                   addFuns [(f',arityLookup f)]
-                   phyp <- instantiateP [(f,f')]
-                   pstep <- instantiateP []
-                   return $ [proofPart "step" [Axiom      "fixhyp"  phyp
-                                              ,Conjecture "fixstep" pstep
-                                              ]])
-               ]
-      where fs = S.toList $ ((fst (usedFC lhs) `S.union` fst (usedFC lhs))
-                               S.\\ S.fromList (map fst typedArgs))
-                             `S.intersection` recfuns
-            bottomFunName = "const.bottom"
-            bottomFun n   = Func (bottomFunName)
-                                 (take n ([1..] >>= flip replicateM ['a'..'z']))
-                                 (Expr (Var bottomName))
-            arityLookup f =
-                 fromMaybe (error $ "proofByFixpoint induction " ++
-                                    "on non-existent function" ++ f)
-               $ lookup f
-               $ map (declName &&& length . declArgs) fundecls
+    proofByFixpointInduction = concatMap
+                                   instantiateFixProof
+                                   (proofByFixpoint fundecls recfuns lhs rhs)
+      where
+        instantiateEq :: (Expr,Expr) -> TM T.Formula
+        instantiateEq (l,r) = locally $ do
+            l' <- translateExpr l
+            r' <- translateExpr r
+            forallUnbound (l' `equals` r')
+
+        addFunsFromDecls ds = sequence_
+           [ addFuns [(f,length as)] | Func f as _ <- ds ]
+
+        addUnrecFunsFromDecls ds fixedFuns = sequence_
+           [ addFuns [(f ++ unRec,length as)]
+           | Func f as _ <- ds
+           , f `elem` fixedFuns ]
+
+        instantiateFixProof :: FixProof -> [TM ProofDecl]
+        instantiateFixProof fp@(FixProof {..}) =
+            [ accompanyPartsWithDecls (FixpointInduction fixedFuns)
+                 [(baseDecls ++ fundecls,baseAxioms)
+                 ,(stepDecls ++ fundecls,stepAxioms)]
+{-            , accompanyPartsWithDecls (FiniteFixpointInduction fixedFuns)
+                 [(fundecls,anyAxioms)
+                 ,(stepDecls ++ fundecls,stepAxioms)] -}
+            ]
+          where
+             baseAxioms = do
+                 dbproof $ show fp
+                 addFunsFromDecls baseDecls
+                 pbottom <- instantiateEq base
+                 return $ [proofPart "base" [Conjecture "fixbase" pbottom]]
+
+             anyAxioms = do
+                 dbproof $ show fp
+                 panyt <- instantiateEq anyt
+                 return $ [Part "anybase"
+                                 [Conjecture "fixanybase" panyt]
+                                 FiniteSuccess]
+
+             stepAxioms = do
+                 addFunsFromDecls stepDecls
+                 addUnrecFunsFromDecls fundecls fixedFuns
+                 phyp  <- instantiateEq hyp
+                 pstep <- instantiateEq step
+                 return $ [proofPart "step"
+                                 [Axiom "fixhyp" phyp
+                                 ,Conjecture "fixstep" pstep]]
+
 
 approximate :: Name -> Type -> TM (Name,[T.Decl])
 approximate f ty = do

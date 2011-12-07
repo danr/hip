@@ -26,3 +26,5 @@ trueP = pcon0 trueName
 falseName :: Name
 falseName = "False"
 
+anySuf :: Name
+anySuf = ".any"

@@ -168,6 +168,13 @@ subst xold xnew = transform f
         f (App x as) | x == xold = App xnew as
         f e = e
 
+test :: Name -> Name -> Expr -> [Expr]
+test xold xnew = transformM f
+  where f e@(Var x)    | x == xold = [e,Var xnew]
+        f e@(App x as) | x == xold = [e,App xnew as]
+        f e = [e]
+
+
 -- | Substitute in a body
 substBody :: Name -> Name -> Body -> Body
 substBody xold xnew (Expr e) = Expr (subst xold xnew e)
