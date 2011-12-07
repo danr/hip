@@ -11,7 +11,7 @@ type Res     = Principle Result
 data Result = Theorem          -- ^ Theroem
             | Countersat       -- ^ Countersatisfiable
             | Timeout          -- ^ Timeout
-            | Unknown          -- ^ Unknown message from prover
+            | Unknown String   -- ^ Unknown message from prover
             | FiniteTheorem    -- ^ This is a theorem for finitevalues
             | Inconsistent     -- ^ If we both have Theorem and Countersat
             | None             -- ^ No information when flattened
@@ -21,7 +21,7 @@ instance Show Result where
   show Theorem       = "Theorem"
   show Countersat    = "Countersatisfiable"
   show Timeout       = "Timeout"
-  show Unknown       = "??"
+  show (Unknown s)   = "??: " ++ s
   show FiniteTheorem = "Finite Theorem"
   show Inconsistent  = "INCONSISTENT"
   show None          = "None"
@@ -35,12 +35,16 @@ flattenRes (Part _ Countersat InfiniteFail)  = FiniteTheorem
 flattenRes (Part _ Countersat Fail)          = None
 flattenRes (Part _ r _)                      = r
 
+isUnknown :: Result -> Bool
+isUnknown (Unknown _) = True
+isUnknown _           = False
+
 combineRes :: [Result] -> Result
 combineRes rs
    | all ((Theorem ==))                                 rs = Theorem
    | all ((||) <$> (Theorem ==) <*> (FiniteTheorem ==)) rs = FiniteTheorem
    | all (Countersat ==)                                rs = Countersat
-   | any (Unknown ==)                                   rs = Unknown
+   | any isUnknown                                      rs = Unknown ""
    | otherwise                                             = None
 
 resFromParts :: [Part Result] -> Result
@@ -52,5 +56,5 @@ statusFromGroup (map principleDecor -> rs)
    | any (Theorem ==) rs       = Theorem
    | any (FiniteTheorem ==) rs = FiniteTheorem
    | any (Countersat ==) rs    = Countersat
-   | any (Unknown ==) rs       = Unknown
+   | any isUnknown rs          = Unknown ""
    | otherwise                 = None

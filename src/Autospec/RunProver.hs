@@ -5,6 +5,8 @@
 -- many different computers, as MPI for C++.
 module Autospec.RunProver where
 
+import Prelude hiding (catch)
+
 import Autospec.Util (mif)
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.ToFOL.Core
@@ -17,6 +19,7 @@ import Control.Monad
 import Control.Arrow (first,second)
 import Control.Monad.State
 import Control.Applicative
+import Control.Exception
 
 import System.Process
 import System.IO
@@ -89,33 +92,20 @@ getResults' ch out = mif (M.null <$> gets fst)
     getResults' ch out
 
 worker :: Int -> Maybe FilePath -> ProbChan -> ResChan -> IO ()
-worker timeout output probChan resChan = forever $ do
+worker timeout output probChan resChan = do
     (desc@(name,ptype),Part pname str pfail) <- readChan probChan
-    mvar <- newEmptyMVar
-    pvar <- newEmptyMVar
-    tid <- length str `seq` forkIO $ runProver str mvar pvar
-    kid <- forkIO $ do threadDelay (timeout * 1000)
-                       (pid,outThread) <- takeMVar pvar
-                       killThread tid
-                       killThread outThread
-                       terminateProcess pid
-{-                       exitCode <- getProcessExitCode pid
-                       unless (exitCode == Nothing) $ do
-                           putStrLn $ "Process didn't actually die, trying again..."
-                           terminateProcess pid
--}
-                       putMVar mvar Timeout
+    resvar <- newEmptyMVar
+    length str `seq` forkIO (runProver str (timeout * 1000) resvar)
     let fname = name ++ "_" ++
                 proofTypeFile ptype ++ "_" ++
                 pname ++ ".tptp"
     maybe (return ()) (\d -> writeFile (d ++ fname) str) output
-    res <- takeMVar mvar
-    killThread kid
-    killThread tid
+    res <- takeMVar resvar
     writeChan resChan (desc,Part pname res pfail)
+    worker timeout output probChan resChan
 
-runProver :: String -> MVar Result -> MVar (ProcessHandle,ThreadId) -> IO ()
-runProver str mvar pvar = do
+runProver :: String -> Int -> MVar Result -> IO ()
+runProver input time resvar = do
     let cmd = "eprover"
         args = words "-tAuto -xAuto --memory-limit=1000 --tptp3-format -s"
 
@@ -127,32 +117,44 @@ runProver str mvar pvar = do
     -- fork off a thread to start consuming the output
     output  <- hGetContents outh
     outMVar <- newEmptyMVar
-    outThread <- forkIO $ length output `seq` putMVar outMVar ()
-
-    -- store pid and out thread
-    putMVar pvar (pid,outThread)
+    _ <- forkIO $ evaluate (length output) >> putMVar outMVar ()
 
     -- now write and flush any input
-    unless (null str) $ do hPutStr inh str; hFlush inh
+    when (not (null input)) $ do hPutStr inh input; hFlush inh
     hClose inh -- done with stdin
 
-    -- wait on the output (do we nede to close this handle?)
-    takeMVar outMVar
-    hClose outh
+    done <- newEmptyMVar
 
-    -- wait on the process
-    ex <- waitForProcess pid
+    tid <- forkIO $ do
+         -- read output
+         takeMVar outMVar
+         hClose outh
+         return output
+         -- wait on the process
+         ex <- waitForProcess pid
+         putMVar done (Just ex)
 
-    out <- case ex of
-     ExitSuccess   -> return output
-     ExitFailure r ->
-       error ("runProver: " ++ cmd ++
-                            ' ':unwords (map show args) ++
-                            " (exit " ++ show r ++ ")")
+    kid <- forkIO $ do
+         threadDelay time
+         killThread tid
+         terminateProcess pid
+         ex <- waitForProcess pid
+         putMVar done Nothing
 
-    let r | "Theorem" `isInfixOf` out            = Theorem
-          | "Unsatisfiable" `isInfixOf` out      = Theorem
-          | "CounterSatisfiable" `isInfixOf` out = Countersat
-          | otherwise                            = Unknown
-    putMVar mvar r
+    ex <- takeMVar done
+
+    killThread tid
+    killThread kid
+
+    let res = case ex of
+                Nothing              -> Timeout
+                Just ExitSuccess
+                    | "Theorem" `isInfixOf` output            -> Theorem
+                    | "Unsatisfiable" `isInfixOf` output      -> Theorem
+                    | "CounterSatisfiable" `isInfixOf` output -> Countersat
+                    | otherwise                               -> Unknown output
+                Just (ExitFailure r) -> Unknown $ output ++
+                                                  " (exit " ++ show r ++ ")"
+
+    putMVar resvar res
 
