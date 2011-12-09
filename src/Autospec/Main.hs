@@ -247,7 +247,7 @@ outputGroup True  name code status grp = do
     putStrLn "\\hline"
     putStr $ "$" ++ escape name ++ "$"
     putStr " \\newline "
-    putStr $ "\\verb`" ++ code ++ "\\`"
+    putStr $ "\\verb`" ++ code ++ "`"
     forM_ proofTypes $ \pt -> do
         let r = minimum (map principleDecor
                              (filter (liberalEq pt .  principleType) grp)
