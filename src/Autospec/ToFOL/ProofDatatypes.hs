@@ -46,8 +46,8 @@ proofTypeFile pt = case pt of
 proofTypes :: [ProofType]
 proofTypes = [Plain,SimpleInduction ""
              ,ApproxLemma
-             ,FixpointInduction []
-             ,FiniteFixpointInduction []]
+             ,FixpointInduction []]
+--             ,FiniteFixpointInduction []]
 
 liberalEq :: ProofType -> ProofType -> Bool
 liberalEq Plain Plain                                         = True
@@ -63,6 +63,13 @@ liberalShow SimpleInduction{}         = "simple induction"
 liberalShow ApproxLemma               = "approximation lemma"
 liberalShow FixpointInduction{}       = "fixed point induction"
 liberalShow FiniteFixpointInduction{} = "finite fixed point induction"
+
+latexShow :: ProofType -> String
+latexShow Plain                     = "plain"
+latexShow SimpleInduction{}         = "simple ind"
+latexShow ApproxLemma               = "approx"
+latexShow FixpointInduction{}       = "fixpoint ind"
+latexShow FiniteFixpointInduction{} = "finite fixpoint ind"
 
 data Principle k = Principle { principleName  :: Name
                              , principleType  :: ProofType

@@ -9,11 +9,11 @@ type Problem = Principle String
 type Res     = Principle Result
 
 data Result = Theorem          -- ^ Theroem
+            | FiniteTheorem    -- ^ This is a theorem for finitevalues
             | Countersat       -- ^ Countersatisfiable
+            | Inconsistent     -- ^ If we both have Theorem and Countersat
             | Timeout          -- ^ Timeout
             | Unknown String   -- ^ Unknown message from prover
-            | FiniteTheorem    -- ^ This is a theorem for finitevalues
-            | Inconsistent     -- ^ If we both have Theorem and Countersat
             | None             -- ^ No information when flattened
   deriving (Eq,Ord)
 
@@ -25,6 +25,18 @@ instance Show Result where
   show FiniteTheorem = "Finite Theorem"
   show Inconsistent  = "INCONSISTENT"
   show None          = "None"
+
+latexResult :: Result -> String
+latexResult Theorem       = "$\\checkmark_{\\infty}$"
+latexResult Countersat    = "$\\bot$"
+latexResult Timeout       = "timeout"
+latexResult (Unknown s)   = "??: " ++ s
+latexResult FiniteTheorem = "$\\checkmark_{\\mathrm{fin}}$"
+latexResult Inconsistent  = "INCONSISTENT"
+latexResult None          = ""
+
+results :: [Result]
+results = [Theorem,FiniteTheorem,Inconsistent,Countersat,None,Timeout,Unknown ""]
 
 flattenRes :: Part Result -> Result
 flattenRes (Part _ Theorem    FiniteSuccess) = FiniteTheorem

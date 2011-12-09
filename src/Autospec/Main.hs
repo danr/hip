@@ -27,7 +27,8 @@ import Control.Arrow
 
 import Data.Function
 import Data.Ord (comparing)
-import Data.List (isSuffixOf,groupBy,find,sortBy)
+import Data.List
+import Data.Maybe
 
 import qualified Data.Map as M
 import Data.Map (Map)
@@ -63,6 +64,30 @@ params = Params
   &= program "autospec"
   &= verbosity
 
+latexHeader' :: IO ()
+latexHeader' = putStrLn $ unlines
+  [ "\\documentclass{article}"
+  , "\\usepackage{fullpage}"
+  , "\\usepackage{courier}"
+  , "\\usepackage{amssymb}"
+  , ""
+  , "\\begin{document}"
+  , ""
+  , "\\title{Results}"
+  , "\\maketitle"
+  ]
+
+latexFooter' :: IO ()
+latexFooter' = putStrLn "\\end{document}"
+
+outputSection :: Bool -> String -> IO ()
+outputSection True  s = putStrLn $ "\\section*{" ++ s ++ "}"
+outputSection False s = putStrLn $ s ++ ":"
+
+outputSubSection :: Bool -> String -> IO ()
+outputSubSection True  s = putStrLn $ "\\subsection*{" ++ s ++ "}"
+outputSubSection False s = return ()
+
 main :: IO ()
 main = do
   Params{..} <- cmdArgs params
@@ -70,9 +95,10 @@ main = do
       putStrLn "No input files. Run with --help to see possible flags"
       exitFailure
   whenLoud $ putStrLn "Verbose output"
+  when latex $ latexHeader'
   total <- forM files $ \file -> do
       when (file /= head files) $ putStrLn ""
-      when (length files > 1) $ putStrLn file
+      when (length files > 1) $ outputSection latex file
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
                                 then parseHaskell <$> readFile file
@@ -84,7 +110,7 @@ main = do
         mapM_ print (filter (sourceIs FromHaskell) hsdebug)
         putStrLn "Translation from Haskell translation complete."
       -- Output warnings of translation
-      whenNormal $ mapM_ print (filter isWarning hsdebug)
+      whenNormal $ when (not latex) $ mapM_ print (filter isWarning hsdebug)
       -- Output Core and terminate
       when core $ do mapM_ (putStrLn . prettyCore) ds
                      exitSuccess
@@ -116,7 +142,7 @@ main = do
           when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
           when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
           -- Print warnings
-          whenNormal $ mapM_ print (filter isWarning debug)
+          whenNormal $ when (not latex) $ mapM_ print (filter isWarning debug)
           whenLoud $ putStrLn "Done preparing proofs"
           proveAll latex processes timeout output file proofs
   let rgs :: [(Result,ResGroup)]
@@ -125,10 +151,14 @@ main = do
       rgr = map (fst . head &&& flattenGroups . map snd)
           $ groupSortedOn fst rgs
       n  = sum ns
+
   when (length files > 1) $ do
-    putStrLn ""
-    putStrLn "Summary:"
+    when latex (outputGroupLatexHeader True)
+    outputSection latex "Total Summary"
     forM_ rgr $ \(r,rgs) -> outputResGroup latex n r rgs
+    when latex latexCloseTabular
+
+  when latex latexFooter'
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
@@ -153,15 +183,21 @@ proveAll latex processes timeout output file proofs = do
     res <- runProvers processes timeout output (map (fmap prettyTPTP) proofs)
     let resgroups :: [[Res]]
         resgroups = groupSortedOn principleName res
-    whenNormal $ forM_ resgroups $ \grp@(Principle name _ _ _ _:_) -> do
-        let Just (Principle _ _ _ pstr _) = find ((name ==) . principleName) proofs
-        outputGroup latex name pstr (statusFromGroup grp) grp
+    whenNormal $ do
+        outputSubSection latex "Properties"
+        when latex (outputGroupLatexHeader False)
+        forM_ resgroups $ \grp@(Principle name _ _ _ _:_) -> do
+           let Just (Principle _ _ _ pstr _) = find ((name ==) . principleName) proofs
+           outputGroup latex name pstr (statusFromGroup grp) grp
+        when latex latexCloseTabular
     -- Statistics
     -- Theorems/FiniteTheorems/All
     whenNormal $ putStrLn ""
     let proverres :: [[[Res]]]
         proverres = groupSortedOn statusFromGroup resgroups
         n         = length resgroups
+    outputSubSection latex "Summary"
+    when latex (outputGroupLatexHeader True)
     r <- flip concatMapM proverres $ \pgrp@(grp:_) -> do
             let res = statusFromGroup grp
             if res == None
@@ -171,33 +207,11 @@ proveAll latex processes timeout output file proofs = do
                         rg = ResGroup (stats pgrp res) tot
                     outputResGroup latex n res rg
                     return [(res,rg)]
+    when latex latexCloseTabular
     return (r,n)
 
 pad :: Int -> String -> String
 pad x s   = replicate (x - length s) ' '
-
-outputGroup :: Bool -> Name -> String -> Result -> [Res] -> IO ()
-outputGroup latex name code status grp = do
-    putStrLn $ "\n" ++ name
-    putStrLn $ code
-    putStrLn $ "Status: " ++ show status
-    forM_ grp $ \(Principle name ptype res _ parts) -> do
-         putStrLn $ "    " ++ show ptype ++ ": " ++ show res
-         putStr "        "
-         forM_ parts $ \(Part pname pres _) ->
-             putStr $ pname ++ ": " ++ show pres ++ " "
-         putStrLn ""
-
-
-outputResGroup :: Bool -> Int -> Result -> ResGroup -> IO ()
-outputResGroup latex n res (ResGroup statsMap tot) = do
-    putStrLn $ show res ++ ":" ++ pad 20 (show res)
-            ++ show tot
-            ++ "/" ++ show n
-    forM_ (M.toList statsMap) $ \(pt,m) -> when (m > 0) $ do
-        let str = liberalShow pt
-        putStrLn $ "     " ++ str ++ ": " ++ pad 21 str
-                 ++ show m ++ "/" ++ show tot
 
 stats :: [[Res]] -> Result -> Map ProofType Int
 stats ress r = execState (mapM_ statFromProp ress)
@@ -209,5 +223,62 @@ stats ress r = execState (mapM_ statFromProp ress)
         let y = any (\(Principle _ pt' r' _ _) ->
                     pt' `liberalEq` pt && r == r') res
         when y $ modify (M.adjust succ pt)
+
+outputGroupLatexHeader :: Bool -> IO ()
+outputGroupLatexHeader total = do
+    putStrLn $ "\\begin{tabular}{p{8cm} || "
+             ++ concat (replicate (length proofTypes + if total then 1 else 0)
+                                  "c | ")
+             ++ "}"
+    putStr $ intercalate " & " (" ":
+                               (if total then ("total":) else id)
+                               (map latexShow proofTypes))
+    putStrLn $ " \\\\"
+
+latexCloseTabular :: IO ()
+latexCloseTabular = putStrLn "\\end{tabular}"
+
+outputGroup :: Bool -> Name -> String -> Result -> [Res] -> IO ()
+outputGroup True  name code status grp = do
+    putStrLn "\\hline"
+    putStr $ "$" ++ escape name ++ "$"
+    putStr " \\, "1
+    putStr $ "\\begin{verbatim}" ++ code ++ "\\end{verbatim}"
+    forM_ proofTypes $ \pt -> do
+        let r = minimum (map principleDecor
+                             (filter (liberalEq pt .  principleType) grp)
+                        ++ [None])
+        putStr $ " & " ++ latexResult r
+    putStrLn " \\\\ "
+outputGroup False name code status grp = do
+    putStrLn $ "\n" ++ name
+    putStrLn $ code
+    putStrLn $ "Status: " ++ show status
+    forM_ grp $ \(Principle name ptype res _ parts) -> do
+         putStrLn $ "    " ++ show ptype ++ ": " ++ show res
+         putStr "        "
+         forM_ parts $ \(Part pname pres _) ->
+             putStr $ pname ++ ": " ++ show pres ++ " "
+         putStrLn ""
+
+outputResGroup :: Bool -> Int -> Result -> ResGroup -> IO ()
+outputResGroup True  n res (ResGroup statsMap tot) = do
+    putStrLn "\\hline"
+    putStr $ latexResult res
+    putStr $ " & " ++ show tot ++ "/" ++ show n
+    forM_ proofTypes $ \pt -> do
+        let m = fromMaybe 0 (M.lookup pt statsMap)
+            str = liberalShow pt
+        putStr " & "
+        when (m > 0) $ putStr $ show m ++ "/" ++ show tot
+    putStrLn "\\\\"
+outputResGroup False n res (ResGroup statsMap tot) = do
+    putStrLn $ show res ++ ":" ++ pad 20 (show res)
+            ++ show tot
+            ++ "/" ++ show n
+    forM_ (M.toList statsMap) $ \(pt,m) -> when (m > 0) $ do
+        let str = liberalShow pt
+        putStrLn $ "     " ++ str ++ ": " ++ pad 21 str
+                 ++ show m ++ "/" ++ show tot
 
 
