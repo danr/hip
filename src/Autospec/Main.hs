@@ -70,6 +70,7 @@ latexHeader' = putStrLn $ unlines
   , "\\usepackage{fullpage}"
   , "\\usepackage{courier}"
   , "\\usepackage{amssymb}"
+  , "\\usepackage{longtable}"
   , ""
   , "\\begin{document}"
   , ""
@@ -226,7 +227,10 @@ stats ress r = execState (mapM_ statFromProp ress)
 
 outputGroupLatexHeader :: Bool -> IO ()
 outputGroupLatexHeader total = do
-    putStrLn $ "\\begin{tabular}{p{8cm} || "
+    putStrLn $ "\\begin{longtable}{p{" ++
+                (if total then "4cm"
+                          else "10cm")
+             ++ "} || "
              ++ concat (replicate (length proofTypes + if total then 1 else 0)
                                   "c | ")
              ++ "}"
@@ -236,14 +240,14 @@ outputGroupLatexHeader total = do
     putStrLn $ " \\\\"
 
 latexCloseTabular :: IO ()
-latexCloseTabular = putStrLn "\\end{tabular}"
+latexCloseTabular = putStrLn "\\end{longtable}"
 
 outputGroup :: Bool -> Name -> String -> Result -> [Res] -> IO ()
 outputGroup True  name code status grp = do
     putStrLn "\\hline"
     putStr $ "$" ++ escape name ++ "$"
-    putStr " \\, "1
-    putStr $ "\\begin{verbatim}" ++ code ++ "\\end{verbatim}"
+    putStr " \newline "
+    putStr $ "\\verb`" ++ code ++ "\\`"
     forM_ proofTypes $ \pt -> do
         let r = minimum (map principleDecor
                              (filter (liberalEq pt .  principleType) grp)
