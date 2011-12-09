@@ -154,8 +154,8 @@ main = do
       n  = sum ns
 
   when (length files > 1) $ do
-    when latex (outputGroupLatexHeader True)
     outputSection latex "Total Summary"
+    when latex (outputGroupLatexHeader True)
     forM_ rgr $ \(r,rgs) -> outputResGroup latex n r rgs
     when latex latexCloseTabular
 
@@ -246,7 +246,7 @@ outputGroup :: Bool -> Name -> String -> Result -> [Res] -> IO ()
 outputGroup True  name code status grp = do
     putStrLn "\\hline"
     putStr $ "$" ++ escape name ++ "$"
-    putStr " \newline "
+    putStr " \\newline "
     putStr $ "\\verb`" ++ code ++ "\\`"
     forM_ proofTypes $ \pt -> do
         let r = minimum (map principleDecor
