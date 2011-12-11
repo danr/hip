@@ -35,7 +35,10 @@ data Expr = App { exprName :: Name , exprArgs :: [Expr] }
           | Con { exprName :: Name , exprArgs :: [Expr] }
           | Var { exprName :: Name }
           | IsBottom Expr
-            -- ^ For guards that evaluate to bottom
+          -- ^ For guards that evaluate to bottom
+          | Expr ::: Type
+          -- ^ Used in instantiating induction schemas
+          --   (never else)
   deriving(Eq,Ord,Data,Typeable)
 
 infix 7 :->
@@ -206,6 +209,13 @@ substVarsBody ns e = foldr (\(x,x') -> substBody x x') e ns
 concreteType :: Type -> Bool
 concreteType TyCon{} = True
 concreteType _       = False
+
+-- | Strips an expression of its types
+stripTypes :: Expr -> Expr
+stripTypes = transform f
+  where
+    f (e ::: t) = e
+    f e         = e
 
 -- | Which arguments to this constructor are recursive?
 --

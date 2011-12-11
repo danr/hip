@@ -45,6 +45,7 @@ instance P Expr where
 pexpr :: Int -> Expr -> Doc
 pexpr l (App n es)   = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
 pexpr l (Con n es)   = enclose (l <= 1) $ text n <+> hsep (map (pexpr 1) es)
+pexpr l (e ::: t)    = enclose (l <= 1) (pexpr 1 e <+> text "::" <+> p t)
 pexpr _ (Var n)      = text n
 pexpr _ (IsBottom e) = pexpr 2 e <+> text "==" <+> text bottomName
 
