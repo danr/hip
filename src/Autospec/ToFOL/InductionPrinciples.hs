@@ -5,7 +5,7 @@ import Autospec.ToFOL.Core
 import Autospec.ToFOL.ParserInternals
 import Autospec.ToFOL.Pretty
 
-import Data.List
+import Data.List hiding (partition)
 import Data.Maybe (fromMaybe)
 import Data.Generics.Uniplate.Data
 
@@ -34,6 +34,7 @@ testEnv = map (declName &&& conTypes) $ parseDecls $ concatMap (++ ";")
   , "data Unit = Unit"
   , "data Ord = Zero | Suc Ord | Lim (Nat -> Ord)"
   , "data WrapList a = Wrap (List a)"
+  , "data Z = P Nat | N Nat"
   ]
 
 data Part = Part { hypotheses :: [Expr] , conjecture :: Expr }
@@ -93,7 +94,7 @@ instantiate (TyCon n ts) env | Just cons <- lookup n env = Just (map (uncurry in
                        -- as is for instance ["a","b","c"]
                        -- ts could be [Nat,List a,b -> c]
                        let instMap = zip as ts
-                       in  (n,TyApp [ substType instMap c | c <- conList ++ [resTy] ])
+                       in  (n,foldr1 tapp [ substType instMap c | c <- conList ++ [resTy] ])
                    _  -> (n,t)
       where
         resTy   :: Type
@@ -120,3 +121,33 @@ unroll i es env = evalStateT (iterateM i (mapM (transformM go)) es) 0
                           return (Var (v ++ '.':show n) ::: t')
               return (Con con args)
     go e = return e
+
+partition :: [(Name,Type)] -> Env -> Int -> Type -> [Expr]
+partition vs env n t
+  | n <= 0 = []
+  | n == 1 = [ Var n | (n,t') <- vs, t' == t {- warning: List a /= List Nat -}]
+          ++ [ Con con [] | Just cons <- [instantiate t env]
+                          , (con,conTy) <- cons
+                          , conTy == t
+                          ]
+  | otherwise = do
+      (con,conTy) <- cons
+      case conTy of
+         TyApp xs | length xs > 1 -> do
+           args <- mapM (partition vs env (n - 1)) (init xs)
+           return (Con con args)
+         _  -> []
+
+    where cons = fromMaybe (error $ "partition: unknown type ++ show t")
+                           (instantiate t env)
+
+
+testVars = [("x",parseType "Nat"),("y",parseType "Nat"),("xs",parseType "List Nat")]
+
+testVars' = [("x",parseType "Nat"),("y",parseType "Nat")]
+
+testType = parseType "List Nat"
+
+testType' = parseType "Z"
+
+testPartition n = partition testVars testEnv n testType

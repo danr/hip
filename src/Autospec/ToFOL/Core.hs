@@ -139,6 +139,7 @@ app IsBottom{} _ = error "app on IsBottom"
 infixl `app`
 
 tapp :: Type -> Type -> Type
+tapp t (TyApp []) = t
 tapp t (TyApp ts) = TyApp (t:ts)
 tapp t t2         = TyApp [t,t2]
 
