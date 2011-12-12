@@ -13,6 +13,8 @@ import Control.Arrow
 import Control.Monad
 import Control.Monad.State
 
+import Test.QuickCheck
+
 type ConName = Name
 type VarName = Name
 type TypeName = Name
@@ -61,9 +63,6 @@ simpleInduction var ty env = do
         step = Con con vars
     return (Part hyps step)
 
--- For each constructor, unroll each typed variable to all its
--- constructors.
-
 newVar :: (MonadState Int m,Monad m) => m Int
 newVar = do
     x <- get
@@ -104,6 +103,8 @@ instantiate (TyCon n ts) env | Just cons <- lookup n env = Just (map (uncurry in
                        _        -> ([],t)
 instantiate _ _ = Nothing
 
+-- For each constructor, unroll each typed variable to all its
+-- constructors.
 unroll :: Int -> [Expr] -> Env -> [[Expr]]
 unroll i es env = evalStateT (iterateM i (mapM (transformM go)) es) 0
   where
@@ -122,8 +123,24 @@ unroll i es env = evalStateT (iterateM i (mapM (transformM go)) es) 0
               return (Con con args)
     go e = return e
 
-partition :: [(Name,Type)] -> Env -> Int -> Type -> [Expr]
-partition vs env n t
+-- partInts n k parts n into k elements
+partInts :: Int -> Int -> [[Int]]
+partInts 0 0 = [[]]
+partInts n k | k < 0 = []
+partInts n k = [ m : k | m <- [1..n], k <- partInts (n - m) (k - 1) ]
+
+prop_partInts_sum :: Int -> Int -> Bool
+prop_partInts_sum n k = all ((n ==) . sum) (partInts n k)
+
+prop_partInts_length :: Int -> Int -> Bool
+prop_partInts_length n k = all ((k ==) . length) (partInts n k)
+
+partitionTo :: [(Name,Type)] -> Env -> Type -> Int -> [Expr]
+partitionTo vs env t = concatMap (partition vs env t) . enumFromTo 1
+
+
+partition :: [(Name,Type)] -> Env -> Type -> Int -> [Expr]
+partition vs env t n
   | n <= 0 = []
   | n == 1 = [ Var n | (n,t') <- vs, t' == t {- warning: List a /= List Nat -}]
           ++ [ Con con [] | Just cons <- [instantiate t env]
@@ -133,8 +150,9 @@ partition vs env n t
   | otherwise = do
       (con,conTy) <- cons
       case conTy of
-         TyApp xs | length xs > 1 -> do
-           args <- mapM (partition vs env (n - 1)) (init xs)
+         TyApp xs -> do
+           part <- partInts (n - 1) (length xs - 1)
+           args <- zipWithM (partition vs env) (init xs) part
            return (Con con args)
          _  -> []
 
@@ -150,4 +168,4 @@ testType = parseType "List Nat"
 
 testType' = parseType "Z"
 
-testPartition n = partition testVars testEnv n testType
+testPartition = partition testVars testEnv testType

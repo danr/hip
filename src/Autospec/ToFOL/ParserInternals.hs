@@ -97,7 +97,7 @@ tyGrammar parens = do
     t2  <- rule [ TyCon <@> u <#> t3s
                 , id    <@> t3
                 ]
-    t3  <- rule [ TyVar <@> l
+    t3  <- rule [ TyVar  <@> l
                 , tycon0 <@> u
                 , id    <@  L.LPar <#> t <# L.RPar
                 ]
