@@ -147,7 +147,7 @@ partition vs env t n
                           , (con,conTy) <- cons
                           , conTy == t
                           ]
-  | otherwise = do
+  | Just cons <- instantiate t env = do
       (con,conTy) <- cons
       case conTy of
          TyApp xs -> do
@@ -155,9 +155,10 @@ partition vs env t n
            args <- zipWithM (partition vs env) (init xs) part
            return (Con con args)
          _  -> []
+  | otherwise = []
 
-    where cons = fromMaybe (error $ "partition: unknown type ++ show t")
-                           (instantiate t env)
+--    where cons = fromMaybe (error $ "partition: unknown type " ++ show t)
+--                           (
 
 
 testVars = [("x",parseType "Nat"),("y",parseType "Nat"),("xs",parseType "List Nat")]
