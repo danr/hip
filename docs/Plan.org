@@ -473,7 +473,8 @@ and just make =:= be the function.
 ** DONE Add disproving
 CLOSED: [2011-12-05 Mon 15:45]
 =/= could do for that.
-** TODO Fixpoint induction on all subsets of recursive functions
+** DONE Fixpoint induction on all subsets of recursive functions
+CLOSED: [2011-12-12 Mon 12:33]
 prove (x + y == y + x)
 
 ** TODO Fixpoint induction for terminating programs
@@ -495,12 +496,14 @@ notation:
 terminates = (+)
 #+END_SRC haskell
 
-** TODO Fixpoint induction on different functions
+** DONE Fixpoint induction on different functions
+CLOSED: [2011-12-12 Mon 12:33]
 $$P(\bot,\bot) \, \wedge \, P(x,y) \rightarrow P(f x,f y)$$
 $$ \Rightarrow P(fix f,fix g)$$
 Notice that the two $\bot$ can be of different arity
 
-** TODO Induction in several variables, and in more depth
+** DONE Induction in several variables, and in more depth
+CLOSED: [2011-12-12 Mon 12:33]
 This should also fire the definition of integers (data Z = P Nat | N Nat)
 
 ** TODO Examples
@@ -526,12 +529,56 @@ postulate : forall x y . x < y == True -> y < x == False
 However, Nat has a sorting... I guess we cannot prove that sort sorts
 without having lemmas for < <= etc.
 
-** Report work
-Write report! :S
+** Informal meeting with Koen and Moa
+*** Papers to read:
+*mumble* Monotonicity by Koen, Ann and Nick
+The other paper by Nick and Jasmin
+*** Haskell -> Isabel
+There is a program called Haskabel that does this. Can our translation
+output Isabel? Probably!
+*** Finite values
+To add finite lemmas there are various ways...
+forall x y . Fin(x) & Fin(y) . suc (x + y) = x + suc y
+Then we need to have another simple induction scheme
+Fin(x) & P(x) => P(suc x)
+And more invocations to the prover.
+*** Try other provers
+Vampire, spass, eprover
+*** Computing cluster
+I will hopefully get access next week
+*** ML
+Made to implement Isabel by the module system. Implement a small logic
+core in a closed module.
+*** Induction on several variables
+**** DONE Symmetric induction
+CLOSED: [2011-12-12 Mon 12:33]
+P(0,0)
+P(0,y) => P(0,y+)
+P(x,0) => P(x+,0)
+P(x,y) & P(x+,y) & P(x,y+) => P(x+,y+)
+**** Lexicographic
+P(0,0)
+P(0,y) => P(0,y+)
+(forall y . P(0,y))
+(forall y . P(x,y)) => (forall y . (P(x+,y))
 * Week 50 (12 Dec - 18 Dec)
-** First draft of report complete.
-Should have all necessary parts.
-
+** DONE Meeting with Koen
+CLOSED: <2011-12-12 Mon 15:00>
+*** Translation of implications with guard function
+*** Fast and loose reasoning
+*** Splitting Haskell's domain in two
+** Report
+Write the techical part, and all desicions made is put in background
+or introduction, and everything not complete put in future work or
+discussion.
+*** Technical Part
+**** Translation to FOL
+Describe the core language (a lot design choices there), and
+compilation of case expressions in the core language.  Translation
+from Haskell to the Core language is pretty straightforward.
+**** Describe simple induction and structural induction
+**** Fixed point induction
+**** Approximation lemma
 * Week 51 (19 Dec - 25 Dec)
 ** Christmas break
 SCHEDULED: <2011-12-23 Fri>
