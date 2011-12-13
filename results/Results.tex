@@ -1,0 +1,1302 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{courier}
+\usepackage{amssymb}
+\usepackage{longtable}
+
+\begin{document}
+
+\title{Results}
+\maketitle
+
+\section*{AutoPrelude.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\end{longtable}
+
+\section*{Bool.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{and_{absorb}}$ \newline \verb`&& x (|| x y) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{and_{assoc}}$ \newline \verb`&& x (&& y z) = && (&& x y) z` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{and_{assoc_{comm}}}$ \newline \verb`&& y (&& x z) = && x (&& y z)` &  &  &  &  \\
+\hline
+$prop_{and_{comm}}$ \newline \verb`&& y x = && x y` &  &  &  &  \\
+\hline
+$prop_{and_{complement}}$ \newline \verb`&& x (not x) = False` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{and_{distrib}}$ \newline \verb`&& (|| x y) (|| x z) = || x (&& y z)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{and_{idem}}$ \newline \verb`&& x x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{and_{identity}}$ \newline \verb`&& x (True) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{and_{zero}}$ \newline \verb`&& x (False) = False` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{de_{morgan_{0}}}$ \newline \verb`&& (not x) (not y) = not (|| x y)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{de_{morgan_{1}}}$ \newline \verb`|| (not x) (not y) = not (&& x y)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{not_{false}}$ \newline \verb`not (False) = True` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{not_{involutive}}$ \newline \verb`not (not x) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{not_{true}}$ \newline \verb`not (True) = False` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{or_{absorb}}$ \newline \verb`|| x (&& x y) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{or_{assoc}}$ \newline \verb`|| x (|| y z) = || (|| x y) z` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{or_{assoc_{comm}}}$ \newline \verb`|| y (|| x z) = || x (|| y z)` &  &  &  &  \\
+\hline
+$prop_{or_{comm}}$ \newline \verb`|| y x = || x y` &  &  &  &  \\
+\hline
+$prop_{or_{complement}}$ \newline \verb`|| x (not x) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{or_{distrib}}$ \newline \verb`|| (&& x y) (&& x z) = && x (|| y z)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{or_{idem}}$ \newline \verb`|| x x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{or_{identity}}$ \newline \verb`|| x (False) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{or_{zero}}$ \newline \verb`|| x (True) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 15/23 & 2/15 & 13/15 & 15/15 & \\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 4/23 &  & 4/4 &  & \\
+\end{longtable}
+
+\section*{EnvMonad.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{app_{assoc}}$ \newline \verb`>>== (>>== m f) g e = >>== m (lambda.5 f g) e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{assocl}}$ \newline \verb`>>= (>>= m f) g e = >>= m (lambda.4 f g) e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{return_{left}}}$ \newline \verb`>>== f return e = f e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{return_{leftl}}}$ \newline \verb`>>= f return e = f e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{return_{right}}}$ \newline \verb`>>== (return a) f e = f a e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{return_{rightl}}}$ \newline \verb`>>= (return a) f e = f a e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{returnl_{left}}}$ \newline \verb`>>== f returnl e = f e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{returnl_{leftl}}}$ \newline \verb`>>= f returnl e = f e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{returnl_{right}}}$ \newline \verb`>>== (returnl a) f e = f a e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{app_{returnl_{rightl}}}$ \newline \verb`>>= (returnl a) f e = f a e` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{assoc}$ \newline \verb`>>== (>>== m f) g = >>== m (lambda.3 f g)` &  &  &  &  \\
+\hline
+$prop_{assocl}$ \newline \verb`>>= (>>= m f) g = >>= m (lambda.2 f g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp}}$ \newline \verb`fmap (. f g) = . (fmap f) (fmap g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{id}}$ \newline \verb`fmap id = id` &  &  &  &  \\
+\hline
+$prop_{fmapl_{comp}}$ \newline \verb`fmapl (. f g) = . (fmapl f) (fmapl g)` &  &  &  &  \\
+\hline
+$prop_{fmapl_{id}}$ \newline \verb`fmapl id = id` &  &  &  &  \\
+\hline
+$prop_{fmaplrl_{comp}}$ \newline \verb`fmaplrl (. f g) = . (fmaplrl f) (fmaplrl g)` &  &  &  &  \\
+\hline
+$prop_{fmaplrl_{idl}}$ \newline \verb`fmaplrl id = id` &  &  &  &  \\
+\hline
+$prop_{fmaprl_{comp}}$ \newline \verb`fmaprl (. f g) = . (fmaprl f) (fmaprl g)` &  &  &  &  \\
+\hline
+$prop_{fmaprl_{id}}$ \newline \verb`fmaprl id = id` &  &  &  &  \\
+\hline
+$prop_{return_{left}}$ \newline \verb`>>== f return = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{leftl}}$ \newline \verb`>>= f return = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right}}$ \newline \verb`>>== (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{rightl}}$ \newline \verb`>>= (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{left}}$ \newline \verb`>>== f returnl = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{leftl}}$ \newline \verb`>>= f returnl = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{right}}$ \newline \verb`>>== (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{rightl}}$ \newline \verb`>>= (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 18/28 & 18/18 &  &  & \\
+\end{longtable}
+
+\section*{Expr.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{mirror}$ \newline \verb`e = mirror (mirror e)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{mirror_{eval}}$ \newline \verb`eval e = eval (mirror e)` &  &  &  &  \\
+\hline
+$prop_{mirror_{size}}$ \newline \verb`size e = size (mirror e)` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 1/3 &  & 1/1 &  & \\
+\end{longtable}
+
+\section*{Fix.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{even}$ \newline \verb`even x = evenFix x` &  &  &  &  \\
+\hline
+$prop_{evenSingl}$ \newline \verb`evenSingl x = even x` &  &  &  &  \\
+\hline
+$prop_{evenSinglFix}$ \newline \verb`evenSingl x = evenFix x` &  &  &  &  \\
+\hline
+$prop_{odd}$ \newline \verb`odd x = oddFix x` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\end{longtable}
+
+\section*{Functions.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{comp_{assoc}}$ \newline \verb`. (. f g) h = . f (. g h)` &  &  &  &  \\
+\hline
+$prop_{comp_{assoc'}}$ \newline \verb`. (. f g) h a = . f (. g h) a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{comp_{assocl}}$ \newline \verb`... (... f g) h = ... f (... g h)` &  &  &  &  \\
+\hline
+$prop_{comp_{equal}}$ \newline \verb`. = ...` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{curry_{uncurry}}$ \newline \verb`id = . curry uncurry` &  &  &  &  \\
+\hline
+$prop_{dans_{identity}}$ \newline \verb`const x y = id x` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{dans_{nonidentity}}$ \newline \verb`const y x = id x` & $\bot$ &  &  &  \\
+\hline
+$prop_{left_{id}}$ \newline \verb`. f id = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{left_{idl}}$ \newline \verb`... f id = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{malins_{identity}}$ \newline \verb`const id x y = flip const x y` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{malins_{identity'}}$ \newline \verb`const id = flip const` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{mikaels_{identity}}$ \newline \verb`id f x = f x` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{nonidentity}$ \newline \verb`const x = id` & $\bot$ &  &  &  \\
+\hline
+$prop_{right_{id}}$ \newline \verb`. id f = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{right_{idl}}$ \newline \verb`... id f = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{uncurry_{curry}}$ \newline \verb`id = . uncurry curry` &  &  &  &  \\
+\hline
+$prop_{uncurry_{equal}}$ \newline \verb`uncurry = uncurry'` &  &  &  &  \\
+\hline
+$prop_{uncurry_{f_{equal}}}$ \newline \verb`uncurry f = uncurry' f` &  &  &  &  \\
+\hline
+$prop_{uncurry_{f_{tuple_{equal}}}}$ \newline \verb`uncurry f t = uncurry' f t` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{uncurry_{f_{unboxedtuple_{equal}}}}$ \newline \verb`uncurry f (T2 a b) = uncurry' f (T2 a b)` & $\checkmark_{\infty}$ &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 11/20 & 11/11 &  &  & \\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 1/20 &  & 1/1 &  & \\
+\hline
+$\bot$ & 2/20 & 2/2 &  &  & \\
+\end{longtable}
+
+\section*{FV.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{free}$ \newline \verb`mem v (freeVars e) = freeIn v e` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\end{longtable}
+
+\section*{Infinite.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{concat_{repeat_{cycle}}}$ \newline \verb`concat (repeat (: x xs)) = cycle (: x xs)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp}}$ \newline \verb`fmap (. f g) t = fmap f (fmap g t)` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{fmap_{id}}$ \newline \verb`fmap id t = t` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{fmap_{iterate}}$ \newline \verb`fmap f (iterTree f f x) = iterTree f f (f x)` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{fmap_{left}}$ \newline \verb`fmap (. id f) t = fmap f t` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{fmap_{map_{toList}}}$ \newline \verb`map f (toList t) = toList (fmap f t)` &  &  &  &  \\
+\hline
+$prop_{fmap_{map_{traverse}}}$ \newline \verb`map f (traverse t) = traverse (fmap f t)` &  &  &  &  \\
+\hline
+$prop_{fmap_{right}}$ \newline \verb`fmap (. f id) t = fmap f t` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{map_{iterate}}$ \newline \verb`map f (iterate f x) = iterate f (f x)` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{mirror_{involutive}}$ \newline \verb`mirror (mirror t) = t` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{mirror_{iterate}}$ \newline \verb`mirror (iterTree f g x) = iterTree g f x` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{mirror_{traverse_{rev}}}$ \newline \verb`reverse (traverse t) = traverse (mirror t)` &  &  &  &  \\
+\hline
+$prop_{repeat_{cycle_{singleton}}}$ \newline \verb`repeat x = cycle (: x ([]))` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{repeat_{iterate}}$ \newline \verb`repeat x = iterate id x` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{tail_{repeat}}$ \newline \verb`repeat x = tail (repeat x)` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 11/15 &  & 5/11 & 10/11 & 9/11\\
+\end{longtable}
+
+\section*{Integers.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{assoc}}$ \newline \verb`+! x (+! y z) = +! (+! x y) z` &  &  &  &  \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+! x y = +! y x` &  &  &  &  \\
+\hline
+$prop_{add_{ident_{left}}}$ \newline \verb`x = +! zero x` &  &  &  &  \\
+\hline
+$prop_{add_{ident_{right}}}$ \newline \verb`x = +! x zero` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{add_{inv_{left}}}$ \newline \verb`+! (neg x) x = zero` &  &  &  &  \\
+\hline
+$prop_{add_{inv_{right}}}$ \newline \verb`+! x (neg x) = zero` &  &  &  &  \\
+\hline
+$prop_{mul_{assoc}}$ \newline \verb`*! x (*! y z) = *! (*! x y) z` &  &  &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`*! x y = *! y x` &  &  &  &  \\
+\hline
+$prop_{mul_{ident_{left}}}$ \newline \verb`x = *! one x` &  &  &  &  \\
+\hline
+$prop_{mul_{ident_{right}}}$ \newline \verb`x = *! x one` &  &  &  &  \\
+\hline
+$prop_{neg_{involutive}}$ \newline \verb`x = neg (neg x)` &  &  &  &  \\
+\hline
+$prop_{sign_{assoc}}$ \newline \verb`*% s (*% t u) = *% (*% s t) u` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{sign_{ident_{left}}}$ \newline \verb`*% s (Pos) = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{sign_{ident_{right}}}$ \newline \verb`*% (Pos) s = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{sign_{opposite_{involutive}}}$ \newline \verb`opposite (opposite s) = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{sign_{triple}}$ \newline \verb`*% s (*% s s) = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 6/16 &  & 6/6 & 6/6 & \\
+\end{longtable}
+
+\section*{IWC.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{appAssoc}$ \newline \verb`app (app xs ys) zs = app xs (app ys zs)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{binomialTheorems}$ \newline \verb`exp (S x) n = sum' (Z) n (lambda.0 n x)` &  &  &  &  \\
+\hline
+$prop_{evenEq}$ \newline \verb`evenm n = evenr n` &  &  &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{rotateLength}$ \newline \verb`rotate (len xs) xs = xs` &  &  &  &  \\
+\hline
+$prop_{split}$ \newline \verb`newSplit x w (len w) = splitList x w` &  &  &  &  \\
+\hline
+$prop_{sumLemma}$ \newline \verb`sum' n m (lambda.1 f g) = plus (sum' n m f) (sum' n m g)` &  &  &  &  \\
+\hline
+$prop_{sumLemma2}$ \newline \verb`sum' n m (lambda.2 f t) = times t (sum' n m f)` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 2/7 &  & 1/2 &  & 1/2\\
+\end{longtable}
+
+\section*{ListFunctions.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{01}$ \newline \verb`++ (take n xs) (drop n xs) = xs` &  &  &  &  \\
+\hline
+$prop_{02}$ \newline \verb`+ (count n xs) (count n ys) = count n (++ xs ys)` &  &  &  &  \\
+\hline
+$prop_{03}$ \newline \verb`<= (count n xs) (count n (++ xs ys)) = True` &  &  &  &  \\
+\hline
+$prop_{04}$ \newline \verb`S (count n xs) = count n (: n xs)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{11}$ \newline \verb`drop (Z) xs = xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{12}$ \newline \verb`drop n (map f xs) = map f (drop n xs)` &  &  &  &  \\
+\hline
+$prop_{13}$ \newline \verb`drop (S n) (: x xs) = drop n xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{14}$ \newline \verb`filter p (++ xs ys) = ++ (filter p xs) (filter p ys)` &  &  &  &  \\
+\hline
+$prop_{15}$ \newline \verb`len (ins x xs) = S (len xs)` &  &  &  &  \\
+\hline
+$prop_{19}$ \newline \verb`len (drop n xs) = - (len xs) n` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{20}$ \newline \verb`len (sort xs) = len xs` &  &  &  &  \\
+\hline
+$prop_{28}$ \newline \verb`elem x (++ xs (: x ([]))) = True` &  &  &  &  \\
+\hline
+$prop_{29}$ \newline \verb`elem x (ins1 x xs) = True` &  &  &  &  \\
+\hline
+$prop_{30}$ \newline \verb`elem x (ins x xs) = True` &  &  &  &  \\
+\hline
+$prop_{35}$ \newline \verb`dropWhile lambda.9 xs = xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{36}$ \newline \verb`takeWhile lambda.10 xs = xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{37}$ \newline \verb`not (elem x (delete x xs)) = True` &  &  &  &  \\
+\hline
+$prop_{38}$ \newline \verb`count n (++ xs (: n ([]))) = S (count n xs)` &  &  &  &  \\
+\hline
+$prop_{39}$ \newline \verb`+ (count n (: x ([]))) (count n xs) = count n (: x xs)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{40}$ \newline \verb`take (Z) xs = []` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{41}$ \newline \verb`take n (map f xs) = map f (take n xs)` &  &  &  &  \\
+\hline
+$prop_{42}$ \newline \verb`take (S n) (: x xs) = : x (take n xs)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{43}$ \newline \verb`++ (takeWhile p xs) (dropWhile p xs) = xs` &  &  &  &  \\
+\hline
+$prop_{44}$ \newline \verb`zip (: x xs) ys = zipConcat x xs ys` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{45}$ \newline \verb`zip (: x xs) (: y ys) = : (T2 x y) (zip xs ys)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{46}$ \newline \verb`zip ([]) xs = []` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{49}$ \newline \verb`butlast (++ xs ys) = butlastConcat xs ys` &  &  &  &  \\
+\hline
+$prop_{50}$ \newline \verb`butlast xs = take (- (len xs) (S (Z))) xs` &  &  &  &  \\
+\hline
+$prop_{51}$ \newline \verb`butlast (++ xs (: x ([]))) = xs` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{52}$ \newline \verb`count n xs = count n (rev xs)` &  &  &  &  \\
+\hline
+$prop_{53}$ \newline \verb`count n xs = count n (sort xs)` &  &  &  &  \\
+\hline
+$prop_{55}$ \newline \verb`drop n (++ xs ys) = ++ (drop n xs) (drop (- n (len xs)) ys)` &  &  &  &  \\
+\hline
+$prop_{56}$ \newline \verb`drop n (drop m xs) = drop (+ n m) xs` &  &  &  &  \\
+\hline
+$prop_{57}$ \newline \verb`drop n (take m xs) = take (- m n) (drop n xs)` &  &  &  &  \\
+\hline
+$prop_{58}$ \newline \verb`drop n (zip xs ys) = zip (drop n xs) (drop n ys)` &  &  &  &  \\
+\hline
+$prop_{61}$ \newline \verb`last (++ xs ys) = lastOfTwo xs ys` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{64}$ \newline \verb`last (++ xs (: x ([]))) = x` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{66}$ \newline \verb`<= (len (filter p xs)) (len xs) = True` &  &  &  &  \\
+\hline
+$prop_{67}$ \newline \verb`len (butlast xs) = - (len xs) (S (Z))` &  &  &  &  \\
+\hline
+$prop_{68}$ \newline \verb`<= (len (delete n xs)) (len xs) = True` &  &  &  &  \\
+\hline
+$prop_{72}$ \newline \verb`rev (drop i xs) = take (- (len xs) i) (rev xs)` &  &  &  &  \\
+\hline
+$prop_{73}$ \newline \verb`rev (filter p xs) = filter p (rev xs)` &  &  &  &  \\
+\hline
+$prop_{74}$ \newline \verb`rev (take i xs) = drop (- (len xs) i) (rev xs)` &  &  &  &  \\
+\hline
+$prop_{75}$ \newline \verb`+ (count n xs) (count n (: m ([]))) = count n (: m xs)` &  &  &  &  \\
+\hline
+$prop_{78}$ \newline \verb`sorted (sort xs) = True` &  &  &  &  \\
+\hline
+$prop_{80}$ \newline \verb`take n (++ xs ys) = ++ (take n xs) (take (- n (len xs)) ys)` &  &  &  &  \\
+\hline
+$prop_{81}$ \newline \verb`take n (drop m xs) = drop m (take (+ n m) xs)` &  &  &  &  \\
+\hline
+$prop_{82}$ \newline \verb`take n (zip xs ys) = zip (take n xs) (take n ys)` &  &  &  &  \\
+\hline
+$prop_{85}$ \newline \verb`zip (rev xs) (rev ys) = rev (zip xs ys)` &  &  &  &  \\
+\hline
+$prop_{len_{plus_{list_{homomorphism}}}}$ \newline \verb`len (++ xs ys) = + (len xs) (len ys)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{map_{compose}}$ \newline \verb`map (. f g) xs = map f (map g xs)` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{map_{id}}$ \newline \verb`map id xs = xs` &  & $\checkmark_{\infty}$ &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 15/52 &  & 15/15 & 10/15 & 2/15\\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 3/52 &  & 3/3 &  & \\
+\end{longtable}
+
+\section*{Lists.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{00}$ \newline \verb`: x xs = revAcc xs (point x)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{01}$ \newline \verb`++ ys xs = revAcc xs (reverse ys)` &  &  &  &  \\
+\hline
+$prop_{02}$ \newline \verb`revAcc ys xs = ++ (reverse xs) ys` &  &  &  &  \\
+\hline
+$prop_{03}$ \newline \verb`++ ys xs = revAcc xs (reverse2 ys)` &  &  &  &  \\
+\hline
+$prop_{04}$ \newline \verb`revAcc ys xs = ++ (reverse2 xs) ys` &  &  &  &  \\
+\hline
+$prop_{05}$ \newline \verb`reverse2 xs = reverse xs` &  &  &  &  \\
+\hline
+$prop_{06}$ \newline \verb`: x ([]) = point x` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{07}$ \newline \verb`++ xs ([]) = xs` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{08}$ \newline \verb`revAcc xs ([]) = xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{09}$ \newline \verb`++ ([]) xs = xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{10}$ \newline \verb`revAcc ([]) xs = reverse xs` &  &  &  &  \\
+\hline
+$prop_{11}$ \newline \verb`revAcc ([]) xs = reverse2 xs` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{12}$ \newline \verb`++ (: x xs) ys = : x (++ xs ys)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{13}$ \newline \verb`++ (++ xs ys) zs = ++ xs (++ ys zs)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{14}$ \newline \verb`++ (revAcc xs ys) zs = revAcc zs (revAcc ys xs)` &  &  &  &  \\
+\hline
+$prop_{15}$ \newline \verb`revAcc (: x xs) ys = revAcc xs (: x ys)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{16}$ \newline \verb`revAcc (revAcc xs ys) zs = revAcc xs (++ ys zs)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 9/17 & 1/9 & 8/9 & 7/9 & \\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 1/17 &  & 1/1 &  & \\
+\end{longtable}
+
+\section*{MaybeMonad.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{assoc}$ \newline \verb`>>= (>>= m f) g = >>= m (lambda.0 f g)` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{fmap_{comp}}$ \newline \verb`fmap (. f g) = . (fmap f) (fmap g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp'}}$ \newline \verb`fmap (. f g) x = . (fmap f) (fmap g) x` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{fmap_{id}}$ \newline \verb`fmap id = id` &  &  &  &  \\
+\hline
+$prop_{fmap_{id'}}$ \newline \verb`fmap id m = id m` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{fmap_{join}}$ \newline \verb`. join (fmap (fmap f)) = . (fmap f) join` &  &  &  &  \\
+\hline
+$prop_{fmap_{join'}}$ \newline \verb`. join (fmap (fmap f)) m = . (fmap f) join m` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{fmap_{return}}$ \newline \verb`. return f = . (fmap f) return` &  &  &  &  \\
+\hline
+$prop_{fmap_{return'}}$ \newline \verb`. return f x = . (fmap f) return x` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{join_{fmap_{join}}}$ \newline \verb`. join (fmap join) = . join join` &  &  &  &  \\
+\hline
+$prop_{join_{fmap_{join'}}}$ \newline \verb`. join (fmap join) m = . join join m` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{join_{return}}$ \newline \verb`. join (fmap return) = . join return` &  &  &  &  \\
+\hline
+$prop_{join_{return'}}$ \newline \verb`. join (fmap return) m = . join return m` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{join_{return_{id}}}$ \newline \verb`. join return = id` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{join_{return_{id'}}}$ \newline \verb`. join return m = id m` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{return_{left}}$ \newline \verb`>>= m return = m` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{return_{right}}$ \newline \verb`>>= (return a) f = f a` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 11/17 & 3/11 & 8/11 & 9/11 & \\
+\end{longtable}
+
+\section*{Mini.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{map_{iterate}}$ \newline \verb`map f (iterate f x) = iterate f (f x)` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{movesuc}$ \newline \verb`+ (S x) y = + x (S y)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{repeat_{cycle_{singleton}}}$ \newline \verb`repeat x = cycle (: x ([]))` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{repeat_{iterate}}$ \newline \verb`repeat x = iterate id x` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{tail_{repeat}}$ \newline \verb`repeat x = tail (repeat x)` &  &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ \\
+\hline
+$prop_{zero_{is_{one}}}$ \newline \verb`Z != S (Z)` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 8/11 & 1/8 & 3/8 & 7/8 & 5/8\\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 1/11 &  & 1/1 &  & \\
+\end{longtable}
+
+\section*{Nat2ndArg.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{idem_{mul}}$ \newline \verb`* x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{idem_{plus}}$ \newline \verb`+ x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{le_{plus}}$ \newline \verb`<= n (+ n m) = True` &  &  &  &  \\
+\hline
+$prop_{le_{plus_{sym}}}$ \newline \verb`<= n (+ m n) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{le_{succ_{plus}}}$ \newline \verb`< i (S (+ i m)) = True` &  &  &  &  \\
+\hline
+$prop_{left_{distrib}}$ \newline \verb`* x (+ y z) = + (* x y) (* x z)` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`* (S (Z)) x = x` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{lt_{suc}}$ \newline \verb`< i (S (+ m i)) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{absorbish}}$ \newline \verb`- (+ n m) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{distribish}}$ \newline \verb`- (+ k m) (+ k n) = - m n` &  &  &  &  \\
+\hline
+$prop_{minus_{plus}}$ \newline \verb`- (+ m n) n = m` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{zeroish}}$ \newline \verb`- n (+ n m) = Z` &  &  &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`* x y = * y x` &  &  &  &  \\
+\hline
+$prop_{right_{distrib}}$ \newline \verb`* (+ x y) z = + (* x z) (* y z)` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`* x (S (Z)) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 6/20 &  & 4/6 & 5/6 & 1/6\\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 3/20 &  & 3/3 &  & \\
+\end{longtable}
+
+\section*{NatAcc.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  &  &  &  \\
+\hline
+$prop_{idem_{mul}}$ \newline \verb`* x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{idem_{plus}}$ \newline \verb`+ x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{le_{plus}}$ \newline \verb`<= n (+ n m) = True` &  &  &  &  \\
+\hline
+$prop_{le_{plus_{sym}}}$ \newline \verb`<= n (+ m n) = True` &  &  &  &  \\
+\hline
+$prop_{le_{succ_{plus}}}$ \newline \verb`< i (S (+ i m)) = True` &  &  &  &  \\
+\hline
+$prop_{left_{distrib}}$ \newline \verb`* x (+ y z) = + (* x y) (* x z)` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`* (S (Z)) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{lt_{suc}}$ \newline \verb`< i (S (+ m i)) = True` &  &  &  &  \\
+\hline
+$prop_{minus_{absorbish}}$ \newline \verb`- (+ n m) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{distribish}}$ \newline \verb`- (+ k m) (+ k n) = - m n` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{plus}}$ \newline \verb`- (+ m n) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{zeroish}}$ \newline \verb`- n (+ n m) = Z` &  &  &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`* x y = * y x` &  &  &  &  \\
+\hline
+$prop_{right_{distrib}}$ \newline \verb`* (+ x y) z = + (* x z) (* y z)` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`* x (S (Z)) = x` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 4/20 &  & 2/4 & 4/4 & \\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 1/20 &  & 1/1 &  & \\
+\end{longtable}
+
+\section*{NatDouble.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  &  &  &  \\
+\hline
+$prop_{idem_{mul}}$ \newline \verb`* x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{idem_{plus}}$ \newline \verb`+ x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{le_{plus}}$ \newline \verb`<= n (+ n m) = True` &  &  &  &  \\
+\hline
+$prop_{le_{plus_{sym}}}$ \newline \verb`<= n (+ m n) = True` &  &  &  &  \\
+\hline
+$prop_{le_{succ_{plus}}}$ \newline \verb`< i (S (+ i m)) = True` &  &  &  &  \\
+\hline
+$prop_{left_{distrib}}$ \newline \verb`* x (+ y z) = + (* x y) (* x z)` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`* (S (Z)) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{lt_{suc}}$ \newline \verb`< i (S (+ m i)) = True` &  &  &  &  \\
+\hline
+$prop_{minus_{absorbish}}$ \newline \verb`- (+ n m) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{distribish}}$ \newline \verb`- (+ k m) (+ k n) = - m n` &  &  &  &  \\
+\hline
+$prop_{minus_{plus}}$ \newline \verb`- (+ m n) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{zeroish}}$ \newline \verb`- n (+ n m) = Z` &  &  &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`* x y = * y x` &  &  &  &  \\
+\hline
+$prop_{right_{distrib}}$ \newline \verb`* (+ x y) z = + (* x z) (* y z)` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`* x (S (Z)) = x` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 4/20 &  & 2/4 & 4/4 & \\
+\end{longtable}
+
+\section*{NatDoubleStupid.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  &  &  &  \\
+\hline
+$prop_{idem_{mul}}$ \newline \verb`* x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{idem_{plus}}$ \newline \verb`+ x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{le_{plus}}$ \newline \verb`<= n (+ n m) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{le_{plus_{sym}}}$ \newline \verb`<= n (+ m n) = True` &  &  &  &  \\
+\hline
+$prop_{le_{succ_{plus}}}$ \newline \verb`< i (S (+ i m)) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{left_{distrib}}$ \newline \verb`* x (+ y z) = + (* x y) (* x z)` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`* (S (Z)) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{lt_{suc}}$ \newline \verb`< i (S (+ m i)) = True` &  &  &  &  \\
+\hline
+$prop_{minus_{absorbish}}$ \newline \verb`- (+ n m) n = m` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{distribish}}$ \newline \verb`- (+ k m) (+ k n) = - m n` &  &  &  &  \\
+\hline
+$prop_{minus_{plus}}$ \newline \verb`- (+ m n) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{zeroish}}$ \newline \verb`- n (+ n m) = Z` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`* x y = * y x` &  &  &  &  \\
+\hline
+$prop_{right_{distrib}}$ \newline \verb`* (+ x y) z = + (* x z) (* y z)` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`* x (S (Z)) = x` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 4/20 &  & 2/4 & 4/4 & \\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 4/20 &  & 4/4 &  & \\
+\end{longtable}
+
+\section*{Nat.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{idem_{mul}}$ \newline \verb`* x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{idem_{plus}}$ \newline \verb`+ x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{le_{plus}}$ \newline \verb`<= n (+ n m) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{le_{plus_{sym}}}$ \newline \verb`<= n (+ m n) = True` &  &  &  &  \\
+\hline
+$prop_{le_{succ_{plus}}}$ \newline \verb`< i (S (+ i m)) = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{left_{distrib}}$ \newline \verb`* x (+ y z) = + (* x y) (* x z)` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`* (S (Z)) x = x` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{lt_{suc}}$ \newline \verb`< i (S (+ m i)) = True` &  &  &  &  \\
+\hline
+$prop_{lt_{zero_{eq_{zero}}}}$ \newline \verb`<= n (Z) = == n (Z)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{max_{absorb}}$ \newline \verb`max x (min x y) = x` &  &  &  &  \\
+\hline
+$prop_{max_{assoc}}$ \newline \verb`max (max a b) c = max a (max b c)` &  &  &  &  \\
+\hline
+$prop_{max_{le}}$ \newline \verb`== (max a b) a = <= b a` &  &  &  &  \\
+\hline
+$prop_{max_{le_{sym}}}$ \newline \verb`== (max a b) b = <= a b` &  &  &  &  \\
+\hline
+$prop_{max_{sym}}$ \newline \verb`max a b = max b a` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{min_{absorb}}$ \newline \verb`min x (max x y) = x` &  &  &  &  \\
+\hline
+$prop_{min_{assoc}}$ \newline \verb`min (min a b) c = min a (min b c)` &  &  &  &  \\
+\hline
+$prop_{min_{le}}$ \newline \verb`== (min a b) a = <= a b` &  &  &  &  \\
+\hline
+$prop_{min_{le_{sym}}}$ \newline \verb`== (min a b) b = <= b a` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{min_{sym}}$ \newline \verb`min a b = min b a` &  &  &  &  \\
+\hline
+$prop_{minus_{absorbish}}$ \newline \verb`- (+ n m) n = m` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{assocish}}$ \newline \verb`- (- i j) k = - i (+ j k)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{minus_{distribish}}$ \newline \verb`- (+ k m) (+ k n) = - m n` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{plus}}$ \newline \verb`- (+ m n) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{zero}}$ \newline \verb`- m m = Z` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{minus_{zeroish}}$ \newline \verb`- n (+ n m) = Z` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`* x y = * y x` &  &  &  &  \\
+\hline
+$prop_{refl}$ \newline \verb`== x x = True` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{right_{distrib}}$ \newline \verb`* (+ x y) z = + (* x z) (* y z)` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`* x (S (Z)) = x` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{succ_{minus_{3}}}$ \newline \verb`- (- (S m) n) (S k) = - (- m n) k` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{zero_{is_{one}}}$ \newline \verb`Z != S (Z)` & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 10/36 & 1/10 & 7/10 & 5/10 & 2/10\\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 10/36 &  & 10/10 &  & \\
+\end{longtable}
+
+\section*{NatSwap.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+ x y = + y x` &  &  &  &  \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`* x (* y z) = * (* x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`+ x (+ y z) = + (+ x y) z` &  &  &  &  \\
+\hline
+$prop_{idem_{mul}}$ \newline \verb`* x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{idem_{plus}}$ \newline \verb`+ x x != x` &  &  & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{le_{plus}}$ \newline \verb`<= n (+ n m) = True` &  &  &  &  \\
+\hline
+$prop_{le_{plus_{sym}}}$ \newline \verb`<= n (+ m n) = True` &  &  &  &  \\
+\hline
+$prop_{le_{succ_{plus}}}$ \newline \verb`< i (S (+ i m)) = True` &  &  &  &  \\
+\hline
+$prop_{left_{distrib}}$ \newline \verb`* x (+ y z) = + (* x y) (* x z)` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`* (S (Z)) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`+ (Z) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{lt_{suc}}$ \newline \verb`< i (S (+ m i)) = True` &  &  &  &  \\
+\hline
+$prop_{minus_{absorbish}}$ \newline \verb`- (+ n m) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{distribish}}$ \newline \verb`- (+ k m) (+ k n) = - m n` &  &  &  &  \\
+\hline
+$prop_{minus_{plus}}$ \newline \verb`- (+ m n) n = m` &  &  &  &  \\
+\hline
+$prop_{minus_{zeroish}}$ \newline \verb`- n (+ n m) = Z` &  &  &  &  \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`* x y = * y x` &  &  &  &  \\
+\hline
+$prop_{right_{distrib}}$ \newline \verb`* (+ x y) z = + (* x z) (* y z)` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`* x (S (Z)) = x` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`+ x (Z) = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 6/20 &  & 4/6 & 5/6 & \\
+\end{longtable}
+
+\section*{Ordinals.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{assoc_{mul}}$ \newline \verb`** x (** y z) = ** (** x y) z` &  &  &  &  \\
+\hline
+$prop_{assoc_{plus}}$ \newline \verb`++ x (++ y z) = ++ (++ x y) z` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{mul}}}$ \newline \verb`** (Suc (Zero)) x = x` &  &  &  &  \\
+\hline
+$prop_{left_{identity_{plus}}}$ \newline \verb`++ (Zero) x = x` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  \\
+\hline
+$prop_{right_{identity_{mul}}}$ \newline \verb`** x (Suc (Zero)) = x` &  &  &  &  \\
+\hline
+$prop_{right_{identity_{plus}}}$ \newline \verb`++ x (Zero) = x` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 1/6 &  & 1/1 & 1/1 & \\
+\end{longtable}
+
+\section*{ProductiveUseOfFailure.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{G1}$ \newline \verb`++ (rev x) y = qrev x y` &  &  &  &  \\
+\hline
+$prop_{G10}$ \newline \verb`* (fac x) y = qfac x y` &  &  &  &  \\
+\hline
+$prop_{G11}$ \newline \verb`+ (* x y) z = mult x y z` &  &  &  &  \\
+\hline
+$prop_{G12}$ \newline \verb`* (exp x y) z = qexp x y z` &  &  &  &  \\
+\hline
+$prop_{G2}$ \newline \verb`++ (revflat x) y = qrevflat x y` &  &  &  &  \\
+\hline
+$prop_{G3}$ \newline \verb`rev (qrev x y) = ++ (rev y) x` &  &  &  &  \\
+\hline
+$prop_{G4}$ \newline \verb`rev (qrev x (rev y)) = ++ y x` &  &  &  &  \\
+\hline
+$prop_{G5}$ \newline \verb`rev (++ (rev x) y) = ++ (rev y) x` &  &  &  &  \\
+\hline
+$prop_{G6}$ \newline \verb`rev (++ (rev x) (rev y)) = ++ y x` &  &  &  &  \\
+\hline
+$prop_{G7}$ \newline \verb`qrev (qrev x y) ([]) = ++ (rev y) x` &  &  &  &  \\
+\hline
+$prop_{G8}$ \newline \verb`qrev (qrev x (rev y)) ([]) = ++ y x` &  &  &  &  \\
+\hline
+$prop_{G9}$ \newline \verb`rotate (length x) (++ x y) = ++ y x` &  &  &  &  \\
+\hline
+$prop_{L1}$ \newline \verb`+ x (S y) = S (+ x y)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L10}$ \newline \verb`rev (++ (++ x (: y ([]))) ([])) = : y (rev (++ x ([])))` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L11}$ \newline \verb`++ (++ x (: y ([]))) z = ++ x (: y z)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{L12}$ \newline \verb`--> (sorted y) (sorted (insert x y)) = True` &  &  &  &  \\
+\hline
+$prop_{L13}$ \newline \verb`++ (++ x y) (: z ([])) = ++ x (++ y (: z ([])))` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{L14}$ \newline \verb`<=> (even (length (++ w z))) (even (length (++ w (: x (: y z))))) = True` &  &  &  &  \\
+\hline
+$prop_{L15}$ \newline \verb`length (++ w (: x (: y z))) = S (S (length (++ w z)))` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L16}$ \newline \verb`<=> (even (+ x y)) (even (+ x (S (S y)))) = True` &  &  &  &  \\
+\hline
+$prop_{L17}$ \newline \verb`+ x (S (S y)) = S (S (+ x y))` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L18}$ \newline \verb`length (insert x y) = S (length y)` &  &  &  &  \\
+\hline
+$prop_{L19}$ \newline \verb`--> (/= x y) (--> (elem x (insert y z)) (elem x z)) = True` &  &  &  &  \\
+\hline
+$prop_{L2}$ \newline \verb`length (++ x (: y z)) = S (length (++ x z))` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L20}$ \newline \verb`count x (insert x y) = S (count x y)` &  &  &  &  \\
+\hline
+$prop_{L21}$ \newline \verb`--> (/= x y) (== (count x (insert y z)) (count x z)) = True` &  &  &  &  \\
+\hline
+$prop_{L22}$ \newline \verb`++ (++ x y) z = ++ x (++ y z)` &  & $\checkmark_{\infty}$ &  &  \\
+\hline
+$prop_{L23}$ \newline \verb`* (* x y) z = * x (* y z)` &  &  &  &  \\
+\hline
+$prop_{L24}$ \newline \verb`+ (+ x y) z = + x (+ y z)` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{L3}$ \newline \verb`length (++ x (: y ([]))) = S (length x)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L4}$ \newline \verb`drop (S w) (drop x (: y z)) = drop w (drop x z)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L5}$ \newline \verb`drop (S v) (drop (S w) (: x (: y z))) = drop (S v) (drop w (: x z))` &  & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{L6}$ \newline \verb`drop (S v) (drop w (drop x (: y z))) = drop v (drop w (drop x z))` &  &  &  &  \\
+\hline
+$prop_{L7}$ \newline \verb`drop (S u) (drop v (drop (S w) (: x (: y z)))) = drop (S u) (drop v (drop w (: x z)))` &  &  &  &  \\
+\hline
+$prop_{L8}$ \newline \verb`rev (++ x (: y ([]))) = : y (rev x)` &  & $\checkmark_{\mathrm{fin}}$ &  &  \\
+\hline
+$prop_{L9}$ \newline \verb`rev (++ x (++ y (: z ([])))) = : z (rev (++ x y))` &  &  &  &  \\
+\hline
+$prop_{T1}$ \newline \verb`double x = + x x` &  &  &  &  \\
+\hline
+$prop_{T10}$ \newline \verb`rev (rev x) = x` &  &  &  &  \\
+\hline
+$prop_{T11}$ \newline \verb`rev (++ (rev x) (rev y)) = ++ y x` &  &  &  &  \\
+\hline
+$prop_{T12}$ \newline \verb`qrev x y = ++ (rev x) y` &  &  &  &  \\
+\hline
+$prop_{T13}$ \newline \verb`half (+ x x) = x` &  &  &  &  \\
+\hline
+$prop_{T14}$ \newline \verb`sorted (isort x) = True` &  &  &  &  \\
+\hline
+$prop_{T15}$ \newline \verb`+ x (S x) = S (+ x x)` &  &  &  &  \\
+\hline
+$prop_{T16}$ \newline \verb`even (+ x x) = True` &  &  &  &  \\
+\hline
+$prop_{T17}$ \newline \verb`rev (rev (++ x y)) = ++ (rev (rev x)) (rev (rev y))` &  &  &  &  \\
+\hline
+$prop_{T18}$ \newline \verb`rev (++ (rev x) y) = ++ (rev y) x` &  &  &  &  \\
+\hline
+$prop_{T19}$ \newline \verb`++ (rev (rev x)) y = rev (rev (++ x y))` &  &  &  &  \\
+\hline
+$prop_{T2}$ \newline \verb`length (++ x y) = length (++ y x)` &  &  &  &  \\
+\hline
+$prop_{T20}$ \newline \verb`even (length (++ x x)) = True` &  &  &  &  \\
+\hline
+$prop_{T21}$ \newline \verb`rotate (length x) (++ x y) = ++ y x` &  &  &  &  \\
+\hline
+$prop_{T22}$ \newline \verb`<=> (even (length (++ x y))) (even (length (++ y x))) = True` &  &  &  &  \\
+\hline
+$prop_{T23}$ \newline \verb`half (length (++ x y)) = half (length (++ y x))` &  &  &  &  \\
+\hline
+$prop_{T25}$ \newline \verb`<=> (even (length (++ x y))) (even (+ (length y) (length x))) = True` &  &  &  &  \\
+\hline
+$prop_{T26}$ \newline \verb`half (+ x y) = half (+ y x)` &  &  &  &  \\
+\hline
+$prop_{T27}$ \newline \verb`rev x = qrev x ([])` &  &  &  &  \\
+\hline
+$prop_{T28}$ \newline \verb`revflat x = qrevflat x ([])` &  &  &  &  \\
+\hline
+$prop_{T29}$ \newline \verb`rev (qrev x ([])) = x` &  &  &  &  \\
+\hline
+$prop_{T3}$ \newline \verb`length (++ x y) = + (length y) (length x)` &  &  &  &  \\
+\hline
+$prop_{T30}$ \newline \verb`rev (++ (rev x) ([])) = x` &  &  &  &  \\
+\hline
+$prop_{T31}$ \newline \verb`qrev (qrev x ([])) ([]) = x` &  &  &  &  \\
+\hline
+$prop_{T32}$ \newline \verb`rotate (length x) x = x` &  &  &  &  \\
+\hline
+$prop_{T33}$ \newline \verb`fac x = qfac x one` &  &  &  &  \\
+\hline
+$prop_{T34}$ \newline \verb`* x y = mult x y zero` &  &  &  &  \\
+\hline
+$prop_{T35}$ \newline \verb`exp x y = qexp x y one` &  &  &  &  \\
+\hline
+$prop_{T36}$ \newline \verb`--> (elem x y) (elem x (++ y z)) = True` &  &  &  &  \\
+\hline
+$prop_{T37}$ \newline \verb`--> (elem x z) (elem x (++ y z)) = True` &  &  &  &  \\
+\hline
+$prop_{T38}$ \newline \verb`--> (&& (elem x y) (elem x z)) (elem x (++ y z)) = True` &  &  &  &  \\
+\hline
+$prop_{T39}$ \newline \verb`--> (elem x (drop y z)) (elem x z) = True` &  &  &  &  \\
+\hline
+$prop_{T4}$ \newline \verb`length (++ x x) = double (length x)` &  &  &  &  \\
+\hline
+$prop_{T40}$ \newline \verb`--> (subset x y) (listEq (union x y) y) = True` &  &  &  &  \\
+\hline
+$prop_{T41}$ \newline \verb`--> (subset x y) (listEq (intersect x y) x) = True` &  &  &  &  \\
+\hline
+$prop_{T42}$ \newline \verb`--> (elem x y) (elem x (union y z)) = True` &  &  &  &  \\
+\hline
+$prop_{T43}$ \newline \verb`--> (elem x y) (elem x (union z y)) = True` &  &  &  &  \\
+\hline
+$prop_{T44}$ \newline \verb`--> (&& (elem x y) (elem x z)) (elem x (intersect y z)) = True` &  &  &  &  \\
+\hline
+$prop_{T45}$ \newline \verb`elem x (insert x y) = True` &  &  &  &  \\
+\hline
+$prop_{T46}$ \newline \verb`--> (== x y) (<=> (elem x (insert y z)) (True)) = True` &  &  &  &  \\
+\hline
+$prop_{T47}$ \newline \verb`--> (/= x y) (<=> (elem x (insert y z)) (elem x z)) = True` &  &  &  &  \\
+\hline
+$prop_{T48}$ \newline \verb`length (isort x) = length x` &  &  &  &  \\
+\hline
+$prop_{T49}$ \newline \verb`--> (elem x (isort y)) (elem x y) = True` &  &  &  &  \\
+\hline
+$prop_{T5}$ \newline \verb`length (rev x) = length x` &  &  &  &  \\
+\hline
+$prop_{T50}$ \newline \verb`count x (isort y) = count x y` &  &  &  &  \\
+\hline
+$prop_{T6}$ \newline \verb`length (rev (++ x y)) = + (length x) (length y)` &  &  &  &  \\
+\hline
+$prop_{T7}$ \newline \verb`length (qrev x y) = + (length x) (length y)` &  &  &  &  \\
+\hline
+$prop_{T8}$ \newline \verb`drop x (drop y z) = drop y (drop x z)` &  &  &  &  \\
+\hline
+$prop_{T9}$ \newline \verb`drop w (drop x (drop y z)) = drop y (drop x (drop w z))` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\hline
+$\checkmark_{\infty}$ & 5/85 &  & 5/5 &  & 2/5\\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 8/85 &  & 8/8 &  & \\
+\end{longtable}
+
+\section*{Sequences.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{facts}$ \newline \verb`facts = facts'` &  &  &  &  \\
+\hline
+$prop_{fibs}$ \newline \verb`fibs = fibs'` &  &  &  &  \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind \\
+\end{longtable}
+
+\section*{StateMonad.hs}
+\subsection*{Properties}
+\begin{longtable}{p{10cm} || c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind \\
+\hline
+$prop_{assoc1}$ \newline \verb`bind1 (bind1 m f) g = bind1 m (lambda.8 f g)` &  &  &  &  \\
+\hline
+$prop_{assoc1l}$ \newline \verb`bind1l (bind1l m f) g = bind1l m (lambda.11 f g)` &  &  &  &  \\
+\hline
+$prop_{assoc2}$ \newline \verb`bind2 (bind2 m f) g = bind2 m (lambda.9 f g)` &  &  &  &  \\
+\hline
+$prop_{assoc2l}$ \newline \verb`bind2l (bind2l m f) g = bind2l m (lambda.12 f g)` &  &  &  &  \\
+\hline
+$prop_{assoc3}$ \newline \verb`bind3 (bind3 m f) g = bind3 m (lambda.10 f g)` &  &  &  &  \\
+\hline
+$prop_{assoc3l}$ \newline \verb`bind3l (bind3l m f) g = bind3l m (lambda.13 f g)` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{assoc_{kliesli}}$ \newline \verb`>=> (>=> f g) h = >=> f (>=> g h)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp1}}$ \newline \verb`fmap1 (. f g) = . (fmap1 f) (fmap1 g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp1l}}$ \newline \verb`fmap1l (. f g) = . (fmap1l f) (fmap1l g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp2}}$ \newline \verb`fmap2 (. f g) = . (fmap2 f) (fmap2 g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp2l}}$ \newline \verb`fmap2l (. f g) = . (fmap2l f) (fmap2l g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp3}}$ \newline \verb`fmap3 (. f g) = . (fmap3 f) (fmap3 g)` &  &  &  &  \\
+\hline
+$prop_{fmap_{comp3l}}$ \newline \verb`fmap3l (. f g) = . (fmap3l f) (fmap3l g)` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{fmap_{id1}}$ \newline \verb`fmap1 id = id` &  &  &  &  \\
+\hline
+$prop_{fmap_{id1l}}$ \newline \verb`fmap1l id = id` &  &  &  &  \\
+\hline
+$prop_{fmap_{id2}}$ \newline \verb`fmap2 id = id` &  &  &  &  \\
+\hline
+$prop_{fmap_{id2l}}$ \newline \verb`fmap2l id = id` &  &  &  &  \\
+\hline
+$prop_{fmap_{id3}}$ \newline \verb`fmap3 id = id` &  &  &  &  \\
+\hline
+$prop_{fmap_{id3l}}$ \newline \verb`fmap3l id = id` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{left_{kliesli}}$ \newline \verb`>=> return f = f` &  &  &  &  \\
+\hline
+$prop_{return_{left1}}$ \newline \verb`bind1 f return = f` &  &  &  &  \\
+\hline
+$prop_{return_{left1l}}$ \newline \verb`bind1l f return = f` &  &  &  &  \\
+\hline
+$prop_{return_{left2}}$ \newline \verb`bind2 f return = f` &  &  &  &  \\
+\hline
+$prop_{return_{left2l}}$ \newline \verb`bind2l f return = f` &  &  &  &  \\
+\hline
+$prop_{return_{left3}}$ \newline \verb`bind3 f return = f` &  &  &  &  \\
+\hline
+$prop_{return_{left3l}}$ \newline \verb`bind3l f return = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right1}}$ \newline \verb`bind1 (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right1l}}$ \newline \verb`bind1l (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right2}}$ \newline \verb`bind2 (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right2l}}$ \newline \verb`bind2l (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right3}}$ \newline \verb`bind3 (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{return_{right3l}}$ \newline \verb`bind3l (return a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{left1}}$ \newline \verb`bind1 f returnl = f` &  &  &  &  \\
+\hline
+$prop_{returnl_{left1l}}$ \newline \verb`bind1l f returnl = f` &  &  &  &  \\
+\hline
+$prop_{returnl_{left2}}$ \newline \verb`bind2 f returnl = f` &  &  &  &  \\
+\hline
+$prop_{returnl_{left2l}}$ \newline \verb`bind2l f returnl = f` &  &  &  &  \\
+\hline
+$prop_{returnl_{left3}}$ \newline \verb`bind3 f returnl = f` &  &  &  &  \\
+\hline
+$prop_{returnl_{left3l}}$ \newline \verb`bind3l f returnl = f` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{right1}}$ \newline \verb`bind1 (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{right1l}}$ \newline \verb`bind1l (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{right2}}$ \newline \verb`bind2 (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{right2l}}$
+\newline \verb`bind2l (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\
+\hline
+$prop_{returnl_{right3}}$
+\newline \verb`bind3 (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\\hline$prop_{returnl_{right3l}}$\newline \verb`bind3l (returnl a) f = f a` & $\checkmark_{\infty}$ &  &  &  \\\hline$prop_{right_{kliesli}}$\newline \verb`>=> f return = f` &  &  &  &  \\\end{longtable}\subsection*{Summary}\begin{longtable}{p{4cm} || c | c | c | c | c | }  & total & plain & simple ind & approx & fixpoint ind \\\hline$\checkmark_{\infty}$ & 17/45 & 17/17 &  &  & \\\end{longtable}\section*{Total Summary}\begin{longtable}{p{4cm} || c | c | c | c | c | }  & total & plain & simple ind & approx & fixpoint ind \\\hline$\checkmark_{\infty}$ & 164/488 & 54/164 & 87/164 & 92/164 & 22/164\\\hline$\checkmark_{\mathrm{fin}}$ & 36/488 &  & 36/36 &  & \\\hline$\bot$ & 2/488 & 2/2 &  &  & \\\end{longtable}\end{document}

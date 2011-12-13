@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{courier}
+\usepackage{amssymb}
+\usepackage{longtable}
+
+\begin{document}
+
+\title{Results}
+\maketitle
+
+\subsection*{Properties}
+\begin{longtable}{p{9cm} || c | c | c | c | c | }
+  & plain & simple ind & approx & fixpoint ind & struct ind \\
+\hline
+$prop_{add_{comm}}$ \newline \verb`+! x y = +! y x` &  &  &  &  &  \\
+\hline
+$prop_{add_{ident_{left}}}$ \newline \verb`x = +! zero x` &  &  &  &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{add_{ident_{right}}}$ \newline \verb`x = +! x zero` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{add_{inv_{left}}}$ \newline \verb`+! (neg x) x = zero` &  &  &  &  & $\checkmark_{\mathrm{fin}}$ \\
+\hline
+$prop_{add_{inv_{right}}}$ \newline \verb`+! x (neg x) = zero` &  &  &  &  & $\checkmark_{\mathrm{fin}}$ \\
+\hline
+$prop_{mul_{comm}}$ \newline \verb`*! x y = *! y x` &  &  &  &  &  \\
+\hline
+$prop_{mul_{ident_{left}}}$ \newline \verb`x = *! one x` &  &  &  &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{mul_{ident_{right}}}$ \newline \verb`x = *! x one` &  &  &  &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{neg_{involutive}}$ \newline \verb`x = neg (neg x)` &  &  &  &  & $\checkmark_{\mathrm{fin}}$ \\
+\hline
+$prop_{sign_{assoc}}$ \newline \verb`*% s (*% t u) = *% (*% s t) u` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{sign_{ident_{left}}}$ \newline \verb`*% s (Pos) = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{sign_{ident_{right}}}$ \newline \verb`*% (Pos) s = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{sign_{opposite_{involutive}}}$ \newline \verb`opposite (opposite s) = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\hline
+$prop_{sign_{triple}}$ \newline \verb`*% s (*% s s) = s` &  & $\checkmark_{\infty}$ & $\checkmark_{\infty}$ &  & $\checkmark_{\infty}$ \\
+\end{longtable}
+
+\subsection*{Summary}
+\begin{longtable}{p{4cm} || c | c | c | c | c | c | }
+  & total & plain & simple ind & approx & fixpoint ind & struct ind \\
+\hline
+$\checkmark_{\infty}$ & 9/14 &  & 6/9 & 6/9 &  & 9/9\\
+\hline
+$\checkmark_{\mathrm{fin}}$ & 3/14 &  &  &  &  & 3/3\\
+\end{longtable}
+\end{document}
