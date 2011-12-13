@@ -1,6 +1,6 @@
 module Autospec.Util
        (selections,withPrevious,concatMapM,concatMaybe
-       ,isOp,putEither,mif,countBy,groupSortedOn)
+       ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted)
        where
 
 import Data.Maybe
@@ -57,6 +57,9 @@ mif :: Monad m => m Bool -> m a -> m a -> m a
 mif mb mt mf = do
    b <- mb
    if b then mt else mf
+
+nubSorted :: Ord a => [a] -> [a]
+nubSorted = map head . group . sort
 
 -- | Count the number of occurences satisfying the predicate
 countBy :: (a -> Bool) -> [a] -> Int

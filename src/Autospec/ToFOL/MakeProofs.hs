@@ -10,6 +10,7 @@ import Autospec.ToFOL.Pretty
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.ToFOL.NecessaryDefinitions
 import Autospec.ToFOL.FixpointInduction
+import Autospec.ToFOL.StructuralInduction hiding (VarName,ConName)
 import Autospec.Util (putEither,concatMapM)
 
 import Language.TPTP hiding (Decl,Var,VarName,declName)
@@ -26,7 +27,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 
 powerset :: [a] -> [[a]]
-powerset = map reverse . filterM (const [False,True]) . reverse
+powerset = init . filterM (const [True,False])
 
 unProp :: Type -> Type
 unProp (TyCon _ [t]) = t
@@ -78,9 +79,12 @@ prove :: [Decl]
       -- ^ Resulting instructions how to do proof declarations for this
 prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
+        powset = filter ((<= 2) . length) (powerset indargs)
     in  plainProof ++
         proofByFixpointInduction ++
         proofByApproxLemma ++
+        map (proofByStructInd True 2) (powerset indargs) ++
+        map (proofByStructInd False 2) (powerset indargs) ++
         map proofBySimpleInduction indargs
   where
     pstr :: String
@@ -131,6 +135,28 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
        return (n,lr)
     decorateArg (n,t) = error $ "decorateArg " ++ n
                               ++ " on non-concrete type " ++ show t
+
+    proofByStructInd :: Bool -> Int -> [(Name,Type)] -> TM ProofDecl
+    proofByStructInd addBottom d ns = accompanyParts
+      (StructuralInduction (map fst ns) addBottom d) $ do
+        env <- getEnv addBottom
+        let parts = structuralInduction ns env d
+        forM parts $ \(IndPart hyps conj vars) -> locally $ do
+            forM vars $ \v -> addIndirection v (Var v)
+            addFuns (zip vars (repeat 0))
+            phyps <- mapM instP hyps
+            pconj <- instP conj
+            return $ Part (concat vars)
+                          ( Conjecture "conj" pconj :
+                          [ Axiom "hyp" phyp | phyp <- phyps ] )
+                          (if addBottom then Fail else FiniteSuccess)
+      where
+        instP :: [Expr] -> TM T.Formula
+        instP es = locally $ do
+            zipWithM addIndirection (map fst ns) es
+            instantiateP []
+
+
 
     proofBySimpleInduction :: (VarName,Type) -> TM ProofDecl
     proofBySimpleInduction (v,t) = accompanyParts (SimpleInduction v) $ do

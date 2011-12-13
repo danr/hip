@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleContexts, PatternGuards, ViewPatterns #-}
-module Autospec.ToFOL.InductionPrinciples where
+module Autospec.ToFOL.StructuralInduction where
 
 import Autospec.ToFOL.Core
 import Autospec.ToFOL.ParserInternals
 import Autospec.ToFOL.Pretty
+import Autospec.ToFOL.Constructors
+import Autospec.Util
 
 import Data.List hiding (partition)
 import Data.Maybe (fromMaybe)
@@ -39,29 +41,32 @@ testEnv = map (declName &&& conTypes) $ parseDecls $ concatMap (++ ";")
   , "data Z = P Nat | N Nat"
   ]
 
-data Part = Part { hypotheses :: [Expr] , conjecture :: Expr }
+data IndPart = IndPart { hypotheses :: [[Expr]]
+                       , conjecture :: [Expr]
+                       , vars       :: [Name]
+                       }
   deriving (Eq,Ord)
 
-instance Show Part where
-  show (Part hyps conj) = case hyps of
+instance Show IndPart where
+  show (IndPart hyps conj _) = case hyps of
      []   -> p conj
      hyps -> foldr1 (\xs ys -> xs ++ " & " ++ ys) (map p hyps)
              ++ " => " ++ p conj
-    where p e = "P(" ++ prettyCore e ++ ")"
+    where p es = "P(" ++ intercalate "," (map prettyCore es) ++ ")"
 
 prints :: Show a => [a] -> IO ()
 prints = mapM_ print
 
-simpleInduction :: VarName -> TypeName -> Env -> [Part]
+simpleInduction :: VarName -> TypeName -> Env -> [IndPart]
 simpleInduction var ty env = do
     let cons = fromMaybe (error $ "unknown datatype " ++ show ty)
                          (lookup ty env)
     (con,conTy) <- cons
     let recs = recursiveArgs conTy
         vars = map (Var . (var ++) . show) [0..length recs-1]
-        hyps = [ v | (v,r) <- zip vars recs, r ]
-        step = Con con vars
-    return (Part hyps step)
+        hyps = [ [v] | (v,r) <- zip vars recs, r ]
+        step = [Con con vars]
+    return (IndPart hyps step [var])
 
 newVar :: (MonadState Int m,Monad m) => m Int
 newVar = do
@@ -84,8 +89,12 @@ unTyVar :: Type -> Name
 unTyVar (TyVar x) = x
 unTyVar t         = error $ "unTyVar: " ++ show t
 
+bottomless :: Expr -> Bool
+bottomless e = and [ False | Var x <- universe e, x == bottomName ]
+
 instantiate :: Type -> Env -> Maybe [(Name,Type)]
-instantiate (TyCon n ts) env | Just cons <- lookup n env = Just (map (uncurry inst) cons)
+instantiate (TyCon n ts) env
+    | Just cons <- lookup n env = Just (map (uncurry inst) cons)
   where
     inst :: Name -> Type -> (Name,Type)
     inst n t = case resTy of
@@ -93,20 +102,20 @@ instantiate (TyCon n ts) env | Just cons <- lookup n env = Just (map (uncurry in
                        -- as is for instance ["a","b","c"]
                        -- ts could be [Nat,List a,b -> c]
                        let instMap = zip as ts
-                       in  (n,foldr1 tapp [ substType instMap c | c <- conList ++ [resTy] ])
+                       in  (n,foldr1 tapp [ substType instMap c | c <- argsTy ++ [resTy] ])
                    _  -> (n,t)
       where
         resTy   :: Type
-        conList :: [Type]
-        (conList,resTy) = case t of
+        argsTy :: [Type]
+        (argsTy,resTy) = case t of
                        TyApp xs -> (init xs,last xs)
                        _        -> ([],t)
 instantiate _ _ = Nothing
 
--- For each constructor, unroll each typed variable to all its
--- constructors.
-unroll :: Int -> [Expr] -> Env -> [[Expr]]
-unroll i es env = evalStateT (iterateM i (mapM (transformM go)) es) 0
+-- | For each constructor, unroll each typed variable to all its
+--   constructors.
+unroll :: [Expr] -> Env -> Int -> [[Expr]]
+unroll es env i = evalStateT (iterateM i (mapM (transformM go)) es) 0
   where
     go :: Expr -> StateT Int [] Expr
     go (Var v ::: t) =
@@ -135,12 +144,11 @@ prop_partInts_sum n k = all ((n ==) . sum) (partInts n k)
 prop_partInts_length :: Int -> Int -> Bool
 prop_partInts_length n k = all ((k ==) . length) (partInts n k)
 
-partitionTo :: [(Name,Type)] -> Env -> Type -> Int -> [Expr]
-partitionTo vs env t = concatMap (partition vs env t) . enumFromTo 1
+partitionTo :: Env -> [(Name,Type)] -> Type -> Int -> [Expr]
+partitionTo env vs t = concatMap (partition env vs t) . enumFromTo 1
 
-
-partition :: [(Name,Type)] -> Env -> Type -> Int -> [Expr]
-partition vs env t n
+partition :: Env -> [(Name,Type)] -> Type -> Int -> [Expr]
+partition env vs t n
   | n <= 0 = []
   | n == 1 = [ Var n | (n,t') <- vs, t' == t {- warning: List a /= List Nat -}]
           ++ [ Con con [] | Just cons <- [instantiate t env]
@@ -152,21 +160,55 @@ partition vs env t n
       case conTy of
          TyApp xs -> do
            part <- partInts (n - 1) (length xs - 1)
-           args <- zipWithM (partition vs env) (init xs) part
+           args <- zipWithM (partition env vs) (init xs) part
            return (Con con args)
          _  -> []
   | otherwise = []
 
---    where cons = fromMaybe (error $ "partition: unknown type " ++ show t)
---                           (
+subdiag :: [Int] -> [[Int]]
+subdiag [] = []
+subdiag (x:xs) = (if x > 1 then ((x-1:xs) :) else id)
+                 [ x : ys | ys <- subdiag xs ]
 
+partitionListTo :: Env -> [[(Name,Type)]] -> [Type] -> [Int] -> [[Expr]]
+partitionListTo env vs ts ps = do
+    part <- subdiag ps
+    sequence (zipWith3 (partitionTo env) vs ts part)
 
 testVars = [("x",parseType "Nat"),("y",parseType "Nat"),("xs",parseType "List Nat")]
 
 testVars' = [("x",parseType "Nat"),("y",parseType "Nat")]
 
+natType = parseType "Nat"
+
 testType = parseType "List Nat"
 
 testType' = parseType "Z"
 
-testPartition = partition testVars testEnv testType
+testPartition = partition testEnv testVars testType
+
+constructors :: Expr -> Int
+constructors e = sum $ [ 1 | Con{}  <- universe e ]
+                    ++ [ 1 | Var{} <- universe e ]
+
+
+typedVars :: Expr -> [(Name,Type)]
+typedVars e = [ (v,t) | Var v ::: t <- universe e ]
+
+-- | Leads to combinatorial explosion (Tree a with depth 2)
+structuralInduction :: [(VarName,Type)] -> Env -> Int -> [IndPart]
+structuralInduction vts env depth = map mkPart ess
+   where
+     ess :: [[Expr]]
+     ess = unroll (map (uncurry ((:::) . Var)) vts) env depth
+
+     mkPart :: [Expr] -> IndPart
+     mkPart es = IndPart (nubSorted (partitionListTo env vs ts ps))
+                         (map stripTypes es)
+                         (map (concat . map fst) vs)
+       where
+          vs :: [[(Name,Type)]]
+          vs = map typedVars es
+          ts = map snd vts
+          ps = map (constructors) es
+

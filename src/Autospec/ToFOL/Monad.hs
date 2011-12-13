@@ -11,6 +11,7 @@ module Autospec.ToFOL.Monad
        ,dbproof
        ,writeDelimiter
        ,indented
+       ,getEnv
        ,popDebug
        ,returnWithDebug
        ,locally
@@ -182,6 +183,25 @@ locally' m = do
   puts boundNames boundNames'
   puts arities    arities'
   return r
+
+-- | Get the environment for structural induction
+getEnv :: Bool -> TM [(Name,[(Name,Type)])]
+getEnv addBottom = TM $ do
+    untyped <- M.toList <$> gets conFam
+    mapM (unTM . addType) untyped
+  where
+    addType :: (Name,[Name]) -> TM (Name,[(Name,Type)])
+    addType (n,cs) = do
+        ts <- forM cs $ \c -> fromMaybe
+                               (error $ "getEnv unbound con" ++ show c)
+                                <$> lookupType c
+        let t = head ts
+            resTy = case t of
+                       TyApp xs -> last xs
+                       _        -> t
+            bottomList = [ (bottomName,resTy) | addBottom ]
+
+        return (n,zip cs ts ++ bottomList)
 
 -- | Insert /n/ elements to a map of /m/ elements
 --
