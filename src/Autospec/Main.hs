@@ -229,7 +229,7 @@ outputGroupLatexHeader :: Bool -> IO ()
 outputGroupLatexHeader total = do
     putStrLn $ "\\begin{longtable}{p{" ++
                 (if total then "4cm"
-                          else "10cm")
+                          else "9cm")
              ++ "} || "
              ++ concat (replicate (length proofTypes + if total then 1 else 0)
                                   "c | ")
