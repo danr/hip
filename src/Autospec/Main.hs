@@ -96,7 +96,7 @@ main = do
       putStrLn "No input files. Run with --help to see possible flags"
       exitFailure
   whenLoud $ putStrLn "Verbose output"
-  when latex $ latexHeader'
+  when (latex && not tptp) $ latexHeader'
   total <- forM files $ \file -> do
       when (file /= head files) $ putStrLn ""
       when (length files > 1) $ outputSection latex file
@@ -125,16 +125,15 @@ main = do
           -- Warnings
           whenNormal $ mapM_ print (filter isWarning debug)
           -- TPTP output
-          when tptp $ do putStrLn (prettyTPTP axioms)
-                         exitSuccess
-          -- Latex output
-          when latex $ do
+          if latex
+            then do
               putStrLn (latexHeader file extraAxioms)
               mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
               putStrLn latexFooter
               exitSuccess
-
-          return undefined
+            else do
+              putStrLn (prettyTPTP axioms)
+              exitSuccess
         else do
           -- Prove everything
           whenLoud $ putStrLn "Preparing proofs..."
@@ -153,13 +152,13 @@ main = do
           $ groupSortedOn fst rgs
       n  = sum ns
 
-  when (length files > 1) $ do
+  when (length files > 1 && not tptp) $ do
     outputSection latex "Total Summary"
     when latex (outputGroupLatexHeader True)
     forM_ rgr $ \(r,rgs) -> outputResGroup latex n r rgs
     when latex latexCloseTabular
 
-  when latex latexFooter'
+  when (latex && not tptp) latexFooter'
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x

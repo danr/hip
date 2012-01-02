@@ -80,9 +80,9 @@ instance Latex Decl where
 quantifier :: Bool -> [VarName] -> Formula -> State Bool String
 quantifier fa xs phi = do
   phi' <- latex phi
-  return $ (if fa then " \\forall \\;" else " \\exists \\;")
-         ++ intercalate " \\; " (map (map toLower . varName) xs)
-         ++ " \\; . \\; " ++ phi'
+  return $ (if fa then " \\forall \\, " else " \\exists \\, ")
+         ++ intercalate " \\, " (map (map toLower . varName) xs)
+         ++ " \\, . \\, " ++ phi'
 
 eqop :: EqOp -> String
 eqop (:==) = " = "
@@ -146,7 +146,7 @@ instance Latex Term where
   latex (Fun op [x,y]) | isOp (funName op) = do
     x' <- parenTerm x <$> latex x
     y' <- parenTerm y <$> latex y
-    return (x' ++ " \\; " ++ showFunName op ++ " \\; " ++ y')
+    return (x' ++ " \\, " ++ showFunName op ++ " \\, " ++ y')
   latex (Fun f as) = do
     as' <- mapM latex as
     return ("\\mathrm{" ++ showFunName f ++ "}"

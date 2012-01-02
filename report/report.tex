@@ -1,6 +1,7 @@
 \documentclass{report}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
+\usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage[margin=1.5in]{geometry}
 \usepackage{parsetree}
@@ -31,7 +32,7 @@ breeze.
 
 \newpage
 \pagestyle{empty}
-\section*{Acknowledgements}
+\section*{Acknowledgments}
 \vspace{5mm}
 ACK, ACK, ACK, ACK, ACK, ACK, NAK
 
@@ -59,7 +60,10 @@ This work's main areas, Haskell, FOL, ATPs and some basic DT.
 \section{Haskell}
 
 Describe some of the features of Haskell, types, lazy evaluation,
-bottoms, pattern-matching, data types, type classes
+bottoms, pattern-matching, data types, type classes.
+
+Haskell is declarative and side-effect free which makes it easy
+to model in logic in comparison to imperative effectful programming languages.
 
 \section{First Order Logic}
 
@@ -86,62 +90,22 @@ Agda and dependent types, Agda and ATPs by Peter, Bove, Sicard
 
 Zeno
 
-Corecursive techniques \cite{corecursive}, Hinze's papers, Generic
+Co-recursive techniques \cite{corecursive}, Hinze's papers, Generic
 Approximation lemma, or have this in other chapters
 
+%% Techical Part --------------------------------------------------------------
+
+\input{tech}
+
+%% End of Technical Part ------------------------------------------------------
 
 
-
-\chapter{Technical Part}
-
-Implementation technicalities.
-
-\section{Translation to FOL}
-
-Describe (and motivate here?) the intermediate language
-
-Pattern-matching and bottoms
-
-Higher order functions and function pointers
-
-Axioms of disjointness
-
-Axioms of projections and injectivity of constructors
-
-Extensional equality and application of bottom
-
-\section{Proof techinques}
-
-An article:
-
-\subsection{Definitional Equality}
-
-Only on non-concrete types
-
-Prove monad laws for the environment monad for instance
-
-Mention (the unimplemented \verb;Prop (a -> b); - \verb;a -> Prop b; isomorphism and
-its relation to seq and extensional equality)
-
-\subsection{Structural induction}
-
-Simle induction to more complex structural induction and its
-implementation.
-
-\subsection{Fixed point induction}
-
-Describe how and why it works
-
-Fixed point induction on several functions and subsets of the existing functions
-
-\subsection{Approximation lemma}
-
-After fixed point induction since it is an easy consequence of fixed
-point induction
 
 \chapter{Discussion}
 
 \section{Results}
+
+Test suite
 
 \section{Future work}
 
@@ -155,6 +119,17 @@ Lemmas
 Implications
 
 Finite fixed point induction on terminating functions
+
+Fix-point induction with id on variables
+
+Recursion-induction
+
+Fix-point induction (and approximation lemma) induction depth machines
+
+Cover a larger part of Haskell (type classes, do-notation, list
+comprehensions, records, pattern bindings)
+
+Min-predicate for finite models and quicker proof searches
 
 \section{Conclusion}
 
