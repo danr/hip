@@ -591,6 +591,33 @@ SCHEDULED: <2012-01-01 Sun>
 ** Write report
 SCHEDULED: <2012-01-06 Fri>
 
+** Finite simple induction is not complete
+Some properties, like the one in PAP.hs, is indeed a finite theorem
+but simple induction cannot show this. It is not a theorem when we
+have (+ one). We really need a FIN-predicate, or some other coding.
+
+** Alarming bug with complex patterns
+--   If there exists a match-any pattern, we need to add all branches
+--   with pattern-matched constructors as bottoms. Though, if the
+--   match-any pattern goes to bottom, nothing needs to be done.
+--   If there is no match-any pattern, just add a new one which goes to bottom.
+
+This is incorrect, consider:
+
+#+BEGIN_SRC haskell
+unbalance :: Tree a -> Tree a
+unbalance (Branch (Branch l x r) y r') = unbalance (Branch l x (Branch r y r'))
+unbalance (Branch l x r)               = Branch l x (unbalance r)
+unbalance Empty                        = Empty
+#+END_SRC
+
+Here we need to add (Branch Bottom _ _), but this is not currently
+done.  This needs a big overhaul and also some new QC properties which
+holds with bottom. Important, important!
+
+** Function pointers are really smart.
+See the report :) And PAP.hs
+
 * Week 2 (9 Jan - 15 Jan)
 ** Write report
 SCHEDULED: <2012-01-13 Fri>
