@@ -63,7 +63,7 @@ tail :: [a] -> [a]
 tail [x]    = []
 tail (x:xs) = x:tail xs
 
-prop_map_iterate ::(a -> a) -> a -> Prop [a]
+prop_map_iterate :: (a -> a) -> a -> Prop [a]
 prop_map_iterate f x = map f (iterate f x) =:= iterate f (f x)
 
 {-
@@ -142,19 +142,19 @@ prop_mirror_traverse_rev :: Tree a -> Prop [a]
 prop_mirror_traverse_rev t = reverse (traverse t) =:= traverse (mirror t)
 
 main = do
-  quickCheck (printTestCase "prop_map_iterate" (prop_map_iterate :: (Int -> Int) -> Int -> Prop [Int]))
---  quickCheck (printTestCase "prop_filter_iterate" (prop_filter_iterate :: (Int -> Bool) -> (Int -> Int) -> Int -> Prop [Int]))
-  quickCheck (printTestCase "prop_repeat_iterate" (prop_repeat_iterate :: Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_map_iterate"            (prop_map_iterate            :: (Int -> Int) -> Int -> Prop [Int]))
+--  quickCheck (printTestCase "prop_filter_iterate"       (prop_filter_iterate         :: (Int -> Bool) -> (Int -> Int) -> Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_repeat_iterate"         (prop_repeat_iterate         :: Int -> Prop [Int]))
   quickCheck (printTestCase "prop_repeat_cycle_singleton" (prop_repeat_cycle_singleton :: Int -> Prop [Int]))
-  quickCheck (printTestCase "prop_concat_repeat_cycle" (prop_concat_repeat_cycle :: Int -> [Int] -> Prop [Int]))
-  quickCheck (printTestCase "prop_tail_repeat" (prop_tail_repeat :: Int -> Prop [Int]))
-  quickCheck (printTestCase "prop_fmap_iterate" (prop_fmap_iterate :: (Int -> Int) -> Int -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_fmap_comp" (prop_fmap_comp :: (Int -> Int) -> (Int -> Int) -> Tree Int -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_fmap_left" (prop_fmap_left :: (Int -> Int) -> Tree Int -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_fmap_right" (prop_fmap_right :: (Int -> Int) -> Tree Int -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_fmap_id" (prop_fmap_id :: Tree Int -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_mirror_involutive" (prop_mirror_involutive :: Tree Int -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_mirror_iterate" (prop_mirror_iterate :: Int -> (Int -> Int) -> (Int -> Int) -> Prop (Tree Int)))
-  quickCheck (printTestCase "prop_fmap_map_traverse" (prop_fmap_map_traverse :: Tree Int -> (Int -> Int) -> Prop [Int]))
-  quickCheck (printTestCase "prop_fmap_map_toList" (prop_fmap_map_toList :: Tree Int -> (Int -> Int) -> Prop [Int]))
-  quickCheck (printTestCase "prop_mirror_traverse_rev" (prop_mirror_traverse_rev :: Tree Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_concat_repeat_cycle"    (prop_concat_repeat_cycle    :: Int -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_tail_repeat"            (prop_tail_repeat            :: Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_fmap_iterate"           (prop_fmap_iterate           :: (Int -> Int) -> Int -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_fmap_comp"              (prop_fmap_comp              :: (Int -> Int) -> (Int -> Int) -> Tree Int -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_fmap_left"              (prop_fmap_left              :: (Int -> Int) -> Tree Int -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_fmap_right"             (prop_fmap_right             :: (Int -> Int) -> Tree Int -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_fmap_id"                (prop_fmap_id                :: Tree Int -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_mirror_involutive"      (prop_mirror_involutive      :: Tree Int -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_mirror_iterate"         (prop_mirror_iterate         :: Int -> (Int -> Int) -> (Int -> Int) -> Prop (Tree Int)))
+  quickCheck (printTestCase "prop_fmap_map_traverse"      (prop_fmap_map_traverse      :: Tree Int -> (Int -> Int) -> Prop [Int]))
+  quickCheck (printTestCase "prop_fmap_map_toList"        (prop_fmap_map_toList        :: Tree Int -> (Int -> Int) -> Prop [Int]))
+  quickCheck (printTestCase "prop_mirror_traverse_rev"    (prop_mirror_traverse_rev    :: Tree Int -> Prop [Int]))
