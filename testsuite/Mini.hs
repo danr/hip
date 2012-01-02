@@ -12,6 +12,8 @@ Z     * _ = Z
 
 data Nat = Z | S Nat
 
+{-
+
 -- Disprove
 prop_zero_is_one :: Prop Nat
 prop_zero_is_one = Z =/= S Z
@@ -20,11 +22,6 @@ prop_zero_is_one = Z =/= S Z
 prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
 prop_assoc_plus x y z
   = x + (y + z) =:= (x + y) + z
-
--- Needs assoc plus as lemma
-prop_assoc_mul :: Nat -> Nat -> Nat -> Prop Nat
-prop_assoc_mul x y z
-  = x * (y * z) =:= (x * y) * z
 
 -- True by definition
 prop_right_identity_plus :: Nat -> Prop Nat
@@ -40,15 +37,33 @@ prop_left_identity_plus x
 prop_movesuc :: Nat -> Nat -> Prop Nat
 prop_movesuc x y = S x + y =:= x + S y
 
+-}
+
+{-
+
+-- Needs assoc plus as lemma
+prop_assoc_mul :: Nat -> Nat -> Nat -> Prop Nat
+prop_assoc_mul x y z
+  = x * (y * z) =:= (x * y) * z
+
+-}
+
+{-
 -- Provable for total elements by induction on both variables,
 -- symmetrically, or with movesuc lemma
 prop_add_comm :: Nat -> Nat -> Prop Nat
 prop_add_comm x y
   = x + y =:= y + x
 
---prop_left_distrib :: Nat -> Nat -> Nat -> Prop Nat
---prop_left_distrib x y z
---  = x * (y + z) =:= (x * y) + (x * z)
+-}
+
+
+prop_left_distrib :: Nat -> Nat -> Nat -> Prop Nat
+prop_left_distrib x y z
+  = x * (y + z) =:= (x * y) + (x * z)
+
+{-
+
 
 map :: (a -> b) -> [a] -> [b]
 map f []       = []
@@ -85,3 +100,5 @@ prop_repeat_cycle_singleton x = repeat x =:= cycle [x]
 
 prop_tail_repeat :: a -> Prop [a]
 prop_tail_repeat x = repeat x =:= tail (repeat x)
+
+-}

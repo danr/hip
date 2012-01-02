@@ -79,12 +79,12 @@ prove :: [Decl]
       -- ^ Resulting instructions how to do proof declarations for this
 prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
-        powset = filter ((<= 2) . length) (powerset indargs)
+        powset = powerset indargs
     in  plainProof ++
         proofByFixpointInduction ++
         proofByApproxLemma ++
-        map (proofByStructInd True 2) (powerset indargs) ++
-        map (proofByStructInd False 2) (powerset indargs) ++
+        map (proofByStructInd True 2) (filter ((<2) .  length) powset) ++
+        map (proofByStructInd False 2) (filter ((<3) .  length) powset) ++
         map proofBySimpleInduction indargs
   where
     pstr :: String
@@ -142,7 +142,7 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
         env <- getEnv addBottom
         let parts = structuralInduction ns env d
         forM parts $ \(IndPart hyps conj vars) -> locally $ do
-            forM vars $ \v -> addIndirection v (Var v)
+--            forM vars $ \v -> addIndirection v (Var v)
             addFuns (zip vars (repeat 0))
             phyps <- mapM instP hyps
             pconj <- instP conj

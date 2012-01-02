@@ -27,8 +27,8 @@ testEnv :: Env
 testEnv = map (declName &&& conTypes) $ parseDecls $ concatMap (++ ";")
   [ "data Tree a = Branch (Tree a) a (Tree a) | Empty"
   , "data T = B T T | E"
-  , "data Nat = Suc Nat | Zero"
-  , "data List a = Cons a (List a) | Nil"
+  , "data Nat = Suc Nat | Zero | Bottom"
+  , "data List a = Cons a (List a) | Nil | Bottom"
   , "data Expr = Add Expr Expr | Mul Expr Expr | Value Nat | X | Neg Expr"
   , "data Integ = PS Nat | NS Nat | Z"
   , "data Tup a b = Tup a b"
@@ -48,10 +48,10 @@ data IndPart = IndPart { hypotheses :: [[Expr]]
   deriving (Eq,Ord)
 
 instance Show IndPart where
-  show (IndPart hyps conj _) = case hyps of
-     []   -> p conj
+  show (IndPart hyps conj vars) = case hyps of
+     []   -> p conj ++ " [" ++ intercalate "," vars ++ "]"
      hyps -> foldr1 (\xs ys -> xs ++ " & " ++ ys) (map p hyps)
-             ++ " => " ++ p conj
+             ++ " => " ++ p conj ++ " [" ++ intercalate "," vars ++ "]"
     where p es = "P(" ++ intercalate "," (map prettyCore es) ++ ")"
 
 prints :: Show a => [a] -> IO ()
@@ -205,7 +205,7 @@ structuralInduction vts env depth = map mkPart ess
      mkPart :: [Expr] -> IndPart
      mkPart es = IndPart (nubSorted (partitionListTo env vs ts ps))
                          (map stripTypes es)
-                         (map (concat . map fst) vs)
+                         (concatMap (map fst) vs)
        where
           vs :: [[(Name,Type)]]
           vs = map typedVars es
