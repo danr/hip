@@ -6,6 +6,14 @@ import Prelude ()
 const x y = x
 flip f x y = f y x
 id x = x
+s f g x = f x (g x)
+k = const
+
+prop_skk_id :: Prop (a -> a)
+prop_skk_id = s k k =:= id
+
+prop_skf_id :: (a -> b) -> Prop (a -> a)
+prop_skf_id f = s k f =:= id
 
 -- Sometimes, Malin and Mikael help me with names of properties
 

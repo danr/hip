@@ -108,6 +108,8 @@ runProver :: String -> Int -> MVar Result -> IO ()
 runProver input time resvar = do
     let cmd = "eprover"
         args = words "-tAuto -xAuto --memory-limit=1000 --tptp3-format -s"
+--  let cmd  = "vampire_lin64"
+--      args = words "--proof tptp --mode casc -t 1"
 
     (Just inh, Just outh, _, pid) <-
         createProcess (proc cmd args){ std_in  = CreatePipe,

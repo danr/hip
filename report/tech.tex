@@ -206,7 +206,7 @@ For instance, the if there is a binary function plus then a constant
 called plus-ptr is added to the theory and this axiom:
 
 \begin{equation*}
-\forall \, x \, y \, . \, (\fn{plus.ptr} \, @ \,  x) \, @ \,  y = \fn{plus}(x,y)
+\forall \, x \, y \, . \, \app{(\app{\fn{plus.ptr}}{x})}{y} = \fn{plus}(x,y)
 \end{equation*}
 
 When a function is only partially applied, or a function argument is
@@ -220,7 +220,7 @@ iterate f x = x : iterate f (f x)
 It is translated with $\, @ \, $ in the following way, with \hs{:} written infix:
 
 \begin{equation*}
-\forall \, f \, x \, . \, \fn{iterate}(f,x) = x : \fn{iterate}(f,f \, @ \,  x)
+\forall \, f \, x \, . \, \fn{iterate}(f,x) = x : \fn{iterate}(f,\app{f}{x})
 \end{equation*}
 
 Should a function not get all its arguments, appropriate use of $\, @ \, $ is
@@ -231,20 +231,20 @@ by one using \hs{map}:
 incr = map (plus one)
 \end{verbatim}
 
-As incr is also written point-free or eta-reduced, \hs{map} is also
-partially applied. This is the translated axiom:
+As \hs{incr} is also written point-free or eta-reduced, \hs{map} is
+only partially applied. This is the translated axiom:
 
 \begin{equation*}
-\fn{incr} = \fn{map.ptr} \, @ \,  (\fn{plus.ptr} \, @ \,  \fn{one})
+\fn{incr} = \app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})}}
 \end{equation*}
 
-If \hs{incr} is applied to an argument $xs$, then \hs{incr} is
-applied to more arguments then it takes, so we add $\, @ \,$ so the
-corresponding formula becomes $\fn{incr} \, @ \, xs$, and by
-equational substitution from the definition of incr we get
-$(\fn{map.ptr} \, @ \, (\fn{plus.ptr} \, @ \, \fn{one}))
-\, @ \, xs$ and the axiom of $\fn{map.ptr}$ then equals this to
-$\fn{map}(\fn{plus.ptr} \, @ \, \fn{one},xs)$.
+If \hs{incr} is applied to an argument $xs$, then \hs{incr} is applied
+to more arguments then it takes, so we add $\, @ \,$ so the
+corresponding formula becomes $\app{\fn{incr}}{xs}$, and by equational
+substitution from the definition of $\fn{incr}$ we get
+$\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
+the axiom of $\fn{map.ptr}$ then equals this to
+$\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
 \subsection{The intermediate language}
 
@@ -295,7 +295,7 @@ A more serious omitted feature is the lack of built-in types like \hs{Int},
 
 \item $\checkmark$ Axioms of projections and injectivity of constructors
 
-\item Extensional equality and application of bottom
+\item $\checkmark$ Extensional equality and application of bottom
 
 \item Remove unnecessary definitions for a given proof
 
@@ -303,17 +303,148 @@ A more serious omitted feature is the lack of built-in types like \hs{Int},
 
 \section{Proof techniques}
 
-Describe how properties are entered in the code, and that they are
-Quick Check testable
+\note{Need to decide some running example}
+
+To prove things using this technique, properties are entered in the
+Haskell source code. A small prelude called \hs{AutoPrelude} needs to
+be imported that gives access to the relevant functions. One example
+is the associativity of list concatenation:
+
+\begin{verbatim}
+import AutoPrelude
+
+prop_app_assoc :: [a] -> [a] -> [a] -> Prop [a]
+prop_app_assoc xs ys zs = xs ++ (ys ++ zs) =:= (xs ++ ys) ++ zs
+\end{verbatim}
+
+The infix function \hs{=:=} comes from the imported library, as well
+as the type constructor \hs{Prop}. The type signature cannot be
+omitted as this is used for instance to see which kind of induction we
+will use.
+
+Running the program is simple. Just save the file as for instance
+\hs{ListProps.hs} and run
+
+\begin{verbatim}
+autospec ListProps.hs
+\end{verbatim}
+
+and the program will report if it was provable or not, and which
+techniques succeeded.
+
+These properties are also QuickCheck-testable, so you can run the
+normal \hs{quickCheck} function on them, given that there are
+relevant \hs{Eq} and \hs{Arbitrary} instances provided.
+
+Let's now take a look what different proof methods that are supported.
+\note{This is too informal}
 
 \subsection{Definitional Equality}
 
-Only on non-concrete types
+Some properties cannot or need not use induction or some more
+sophisticated technique, since they are true by definition. Examples
+are properties for fully polymorphic functions such as the definition
+of \hs{id} in the SK-calculus, here
 
-Prove monad laws for the environment monad for instance
+\begin{verbatim}
+s f g x = f x (g x)
+k x y = x
+id x = x
 
-Mention (the unimplemented \hs{Prop (a -> b)} - \hs{a -> Prop b}
-isomorphism and its relation to seq and extensional equality)
+prop_skk_id :: Prop (a -> a)
+prop_skk_id = s k k =:= id
+\end{verbatim}
+
+Then, the generated conjecture is simply
+
+\begin{equation*}
+\app{ (\app {\ptr{s}} {\ptr{k}} )
+    }{\ptr{k}}} = \ptr{id}
+\end{equation*}
+
+Another example where this is useful is to prove functor and monad
+laws for the environment monad.
+
+\subsubsection{Extensional Equality and seq}
+
+To prove the previous property we also need to have extensional
+equality, postulated with the following axiom
+
+\begin{equation*}
+\faa{f}{g} (\fa{x} \app{f}{x} = \app{g}{x}) \rightarrow f = g
+\end{equation*}
+
+which identifies function pointers and functions composed with $@$.
+One problem with extensional equality in Haskell, is that the presence
+of \hs{seq} breaks it. \hs{seq} is a built in function with the
+following behavior:
+
+\begin{verbatim}
+seq :: a -> b -> b
+seq bottom b = bottom
+seq a      b = b
+\end{verbatim}
+
+Where \hs{a} is any other value than $\bot$. With \hs{seq} it is
+possibly to distinguish between these two functions, which otherwise
+are observationally equal:
+
+\begin{verbatim}
+f = bottom
+g = \x -> bottom
+\end{verbatim}
+
+Because \hs{seq f ()} evaluates to $\bot$, and \hs{seq g ()} evaluates
+to \hs{()}, but on any argument \hs{f} and \hs{g} gets, they both
+return $\bot$. Here we also need an extra axiom, which says that
+anything applied to $\bot$ is $\bot$:
+
+\begin{equation*}
+\fa{x} \app{\bot}{x} = \bot
+\end{equation*}
+
+However, \hs{seq} is the only function that can do this, so we will
+ignore its presence in Haskell.
+\note{This could be added as a switch \hs{--enable-seq}, which removes
+  extensional equality}
+
+Furthermore, if we assume we have extensional equality we also have
+the property that \hs{Prop (a -> b)} is equivalent to
+\hs{a -> Prop b}, by letting the property have an extra argument that
+is applied to the left and right hand side of the equality. This has
+two benefits, firstly it can trigger other proof methods should \hs{a}
+or \hs{b} be concrete types (the former for induction and the latter
+for approximation lemma), and secondly it does not need to use the
+extensionality axiom introduced above which is costly and confusing
+for the theorem provers tested.
+\note{Add some support for this claim. For instance, SPASS seems to be
+  utterly horrible at this, but Eprover and Vampire are OK}
+
+\subsubsection{Concrete Concerns}
+
+This only works on non-concrete types because of the way bottoms are
+added. One example when this is a problem with is this plausible
+definition of boolean or
+
+\begin{verbatim}
+False || a = a
+True  || _ = True
+\end{verbatim}
+
+Then an extra branch is added that matches everything else that goes
+to $\bot$. This is of efficiency reasons: imagine if we had only used
+just a few constructors of a data type with hundreds of constructors,
+then we do not want to write a new line with all those constructors to
+$\bot$. A property that should indeed hold (regardless of presence of
+partial values or not) is \hs{x || False == x} for all
+\hs{x}. However, for models with another point, say $\top$, we get
+that $\top \, \fn{||} \, \fn{False} = \bot$, and the conjecture is
+counter satisfiable.
+
+\note{This blends a bit with future work. One solution is just to add
+  a predicate describing the elements of the type. Hopefully I will have time
+  to implement this so it need not be in future work. Further, it is
+  pretty sloppily written}
 
 \subsection{Structural induction}
 

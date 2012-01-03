@@ -12,12 +12,15 @@
 \usepackage{textcomp}
 %\usepackage{courier}
 
-\begin{document}
-
 \newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
-
 \newcommand\hs[1]{\verb~#1~}
 \newcommand\fn[1]{\mathrm{#1}}
+\newcommand\ptr[1]{\fn{#1.ptr}}
+\newcommand\app[2]{#1 \, @ \, #2}
+\newcommand\fa[1]{\forall \, #1 \, . \,}
+\newcommand\faa[2]{\forall \, #1 \, #2 \, . \,}
+
+\begin{document}
 
 %% Title ----------------------------------------------------------------------
 \title{Proving Equational Haskell Properties Using ATPs}
@@ -54,6 +57,11 @@ ACK, ACK, ACK, ACK, ACK, ACK, NAK
 \chapter{Introduction}
 
 Induction and Haskell
+
+Infinite values in Haskell are commonplace, but why care about partial
+values? They are still present because of non-terminating programs,
+calls to the error function and pattern-match
+failures \cite{chasingbot}.
 
 \section{Outline}
 
