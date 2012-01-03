@@ -3,6 +3,7 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{mathpartir}
 \usepackage[margin=1.5in]{geometry}
 \usepackage{parsetree}
 \usepackage{verbatim}
@@ -19,6 +20,10 @@
 \newcommand\app[2]{#1 \, @ \, #2}
 \newcommand\fa[1]{\forall \, #1 \, . \,}
 \newcommand\faa[2]{\forall \, #1 \, #2 \, . \,}
+\newcommand\faaa[3]{\forall \, #1 \, #2 \, #3 \, . \,}
+
+\newcommand\tofix[1]{#1_{\mathrm{tofix}}}
+\newcommand\unfix[1]{#1_{\mathrm{unfix}}}
 
 \begin{document}
 
@@ -93,12 +98,42 @@ Use derivations or models to deduce absurdity.
 Some background of induction and how it is present in well-known
 theories like PA, ZFC, MLTT and CoC.
 
+PA which only concerns natural numbers has a small vocabulary
+consisting only of the constant $0$, the unary successor function $s$,
+and binary plus and multiplication.
+Here the induction schema from looks like this:
+
+\note{One could also be explicit about the free variables in $P$}
+\begin{mathpar}
+  \inferrule*
+     {
+       \overbrace{P(0)}^{\mathrm{base}}
+       \\
+       \overbrace{
+           \fa{x}
+                 \underbrace{P(x)}_{\mathrm{hypothesis}}
+              \rightarrow
+                 \underbrace{P(s(x))}_{\mathrm{conclusion}}
+       }^{\mathrm{step}}
+     }
+     { \fa{x} P(x) }
+\end{mathpar}
+
+This is a axioms schema since it is not possible to quantify over the
+predicate $P$ in FOL. Rather, it is a infinite set of axioms, one for
+each (well-formed) formula instantiated in place for $P$. Generally,
+ATPs do not instantiate schemas themselves but it has to be done
+manually, with an appropriate formula for $P$.
+
 \section{Domain Theory}
 
 CPOs, monotonicity, continuity and admissible predicates.
 
 \section{Related Work}
 
+\note{Related work in background or in discussion? Would be nice to
+  have it after the technical part to be able to compare different
+  approaches.}
 Isabel, Sledgehammer, Rippling and other techniques
 (Productive Use of Failure)
 

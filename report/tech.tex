@@ -2,304 +2,11 @@
 
 Implementation technicalities.
 
-\section{Translation to FOL}
+% Translation to FOL ----------------------------------------------------------
 
-The goal of this translation is to enable equational reasoning of
-Haskell programs, in FOL. It is here referred to as a translation, but
-it could also in be regarded as compilation.
+\input{translation}
 
-Equational reasoning is traditional in proving corrected of Haskell
-programs, but it assumes that a simple denotational semantics exists,
-and there is not even a formal semantics for the language
-\cite{chasingbot}.
-
-% Whoa, much in this section
-\subsection{Data types}
-
-Haskell's data types and its consequence pattern matching is
-translated by giving each constructor a function or constant symbol.
-
-Consider this examples of binary trees in Haskell style:
-
-\begin{verbatim}
-data Tree a = Empty | Branch (Tree a) a (Tree a)
-\end{verbatim}
-
-We get one constant $\fn{Empty}$ for \hs{Empty}, and one trinary
-function $\fn{Branch}$ for \hs{Branch}. Normally, it is custom
-to write functions in logic with lowercase letters, but this
-convention is disregarded here. The values of these constructors are
-distinct, so the following disjointedness axioms are added to the
-theory of a Haskell program with this data type.
-
-\begin{align*}
-\fn{\bot} &  \neq \fn{Empty}\\
- \forall \, l \,  x \,  r \,  . \,  \fn{\bot} &  \neq \fn{Branch}(l,x,r)\\
- \forall \, l \,  x \,  r \,  . \,  \fn{Empty} &  \neq \fn{Branch}(l,x,r)\\
-\end{align*}
-
-Notice that in Haskell, each data type also has an extra value, bottom, which
-can come from the functions \hs{undefined} or \hs{error}, as well as
-irrefutable pattern matches but also non-terminating programs. The constant
-$\bot$ captures this notion and is naturally also distinct from the values
-of \hs{Empty} and \hs{Branch}.
-
-\subsection{Injective constructors and projections}
-
-We also want injectivity of constructors, for example if we have the
-cons constructor, \hs{:} in Haskell, and \hs{x:xs = y:ys} then
-\hs{x = y} and \hs{xs = ys}. As we will see later, we also want the
-projections of the left and right sub tree, and the value in a Branch.
-It turns out that the projections imply the injectivity. For the Branch
-constructor of the Tree example, we get the following projections:
-
-\begin{align*}
- \forall \, l \, x \, r \, . \,  \fn{Branch_{0}}(\fn{Branch}(l,x,r)) &  = l\\
- \forall \, l \, x \, r \, . \,  \fn{Branch_{1}}(\fn{Branch}(l,x,r)) &  = x\\
- \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r\\
-\end{align*}
-
-These ternary functions are bluntly named by indexing on the projected
-coordinate, but could just as well have more descriptive names as
-$\fn{left}$, $\fn{value}$ and $\fn{right}$.
-
-Now, these projections imply injective constructors. Assume we have
-$\fn{Branch}(l,x,r) = \fn{Branch}(l',x',r')$ then the first
-projection, $\fn{Branch_0}$, gives us that $l=l'$. Analogously,
-and the second and the third give $x=x'$ and $r=r'$, respectively.
-
-\subsection{Translation of functions}
-
-Translating functions that do not use pattern matching is
-straightforward. Consider this Haskell definition of a singleton tree:
-
-\begin{verbatim}
-leaf :: a -> Tree a
-leaf x = Branch Empty x Empty
-\end{verbatim}
-
-We simply introduce a new function symbol, $\fn{leaf}$, and due
-to referential transparency we can turn the definition into an
-equality with quantified variables:
-
-\begin{align*}
- \forall \, x \, . \, \fn{leaf}(x) &  = \fn{Branch}(\fn{Empty},x,\fn{Empty})\\
-\end{align*}
-
-\subsection{Pattern matching}
-
-Let's now consider \hs{leaf}'s partial inverse, \hs{top} that
-yields the top element of the tree if there is one, or is undefined
-otherwise:
-
-\begin{verbatim}
-top :: Tree a -> a
-top (Branch _ x _) = x
-\end{verbatim}
-
-The function call of \hs{top Empty} would yield a run time error
-since this pattern is not covered, equivalent to an undefined
-value. Indeed, an equivalent formulation would be to cover the
-\hs{Empty} case by \hs{undefined} or a helpful message from
-\hs{error}, but the run time error is still remains, and this
-behavior is modeled by the $\bot$ value in the theory. Thus the
-translation to an equality is as follows: if the argument is
-constructed with \hs{Branch}, it is equivalent to the top value,
-otherwise, it is $\bot$:
-
-\begin{align*}
- \forall \, l \, x \, r \, & . \, \fn{top}(\fn{Branch}(l,x,r) = x\\
- \forall \, t \, & . \, t \neq
-p \fn{Branch}(\fn{Branch_{0}}(t),\fn{Branch_{1}}(t),\fn{Branch_{2}}(t))
- \rightarrow \, \fn{top}(t)  = \fn{\bot}\\
-\end{align*}
-
-Here the projections functions come in handy. Indeed, an equivalent
-but skolemized formulations of the second formulas are:
-
-\begin{align*}
- \forall \, t \, & . \neg (\exists \, l \, x \, r . \, t =
- \fn{Branch}(l,x,r))
- \rightarrow \, \fn{top}(t) = \bot \\
- \forall \, t \, & . (\forall \, l \, x \, r . \, t \neq
- \fn{Branch}(l,x,r))
- \rightarrow \, \fn{top}(t) = \bot \\
-\end{align*}
-
-But as we saw earlier, projections also imply injectivity so this is
-the approach used here but the choice is of little importance (or is
-it? benchmark!!)
-
-\subsection{Overlapping patterns}
-
-Overlapping patterns need to be removed, otherwise we could easily get
-an inconsistent theory, consider
-
-\begin{verbatim}
-overlap :: Bool -> Bool
-overlap True = True
-overlap True = False
-\end{verbatim}
-
-Certainly, we cannot translate this to
-\begin{align*}
-\fn{overlap}(\fn{True}) & = \fn{True} \\
-\fn{overlap}(\fn{True}) & = \fn{False} \\
-\forall \, b \, . \, b \neq True & \rightarrow \fn{overlap}(b) = \bot \\
-\end{align*}
-
-Transitivity of equality then yields $\fn{True} = \fn{False}$,
-and this together with the axioms of disjoint constructors gives a
-contradiction.
-
-In Haskell, pattern matching is done from top to bottom of the
-definition, making the second match of True to never occur. Thus, the
-translation to FOL also removes all subsequent patterns that are
-instances of any pattern above.
-
-\subsection{Nested patterns and bottoms}
-
-The translation also handles patterns in more than one depth. At every
-location in a pattern where a constructor is matched against, a
-pattern with bottom at that spot is also added, defined to
-bottom. This definition that balances a tree to the left is defined
-with pattern matching on depth two:
-
-\begin{verbatim}
-unbalance :: Tree a -> Tree a
-unbalance (Branch (Branch l x r) y r') = unbalance (Branch l x (Branch r y r'))
-unbalance (Branch l x r)               = Branch l x (unbalance r)
-unbalance Empty                        = Empty
-\end{verbatim}
-
-If we could see the bottoms in Haskell, the definition would look like this:
-
-\begin{verbatim}
-unbalance :: Tree a -> Tree a
-unbalance (Branch (Branch l x r) y r') = unbalance (Branch l x (Branch r y r'))
-unbalance (Branch Bottom _ _)          = Bottom
-unbalance (Branch l x r)               = Branch l x (unbalance r)
-unbalance Empty                        = Empty
-unbalance Bottom                       = Bottom
-\end{verbatim}
-
-And such an addition of bottoms is made by the translation.
-\note{This writing actually discovered a bug. Report the solution and how it was tested}
-
-\subsection{Guards}
-
-Guards are not much of a complication. Either the guard expression is
-\hs{True}, then that branch is picked. If the expression returns
-bottom, then for this argument, the function is bottom. Care needs to
-be taken when looking ``upwards'' the branches, to not collide with
-the guards.
-\note{Add example}
-
-\subsection{Functions as arguments}
-
-In Haskell, functions readily take other functions as arguments, and
-functions can also be partially applied. To get the same behavior in
-logic, each function gets a \emph{function pointer}, and a new binary
-function is added to the language, written infix with $\fn{@}$.
-\note{Should $\fn{@}$ be written infix? $\fn{app}$ prefix is also a viable option}
-For instance, the if there is a binary function plus then a constant
-called plus-ptr is added to the theory and this axiom:
-
-\begin{equation*}
-\forall \, x \, y \, . \, \app{(\app{\fn{plus.ptr}}{x})}{y} = \fn{plus}(x,y)
-\end{equation*}
-
-When a function is only partially applied, or a function argument is
-applied, $\, @ \, $ is used. Consider the Prelude function \hs{iterate}
-
-\begin{verbatim}
-iterate :: (a -> a) -> a -> [a]
-iterate f x = x : iterate f (f x)
-\end{verbatim}
-
-It is translated with $\, @ \, $ in the following way, with \hs{:} written infix:
-
-\begin{equation*}
-\forall \, f \, x \, . \, \fn{iterate}(f,x) = x : \fn{iterate}(f,\app{f}{x})
-\end{equation*}
-
-Should a function not get all its arguments, appropriate use of $\, @ \, $ is
-added, as in this function which increments all elements of the list
-by one using \hs{map}:
-
-\begin{verbatim}
-incr = map (plus one)
-\end{verbatim}
-
-As \hs{incr} is also written point-free or eta-reduced, \hs{map} is
-only partially applied. This is the translated axiom:
-
-\begin{equation*}
-\fn{incr} = \app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})}}
-\end{equation*}
-
-If \hs{incr} is applied to an argument $xs$, then \hs{incr} is applied
-to more arguments then it takes, so we add $\, @ \,$ so the
-corresponding formula becomes $\app{\fn{incr}}{xs}$, and by equational
-substitution from the definition of $\fn{incr}$ we get
-$\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
-the axiom of $\fn{map.ptr}$ then equals this to
-$\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
-
-\subsection{The intermediate language}
-
-Everything becomes top level definitions, \hs{let} and \hs{where} are
-floated to the top, with the free variables added as extra parameters,
-as well as lambda functions, the same approach was taken for extra or
-nested case-expressions. Extra care needs to be taken for mutually
-recursive \hs{let} and \hs{where} functions, which potentially need's
-each other's free variables as arguments.
-\note{Incomplete, add examples}
-
-Functions do not do any pattern matching on their arguments directly,
-but in a case statement that is the entire body of the function. The
-branch expressions are just constructor or function application.
-\note{Add BNF}
-
-Type-signatures and data types are also supported since this
-information is needed for different proof techniques.
-
-\subsection{Haskell coverage}
-
-Haskell is a big language, and translating it all in one go is a
-daunting task. Therefore, some restrictions were settled to be able to
-focus on proving rather than translating.
-\note{Maybe move this to background?}
-The goal was to add enough of the Haskell language to enable to prove
-interesting properties, but much of the widely available sugar in
-Haskell was omitted since it does not add extra
-expressibility. Therefore there is no support for
-list comprehensions, do-notation, pattern bindings and type classes .
-
-A more serious omitted feature is the lack of built-in types like \hs{Int},
-\hs{Integer}, \hs{Double}, \hs{Char}, etc.
-
-(Higher-kinded type variables are currently not supported)
-
-\subsection{Uncategorized}
-
-\begin{itemize}
-
-\item $\checkmark$ Describe (and motivate here?) the intermediate language
-
-\item $\checkmark$ Pattern-matching and bottoms
-
-\item $\checkmark$ Higher order functions and function pointers
-
-\item $\checkmark$ Axioms of disjointedness
-
-\item $\checkmark$ Axioms of projections and injectivity of constructors
-
-\item $\checkmark$ Extensional equality and application of bottom
-
-\item Remove unnecessary definitions for a given proof
-
-\end{itemize}
+% End of Translation to FOL ---------------------------------------------------
 
 \section{Proof techniques}
 
@@ -431,6 +138,10 @@ False || a = a
 True  || _ = True
 \end{verbatim}
 
+\note{This blends a bit with future work. One solution is just to add
+  a predicate describing the elements of the type. Hopefully I will have time
+  to implement this so it need not be in future work. Further, it is
+  pretty sloppily written}
 Then an extra branch is added that matches everything else that goes
 to $\bot$. This is of efficiency reasons: imagine if we had only used
 just a few constructors of a data type with hundreds of constructors,
@@ -441,22 +152,150 @@ partial values or not) is \hs{x || False == x} for all
 that $\top \, \fn{||} \, \fn{False} = \bot$, and the conjecture is
 counter satisfiable.
 
-\note{This blends a bit with future work. One solution is just to add
-  a predicate describing the elements of the type. Hopefully I will have time
-  to implement this so it need not be in future work. Further, it is
-  pretty sloppily written}
 
 \subsection{Structural induction}
 
-Simple induction to more complex structural induction and its
-implementation.
+Any non-recursive, or more importantly recursive data type gives rise
+to induction schemata.
 
-\subsection{Fixed point induction}
+\footnote{Haskell's natural numbers are of course also cluttered with
+  elements that are not natural numbers, such as $\bot$, but also the
+  infinite ``natural number'' defined by \hs{infinite = Succ infinite}}
+, defined the usual way in Haskell by \hs{data Nat = Zero | Succ Nat}
+yields this induction axiom schema:
 
-Describe how and why it works
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\fn{Zero})
+       \\
+       \fa{x} P(x) \rightarrow P(\fn{Succ}(x))
+     }
+     { \fa{x} P(x) }
+\end{mathpar}
 
-Fixed point induction on several functions and subsets of the existing
-functions
+\subsection{Fixpoint induction}
+
+\note{fixpoint induction or fixed point induction?}
+\note{Introduce \hs{fix} in background, and reference them to each
+  other?}
+The celebrated fixpoint induction from Domain Theory, now automated!
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot)
+       \\
+       P(x) \rightarrow P(f(x))
+       \\
+       P \, \mathrm{admissible}
+     }
+     { P(\fn{fix} f) }
+\end{mathpar}
+
+Here it is important that $P$ is \emph{admissible} or
+$\omega$-\emph{complete}, but universally quantified equalities of
+continuous functions and compositions thereof is.
+
+A simple way of defining a fixed point combinator in Haskell is
+\begin{verbatim}
+fix :: (a -> a) -> a
+fix f = f (fix f)
+\end{verbatim}
+
+The translation from a function written with explicit recursion to a
+style with \hs{fix} is mechanical. Consider \hs{iterate}
+
+\begin{verbatim}
+iterate f x = x : iterate f (f x)
+\end{verbatim}
+
+Each occurrence of the same function is copied with a new definition,
+here \hs{iterateStep}, with an additional argument (here \hs{i}) which
+replaces the recursive call.
+
+\begin{verbatim}
+iterate = fix iterateStep
+iterateStep i f x = x : i f (f x)
+\end{verbatim}
+
+Now,
+\hs{fix iterateStep} =
+\hs{iterateStep (fix iterateStep}) =
+\hs{iterateStep (iterateStep (fix iterateStep))} = ...
+\hs{iterateStep (iterateStep (... (iterateStep (fix iterateStep))
+  ...))}, which allows arbitrary unrolling of the definition, making it
+  equivalent to \hs{iterate} above.
+
+\subsubsection{Implementation}
+
+To prove something regarding a function $f$ defined abstractly with
+arguments $\overbar{x}$ and body $e(\overbar{x},f)$ as
+
+\begin{equation*}
+f \, \overbar{x} = e(\overbar{x},f)
+\end{equation*}
+
+
+
+We introduce two new constants, $\tofix{f}$ and $\unfix{f}$ as this:
+
+\begin{equation*}
+\tofix{f} \, \overbar{x} = e(\overbar{x},\unfix{f})
+\end{equation*}
+
+\note{Some side-by side reasoning how it looks with these definitions
+  and the normal definitions of fixpoint induction}
+The fixpoint schema now becomes:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot)
+       \\
+       P(\unfix{f}) \rightarrow P(\tofix{f})
+       \\
+       P \, \mathrm{admissible}
+     }
+     { P(f) }
+\end{mathpar}
+
+
+This also works for several functions at the same time, possibly
+mutually recursive:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot,\bot)
+       \\
+       P(\unfix{f},\unfix{g}) \rightarrow P(\tofix{f},\tofix{g})
+       \\
+       P \, \mathrm{admissible}
+     }
+     { P(f,g) }
+\end{mathpar}
+
+\subsubsection{Natural Selection}
+
+Given a property like list concatenation as above
+\note{examples are not set in stone so this may change}
+it is actually not possible to show the property with fixed point
+induction on all four occurrences of \hs{++}. As if you would do
+structural induction on this proof, you will see that the both in the
+left hand side are normalized, and the first on the right hand
+side. These are the functions you will want to do fixpoint induction
+on. See illustration with $\mathbf{app}$ on the locations suspect for
+fixpoint induction and $app$ for no change:
+
+\begin{equation*}
+\faaa{xs}{ys}{zs} \mathbf{app}(\mathbf{app}(xs,ys),zs)
+               =  \mathbf{app}(xs,app(ys,zs))
+\end{equation*}
+\note{I cannot prove the \mathbf{[]} case for this}
+
+The approach taken here is to try fixed point induction on all the
+subsets of the recursive functions mentioned in the property.
 
 \subsection{Approximation lemma}
 
@@ -464,3 +303,15 @@ After fixed point induction since it is an easy consequence of fixed
 point induction, and how we removed the auxiliary structure of natural
 numbers. This makes it equivalent to fixed point induction of id on
 both sides (or does it?)
+
+Approximation lemma is a generalization of the take lemma, and its
+first form is used for properties about infinite and partial lists,
+but it is easily generalized to other recursive data types.
+\note{
+In particular, all polynomial datatypes — for example, any
+sum-of-products datatype — can be defined in this way.
+This result generalises
+to mutually recursive, parameterised, exponential and nested datatypes, but
+for simplicity we only consider polynomial datatypes in this article.
+\cite{genapprox}}
+
