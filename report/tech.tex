@@ -4,6 +4,15 @@ Implementation technicalities.
 
 \section{Translation to FOL}
 
+The goal of this translation is to enable equational reasoning of
+Haskell programs, in FOL. It is here referred to as a translation, but
+it could also in be regarded as compilation.
+
+Equational reasoning is traditional in proving corrected of Haskell
+programs, but it assumes that a simple denotational semantics exists,
+and there is not even a formal semantics for the language
+\cite{chasingbot}.
+
 % Whoa, much in this section
 \subsection{Data types}
 
@@ -16,50 +25,50 @@ Consider this examples of binary trees in Haskell style:
 data Tree a = Empty | Branch (Tree a) a (Tree a)
 \end{verbatim}
 
-We get one constant $\mathrm{Empty}$ for \verb;Empty;, and one trinary
-function $\mathrm{Branch}$ for \verb;Branch;. Normally, it is custom
+We get one constant $\fn{Empty}$ for \hs{Empty}, and one trinary
+function $\fn{Branch}$ for \hs{Branch}. Normally, it is custom
 to write functions in logic with lowercase letters, but this
 convention is disregarded here. The values of these constructors are
 distinct, so the following disjointedness axioms are added to the
 theory of a Haskell program with this data type.
 
 \begin{align*}
-\mathrm{\bot} &  \neq \mathrm{Empty}\\
- \forall \, l \,  x \,  r \,  . \,  \mathrm{\bot} &  \neq \mathrm{Branch}(l,x,r)\\
- \forall \, l \,  x \,  r \,  . \,  \mathrm{Empty} &  \neq \mathrm{Branch}(l,x,r)\\
+\fn{\bot} &  \neq \fn{Empty}\\
+ \forall \, l \,  x \,  r \,  . \,  \fn{\bot} &  \neq \fn{Branch}(l,x,r)\\
+ \forall \, l \,  x \,  r \,  . \,  \fn{Empty} &  \neq \fn{Branch}(l,x,r)\\
 \end{align*}
 
 Notice that in Haskell, each data type also has an extra value, bottom, which
-can come from the functions \verb;undefined; or \verb;error;, as well as
+can come from the functions \hs{undefined} or \hs{error}, as well as
 irrefutable pattern matches but also non-terminating programs. The constant
 $\bot$ captures this notion and is naturally also distinct from the values
-of \verb;Empty; and \verb;Branch;.
+of \hs{Empty} and \hs{Branch}.
 
-\subsubsection{Injective constructors and projections}
+\subsection{Injective constructors and projections}
 
 We also want injectivity of constructors, for example if we have the
-cons constructor, \verb;:; in Haskell, and \verb;x:xs = y:ys; then
-\verb;x = y; and \verb;xs = ys;. As we will see later, we also want the
+cons constructor, \hs{:} in Haskell, and \hs{x:xs = y:ys} then
+\hs{x = y} and \hs{xs = ys}. As we will see later, we also want the
 projections of the left and right sub tree, and the value in a Branch.
 It turns out that the projections imply the injectivity. For the Branch
 constructor of the Tree example, we get the following projections:
 
 \begin{align*}
- \forall \, l \, x \, r \, . \,  \mathrm{Branch_{0}}(\mathrm{Branch}(l,x,r)) &  = l\\
- \forall \, l \, x \, r \, . \,  \mathrm{Branch_{1}}(\mathrm{Branch}(l,x,r)) &  = x\\
- \forall \, l \, x \, r \, . \,  \mathrm{Branch_{2}}(\mathrm{Branch}(l,x,r)) &  = r\\
+ \forall \, l \, x \, r \, . \,  \fn{Branch_{0}}(\fn{Branch}(l,x,r)) &  = l\\
+ \forall \, l \, x \, r \, . \,  \fn{Branch_{1}}(\fn{Branch}(l,x,r)) &  = x\\
+ \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r\\
 \end{align*}
 
 These ternary functions are bluntly named by indexing on the projected
 coordinate, but could just as well have more descriptive names as
-$\mathrm{left}$, $\mathrm{value}$ and $\mathrm{right}$.
+$\fn{left}$, $\fn{value}$ and $\fn{right}$.
 
 Now, these projections imply injective constructors. Assume we have
-$\mathrm{Branch}(l,x,r) = \mathrm{Branch}(l',x',r')$ then the first
-projection, $\mathrm{Branch_0}$, gives us that $l=l'$. Analogously,
+$\fn{Branch}(l,x,r) = \fn{Branch}(l',x',r')$ then the first
+projection, $\fn{Branch_0}$, gives us that $l=l'$. Analogously,
 and the second and the third give $x=x'$ and $r=r'$, respectively.
 
-\subsubsection{Translation of functions}
+\subsection{Translation of functions}
 
 Translating functions that do not use pattern matching is
 straightforward. Consider this Haskell definition of a singleton tree:
@@ -69,17 +78,17 @@ leaf :: a -> Tree a
 leaf x = Branch Empty x Empty
 \end{verbatim}
 
-We simply introduce a new function symbol, $\mathrm{leaf}$, and due
+We simply introduce a new function symbol, $\fn{leaf}$, and due
 to referential transparency we can turn the definition into an
 equality with quantified variables:
 
 \begin{align*}
- \forall \, x \, . \, \mathrm{leaf}(x) &  = \mathrm{Branch}(\mathrm{Empty},x,\mathrm{Empty})\\
+ \forall \, x \, . \, \fn{leaf}(x) &  = \fn{Branch}(\fn{Empty},x,\fn{Empty})\\
 \end{align*}
 
-\subsubsection{Pattern matching}
+\subsection{Pattern matching}
 
-Let's now consider \verb;leaf;'s partial inverse, \verb;top; that
+Let's now consider \hs{leaf}'s partial inverse, \hs{top} that
 yields the top element of the tree if there is one, or is undefined
 otherwise:
 
@@ -88,21 +97,21 @@ top :: Tree a -> a
 top (Branch _ x _) = x
 \end{verbatim}
 
-The function call of \verb;top Empty; would yield a run time error
+The function call of \hs{top Empty} would yield a run time error
 since this pattern is not covered, equivalent to an undefined
 value. Indeed, an equivalent formulation would be to cover the
-\verb;Empty; case by \verb;undefined; or a helpful message from
-\verb;error;, but the run time error is still remains, and this
+\hs{Empty} case by \hs{undefined} or a helpful message from
+\hs{error}, but the run time error is still remains, and this
 behavior is modeled by the $\bot$ value in the theory. Thus the
 translation to an equality is as follows: if the argument is
-constructed with \verb;Branch;, it is equivalent to the top value,
+constructed with \hs{Branch}, it is equivalent to the top value,
 otherwise, it is $\bot$:
 
 \begin{align*}
- \forall \, l \, x \, r \, & . \, \mathrm{top}(\mathrm{Branch}(l,x,r) = x\\
+ \forall \, l \, x \, r \, & . \, \fn{top}(\fn{Branch}(l,x,r) = x\\
  \forall \, t \, & . \, t \neq
- \mathrm{Branch}(\mathrm{Branch_{0}}(t),\mathrm{Branch_{1}}(t),\mathrm{Branch_{2}}(t))
- \rightarrow \, \mathrm{top}(t)  = \mathrm{\bot}\\
+p \fn{Branch}(\fn{Branch_{0}}(t),\fn{Branch_{1}}(t),\fn{Branch_{2}}(t))
+ \rightarrow \, \fn{top}(t)  = \fn{\bot}\\
 \end{align*}
 
 Here the projections functions come in handy. Indeed, an equivalent
@@ -110,18 +119,18 @@ but skolemized formulations of the second formulas are:
 
 \begin{align*}
  \forall \, t \, & . \neg (\exists \, l \, x \, r . \, t =
- \mathrm{Branch}(l,x,r))
- \rightarrow \, \mathrm{top}(t) = \bot \\
+ \fn{Branch}(l,x,r))
+ \rightarrow \, \fn{top}(t) = \bot \\
  \forall \, t \, & . (\forall \, l \, x \, r . \, t \neq
- \mathrm{Branch}(l,x,r))
- \rightarrow \, \mathrm{top}(t) = \bot \\
+ \fn{Branch}(l,x,r))
+ \rightarrow \, \fn{top}(t) = \bot \\
 \end{align*}
 
 But as we saw earlier, projections also imply injectivity so this is
 the approach used here but the choice is of little importance (or is
 it? benchmark!!)
 
-\subsubsection{Overlapping patterns}
+\subsection{Overlapping patterns}
 
 Overlapping patterns need to be removed, otherwise we could easily get
 an inconsistent theory, consider
@@ -134,12 +143,12 @@ overlap True = False
 
 Certainly, we cannot translate this to
 \begin{align*}
-\mathrm{overlap}(\mathrm{True}) & = & \mathrm{True} \\
-\mathrm{overlap}(\mathrm{True}) & = & \mathrm{False} \\
-\forall \, b \, . b \neq True \rightarrow \mathrm{overlap}(b) = \bot \\
+\fn{overlap}(\fn{True}) & = \fn{True} \\
+\fn{overlap}(\fn{True}) & = \fn{False} \\
+\forall \, b \, . \, b \neq True & \rightarrow \fn{overlap}(b) = \bot \\
 \end{align*}
 
-Transitivity of equality then yields $\mathrm{True} = \mathrm{False}$,
+Transitivity of equality then yields $\fn{True} = \fn{False}$,
 and this together with the axioms of disjoint constructors gives a
 contradiction.
 
@@ -148,7 +157,7 @@ definition, making the second match of True to never occur. Thus, the
 translation to FOL also removes all subsequent patterns that are
 instances of any pattern above.
 
-\subsubsection{Nested patterns and bottoms}
+\subsection{Nested patterns and bottoms}
 
 The translation also handles patterns in more than one depth. At every
 location in a pattern where a constructor is matched against, a
@@ -174,92 +183,123 @@ unbalance Empty                        = Empty
 unbalance Bottom                       = Bottom
 \end{verbatim}
 
-And such an addition of bottoms is made by the translation. The
-resulting logic formulas look like this:
+And such an addition of bottoms is made by the translation.
+\note{This writing actually discovered a bug. Report the solution and how it was tested}
 
-\begin{align*}
- \forall \, l_0 \, q_2 \, r_2 \, x_1 \, y_3 \, . \, \mathrm{unbalance}(\mathrm{Branch}(\mathrm{Branch}(l_{0},x_{1},r_{2}),y_{3},q_{2})) &  = \mathrm{unbalance}(\mathrm{Branch}(l_{0},x_{1},\mathrm{Branch}(r_{2},y_{3},q_{2})))\\
- \forall \, l_5 \, r_7 \, x_6 \, . \, \mathrm{unbalance}(\mathrm{Branch}(l_{5},x_{6},r_{7})) &  = \mathrm{Branch}(l_{5},x_{6},\mathrm{unbalance}(r_{7}))\\
- & \vee l_{5} = \mathrm{Branch}(\mathrm{Branch_{0}}(l_{5}),\mathrm{Branch_{1}}(l_{5}),\mathrm{Branch_{2}}(l_{5}))\\
-\mathrm{unbalance}(\mathrm{Empty}) &  = \mathrm{Empty}\\
- \forall \, u_1 \, . \, \mathrm{unbalance}(u_{1}) &  = \mathrm{\bot}\\
- & \vee u_{1} = \mathrm{Branch}(\mathrm{Branch_{0}}(u_{1}),\mathrm{Branch_{1}}(u_{1}),\mathrm{Branch_{2}}(u_{1}))\\
- & \vee u_{1} = \mathrm{Empty}\\
-\end{align*}
-
-Uh, this is a bug. Heheh heeehhh.
-
-\subsubsection{Guards}
+\subsection{Guards}
 
 Guards are not much of a complication. Either the guard expression is
-\verb;True;, then that branch is picked. If the expression returns
+\hs{True}, then that branch is picked. If the expression returns
 bottom, then for this argument, the function is bottom. Care needs to
 be taken when looking ``upwards'' the branches, to not collide with
-the guards. (Add example)
+the guards.
+\note{Add example}
 
-\subsubsection{Functions as arguments}
+\subsection{Functions as arguments}
 
 In Haskell, functions readily take other functions as arguments, and
 functions can also be partially applied. To get the same behavior in
 logic, each function gets a \emph{function pointer}, and a new binary
-function is added to the language, written infix with $\, @ \, $. For
-instance, the if there is a binary function plus then a constant
+function is added to the language, written infix with $\fn{@}$.
+\note{Should $\fn{@}$ be written infix? $\fn{app}$ prefix is also a viable option}
+For instance, the if there is a binary function plus then a constant
 called plus-ptr is added to the theory and this axiom:
 
-\begin{equation}
-\forall \, x \, y \, . \, (plus.ptr \, @ \,  x) \, @ \,  y = plus(x,y)
-\end{equation}
+\begin{equation*}
+\forall \, x \, y \, . \, (\fn{plus.ptr} \, @ \,  x) \, @ \,  y = \fn{plus}(x,y)
+\end{equation*}
 
 When a function is only partially applied, or a function argument is
-applied, $\, @ \, $ is used. Consider the Prelude function \verb;iterate;
+applied, $\, @ \, $ is used. Consider the Prelude function \hs{iterate}
 
 \begin{verbatim}
 iterate :: (a -> a) -> a -> [a]
 iterate f x = x : iterate f (f x)
 \end{verbatim}
 
-It is translated with $\, @ \, $ in the following way, with \verb;:; written infix:
+It is translated with $\, @ \, $ in the following way, with \hs{:} written infix:
 
-\begin{equation}
-\forall \, f \, x \, . \, \mathrm{iterate}(f,x) = x : \mathrm{iterate}(f,f \, @ \,  x)
-\end{equation}
+\begin{equation*}
+\forall \, f \, x \, . \, \fn{iterate}(f,x) = x : \fn{iterate}(f,f \, @ \,  x)
+\end{equation*}
 
 Should a function not get all its arguments, appropriate use of $\, @ \, $ is
 added, as in this function which increments all elements of the list
-by one using \verb;map;:
+by one using \hs{map}:
 
 \begin{verbatim}
 incr = map (plus one)
 \end{verbatim}
 
-As incr is also written point-free or eta-reduced, \verb;map; is also
+As incr is also written point-free or eta-reduced, \hs{map} is also
 partially applied. This is the translated axiom:
 
-\begin{equation}
-\mathrm{incr} = \mathrm{map.ptr} \, @ \,  (\mathrm{plus.ptr} \, @ \,  \mathrm{one})
-\end{equation}
+\begin{equation*}
+\fn{incr} = \fn{map.ptr} \, @ \,  (\fn{plus.ptr} \, @ \,  \fn{one})
+\end{equation*}
 
-If \verb;incr; is applied to an argument $xs$, then \verb;incr; is
+If \hs{incr} is applied to an argument $xs$, then \hs{incr} is
 applied to more arguments then it takes, so we add $\, @ \,$ so the
-corresponding formula becomes $\mathrm{incr} \, @ \, xs$, and by
+corresponding formula becomes $\fn{incr} \, @ \, xs$, and by
 equational substitution from the definition of incr we get
-$(\mathrm{map.ptr} \, @ \, (\mathrm{plus.ptr} \, @ \, \mathrm{one}))
-\, @ \, xs$ and the axiom of $\mathrm{map.ptr}$ then equals this to
-$\mathrm{map}(\mathrm{plus.ptr} \, @ \, \mathrm{one},xs)$.
+$(\fn{map.ptr} \, @ \, (\fn{plus.ptr} \, @ \, \fn{one}))
+\, @ \, xs$ and the axiom of $\fn{map.ptr}$ then equals this to
+$\fn{map}(\fn{plus.ptr} \, @ \, \fn{one},xs)$.
+
+\subsection{The intermediate language}
+
+Everything becomes top level definitions, \hs{let} and \hs{where} are
+floated to the top, with the free variables added as extra parameters,
+as well as lambda functions, the same approach was taken for extra or
+nested case-expressions. Extra care needs to be taken for mutually
+recursive \hs{let} and \hs{where} functions, which potentially need's
+each other's free variables as arguments.
+\note{Incomplete, add examples}
+
+Functions do not do any pattern matching on their arguments directly,
+but in a case statement that is the entire body of the function. The
+branch expressions are just constructor or function application.
+\note{Add BNF}
+
+Type-signatures and data types are also supported since this
+information is needed for different proof techniques.
+
+\subsection{Haskell coverage}
+
+Haskell is a big language, and translating it all in one go is a
+daunting task. Therefore, some restrictions were settled to be able to
+focus on proving rather than translating.
+\note{Maybe move this to background?}
+The goal was to add enough of the Haskell language to enable to prove
+interesting properties, but much of the widely available sugar in
+Haskell was omitted since it does not add extra
+expressibility. Therefore there is no support for
+list comprehensions, do-notation, pattern bindings and type classes .
+
+A more serious omitted feature is the lack of built-in types like \hs{Int},
+\hs{Integer}, \hs{Double}, \hs{Char}, etc.
+
+(Higher-kinded type variables are currently not supported)
 
 \subsection{Uncategorized}
 
-Describe (and motivate here?) the intermediate language
+\begin{itemize}
 
-$\checkmark$ Pattern-matching and bottoms
+\item $\checkmark$ Describe (and motivate here?) the intermediate language
 
-$\checkmark$ Higher order functions and function pointers
+\item $\checkmark$ Pattern-matching and bottoms
 
-$\checkmark$ Axioms of disjointedness
+\item $\checkmark$ Higher order functions and function pointers
 
-$\checkmark$ Axioms of projections and injectivity of constructors
+\item $\checkmark$ Axioms of disjointedness
 
-Extensional equality and application of bottom
+\item $\checkmark$ Axioms of projections and injectivity of constructors
+
+\item Extensional equality and application of bottom
+
+\item Remove unnecessary definitions for a given proof
+
+\end{itemize}
 
 \section{Proof techniques}
 
@@ -272,12 +312,12 @@ Only on non-concrete types
 
 Prove monad laws for the environment monad for instance
 
-Mention (the unimplemented \verb;Prop (a -> b); - \verb;a -> Prop b;
+Mention (the unimplemented \hs{Prop (a -> b)} - \hs{a -> Prop b}
 isomorphism and its relation to seq and extensional equality)
 
 \subsection{Structural induction}
 
-Simle induction to more complex structural induction and its
+Simple induction to more complex structural induction and its
 implementation.
 
 \subsection{Fixed point induction}
@@ -290,6 +330,6 @@ functions
 \subsection{Approximation lemma}
 
 After fixed point induction since it is an easy consequence of fixed
-point induction, and how we removed the auxillary structure of natural
+point induction, and how we removed the auxiliary structure of natural
 numbers. This makes it equivalent to fixed point induction of id on
 both sides (or does it?)

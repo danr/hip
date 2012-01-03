@@ -615,6 +615,48 @@ Here we need to add (Branch Bottom _ _), but this is not currently
 done.  This needs a big overhaul and also some new QC properties which
 holds with bottom. Important, important!
 
+*** How to QC this beast
+
+Make some generator (possibly Gen) that creates a function with some
+datatype, maybe the standard ones (Nat, Tree, List, Expr), and some
+more contrived ones like
+
+#+BEGIN_SRC haskell
+data D = A0 | B0 | A1 D | B1 D | A2 D D | B2 D D
+#+END_SRC
+
+This function should do some non-trivial pattern matching on this
+expression and return in some result data type like
+
+#+BEGIN_SRC haskell
+data Res = E0 | E1 | ... | En
+#+END_SRC
+
+Furthermore, guards can be added as arguments to the
+function. Example:
+
+#+BEGIN_SRC haskell
+test :: D -> D -> Bool -> Res
+test (A2 B0 x) (B2 (A1 y) z) g0      = E1
+test (A2 x B0) (B1 (A1 y))   g0 | g0 = E2
+test _         C0            g0      = E3
+#+END_SRC
+
+then we generate some values of D and Bool, including bottom, and
+monitor the result (in Res or bottom), and then write properties
+about it, like this:
+
+#+BEGIN_SRC haskell
+prop_test_0 :: Prop Res
+prop_test_0 = test (A2 B0 x) (B2 bottom z) True =:= bottom
+
+prop_test_0 :: Prop Res
+prop_test_0 = test (A2 B0 A0) (B2 (A1 A0) bottom) bottom =:= E1
+#+END_SRC
+
+and see that all properties succeed in autospec, which they should
+trivially do by plain/definitional equality.
+
 ** Function pointers are really smart.
 See the report :) And PAP.hs
 
