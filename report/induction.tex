@@ -1,0 +1,20 @@
+\section{Structural induction}
+
+Any non-recursive, or more importantly recursive data type gives rise
+to induction schemata.
+
+\footnote{Haskell's natural numbers are of course also cluttered with
+  elements that are not natural numbers, such as $\bot$, but also the
+  infinite ``natural number'' defined by \hs{infinite = Succ infinite}}
+, defined the usual way in Haskell by \hs{data Nat = Zero | Succ Nat}
+yields this induction axiom schema:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\fn{Zero})
+       \\
+       \fa{x} P(x) \rightarrow P(\fn{Succ}(x))
+     }
+     { \fa{x} P(x) }
+\end{mathpar}

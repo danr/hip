@@ -1,0 +1,196 @@
+\section{Approximation Lemma}
+
+The approximation lemma must be considered a standard technique for
+proving properties about corecursive programs. Just like fixed point
+induction it can be used with functions that are produce infinite
+values, like \hs{repeat} and \hs{iterate}, out of abstract values
+making structural induction impossible \cite{corecursive}.  The
+approximataion lemma supersedes the classical take lemma
+\cite{introfp} by being easier to apply and generalize: unlike the
+take lemma, it can be applied to equalities of any polynomial
+data type \cite{genapprox}. The definitions of \hs{take} and
+\hs{approx}: % for lists can be viewed in figure \ref{fig:takeapprox}.
+
+%% This is weird!
+
+%\floatstyle{ruled}
+%\newfloat{program}{thp}{lop}
+%\floatname{program}{Program}
+
+\note{how to put/float source code side by side?}
+%\begin{program}
+\begin{verbatim}
+take :: Nat -> [a] -> [a]             approx :: Nat -> [a] -> [a]
+take Zero    _      = []              approx (Suc n) []     = []
+take (Suc n) []     = []              approx (Suc n) (x:xs) = x : approx n xs
+take (Suc n) (x:xs) = x : take n xs
+\end{verbatim}
+%\caption{Definition of \hs{take} and \hs{approx} on lists, with Peano-\hs{Nat}s.}
+%\label{fig:takeapprox}
+%\end{program}
+\note{write this as Haskell code? (those \hs{Nat} are actually $\mathbb{N}$)}
+
+Whereas \hs{take} approximates a list and ends it with \hs{[]},
+\hs{approx} ends it with $\bot$ since the \hs{Zero} case is
+omitted. The idea of these techniques is then to show that show that
+two lists are equal by showing that their prefix or approximation
+coincides for all natural numbers. The approximation lemma is given thusly
+
+\begin{equation}
+\label{eq:approxeq}
+xs \, = \, ys \quad \Leftrightarrow \quad \fa{n \in \mathbb{N}} \hs{approx} \, n \, xs = \hs{approx} \, n \, ys
+\end{equation}
+
+Equation \ref{eq:approxeq} quantifies over the \emph{true} natural
+numbers, rather than the \emph{polluted} Haskell naturals. Showing an
+equality then amounts to a proof by induction over natural numbers,
+and the base case for $0$ is always true by reflexivity, as the
+approximation is $\bot$.
+The right to left implication is (trivially) true by substitution, and
+the other direction hinges on the lemma that better and better
+approximations form a chain with limit \hs{id}, as illustrated in
+Equation \ref{eq:approxchain}.
+
+\begin{equation}
+\label{eq:approxchain}
+\hs{approx} \, 0 \,
+   \sqsubseteq \,
+\hs{approx} \, 1 \,
+   \sqsubseteq \,
+\cdots
+   \sqsubseteq \,
+\hs{approx} \, n \,
+   \sqsubseteq \,
+\hs{approx} \, n + 1 \,
+   \sqsubseteq \,
+\cdots
+   \sqsubseteq \,
+\hs{id}
+\end{equation}
+
+The inclusions in \ref{eq:approxchain}
+are easily given by induction on
+natural numbers and the limit by structural induction on lists. The
+implication is then established by this calculation:
+
+\newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
+\newcommand{\desca}[1]{  & \hspace{46mm}                              \{ \mathrm{#1} \}}
+\newcommand{\descra}[1]{ & \hspace{35mm} \Rightarrow     \hspace{4mm} \{ \mathrm{#1} \}}
+\newcommand{\descla}[1]{ & \hspace{35mm} \Leftarrow      \hspace{4mm} \{ \mathrm{#1} \}}
+\newcommand{\desclra}[1]{& \hspace{35mm} \Leftrightarrow \hspace{4mm} \{ \mathrm{#1} \}}
+\begin{align*}
+\xsys{\fa{n} \hs{approx} \, n}{}            \\
+\descra{limits}                             \\
+\xsys{\lub{n} \, (\hs{approx} \, n}{)}      \\
+\desclra{continuity \, of \, application}   \\
+\xsys{\lub{n} \, (\hs{approx} \, n)}{}      \\
+\desclra{Equation \, \ref{eq:approxchain}} \\
+\xsys{\hs{id}}{}                            \\
+\desclra{definition \, of \, \hs{id}}       \\
+\xsys{}{}                                   \\
+\end{align*}
+
+\subsection{Example: Mirroring an Expression}
+
+Consider these definitions of a modest but prototypical expression
+data type, and its mirroring function:
+
+\begin{verbatim}
+data Expr = Add Expr Expr | Value Nat
+
+mirror :: Expr -> Expr
+mirror (Add e1 e2) = Add (mirror e2) (mirror e1)
+mirror (Value n)   = Value n
+
+prop_mirror_involutive :: Expr -> Prop Expr
+prop_mirror_involutive e = e =:= mirror (mirror e)
+\end{verbatim}
+
+Two things to notice here is that the type \hs{Expr} does not have a
+nullary constructor. Then the \hs{take} lemma would not be usable as
+there is no such function over these expressions: the list version
+returns the empty list \hs{[]} for the zero case, but there is no such
+alternative for \hs{Expr} above. It is important that the limit of
+approximations is the identity, and we cannot get this property when
+trying to generalise the take lemma.
+
+Furthermore, fixed point induction fails on this property: choosing
+either or both occurrences of \hs{mirror} on the right side is
+constant bottom for the base case, and the left side is the identity.
+
+
+We shall now proceed to prove that \hs{mirror} is involutive by the
+approximation lemma. The approximation function for \hs{Expr} is
+automatically generated, by approximating each self-recursive
+constructor, and hence \hs{Value}'s \hs{Nat} is not further approximated:
+
+\begin{verbatim}
+approx :: Nat -> Expr -> Expr
+approx (Suc n) (Add e1 e2) = Add (approx n e1) (approx n e2)
+approx (Suc n) (Value n)   = Value n
+\end{verbatim}
+
+Indeed, we also get a third case for $\bot$ which states that the
+approximation of $\bot$ is, quite unsurprisingly, $\bot$. As always in
+proofs by approximation lemma, we proceed by induction over natural
+numbers, and the base case is always trivial: true by reflexivity as
+both sides are $\bot$. The step case - which indeed is the only proof
+obligation in any proof of this kind - is to prove this:
+
+\begin{equation*}
+\fa{e}  approx \, (\hs{Suc} \, n) \, e = approx \, (\hs{Suc} \, n) \, (mirror \, (mirror \, e))
+\end{equation*}
+
+An important property of the induction hypothesis is the universal
+quantification of the expression $e$, unlike the fixed natural number
+$n$:
+
+\begin{equation*}
+\fa{e}  approx \, n \, e = approx \, n \, (mirror \, (mirror \, e))
+\end{equation*}
+
+The proof is by case exhaustion. The case for \hs{Value} and $\bot$
+are trivial: \hs{mirror} is strict in its first argument, and
+mirroring \hs{Value} twice is the identity, so these cases are both
+true by reflexivity. The \hs{Add} case is ever so slightly more
+elaborate, and with names shortened to \hs{app} and \hs{mir} the
+reasoning is as follows:
+
+\note{$(\hs{Suc} \, n)$ or $(n + 1)$?}
+\newcommand{\Adds}[2]{\hs{Add} \, #1 e_1 #2 \, #1 e_2 #2}
+\newcommand{\Approxn}[0]{\hs{app} \, n \,}
+\newcommand{\ApproxSucn}[0]{\hs{app} \, (\hs{Suc} \, n) \,}
+\newcommand{\mirmir}[0]{\hs{mir} \, (\hs{mir} \, }
+\begin{align*}
+\faa{e_1}{e_2}&  \ApproxSucn (\Adds{}{})  = \ApproxSucn (\mirmir \Adds{}{} ))                                                                   \\
+                                                                                 \desclra{\defof{\hs{mirror}}}                                   \\
+\faa{e_1}{e_2}&  \ApproxSucn (\Adds{}{})  = \ApproxSucn (\Adds{(\mirmir}{))})                                                                    \\
+                                                                                \desclra{\defof{\hs{approx}}}                                    \\
+\faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn(\mirmir}{)))}                                                                        \\
+                                                                                \descla{induction \, hypothesis \, twice \, (e_1 \, and \, e_2)} \\
+\faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn}{)}                                                                                  \\
+                                                                                \desca{reflexivity}                                              \\
+\end{align*}
+
+\subsection{Approximation Lemma is Fixpoint Induction}
+
+Approximation lemma is fixed point induction over the recursive \hs{id}.
+
+\subsection{Uncategorized}
+
+After fixed point induction since it is an easy consequence of fixed
+point induction, and how we removed the auxiliary structure of natural
+numbers. This makes it equivalent to fixed point induction of id on
+both sides (or does it?)
+
+Approximation lemma is a generalization of the take lemma, and its
+first form is used for properties about infinite and partial lists,
+but it is easily generalized to other recursive data types.
+\note{
+In particular, all polynomial data types — for example, any
+sum-of-products data type — can be defined in this way.
+This result generalizes
+to mutually recursive, parameterised, exponential and nested datatypes, but
+for simplicity we only consider polynomial datatypes in this article.
+\cite{genapprox}}
+

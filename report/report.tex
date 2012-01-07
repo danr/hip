@@ -11,6 +11,7 @@
 \usepackage{wrapfig}
 \usepackage{tipa}
 \usepackage{textcomp}
+\usepackage{float}
 %\usepackage{courier}
 
 \newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
@@ -24,8 +25,24 @@
 
 \newcommand\tofix[1]{#1_{\mathrm{tofix}}}
 \newcommand\unfix[1]{#1_{\mathrm{unfix}}}
+\newcommand\comment[1]{}
+
+\newcommand\lub[1]{\sqcup_{#1}}
+\newcommand\defof[1]{definition \, of \, #1}
 
 \begin{document}
+
+\chapter{Proof Methods}
+
+\input{approx}
+
+\bibliographystyle{apalikeurl}
+\bibliography{masterbib}
+
+
+\end{document}
+
+\begin{comment}
 
 %% Title ----------------------------------------------------------------------
 \title{Proving Equational Haskell Properties Using ATPs}
@@ -72,7 +89,7 @@ failures \cite{chasingbot}.
 
 Explain the outline of the report
 
-\chapter{Background}
+\chapter{Background - to me merged}
 
 This work's main areas, Haskell, FOL, ATPs and some basic DT.
 
@@ -147,12 +164,13 @@ Zeno
 Co-recursive techniques \cite{corecursive}, Hinze's papers, Generic
 Approximation lemma, or have this in other chapters
 
-%% Techical Part --------------------------------------------------------------
+%% Technical Part --------------------------------------------------------------
 
-\input{tech}
+\input{translation}
+
+\input{proofs}
 
 %% End of Technical Part ------------------------------------------------------
-
 
 
 \chapter{Discussion}
@@ -185,6 +203,10 @@ comprehensions, records, pattern bindings)
 
 Min-predicate for finite models and quicker proof searches
 
+Since we will need to prove termination for functions, how would one
+prove non-termination (for some inputs)? Then we could get more
+completeness: this function with these inputs would be $\bot$.
+
 \section{Conclusion}
 
 %% References -----------------------------------------------------------------
@@ -192,3 +214,5 @@ Min-predicate for finite models and quicker proof searches
 \bibliographystyle{apalikeurl}
 \bibliography{masterbib}
 \end{document}
+
+\end{comment}

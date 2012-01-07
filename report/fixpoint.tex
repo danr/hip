@@ -1,0 +1,125 @@
+
+\section{Fixpoint induction}
+
+\note{fixpoint induction or fixed point induction?}
+\note{Introduce \hs{fix} in background, and reference them to each
+  other?}
+The celebrated fixpoint induction from Domain Theory, now automated!
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot)
+       \\
+       P(x) \rightarrow P(f(x))
+       \\
+       P \, \mathrm{admissible}
+     }
+     { P(\fn{fix} f) }
+\end{mathpar}
+
+Here it is important that $P$ is \emph{admissible} or
+$\omega$-\emph{complete}, but universally quantified equalities of
+continuous functions and compositions thereof is.
+
+A simple way of defining a fixed point combinator in Haskell is
+\begin{verbatim}
+fix :: (a -> a) -> a
+fix f = f (fix f)
+\end{verbatim}
+
+The translation from a function written with explicit recursion to a
+style with \hs{fix} is mechanical. Consider \hs{iterate}
+
+\begin{verbatim}
+iterate f x = x : iterate f (f x)
+\end{verbatim}
+
+Each occurrence of the same function is copied with a new definition,
+here \hs{iterateStep}, with an additional argument (here \hs{i}) which
+replaces the recursive call.
+
+\begin{verbatim}
+iterate = fix iterateStep
+iterateStep i f x = x : i f (f x)
+\end{verbatim}
+
+Now,
+\hs{fix iterateStep} =
+\hs{iterateStep (fix iterateStep}) =
+\hs{iterateStep (iterateStep (fix iterateStep))} = ...
+\hs{iterateStep (iterateStep (... (iterateStep (fix iterateStep))
+  ...))}, which allows arbitrary unrolling of the definition, making it
+  equivalent to \hs{iterate} above.
+
+\subsection{Implementation}
+
+To prove something regarding a function $f$ defined abstractly with
+arguments $\overbar{x}$ and body $e(\overbar{x},f)$ as
+
+\begin{equation*}
+f \, \overbar{x} = e(\overbar{x},f)
+\end{equation*}
+
+
+
+We introduce two new constants, $\tofix{f}$ and $\unfix{f}$ as this:
+
+\begin{equation*}
+\tofix{f} \, \overbar{x} = e(\overbar{x},\unfix{f})
+\end{equation*}
+
+\note{Some side-by side reasoning how it looks with these definitions
+  and the normal definitions of fixpoint induction}
+The fixpoint schema now becomes:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot)
+       \\
+       P(\unfix{f}) \rightarrow P(\tofix{f})
+       \\
+       P \, \mathrm{admissible}
+     }
+     { P(f) }
+\end{mathpar}
+
+
+This also works for several functions at the same time, possibly
+mutually recursive:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot,\bot)
+       \\
+       P(\unfix{f},\unfix{g}) \rightarrow P(\tofix{f},\tofix{g})
+       \\
+       P \, \mathrm{admissible}
+     }
+     { P(f,g) }
+\end{mathpar}
+
+\subsection{Natural Selection}
+
+Given a property like list concatenation as above
+\note{examples are not set in stone so this may change}
+it is actually not possible to show the property with fixed point
+induction on all four occurrences of \hs{++}. As if you would do
+structural induction on this proof, you will see that the both in the
+left hand side are normalized, and the first on the right hand
+side. These are the functions you will want to do fixpoint induction
+on. See illustration with $\mathbf{app}$ on the locations suspect for
+fixpoint induction and $app$ for no change:
+
+\begin{equation*}
+\faaa{xs}{ys}{zs} \mathbf{app}(\mathbf{app}(xs,ys),zs)
+               =  \mathbf{app}(xs,app(ys,zs))
+\end{equation*}
+\note{I cannot prove the \mathbf{[]} case for this}
+
+The approach taken here is to try fixed point induction on all the
+subsets of the recursive functions mentioned in the property.
+
+

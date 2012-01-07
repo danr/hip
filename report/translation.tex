@@ -1,4 +1,4 @@
-\section{Translation to FOL}
+\chapter{From Haskell to First Order Logic}
 
 The goal of this translation is to enable equational reasoning of
 Haskell programs, in FOL. It is here referred to as a translation, but
@@ -10,7 +10,7 @@ and there is not even a formal semantics for the language
 \cite{chasingbot}.
 
 % Whoa, much in this section
-\subsection{Data types}
+\section{Data types}
 
 Haskell's data types and its consequence pattern matching is
 translated by giving each constructor a function or constant symbol.
@@ -31,7 +31,7 @@ theory of a Haskell program with this data type.
 \begin{align*}
 \fn{\bot} &  \neq \fn{Empty}\\
  \forall \, l \,  x \,  r \,  . \,  \fn{\bot} &  \neq \fn{Branch}(l,x,r)\\
- \forall \, l \,  x \,  r \,  . \,  \fn{Empty} &  \neq \fn{Branch}(l,x,r)\\
+ \forall \, l \,  x \,  r \,  . \,  \fn{Empty} &  \neq \fn{Branch}(l,x,r)
 \end{align*}
 
 Notice that in Haskell, each data type also has an extra value, bottom, which
@@ -40,7 +40,7 @@ irrefutable pattern matches but also non-terminating programs. The constant
 $\bot$ captures this notion and is naturally also distinct from the values
 of \hs{Empty} and \hs{Branch}.
 
-\subsection{Injective constructors and projections}
+\section{Injective constructors and projections}
 
 We also want injectivity of constructors, for example if we have the
 cons constructor, \hs{:} in Haskell, and \hs{x:xs = y:ys} then
@@ -52,7 +52,7 @@ constructor of the Tree example, we get the following projections:
 \begin{align*}
  \forall \, l \, x \, r \, . \,  \fn{Branch_{0}}(\fn{Branch}(l,x,r)) &  = l\\
  \forall \, l \, x \, r \, . \,  \fn{Branch_{1}}(\fn{Branch}(l,x,r)) &  = x\\
- \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r\\
+ \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r
 \end{align*}
 
 These ternary functions are bluntly named by indexing on the projected
@@ -64,7 +64,7 @@ $\fn{Branch}(l,x,r) = \fn{Branch}(l',x',r')$ then the first
 projection, $\fn{Branch_0}$, gives us that $l=l'$. Analogously,
 and the second and the third give $x=x'$ and $r=r'$, respectively.
 
-\subsection{Translation of functions}
+\section{Translation of functions}
 
 Translating functions that do not use pattern matching is
 straightforward. Consider this Haskell definition of a singleton tree:
@@ -79,10 +79,10 @@ to referential transparency we can turn the definition into an
 equality with quantified variables:
 
 \begin{align*}
- \forall \, x \, . \, \fn{leaf}(x) &  = \fn{Branch}(\fn{Empty},x,\fn{Empty})\\
+ \forall \, x \, . \, \fn{leaf}(x) &  = \fn{Branch}(\fn{Empty},x,\fn{Empty})
 \end{align*}
 
-\subsection{Pattern matching}
+\section{Pattern matching}
 
 Let's now consider \hs{leaf}'s partial inverse, \hs{top} that
 yields the top element of the tree if there is one, or is undefined
@@ -106,8 +106,8 @@ otherwise, it is $\bot$:
 \begin{align*}
  \forall \, l \, x \, r \, & . \, \fn{top}(\fn{Branch}(l,x,r) = x\\
  \forall \, t \, & . \, t \neq
-p \fn{Branch}(\fn{Branch_{0}}(t),\fn{Branch_{1}}(t),\fn{Branch_{2}}(t))
- \rightarrow \, \fn{top}(t)  = \fn{\bot}\\
+ \fn{Branch}(\fn{Branch_{0}}(t),\fn{Branch_{1}}(t),\fn{Branch_{2}}(t))
+ \rightarrow \, \fn{top}(t)  = \fn{\bot}
 \end{align*}
 
 Here the projections functions come in handy. Indeed, an equivalent
@@ -119,14 +119,14 @@ but skolemized formulations of the second formulas are:
  \rightarrow \, \fn{top}(t) = \bot \\
  \forall \, t \, & . (\forall \, l \, x \, r . \, t \neq
  \fn{Branch}(l,x,r))
- \rightarrow \, \fn{top}(t) = \bot \\
+ \rightarrow \, \fn{top}(t) = \bot
 \end{align*}
 
 But as we saw earlier, projections also imply injectivity so this is
 the approach used here but the choice is of little importance (or is
 it? benchmark!!)
 
-\subsection{Overlapping patterns}
+\section{Overlapping patterns}
 
 Overlapping patterns need to be removed, otherwise we could easily get
 an inconsistent theory, consider
@@ -141,7 +141,7 @@ Certainly, we cannot translate this to
 \begin{align*}
 \fn{overlap}(\fn{True}) & = \fn{True} \\
 \fn{overlap}(\fn{True}) & = \fn{False} \\
-\forall \, b \, . \, b \neq True & \rightarrow \fn{overlap}(b) = \bot \\
+\forall \, b \, . \, b \neq True & \rightarrow \fn{overlap}(b) = \bot
 \end{align*}
 
 Transitivity of equality then yields $\fn{True} = \fn{False}$,
@@ -153,7 +153,7 @@ definition, making the second match of True to never occur. Thus, the
 translation to FOL also removes all subsequent patterns that are
 instances of any pattern above.
 
-\subsection{Nested patterns and bottoms}
+\section{Nested patterns and bottoms}
 
 The translation also handles patterns in more than one depth. At every
 location in a pattern where a constructor is matched against, a
@@ -182,7 +182,7 @@ unbalance Bottom                       = Bottom
 And such an addition of bottoms is made by the translation.
 \note{This writing actually discovered a bug. Report the solution and how it was tested}
 
-\subsection{Guards}
+\section{Guards}
 
 Guards are not much of a complication. Either the guard expression is
 \hs{True}, then that branch is picked. If the expression returns
@@ -191,7 +191,7 @@ be taken when looking ``upwards'' the branches, to not collide with
 the guards.
 \note{Add example}
 
-\subsection{Functions as arguments}
+\section{Functions as arguments}
 
 In Haskell, functions readily take other functions as arguments, and
 functions can also be partially applied. To get the same behavior in
@@ -242,7 +242,7 @@ $\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
 the axiom of $\fn{map.ptr}$ then equals this to
 $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
-\subsection{The intermediate language}
+\section{The intermediate language}
 
 Everything becomes top level definitions, \hs{let} and \hs{where} are
 floated to the top, with the free variables added as extra parameters,
@@ -260,7 +260,7 @@ branch expressions are just constructor or function application.
 Type-signatures and data types are also supported since this
 information is needed for different proof techniques.
 
-\subsection{Haskell coverage}
+\section{Haskell coverage}
 
 Haskell is a big language, and translating it all in one go is a
 daunting task. Therefore, some restrictions were settled to be able to
@@ -277,7 +277,7 @@ A more serious omitted feature is the lack of built-in types like \hs{Int},
 
 (Higher-kinded type variables are currently not supported)
 
-\subsection{Uncategorized}
+\section{Uncategorized}
 
 \begin{itemize}
 

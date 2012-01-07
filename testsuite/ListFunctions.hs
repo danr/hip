@@ -2,9 +2,14 @@
 module ListFunctions where
 
 import AutoPrelude
-import Prelude (Bool(..))
+import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..),Int)
 
-data Nat = Z | S Nat
+data Nat = Z | S Nat deriving (Eq,Show)
+
+instance Arbitrary Nat where
+  arbitrary =
+    let nats = iterate S Z
+    in  (nats !!) `fmap` choose (0,25)
 
 Z     == Z     = True
 Z     == _     = False
@@ -166,6 +171,18 @@ lastOfTwo _ ys = last ys
 zipConcat :: a -> [a] -> [b] -> [(a, b)]
 zipConcat _ _ [] = []
 zipConcat x xs (y:ys) = (x, y) : zip xs ys
+
+enumFromTo :: Nat -> Nat -> [Nat]
+enumFromTo x y | y < x     = []
+               | otherwise = x : enumFromTo (S x) y
+
+nats = 0 : map S nats
+
+prop_nats :: Nat -> Prop [Nat]
+prop_nats n = take (S n) nats =:= enumFromTo 0 n
+
+prop_00 :: (a -> b) -> [a] -> Nat -> Prop [b]
+prop_00 f xs n = take n (map f xs) =:= map f (take n xs)
 
 prop_01 :: Nat -> [a] -> Prop [a]
 prop_01 n xs
@@ -416,17 +433,20 @@ prop_82 n xs ys
 
 prop_83 :: [a] -> [a] -> [b] -> Prop [(a,b)]
 prop_83 xs ys zs
-  = zip (xs ++ ys zs =:=
-           zip xs (take (len xs) zs) ++ zip ys (drop (len xs) zs))
+  = zip (xs ++ ys) zs =:=
+           zip xs (take (len xs) zs) ++ zip ys (drop (len xs) zs)
 
 prop_84 :: [a] -> [b] -> [b] -> Prop [(a,b)]
 prop_84 xs ys zs
-  = zip xs (ys ++ zs =:=
-           zip (take (len ys) xs) ys ++ zip (drop (len ys) xs) zs)
+  = zip xs (ys ++ zs) =:=
+           zip (take (len ys) xs) ys ++ zip (drop (len ys) xs) zs
 
-prop_85 :: [a] -> [b] -> Prop [(a,b)]
-prop_85 xs ys
-  = zip (rev xs) (rev ys) =:= rev (zip xs ys)
+-- This was originally stated
+-- zip (rev xs) (rev ys) =:= rev (zip xs ys)
+-- but that it obviously not true =/
+prop_85 :: [a] -> Prop [(a,a)]
+prop_85 xs
+  = zip (rev xs) (rev xs) =:= rev (zip xs xs)
 
 prop_map_compose :: (b -> c) -> (a -> b) -> [a] -> Prop [c]
 prop_map_compose f g xs = map (f . g) xs =:= map f (map g xs)
@@ -435,9 +455,68 @@ prop_map_id :: [a] -> Prop [a]
 prop_map_id xs = map id xs =:= xs
 
 prop_filter_double_pred :: (a -> Bool) -> (a -> Bool) -> [a] -> Prop [a]
-prop_filter_double_pred p q xs = filter p (filter q xs =:=
-                                        filter (\x -> p x && q x) xs)
+prop_filter_double_pred p q xs = filter p (filter q xs) =:=
+                                        filter (\x -> p x && q x) xs
 
 prop_len_plus_list_homomorphism :: [a] -> [a] -> Prop Nat
 prop_len_plus_list_homomorphism xs ys =
   len (xs ++ ys) =:= len xs + len ys
+
+main = do
+  quickCheck (printTestCase "prop_nats" (prop_nats :: Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_00" (prop_00 :: (Int -> Int) -> [Int] -> Nat -> Prop [Int]))
+  quickCheck (printTestCase "prop_01" (prop_01 :: Nat -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_02" (prop_02 :: Nat -> [Nat] -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_03" (prop_03 :: Nat -> [Nat] -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_04" (prop_04 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_11" (prop_11 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_12" (prop_12 :: Nat -> (Int -> Int) -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_13" (prop_13 :: Nat -> Int -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_14" (prop_14 :: (Int -> Bool) -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_15" (prop_15 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_19" (prop_19 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_20" (prop_20 :: [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_28" (prop_28 :: Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_29" (prop_29 :: Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_30" (prop_30 :: Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_35" (prop_35 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_36" (prop_36 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_37" (prop_37 :: Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_38" (prop_38 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_39" (prop_39 :: Nat -> Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_40" (prop_40 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_41" (prop_41 :: Nat -> (Int -> Int) -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_42" (prop_42 :: Nat -> Int -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_43" (prop_43 :: (Int -> Bool) -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_44" (prop_44 :: Int -> [Int] -> [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_45" (prop_45 :: Int -> Int -> [Int] -> [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_46" (prop_46 :: [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_49" (prop_49 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_50" (prop_50 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_51" (prop_51 :: [Int] -> Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_52" (prop_52 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_53" (prop_53 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_55" (prop_55 :: Nat -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_56" (prop_56 :: Nat -> Nat -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_57" (prop_57 :: Nat -> Nat -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_58" (prop_58 :: Nat -> [Int] -> [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_61" (prop_61 :: [Nat] -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_64" (prop_64 :: Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_66" (prop_66 :: (Int -> Bool) -> [Int] -> Prop Bool))
+  quickCheck (printTestCase "prop_67" (prop_67 :: [Int] -> Prop Nat))
+  quickCheck (printTestCase "prop_68" (prop_68 :: Nat -> [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_72" (prop_72 :: Nat -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_73" (prop_73 :: (Int -> Bool) -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_74" (prop_74 :: Nat -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_75" (prop_75 :: Nat -> Nat -> [Nat] -> Prop Nat))
+  quickCheck (printTestCase "prop_78" (prop_78 :: [Nat] -> Prop Bool))
+  quickCheck (printTestCase "prop_80" (prop_80 :: Nat -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_81" (prop_81 :: Nat -> Nat -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_82" (prop_82 :: Nat -> [Int] -> [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_83" (prop_83 :: [Int] -> [Int] -> [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_84" (prop_84 :: [Int] -> [Int] -> [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_85" (prop_85 :: [Int] -> Prop [(Int,Int)]))
+  quickCheck (printTestCase "prop_map_compose" (prop_map_compose :: (Int -> Int) -> (Int -> Int) -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_map_id" (prop_map_id :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_filter_double_pred" (prop_filter_double_pred :: (Int -> Bool) -> (Int -> Bool) -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_len_plus_list_homomorphism" (prop_len_plus_list_homomorphism :: [Int] -> [Int] -> Prop Nat))
