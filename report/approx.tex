@@ -68,13 +68,14 @@ Equation \ref{eq:approxchain}.
 \hs{id}
 \end{equation}
 
-The inclusions in \ref{eq:approxchain}
-are easily given by induction on
-natural numbers and the limit by structural induction on lists. The
-implication is then established by this calculation:
+The inclusions in \ref{eq:approxchain} are easily given by induction
+on natural numbers and the limit by structural induction on lists.
+For other polynomial data types, this lemma is established by
+the structural induction induced on that data type.
+The desired implication is then readily deduced:
 
 \newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
-\newcommand{\desca}[1]{  & \hspace{46mm}                              \{ \mathrm{#1} \}}
+\newcommand{\desca}[1]{  & \hspace{44.5mm}                              \{ \mathrm{#1} \}}
 \newcommand{\descra}[1]{ & \hspace{35mm} \Rightarrow     \hspace{4mm} \{ \mathrm{#1} \}}
 \newcommand{\descla}[1]{ & \hspace{35mm} \Leftarrow      \hspace{4mm} \{ \mathrm{#1} \}}
 \newcommand{\desclra}[1]{& \hspace{35mm} \Leftrightarrow \hspace{4mm} \{ \mathrm{#1} \}}
@@ -130,12 +131,14 @@ approx (Suc n) (Add e1 e2) = Add (approx n e1) (approx n e2)
 approx (Suc n) (Value n)   = Value n
 \end{verbatim}
 
+\note{Use $\bot$ or bottom in this text?}
 Indeed, we also get a third case for $\bot$ which states that the
-approximation of $\bot$ is, quite unsurprisingly, $\bot$. As always in
-proofs by approximation lemma, we proceed by induction over natural
-numbers, and the base case is always trivial: true by reflexivity as
-both sides are $\bot$. The step case - which indeed is the only proof
-obligation in any proof of this kind - is to prove this:
+approximation of $\bot$ is, quite unsurprisingly, $\bot$.
+As always in proofs by approximation lemma, we proceed by induction
+over natural numbers, and the base case is always trivial: true by
+reflexivity as both sides are $\bot$. The step case - which indeed is
+the only proof obligation in any proof of this kind - is to prove
+this:
 
 \begin{equation*}
 \fa{e}  approx \, (\hs{Suc} \, n) \, e = approx \, (\hs{Suc} \, n) \, (mirror \, (mirror \, e))
@@ -167,7 +170,7 @@ reasoning is as follows:
 \faa{e_1}{e_2}&  \ApproxSucn (\Adds{}{})  = \ApproxSucn (\Adds{(\mirmir}{))})                                                                    \\
                                                                                 \desclra{\defof{\hs{approx}}}                                    \\
 \faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn(\mirmir}{)))}                                                                        \\
-                                                                                \descla{induction \, hypothesis \, twice \, (e_1 \, and \, e_2)} \\
+                                                                                \desclra{induction \, hypothesis \, twice \, (e_1 \, and \, e_2)} \\
 \faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn}{)}                                                                                  \\
                                                                                 \desca{reflexivity}                                              \\
 \end{align*}
@@ -178,6 +181,7 @@ This technique is already simple and widely applicable, however it can
 further be simplified. Implementing it in this form relies on the
 auxiliary structure of Peano natural numbers which also needs to be
 added to the theory. This can be removed by the observation that is
+\note{What is a better name for these functions than \hs{id}?}
 expressed as fixed point induction over a recursive form of \hs{id}.
 
 \begin{verbatim}
@@ -224,7 +228,7 @@ instantiated to the universally quantified equality, and the
 conjecture is $P(\tofix{id})$. The base case need not be proven,
 $P(\bot)$ is always true since it evaluates to $\bot=\bot$.
 
-\subsection{Total Approximation Lemma}
+\subsection{Future Work: Total Approximation Lemma}
 
 It is also possible to adjust the approximation lemma to prove
 properties that are true for total and potentially infinite objects,
@@ -243,6 +247,47 @@ prop_nub_idem :: [Bool] -> Prop [Bool]
 prop_nub_idem xs = nub (nub xs) =:= nub xs
 \end{verbatim}
 
+Consider the list \hs{True:False:}$\bot$. One application of \hs{nub}
+gives \hs{True:}$\bot$, and two gives $\bot$ immediately. In spite of
+this, the property is a truism for finite as well as infinite lists,
+provided that there are not bottoms.
+
+The way to enable the approximation lemma to prove such properties is
+to add predicates of totality, and add axioms like the following to
+the theory:
+
+\note{How to make $Total$ look like one word? The kerning for $T$ in
+  $Total$ looks incorrect}
+\begin{align*}
+            & \neg \, Total(\bot) \\
+            & Total(\hs{[]}) \\
+\faa{x}{xs} & Total(x) \wedge Total(xs) \rightarrow Total(x\hs{:}xs) \\
+\fa{xs}     & Total(xs) \rightarrow Total(\hs{nub} \, xs) \\
+\end{align*}
+
+To use fixed point induction \hs{Total} needs to be an admissible
+predicate. But this is indeed so, for each model with infinite lists,
+we have that all such lists are total.  However, that a total argument
+to \hs{nub} yields a total value also needs to be proven. Furthermore,
+the totality property for the cons case of lists is debatable: should
+the consed element also be total?
+
+The proof obligation is then:
+
+\begin{mathpar}
+  \inferrule*
+     {
+        \fa{xs} Total(xs) \Rightarrow \unfix{id}(\hs{nub} (\hs{nub} \, xs)) = \unfix{id}(\hs{nub} \, xs)
+     }
+     {
+        \fa{xs} Total(xs) \Rightarrow \tofix{id}(\hs{nub} (\hs{nub} \, xs)) = \tofix{id}(\hs{nub} \, xs)
+     }
+\end{mathpar}
+
+It seems like you have to add
+$Total(x) \rightarrow Total(\tofix{id}(x))$ and
+$Total(x) \rightarrow Total(\unfix{id}(x))$ to the theory, too.
+
 \subsection{Uncategorized / old}
 
 After fixed point induction since it is an easy consequence of fixed
@@ -260,3 +305,5 @@ to mutually recursive, parameterised, exponential and nested datatypes, but
 for simplicity we only consider polynomial datatypes in this article.
 \cite{genapprox}
 
+How to use approximation lemma on exponential, mutually recursive and
+nested data types? This would be nice.

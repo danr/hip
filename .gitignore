@@ -21,3 +21,10 @@ src/Test/QuickSpec/
 html/
 *\#*
 tmp/
+*/*tex
+*/*pdf
+!report/*tex
+*bbl
+*blg
+*toc
+*sty
