@@ -13,13 +13,15 @@ Z     * _ = Z
 data Nat = Z | S Nat
 
 -- Disprove
-prop_zero_is_one :: Prop Nat
-prop_zero_is_one = Z =/= S Z
+--prop_zero_is_one :: Prop Nat
+--prop_zero_is_one = Z =/= S Z
 
 -- Induction on x. Also holds in the presence of bottoms
 prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
 prop_assoc_plus x y z
   = x + (y + z) =:= (x + y) + z
+
+{-
 
 -- True by definition
 prop_right_identity_plus :: Nat -> Prop Nat
@@ -95,3 +97,4 @@ prop_repeat_cycle_singleton x = repeat x =:= cycle [x]
 prop_tail_repeat :: a -> Prop [a]
 prop_tail_repeat x = repeat x =:= tail (repeat x)
 
+-}

@@ -224,6 +224,25 @@ instantiated to the universally quantified equality, and the
 conjecture is $P(\tofix{id})$. The base case need not be proven,
 $P(\bot)$ is always true since it evaluates to $\bot=\bot$.
 
+\subsection{Total Approximation Lemma}
+
+It is also possible to adjust the approximation lemma to prove
+properties that are true for total and potentially infinite objects,
+but false for objects with partial values. One such property is the
+idempotence of \hs{nub}. Here is a version of \hs{nub} on booleans,
+and the said property about it:
+
+\begin{verbatim}
+nub :: [Bool] -> [Bool]
+nub (True :True :xs) = nub (True:xs)
+nub (False:False:xs) = nub (False:xs)
+nub (x:xs)           = x:nub xs
+nub _                = []
+
+prop_nub_idem :: [Bool] -> Prop [Bool]
+prop_nub_idem xs = nub (nub xs) =:= nub xs
+\end{verbatim}
+
 \subsection{Uncategorized / old}
 
 After fixed point induction since it is an easy consequence of fixed

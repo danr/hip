@@ -19,6 +19,7 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,lemma
                            ,forall'
                            ,exists'
+                           ,neg
                            ) where
 
 import Data.Map (Map)
@@ -89,6 +90,8 @@ infix  1 <=>
 (===) = liftM2 (\f g -> EqOp f (:==) g)
 (!=)  = liftM2 (\f g -> EqOp f (:!=) g)
 
+neg :: M Formula -> M Formula
+neg = fmap Neg
 
 axiom :: String -> M Formula -> Decl
 axiom s f = Axiom s (run f)

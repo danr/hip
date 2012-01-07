@@ -49,7 +49,7 @@ data Params = Params { files     :: [FilePath]
 params :: Params
 params = Params
   { files     = []      &= args &= typFile
-  , processes = 4       &= help "Number of prover processes (default 4)"
+  , processes = 2       &= help "Number of prover processes (default 4)"
   , output    = Nothing &= opt  "proving/" &= typDir
                         &= help "Output all tptp files in a directory (default proving/)"
   , timeout   = 500     &= help "Timout of provers in milliseconds (default 500)" &= name "t"
