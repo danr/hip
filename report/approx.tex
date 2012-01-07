@@ -61,7 +61,7 @@ Equation \ref{eq:approxchain}.
    \sqsubseteq \,
 \hs{approx} \, n \,
    \sqsubseteq \,
-\hs{approx} \, n + 1 \,
+\hs{approx} \, (\hs{Suc} \, n) \,
    \sqsubseteq \,
 \cdots
    \sqsubseteq \,
@@ -174,9 +174,57 @@ reasoning is as follows:
 
 \subsection{Approximation Lemma is Fixpoint Induction}
 
-Approximation lemma is fixed point induction over the recursive \hs{id}.
+This technique is already simple and widely applicable, however it can
+further be simplified. Implementing it in this form relies on the
+auxiliary structure of Peano natural numbers which also needs to be
+added to the theory. This can be removed by the observation that is
+expressed as fixed point induction over a recursive form of \hs{id}.
 
-\subsection{Uncategorized}
+\begin{verbatim}
+id :: [a] -> [a]              id :: Expr -> Expr
+id []     = []                id (Add e1 e2) = Add (id e1) (id e2)
+id (x:xs) = x : id xs         id (Value n)   = Value n
+\end{verbatim}
+
+Each \hs{id} function constructed in this way is indeed an identity
+function, equivalent to the implementation \hs{id x = x} if we
+disregard time and space complexity. Now, to prove
+
+\begin{equation*}
+e_1 \, = \, e_2
+\end{equation*}
+
+we simply use fixed point induction to prove
+
+\begin{equation*}
+\hs{id} \, e_1 \, = \, \hs{id} \, e_2
+\end{equation*}
+
+where \hs{id} is a such a specialized recursive identity function over
+the data type of the equality. With the same translation of recursive
+functions as in the fixed point section, the axioms for \hs{id} for, say
+lists becomes:
+
+\begin{align*}
+            & \tofix{id}(\hs{[]}) \,   = \, \hs{[]}                                                           \\
+\faa{x}{xs} & \tofix{id}(x\hs{:}xs) \, = x\hs{:}\unfix{id}(xs)                                                \\
+\fa{xs}     & \tofix{id}(xs)           = \bot  \leftarrow    xs \neq [] \wedge xs \neq head(xs)\hs{:}tail(xs) \\
+\end{align*}
+
+The step case in induction $P(\unfix{id}) \rightarrow P(\tofix{id})$
+is then exactly the same strength as the approximation lemma with
+natural numbers.
+
+\subsection{Implementation} The implementation of approximation lemma
+was the simplest to implement, after definitional equality. First,
+from the type signature from the property, such a recursive identity
+function as above is generated for the data type of the equality. Then
+the lemma $P(\unfix{id})$ is added to the theory, with $P$
+instantiated to the universally quantified equality, and the
+conjecture is $P(\tofix{id})$. The base case need not be proven,
+$P(\bot)$ is always true since it evaluates to $\bot=\bot$.
+
+\subsection{Uncategorized / old}
 
 After fixed point induction since it is an easy consequence of fixed
 point induction, and how we removed the auxiliary structure of natural
@@ -186,11 +234,10 @@ both sides (or does it?)
 Approximation lemma is a generalization of the take lemma, and its
 first form is used for properties about infinite and partial lists,
 but it is easily generalized to other recursive data types.
-\note{
 In particular, all polynomial data types — for example, any
 sum-of-products data type — can be defined in this way.
 This result generalizes
 to mutually recursive, parameterised, exponential and nested datatypes, but
 for simplicity we only consider polynomial datatypes in this article.
-\cite{genapprox}}
+\cite{genapprox}
 
