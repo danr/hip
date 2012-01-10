@@ -74,11 +74,6 @@ For other polynomial data types, this lemma is established by
 the structural induction induced on that data type.
 The desired implication is then readily deduced:
 
-\newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
-\newcommand{\desca}[1]{  & \hspace{44.5mm}                              \{ \mathrm{#1} \}}
-\newcommand{\descra}[1]{ & \hspace{35mm} \Rightarrow     \hspace{4mm} \{ \mathrm{#1} \}}
-\newcommand{\descla}[1]{ & \hspace{35mm} \Leftarrow      \hspace{4mm} \{ \mathrm{#1} \}}
-\newcommand{\desclra}[1]{& \hspace{35mm} \Leftrightarrow \hspace{4mm} \{ \mathrm{#1} \}}
 \begin{align*}
 \xsys{\fa{n} \hs{approx} \, n}{}            \\
 \descra{limits}                             \\
@@ -270,7 +265,15 @@ predicate. But this is indeed so, for each model with infinite lists,
 we have that all such lists are total.  However, that a total argument
 to \hs{nub} yields a total value also needs to be proven. Furthermore,
 the totality property for the cons case of lists is debatable: should
-the consed element also be total?
+the consed element also be total? In this case it must be, but it is
+not generally so.
+\note{Change to an example that highlights this?
+\hs{
+dumb (x:y:ys) = x:y:dumb ys
+dumb xs       = xs
+}
+Not idempotent
+}
 
 The proof obligation is then:
 

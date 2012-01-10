@@ -27,14 +27,24 @@
 \newcommand\unfix[1]{#1_{\mathrm{unfix}}}
 \newcommand\comment[1]{}
 
+\newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
+\newcommand{\desca}[1]{  & \hspace{44.5mm}                            \{ \mathrm{#1} \}}
+\newcommand{\descra}[1]{ & \hspace{35mm} \Rightarrow     \hspace{4mm} \{ \mathrm{#1} \}}
+\newcommand{\descla}[1]{ & \hspace{35mm} \Leftarrow      \hspace{4mm} \{ \mathrm{#1} \}}
+\newcommand{\desclra}[1]{& \hspace{35mm} \Leftrightarrow \hspace{4mm} \{ \mathrm{#1} \}}
+
 \newcommand\lub[1]{\sqcup_{#1}}
 \newcommand\defof[1]{definition \, of \, #1}
+
+\newcommand\w[0]{\,\,}
+\newcommand\eq[0]{=}
 
 \begin{document}
 
 \chapter{Proof Methods}
 
-\input{approx}
+\noindent
+\input{fixpoint}
 
 \bibliographystyle{apalikeurl}
 \bibliography{masterbib}
