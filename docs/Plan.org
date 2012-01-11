@@ -666,6 +666,21 @@ SCHEDULED: <2012-01-13 Fri>
 ** Hacking on the lost features
 SCHEDULED: <2012-01-13 Fri>
 
+** Problems with pattern coverage
+What is the difference between these two definitions?
+
+#+BEGIN_SRC
+if' True a b = a
+if' _    a b = b
+
+if'' True  a b = a
+if'' False a b = b
+#+END_SRC
+
+if'' will have that everything but True and False goes to bottom,
+and if' will have that everything but True and Bottom goes to b.
+
+Is this OK?
 * Week 3 (16 Jan - 22 Jan)
 ** Write report
 SCHEDULED: <2012-01-20 Fri>

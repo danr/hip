@@ -11,6 +11,8 @@ instance Arbitrary Nat where
     let nats = iterate S Z
     in  (nats !!) `fmap` choose (0,25)
 
+otherwise = True
+
 Z     == Z     = True
 Z     == _     = False
 (S _) == Z     = False
@@ -176,10 +178,10 @@ enumFromTo :: Nat -> Nat -> [Nat]
 enumFromTo x y | y < x     = []
                | otherwise = x : enumFromTo (S x) y
 
-nats = 0 : map S nats
+nats = Z : map S nats
 
 prop_nats :: Nat -> Prop [Nat]
-prop_nats n = take (S n) nats =:= enumFromTo 0 n
+prop_nats n = take (S n) nats =:= enumFromTo Z n
 
 prop_00 :: (a -> b) -> [a] -> Nat -> Prop [b]
 prop_00 f xs n = take n (map f xs) =:= map f (take n xs)
