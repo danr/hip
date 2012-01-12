@@ -681,6 +681,30 @@ if'' will have that everything but True and False goes to bottom,
 and if' will have that everything but True and Bottom goes to b.
 
 Is this OK?
+** Equistential quantification in cnf
+** TODO Fixed point induction
+*** Good when you don't have anything to do induction on
+*** Examples of examples
+**** map-iterate
+**** repeat-iterate
+**** append / plus
+**** mirror-treeIterate
+*** On mutual and subset of occuring functions
+*** How it was implemented
+*** Future work: depth machines
+** TODO Structural induction
+*** Compare to normal PA induction
+*** Chain complete predicates -> infinite properties
+*** Structural induction on exponential types
+*** Deeper structural induction
+*** Future work: induction machines
+** TODO Related work
+*** Coinduction work in Agda by NAD
+** TODO Future work
+*** Properties of implication
+**** x + y = x + z -> y = x
+needs induction on the whole property, you cannot simply the
+antecedent as a lemma
 * Week 3 (16 Jan - 22 Jan)
 ** Write report
 SCHEDULED: <2012-01-20 Fri>

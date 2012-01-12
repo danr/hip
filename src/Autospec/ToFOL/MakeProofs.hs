@@ -80,12 +80,12 @@ prove :: [Decl]
 prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
         powset = powerset indargs
-    in  plainProof ++
-        proofByFixpointInduction ++
-        proofByApproxLemma ++
+    in  -- plainProof ++
+        proofByFixpointInduction -- ++
+--        proofByApproxLemma ++
 --        map (proofByStructInd True 2) (filter ((<2) .  length) powset) ++
 --        map (proofByStructInd False 2) (filter ((<3) .  length) powset) ++
-        map proofBySimpleInduction indargs
+--        map proofBySimpleInduction indargs
   where
     pstr :: String
     pstr = prettyCore lhs ++

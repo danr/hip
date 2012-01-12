@@ -74,10 +74,43 @@ it can exploit strange recursive structures of the function. A caveat
 is that it can only prove properties that must hold for infinite and
 partial values.
 
+\note{There are also a bunch of proofs available to show here: which
+  are necessary here?  We have that $fix_f \bot = \lub{n}(f^n \bot)$
+  and that $fix_f$ is the least prefixed-point of $x = f x$, if there
+  is another one $\theta$, then $fix_f \sqsubseteq \theta$ (by
+  induction). Futhermore, it is probably appropriate to elaborate why
+  \hs{fix f = f (fix f)} is equal to $\lub{n}(f^n \bot)$ (even though
+  it is obvious!) Page 5 \cite{domains}.  }
+The proof that fixed point induction relies on the fact that
+$\lub{n}(f^n \w \bot) \eq \hs{fix} \w f$, where $f^n$ is $n$
+self-applications of $f$. This is true since \hs{fix} is defined as
+$f$ self-applied to it self. Apart from this, the proof only uses
+induction over natural numbers and that $\f^0 \w \bot \eq \bot$, and
+it is of course important that $P$ is admissible. See proof below:
+
+\begin{align*}
+P(\bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
+\desclra{\mathit{f^0 \w \bot \eq \bot}} \\
+P(f^0 \w \bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
+\descra{quantfying} \\
+P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
+\desclra{induction} \\
+\fa{n} & P(f^n \w \bot) \\
+\desclra{\mathit{P} \w admissible} \\
+& P(\lub{n}(f^n \w \bot)) \\
+\desclra{definition \w of \w \hs{fix}} \\
+& P(\hs{fix} \w f) \\
+\end{align*}
+
+
 \subsection{Example: map-iterate}
 
-The two Haskell functions \hs{map} and \hs{iterate} are related in a
-simple way, namely
+For properties that do not have any arguments with a concrete type,
+structural induction is not applicable. The Haskell function
+\hs{iterate} is a that makes an infinite list from a seed, by repeated
+application of a function, i.e \hs{iterate f x} is the list
+ \hs{x:f x:f (f x):}$\cdots$. It is related to Haskell function
+ \hs{map} in the map-iterate property, stated as follows:
 
 \begin{equation*}
 \faa{f}{x} \hs{map} \w f \w (\hs{iterate} \w f \w x) \eq
@@ -93,10 +126,9 @@ map f [] = []
 \end{verbatim}
 
 The behavior of \hs{map} is to apply a function to every element of a
-list, and \hs{iterate} makes an infinite list from a seed, by repeated
-application of a function. This can easily be proved by fixpoint
-induction on \hs{iterate}. First, we rewrite this function in terms of
-\hs{fix}:
+list. We see that we cannot use structural induction here, since both
+$f$ and $x$ are abstract, but this can be proved by fixpoint induction
+on \hs{iterate}. First, we rewrite this function in terms of \hs{fix}:
 
 \begin{verbatim}
 iterate = fix iter
@@ -163,48 +195,61 @@ admissible. Indeed, for the sequence
 \end{equation*}
 $P$ holds for all elements but $P$ does not hold for its limit \hs{[0..]}.
 
-\subsection{Uncategorized / old}
+\subsection{Mutually recursive functions}
 
-A simple way of defining a fixed point combinator in Haskell is
-\begin{verbatim}
-fix :: (a -> a) -> a
-fix f = f (fix f)
-\end{verbatim}
-
-The translation from a function written with explicit recursion to a
-style with \hs{fix} is mechanical. Consider \hs{iterate}
+You can also mechanically transform mutually recursive functions to be
+defined in terms of \hs{fix}. The functions \hs{even} and \hs{odd}
+defined below, which determines if a \hs{Nat} is even, and odd,
+respectively, are straightforwardly written by mutual recursion:
 
 \begin{verbatim}
-iterate f x = x : iterate f (f x)
+even :: Nat -> Bool           odd :: Nat -> Bool
+even Z     = True             odd Z     = False
+even (S x) = odd x            odd (S x) = even x
 \end{verbatim}
 
-Each occurrence of the same function is copied with a new definition,
-here \hs{iterateStep}, with an additional argument (here \hs{i}) which
-replaces the recursive call.
+To write these functions in terms of fix, as an additional argument,
+the take a tuple of ``non-recursive'' copies of themselves.
 
 \begin{verbatim}
-iterate = fix iterateStep
-iterateStep i f x = x : i f (f x)
+evenToFix :: (Nat -> Bool,Nat -> Bool) -> Nat -> Bool
+evenToFix (evenUnFix,oddUnFix) Z     = True
+evenToFix (evenUnFix,oddUnFix) (S x) = oddUnFix x
+
+oddToFix :: (Nat -> Bool,Nat -> Bool) -> Nat -> Bool
+oddToFix (evenUnFix,oddUnFix) Z     = True
+oddToFix (evenUnFix,oddUnFix) (S x) = evenUnFix x
 \end{verbatim}
 
-Now,
-\hs{fix iterateStep} =
-\hs{iterateStep (fix iterateStep}) =
-\hs{iterateStep (iterateStep (fix iterateStep))} = ...
-\hs{iterateStep (iterateStep (... (iterateStep (fix iterateStep))
-  ...))}, which allows arbitrary unrolling of the definition, making it
-  equivalent to \hs{iterate} above.
+Here the prefix \hs{ToFix} means that it is a function subject to be
+\hs{fix}-ed, and \hs{UnFix} means that it is the ``non-recursive''
+function. The functions above can now be \hs{fix}-ed by giving the
+tuple as an argument to both of them:
+
+\begin{verbatim}
+even',odd' :: Nat -> Bool
+(even',odd') = fix (\t -> (evenToFix t,oddToFix t))
+\end{verbatim}
+
+This encoding makes \hs{even'} denotationally equal to \hs{even} and
+the same relation hols for \hs{odd'} and \hs{odd}.
 
 \subsection{Implementation}
 
-To prove something regarding a function $f$ defined abstractly with
-arguments $\overline{x}$ and body $e(\overline{x},f)$ as
+The mechanical translations introduced above for self-recursive
+functions and mutually recursive functions makes a new function with
+an additional argument, the ``non-recursive'' version of itself. By
+the translation to FOL that is used, this would introduce a new
+argument as a ``function pointer'' and introduce uses of $\app$, which
+seems to confuse at least both eprover and SPASS. Another approach
+which avoids introducing these function pointers, and an additional
+argument to every function is to replace a function $f$ defined
+abstractly with arguments $\overline{x}$ and body $e(\overline{x},f)$
+as
 
 \begin{equation*}
 f \, \overline{x} = e(\overline{x},f)
 \end{equation*}
-
-
 
 We introduce two new constants, $\tofix{f}$ and $\unfix{f}$ as this:
 
@@ -212,7 +257,7 @@ We introduce two new constants, $\tofix{f}$ and $\unfix{f}$ as this:
 \tofix{f} \, \overline{x} = e(\overline{x},\unfix{f})
 \end{equation*}
 
-\note{Some side-by side reasoning how it looks with these definitions
+\note{Maybe some side-by side reasoning how it looks with these definitions
   and the normal definitions of fixpoint induction}
 The fixpoint schema now becomes:
 
@@ -228,7 +273,6 @@ The fixpoint schema now becomes:
      { P(f) }
 \end{mathpar}
 
-
 This also works for several functions at the same time, possibly
 mutually recursive:
 
@@ -243,6 +287,18 @@ mutually recursive:
      }
      { P(f,g) }
 \end{mathpar}
+
+This translation needs to be carried out with some care, since for $f
+\, \overline{x} = e(\overline{x},f)$, it is also possible that $f$ is
+called in bodies of other functions. These are of two kinds: either
+this function is also called from $f$, making it recursive, or another
+function which is not called from $f$, but makes use of $f$
+anyway. The first example, with a recursive call, the body needs to be
+edited so $f$ becomes translated (to $\bot$, $\unfix{f}$ or
+$\tofix{f}$, and the second case should use the original $f$. The
+transitive clousure of the call graph is calculated, and every
+appropriate calls of $f$ are replaced.
+
 
 \subsection{Natural Selection}
 
@@ -260,7 +316,6 @@ fixpoint induction and $app$ for no change:
 \faaa{xs}{ys}{zs} \mathbf{app}(app(xs,ys),zs)
                =  \mathbf{app}(xs,app(ys,zs))
 \end{equation*}
-\note{I cannot prove the $\mathbf{[]}$ case for this}
 
 The approach taken here is to try fixed point induction on all the
 subsets of the recursive functions mentioned in the property.
