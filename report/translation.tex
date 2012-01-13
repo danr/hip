@@ -1,4 +1,4 @@
-\chapter{From Haskell to First Order Logic}
+\chapter{Haskell to First Order Logic}
 
 The goal of this translation is to enable equational reasoning of
 Haskell programs, in FOL. It is here referred to as a translation, but
@@ -8,6 +8,21 @@ Equational reasoning is traditional in proving corrected of Haskell
 programs, but it assumes that a simple denotational semantics exists,
 and there is not even a formal semantics for the language
 \cite{chasingbot}.
+
+\section{Haskell}
+
+Describe some of the features of Haskell, types, lazy evaluation,
+bottoms, pattern-matching, data types, type classes.
+
+Haskell is declarative and side-effect free which makes it easy
+to model in logic in comparison to imperative effectful programming languages.
+
+\section{Domains}
+
+This is the right place to introduce some notions of domain theory:
+values of a data type form a complete partial order with least element
+$\bot$, and introduce concepts of monotonicity,
+$\omega$-$\sqsubseteq$-limits and continuity.
 
 % Whoa, much in this section
 \section{Data types}

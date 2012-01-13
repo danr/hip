@@ -205,9 +205,9 @@ functions as in the fixed point section, the axioms for \hs{id} for, say
 lists becomes:
 
 \begin{align*}
-            & \tofix{id}(\hs{[]}) \,   = \, \hs{[]}                                                           \\
-\faa{x}{xs} & \tofix{id}(x\hs{:}xs) \, = x\hs{:}\unfix{id}(xs)                                                \\
-\fa{xs}     & \tofix{id}(xs)           = \bot  \leftarrow    xs \neq [] \wedge xs \neq head(xs)\hs{:}tail(xs) \\
+            \tofix{id}(\hs{[]})   & \eq \, \hs{[]}                                                           \\
+\faa{x}{xs} \tofix{id}(x\hs{:}xs) & \eq x\hs{:}\unfix{id}(xs)                                                \\
+\fa{xs}     \tofix{id}(xs)        & \eq \bot  \leftarrow    xs \neq [] \wedge xs \neq head(xs)\hs{:}tail(xs) \\
 \end{align*}
 
 The step case in induction $P(\unfix{id}) \rightarrow P(\tofix{id})$

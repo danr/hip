@@ -307,7 +307,7 @@ this function is also called from $f$, making it recursive, or another
 function which is not called from $f$, but makes use of $f$
 anyway. The first example, with a recursive call, the body needs to be
 edited so $f$ becomes translated (to $\bot$, $\unfix{f}$ or
-$\tofix{f}$, and the second case should use the original $f$. The
+$\tofix{f}$), and the second case should use the original $f$. The
 transitive clousure of the call graph is calculated, and every
 appropriate calls of $f$ are replaced.
 
