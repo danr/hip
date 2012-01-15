@@ -16,7 +16,7 @@ induction schema from looks like this:
 
 \note{One could also be explicit about the free variables in $P$}
 \begin{mathpar}
-  \inferrule* [Left=PA-Ind]
+  \inferrule* % [Left=PA-Ind]
      {
        \overbrace{P(0)}^{\mathrm{base}}
        \\
@@ -59,8 +59,8 @@ following axiom schema is used:
      { \fa{x} x \mathrm{\w finite \w and \w total} \rightarrow P(x) }
 \end{mathpar}
 
-If $P$ is a predicate that preserves $\sqsubseteq$-chains, further
-discussed in \ref{sec:admissibility}, then if you prove $P(\bot)$,
+If $P$ is a predicate that preserves $\sqsubseteq$-chains, also
+discussed in Section \ref{sec:admissible}, then if you prove $P(\bot)$,
 then $P(x)$ is true for all $x$, as well as partial and infinite. This
 is because this is a $\sqsubseteq$-chain:
 
@@ -70,11 +70,12 @@ is because this is a $\sqsubseteq$-chain:
 \hs{Succ} \w (\hs{Succ} \w \bot) \sqsubseteq
 \hs{Succ} \w (\hs{Succ} \w (\hs{Succ} \w \bot)) \sqsubseteq
 \cdots
-\end{equation}
+\end{equation*}
 
 with limit \hs{inf}, defined as \hs{inf = Succ inf}. If $P$ then
 preserves $\sqsubseteq$-chains, the property also holds for
-\hs{inf}. Equality properties are admissible.
+\hs{inf}. In this work we are only concerned with equality properties,
+and they are all admissible.
 
 Any non-recursive, or more importantly recursive data type gives rise
 to induction schemata, and this is called structural induction. Here
@@ -82,7 +83,7 @@ are the axiom schemata for potentially partial and infinite lists and
 the \hs{Tree} type defined in \ref{sec:treetrans}:
 
 \begin{mathpar}
-  \inferrule* [left=List-Ind]
+  \inferrule* % [left=List-Ind]
      {
        P(\bot)
        \\
@@ -92,7 +93,7 @@ the \hs{Tree} type defined in \ref{sec:treetrans}:
      }
      { \fa{x} P(x) }
 
-  \inferrule* [left=Tree-Ind]
+  \inferrule* % [left=Tree-Ind]
      {
        P(\bot)
        \\
@@ -118,7 +119,7 @@ data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
 The induction schema for this data type is:
 
 \begin{mathpar}
-  \inferrule* [left=Ord-Ind]
+  \inferrule* % [left=Ord-Ind]
      {
        P(\bot)
        \\
@@ -129,20 +130,17 @@ The induction schema for this data type is:
      { \fa{x} P(x) }
 \end{mathpar}
 
-\subsection{Applications}
-
-The examples where
-
 \subsection{Generalizations}
+\label{sec:genind}
 
-The structural induction schemata we have seen so far only go one
-depth down the data type, and that is of limited use when proving
-properties about functions defined with recursion with a bigger
-depth. For instance, the induction on Peano numbers in Haskell is
-adjusted to depth two in this way:
+The structural induction schemata we have seen so far only unses each
+constructor once and that does not work for proving properties about
+functions defined with recursion with a bigger depth. For instance,
+the induction on Peano numbers in Haskell is adjusted to a constructor
+depth two in this way:
 
 \begin{mathpar}
-  \inferrule* [left=Nat-Ind-Depth-Two]
+  \inferrule* % [left=Nat-Ind-Depth-Two]
      {
        P(\bot)
        \and
@@ -155,6 +153,268 @@ adjusted to depth two in this way:
      { \fa{x} P(x) }
 \end{mathpar}
 
-If you want to prove a property that has a list of natural numbers as
-property, you can get a very strong induction hypothesis, by unrolling
-the data type enough.
+Given how many constructors you maximally want to unroll for your data
+type, you have to prove the property for all combinations or
+constructors up to including that limit, but for an induction step
+with a conclusion with $i$ constructors, the induction hypothesis is
+the conjunction of all combinations with strictly less than $i$
+constructors.
+
+Say you want to prove a property that has a list of natural numbers as
+property, with up to two constructors, these are the required
+induction steps:
+
+\begin{align*}
+                                                               & P(\hs{[]}) \\
+                                                               & P(\hs{Zero}\hs{:}\hs{[]}) \\
+\fa{x} P(x\hs{:}\hs{[]}) \rightarrow                        \, & P(\hs{Succ} \w x\hs{:}\hs{[]}) \\
+\faaa{x}{y}{zs} P(x\hs{:}zs) \wedge P(y\hs{:}zs)\rightarrow \, & P(x\hs{:}y\hs{:}zs) \\
+\end{align*}
+
+Similarly, this is used to use induction on more than one arguments,
+by using the tuple constructor. Induction on two natural numbers is this:
+
+\begin{align*}
+                                                                                       & P(\hs{Zero}     ,\hs{Zero}     ) \\
+\fa{x} P(x,\hs{Zero})                                                   \rightarrow \, & P(\hs{Succ} \w x,\hs{Zero}     ) \\
+\fa{y} P(\hs{Zero},y)                                                   \rightarrow \, & P(\hs{Zero}     ,\hs{Succ} \w y) \\
+\faa{x}{y} P(x,y) \wedge P(\hs{Succ} \w x,y) \wedge P(x,\hs{Succ} \w y) \rightarrow \, & P(\hs{Succ} \w x,\hs{Succ} \w y) \\
+\end{align*}
+
+This can be used to show the commutativity of plus for natural numbers
+defined recursively on the first argument. The predicate is defined as
+$P(x,y) \Leftrightarrow \faa{x}{y} x + y = y + x$. Two lemmas are
+needed if you do this with induction on the first argument:
+\begin{itemize}
+  \item $\fa{x} x + \hs{Zero} = x$. This corresponds the hypothesis
+    $P(x,\hs{Zero})$ above.
+  \item $\faa{x}{y} \hs{Succ} \w x + y = x + \hs{Succ} \w y$. This is
+    derivable from two of the hypotheses in the last step above:
+    \begin{align*}
+    \hs{Succ} \w x + y   & = \{\mathrm{definition \w of \w \mathit{+}}\} \\
+    \hs{Succ} \w (x + y) & = \{\mathrm{hypothesis \w \mathit{P(x,y)}}\} \\
+    \hs{Succ} \w (y + x) & = \{\mathrm{definition \w of \w \mathit{+}}\} \\
+    \hs{Succ} \w y + x   & = \{\mathrm{hypothesis \w \mathit{P(x,\hs{Succ} \w y)}}\} \\
+    x + \hs{Succ} \w y
+    \end{align*}
+\end{itemize}
+
+The commutativity of plus does only hold for total values since we have
+$$\bot \eq \bot + \hs{Succ Zero} \, \neq \, \hs{Succ Zero} + \bot \eq \hs{Succ} \w \bot$$
+If you want to show that a property holds for partial and infinite
+values you also need to consider $\bot$ as a constructor for the data
+type.
+
+This kind of unrolling data types also work well with mixed data
+types, a standard example is the definition of $\mathbb{Z}$ defined as
+a disjoint union as $\mathbb{N} + \mathbb{N}$, or in Haskell
+
+\begin{verbatim}
+data Z = Pos Nat | Neg Nat
+\end{verbatim}
+
+A value of $\hs{Pos} \w x$ denotes the integer $+\, x$ and $\hs{Neg} \w y$
+the integer $-\
+, (y + 1)$, to avoid having two values denote
+$0$. With the above technique, the induction principle for total
+\hs{Z} with two constructors is:
+
+\begin{mathpar}
+  \inferrule* % [left=Nat-Ind-Depth-Two]
+     {
+       P(\hs{Pos Zero})
+       \and
+       \fa{x} P(\hs{Pos} \w x) \wedge P(\hs{Neg} \w x) \rightarrow P(\hs{Pos} \w (\hs{Succ} \w x))
+       \\
+       P(\hs{Neg Zero})
+       \and
+       \fa{x} P(\hs{Pos} \w x) \wedge P(\hs{Neg} \w x) \rightarrow P(\hs{Neg} \w (\hs{Succ} \w x))
+     }
+     { \fa{x} P(x) }
+\end{mathpar}
+
+\subsection{Implementation}
+
+The universally quantified variables are skolemized, a new constant is
+introduced for each and that means that they can be referred to in
+different axioms added in the theory. For example, when adding the
+\hs{Branch} step for an induction proof over the \hs{Tree} data type,
+we could run the theorem checker like this:
+
+\begin{equation*}
+T \vdash \faaa{l}{x}{r} P(l) \wedge P(r) \rightarrow P(\hs{Branch} \w l \w x \w r)
+\end{equation*}
+
+Rather, skolemize each universally quantified variable and prove this:
+
+\begin{equation*}
+T , P(l) , P(r) \vdash P(\hs{Branch} \w l \w x \w r)
+\end{equation*}
+
+This make the implementation of the simple induction technique with
+one argument and one constructor straightforward. For each constructor
+$C$ with $n$ arguments, we make a new call to a theorem prover with $n$
+Skolem variables $x_1 \cdots x_n$ and try to prove $P(x_1,\cdots,x_n)$.
+Additionally, for each argument with assigned variable $x_i$, if the
+type of this variable is the same as the constructor $C$'s, $P(x_i)$
+is added as an axiom to the theory: this an induction hypothesis.
+
+The predicate is inlined: there is no introduction of $P$ and its
+definition, it is replaced with the property. Suppose we want to prove
+the property
+$\fa{t} \hs{mirror} \w (\hs{mirror} \w t) = t$ where $t : \hs{Tree a}$,
+the Branch case generates this call to the theorem prover:
+
+\begin{align*}
+T \, & , \, \hs{mirror} \w (\hs{mirror} \w x_1) \eq x_1 \\
+  \, & , \, \hs{mirror} \w (\hs{mirror} \w x_3) \eq x_3 \\
+&\vdash \hs{mirror} \w (\hs{mirror} \w (\hs{Branch} \w x_1 \w x_2\w x_3) \eq \hs{Branch} \w x_1 \w x_2\w x_3
+\end{align*}
+
+Here $T$ is the theory for this Haskell program: it includes the
+definition of $\hs{mirror}$, along with axioms that $\hs{Branch}$,
+$\hs{Empty}$ and $\bot$ are disjoint.  Hypotheses for $x_1$ and $x_3$
+are added since the first and the third argument for the \hs{Branch}
+constructor is \hs{Tree a}. For $x_2$, nothing is added since the type
+of this is simply \hs{a}.  For this property, in total three
+invocation of the theorem prover is made, one for each constructor.
+
+\note{I don't elaborate on this too much since the current
+  implementation generates tree of a given depth instead of a given
+  number of constructors. Specifying constructors could potentially
+  give you less granularity: I need to investigate this}
+To generate theories for the approach in \ref{sec:genind} an algorithm
+was written to generate trees with a number of constructors. For the
+commutativity of plus example, you would start with the expression
+\hs{(x :: Nat,y :: Nat)}, and for each occurrence of a typed variable,
+you replace it with its constructors, and combine. Then an other
+algorithm takes a typed expression, like
+\hs{(Succ (x :: Nat),Succ (y :: Nat))} and returns all expressions
+with less constructors you can generate with the correct type with
+the typed variables, here \hs{(Nat,Nat)}. Then you proceed as in the
+simple case: one invocation to the theorem prover for each step,
+variables are skolemized and the predicate inlined.
+
+This leads to a combinatorial explosion for a lot of data types. If
+you need to prove something with length $n$ lists, you get a induction
+conclusion $P(x_1\hs{:}x_2\hs{:}\cdots\hs{:}x_n\hs{:}xs)}$, and as there
+are $n!$ combinations of $x_1 \cdots x_n$, making this approach
+unusable for high $n$. A better way would probably to just give you
+all sub trees instead of all possible trees: again, this of course
+depends on what you need to show.
+
+\subsection{Future work}
+\label{sec:futind}
+
+In this section we will mainly be discuss induction in Peano
+Arithmetic, with $0$ and the successor function $s$.
+If you need induction on two variables, to show $\faa{x}{y} P(x,y)$, an other
+way is to use lexicographic induction. First you do induction on $x$
+to get the proof obligations $\fa{y} P(0,y)$ and
+$(\fa{y} P(x,y)) \rightarrow (\fa{y} P(s(x),y))$. Notice that in the
+step case, $y$ is universally quantified in both the hypothesis and in
+the conclusion. In both the base and in the step you can now do
+induction on $y$ to get this inference rule:
+
+\begin{mathpar}
+  \inferrule* % [left=Nat-Ind-Depth-Two]
+     {
+       P(0,0)
+       \and
+       \inferrule{P(0,y)}{P(0,s(y))}
+       \and
+       \inferrule{\fa{y'} P(x,y')}
+                 {P(s(x),0)}
+       \and
+       \inferrule{\fa{y'} P(x,y') \and P(s(x),y)}
+                 {P(s(x),s(y))}
+     }
+     { \faa{x}{y} P(x,y) }
+\end{mathpar}
+
+This is not yet implemented since it was not clear which examples
+would benefit from it, and you get many combinations of how to apply
+this principle: in the example above we first did induction on $x$,
+and then on $y$, but we could just as well do $y$ then $x$. If a
+property has $n$ variables that could be used for induction, and you
+use all variables, you have $n!$ ways of doing lexicographic
+induction. If you want all subsets of this, you get even more
+combinations. The simplest solution to this problem, as well as the
+problem with how many constructors you want to use in the generalized
+induction is to allow the user to annotate in the source code the
+desired way to do induction: furthermore, it does not blend well that
+this should be a fully automated way of proving Haskell properties.
+
+Another way to do this is to encode different induction ways by means
+of axioms in the theory itself. A simple example of this is to prove a
+property $P$ on one Peano natural number, and choose how many base
+cases in form of $P(0)$, $P(1)$, up to $P(n)$ and can then get a
+stronger induction hypothesis
+$P(x)\wedge P(x+1)\wedge \cdots\wedge P(x+n)\rightarrow P(x+n+1)$. It is
+possible to encode such a ``machine'' in terms of first order logic as this:
+
+\newcommand{\QZ}[2]{\inferrule* [left=q-0]{ }{Q(#1,#2)}}
+\newcommand{\QS}[3]{\inferrule* [left=q-s]{P(#2) \and #3}{Q(#1,#2)}}
+\newcommand{\IPZ}[2]{\inferrule* [left=+-0]{#1}{#2}}
+\newcommand{\IPS}[2]{\inferrule* [left=+-s]{#1}{#2}}
+
+\begin{mathpar}
+  \QZ{0}{x}
+  \and
+  \QS{s(n)}{x}{Q(n,s(x))}
+  \and
+  \IPZ{ }{0 + x=x}
+  \and
+  \IPS{ }{s(n) + x=s(n+x)}
+  \\
+  \inferrule*{\ex{n} Q(n,0) \wedge
+                     \fa{x} Q(n,x) \rightarrow P(n+x)}
+             {\fa{x} P(x)}
+\end{mathpar}
+
+The $n$ in the existential quantifier is how deep the induction needs
+to go. $Q$ is a predicate which both gives a suitable induction base
+and hypothesis for this $n$. For the base case, you need to prove
+$P(0)$, $P(1)$, up to $P(n-1)$. In the induction step, you will have
+$P(x)$, $P(x)$, up to $P(x+n-1)$ as hypothesis, since it is the
+antecedent in the implication. The consequent is $P(n+x)$, so we need
+to have the suitable axioms for $+$ in the theory. The degenerate case
+come from $n=0$:
+
+\begin{mathpar}
+  \inferrule*{
+     \QZ{0}{0}
+     \and
+     \fa{x}      \QZ{0}{x}
+     \rightarrow \IPZ{P(x)}{P(0+x)}
+    }
+    {\fa{x} P(x)}
+\end{mathpar}
+
+A little bit of expanding is necessary when $n=2$. It looks like this
+
+\begin{mathpar}
+    \inferrule*
+      {
+        \QS{2}{0}{\QS{1}{1}{\QZ{0}{2}}}
+       \\
+       \fa{x}      \QS{2}{x}{\QS{1}{s(x)}{\QZ{0}{s(s(x))}}}
+       \rightarrow \IPS{
+                        \IPS{
+                              \IPZ{P(s(s(x)))}
+                                  {P(s(s(x+0)))}
+                            }
+                            {P(1+s(x))}
+                       }
+                       {P(2+x)}
+      }
+      {
+        \inferrule*
+          {P(0) \and P(1) \and \fa{x} P(x) \wedge P(s(x)) \rightarrow P(s(s(x)))}
+          {\fa{x} P(x)}
+      }
+\end{mathpar}
+
+The complexity is greatly increased with more irregular data types
+than natural numbers, and it is unclear how well theorem provers would
+be able to handle this.

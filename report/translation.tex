@@ -26,7 +26,7 @@ $\omega$-$\sqsubseteq$-limits and continuity.
 
 % Whoa, much in this section
 \section{Data types}
-\ref{sec:treetrans}
+\label{sec:treetrans}
 
 Haskell's data types and its consequence pattern matching is
 translated by giving each constructor a function or constant symbol.
@@ -247,7 +247,7 @@ As \hs{incr} is also written point-free or eta-reduced, \hs{map} is
 only partially applied. This is the translated axiom:
 
 \begin{equation*}
-\fn{incr} = \app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})}}
+\fn{incr} = \app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})}
 \end{equation*}
 
 If \hs{incr} is applied to an argument $xs$, then \hs{incr} is applied

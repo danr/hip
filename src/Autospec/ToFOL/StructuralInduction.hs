@@ -27,8 +27,8 @@ testEnv :: Env
 testEnv = map (declName &&& conTypes) $ parseDecls $ concatMap (++ ";")
   [ "data Tree a = Branch (Tree a) a (Tree a) | Empty"
   , "data T = B T T | E"
-  , "data Nat = Suc Nat | Zero | Bottom"
-  , "data List a = Cons a (List a) | Nil | Bottom"
+  , "data Nat = Suc Nat | Zero"
+  , "data List a = Cons a (List a) | Nil"
   , "data Expr = Add Expr Expr | Mul Expr Expr | Value Nat | X | Neg Expr"
   , "data Integ = PS Nat | NS Nat | Z"
   , "data Tup a b = Tup a b"

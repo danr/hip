@@ -5,8 +5,11 @@ The approximation lemma must be considered a standard technique for
 proving properties about corecursive programs. Just like fixed point
 induction it can be used with functions that are produce infinite
 values, like \hs{repeat} and \hs{iterate}, out of abstract values
-making structural induction impossible \cite{corecursive}.  The
-approximataion lemma supersedes the classical take lemma
+making structural induction impossible \cite{corecursive}, but the
+approximation lemma is much simpler to apply with very positive
+results.
+
+The approximataion lemma supersedes the classical take lemma
 \cite{introfp} by being easier to apply and generalize: unlike the
 take lemma, it can be applied to equalities of any polynomial
 data type \cite{genapprox}. The definitions of \hs{take} and

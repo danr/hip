@@ -19,13 +19,13 @@
 \newcommand\fn[1]{\mathrm{#1}}
 \newcommand\ptr[1]{\fn{#1.ptr}}
 \newcommand\app[2]{#1 \, @ \, #2}
+\newcommand\ex[1]{\exists \, #1 \, . \,}
 \newcommand\fa[1]{\forall \, #1 \, . \,}
 \newcommand\faa[2]{\forall \, #1 , #2 \, . \,}
 \newcommand\faaa[3]{\forall \, #1 , #2 , #3 \, . \,}
 
 \newcommand\tofix[1]{#1_{\mathrm{tofix}}}
 \newcommand\unfix[1]{#1_{\mathrm{unfix}}}
-\newcommand\comment[1]{}
 
 \newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
 \newcommand{\desca}[1]{  & \hspace{44.5mm}                            \{ \mathrm{#1} \}}
@@ -41,20 +41,20 @@
 
 
 %\begin{comment}
-\begin{document}
-
-\chapter{Proof Methods}
-
-\noindent
-\input{induction}
-
-\bibliographystyle{apalikeurl}
-\bibliography{masterbib}
-
-\end{document}
+%%\begin{document}
+%
+%\chapter{Proof Methods}
+%
+%\noindent
+%\input{induction}
+%
+%\bibliographystyle{apalikeurl}
+%\bibliography{masterbib}
+%
+%%\end{document}
 %\end{commment}
-
-\begin{comment}
+%
+%%\begin{comment}
 
 \begin{document}
 
@@ -75,11 +75,11 @@ breeze.
 
 %% Acknowledgements -----------------------------------------------------------
 
-\newpage
-\pagestyle{empty}
-\section*{Acknowledgments}
-\vspace{5mm}
-ACK, ACK, ACK, ACK, ACK, ACK, NAK
+%\newpage
+%\pagestyle{empty}
+%\section*{Acknowledgments}
+%\vspace{5mm}
+%ACK, ACK, ACK, ACK, ACK, ACK, NAK
 
 %% Table of Contents ----------------------------------------------------------
 
@@ -99,42 +99,29 @@ values? They are still present because of non-terminating programs,
 calls to the error function and pattern-match
 failures \cite{chasingbot}.
 
-\section{First Order Logic}
+% First order logic and FOL and ATPs
+\input{logic}
 
-Connectives, quantifiers, predicates, functions and constants.
-Derivation rules and models.
-
-\section{FOL and Automated Theorem Provers}
-
-Use derivations or models to deduce absurdity.
-
-\section{Related Work}
-
-\note{Related work in background or in discussion? Would be nice to
-  have it after the technical part to be able to compare different
-  approaches.}
-Isabel, Sledgehammer, Rippling and other techniques
-(Productive Use of Failure)
-
-Other proof assistants as Coq
-
-Agda and dependent types, Agda and ATPs by Peter, Bove, Sicard
-\cite{agdaatp} and Dependently Typed Programming Based on ATPs
-
-Zeno
-
-Co-recursive techniques \cite{corecursive}, Hinze's papers, Generic
-Approximation lemma, or have this in other chapters
+% Related work
+\input{related}
 
 \section{Outline}
 
-Explain the outline of the report
+Explain the outline of the report.  The necessarily background of FOL
+and ATPs are already given in the introduction (?) and other
+necessary background is given when needed.
+Chapter 2 explains the translation from Haskell to FOL and also
+introduces some domain theoretic concepts. Chapter 3 explains the
+three main proof techniques used in this project: structural
+induction, fixed point induction and the approximation lemma. The last
+chapter includes results, futher work and conclusion.
 
 %% Technical Part --------------------------------------------------------------
 
 \input{translation}
 
 \input{proofs}
+
 
 %% End of Technical Part ------------------------------------------------------
 
@@ -182,4 +169,4 @@ completeness: this function with these inputs would be $\bot$.
 \bibliography{masterbib}
 \end{document}
 
-\end{comment}
+%\end{comment}

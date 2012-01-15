@@ -1,23 +1,38 @@
 \section{Fixed point induction}
 
-Fixed point induction is an early example of a technique
-from domain theory, attributed to Scott and de Bakker,
-\note{citation needed, there is a book called Mathematical Theory of
-  Program Correctness by Jaco de Bakker that could be appropriate if found}
-and sometimes called Scott induction or computational induction.
-\cite{domains} The least fixed point for a function can be found in
-Haskell with the function \hs{fix}, which can simply be defined as:
+Induction is well when you have arguments that are of a concrete type
+like lists, natural numbers, and so on, but there are also porperties
+with abstract types. The canonical example is the map-iterate property:
+
+\begin{equation*}
+\faa{(f : a \rightarrow a)}{(x : a)} \hs{map} \w f \w (\hs{iterate} \w f \w x) \eq
+           \hs{iterate} \w f \w (f \w x)
+\end{equation*}
+
+Here $f$ is an abstract function $a \rightarrow a$, and $x$ is
+something of type $a$. This example is further investigated in
+\ref{sec:mapiter}, but it is already clear that we cannot proceed to
+prove this with structural induction.  Enter fixed point induction. It
+is an early example of a technique from domain theory, attributed to
+Scott and de Bakker,
+\note{Citation needed: there is a book called
+  Mathematical Theory of Program Correctness by Jaco de Bakker that
+  could be appropriate if found}
+and sometimes called Scott induction
+or computational induction.  \cite{domains} The least fixed point for
+a function can be found in Haskell with the function \hs{fix}, which
+can simply be defined as:
 
 \begin{verbatim}
 fix :: (a -> a) -> a
 fix f = f (fix f)
 \end{verbatim}
 
-This function solves the equation $x = f x$, since substituting $x$
-for $\hs{fix} x$: the left side evaluates to $f (\hs{fix} f)$ in one
-step, which is then equal to the right side. This is the origin of the
-name of the combinator \hs{fix}: this is a fixed point of the equation.
-Any self-recursive function can be rewritten in terms of
+This function solves the equation $x = f \w x$, since substituting $x$
+for $\hs{fix} \w x$: the left side evaluates to $f \w (\hs{fix} \w f)$
+in one step, which is then equal to the right side. This is the origin
+of the name of the combinator \hs{fix}: this is a fixed point of the
+equation.  Any self-recursive function can be rewritten in terms of
 \hs{fix}. Recall the \hs{Prelude} function \hs{repeat}, which makes an
 infinite list of the same element \hs{repeat x = x : repeat}. Its
 transformation to \hs{fix}-style is this:
@@ -50,9 +65,11 @@ f \eq \hs{fix} \w (\lambda \w f' \w \overline{x} \w \rightarrow \w e(f',\overlin
 
 Another more domain theoretic approach is to say that
 $\hs{fix} \w f \eq \lub{n}(f^n \bot)$, where $f^n \bot$ is $n$ applications of $f$:
-$$f^n \bot \eq \underbrace{f (f (\cdots (f}__{n \w \mathrm{copies \w of} \w f}} \bot) \cdots))$$
+\begin{equation*}
+f^n \bot \eq \underbrace{f (f (\cdots (f}_{n \w \mathrm{copies \w of} \w f}} \bot) \cdots))
+\end{equation*}
 This corresponds to a potentially infinite, countable unrolling of $f$.
-It is easy to verify that $\langle f^n \bot\ \rangle_{n\in\omega}$ is a
+It is easy to verify that $\langle f^n \bot\rangle_{n\in\omega}$ is a
 $\sqsubseteq$-chain by induction on $n$, and that this is the least
 pre-fixed point of $f$ is also showed by induction: Assume there
 is another pre-fixed point $\theta$, thus satisfying
@@ -60,7 +77,7 @@ $\theta \eq f \w \theta$. The base case is
 $\bot \eq f^0 \bot \sqsubseteq \theta$, trivially satisified since
 $\bot$ is the least element. For the step case, assume that
 $f^n \bot \sqsubseteq \theta$, and we get the conclusion
-$f^{n+1} \bot = f (f^n \bot) \sqsubseteq f \theta = \theta$ as desired.
+$f^{n+1} \bot = f (f^n \bot) \sqsubseteq f \w \theta = \theta$ as desired.
 Fixpoint induction proves properties about a function written in terms
 of \hs{fix}, and its inference rule is this:
 
@@ -76,7 +93,7 @@ of \hs{fix}, and its inference rule is this:
      { P(\fn{fix} f) }
 \end{mathpar}
 
-\ref{sec:admissible}
+\label{sec:admissible}
 Here it is important that $P$ is \emph{admissible} or
 $\omega$-\emph{inductive}, meaning that for all $\sqsubseteq$-chains
 of length $\omega$, if the property holds for all elements in the
@@ -96,7 +113,7 @@ The proof that fixed point induction relies on the fact that
 $\lub{n}(f^n \w \bot) \eq \hs{fix} \, f$, where $f^n$ is $n$
 self-applications of $f$. This is true since \hs{fix} is defined as
 $f$ self-applied to it self. Apart from this, the proof only uses
-induction over natural numbers and that $\f^0 \w \bot \eq \bot$, and
+induction over natural numbers and that $f^0 \w \bot \eq \bot$, and
 it is of course important that $P$ is admissible. See proof below:
 
 \begin{align*}
@@ -118,6 +135,7 @@ mentioning natural numbers and use $\fa{n} P(f^n \bot)$ to prove
 $\fa{n} P(\hs{fix} \w f)$.
 
 \subsection{Example: map-iterate}
+\label{sec:mapiter}
 
 For properties that do not have any arguments with a concrete type,
 structural induction is not applicable. The Haskell function
@@ -328,3 +346,37 @@ The answer here is to do fixed point induction on \hs{drop}, and on
 \hs{-}. The implementetation tries fixed point induction on all
 subsets of recursive functions mentioned in the property.
 
+\subsection{Future work}
+
+Just as with structural induction, it is also possible to use fixed
+point in more than one ``depth'', giving for instance this inference
+rule:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       P(\bot)
+       \\
+       P(f \w \bot)
+       \\
+       \inferrule*{P(x) \and P(f \w x)}{P(f \w (f \w x))}
+       \\
+       P \w \mathrm{admissible}
+     }
+     { P(\fn{fix} f) }
+\end{mathpar}
+
+It is also possible to use the ``machine'' from Section
+\ref{sec:futind} to let the theorem prover determine the depth. An
+example that makes map-iterate impossible to show with ordinary depth
+one fixed point induction, is to redefine map to this:
+
+\begin{verbatim}
+doublemap :: (a -> b) -> [a] -> [b]
+doublemap f []       = []
+doublemap f [x]      = [f x]
+doublemap f (x:y:zs) = f x : f y : doublemap f zs
+\end{verbatim}
+
+It is behaviorally equivalent to \hs{map}, but it makes the induction
+hypothesis in fixed point induction too weak.

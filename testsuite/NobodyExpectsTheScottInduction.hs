@@ -180,7 +180,17 @@ enumFromTo x y | y < x     = []
 
 nats = Z : map S nats
 
-
 prop_19 :: Nat -> [Nat] -> Prop Nat
 prop_19 n xs
   = len (drop n xs) =:= len xs - n
+
+iter :: (a -> a) -> a -> [a]
+iter f x = x : iter f (f x)
+
+doublemap :: (a -> b) -> [a] -> [b]
+doublemap f [] = []
+doublemap f [x] = [f x]
+doublemap f (x:y:zs) = f x:f y:doublemap f zs
+
+prop_map_iter :: (a -> a) -> a -> Prop [a]
+prop_map_iter f x = doublemap f (iter f x) =:= iter f (f x)
