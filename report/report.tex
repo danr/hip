@@ -20,8 +20,8 @@
 \newcommand\ptr[1]{\fn{#1.ptr}}
 \newcommand\app[2]{#1 \, @ \, #2}
 \newcommand\fa[1]{\forall \, #1 \, . \,}
-\newcommand\faa[2]{\forall \, #1 \, #2 \, . \,}
-\newcommand\faaa[3]{\forall \, #1 \, #2 \, #3 \, . \,}
+\newcommand\faa[2]{\forall \, #1 , #2 \, . \,}
+\newcommand\faaa[3]{\forall \, #1 , #2 , #3 \, . \,}
 
 \newcommand\tofix[1]{#1_{\mathrm{tofix}}}
 \newcommand\unfix[1]{#1_{\mathrm{unfix}}}
@@ -39,21 +39,22 @@
 \newcommand\w[0]{\,\,}
 \newcommand\eq[0]{=}
 
-\begin{comment}
+
+%\begin{comment}
 \begin{document}
 
 \chapter{Proof Methods}
 
 \noindent
-\input{fixpoint}
+\input{induction}
 
 \bibliographystyle{apalikeurl}
 \bibliography{masterbib}
 
 \end{document}
-\end{comment}
+%\end{commment}
 
-%\begin{comment}
+\begin{comment}
 
 \begin{document}
 
@@ -181,4 +182,4 @@ completeness: this function with these inputs would be $\bot$.
 \bibliography{masterbib}
 \end{document}
 
-%\end{comment}
+\end{comment}

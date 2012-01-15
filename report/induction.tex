@@ -1,18 +1,22 @@
 \section{Structural induction}
 
-\subsection{Induction}
+Induction is a very fundamental concept of mathematics and is directly
+or indirectly an axiom in axiomatizations of mathematics: directly in
+Peano Arithmetic (abbreviated PA), indirectly in Zermelo-Fraenkel Set
+Theory (commonly abbreviated ZF or ZFC with the Axiom of Choice). In
+type theory there are different approaches: the proof assistants Coq
+and Isabell/HOL generates an induction schema for each data type, and
+in Agda, based on Martin-Löf Type Theory with inductive families,
+induction is a matter of recursion.
 
-Some background of induction and how it is present in well-known
-theories like PA, ZFC, MLTT and CoC.
-
-PA which only concerns natural numbers has a small vocabulary
-consisting only of the constant $0$, the unary successor function $s$,
-and binary plus and multiplication.
-Here the induction schema from looks like this:
+PA, or first order aritmetic, has the natural numbers as standard
+model and small vocabulary consisting only of the constant $0$, the unary
+successor function $s$, and binary plus and multiplication.  Here the
+induction schema from looks like this:
 
 \note{One could also be explicit about the free variables in $P$}
 \begin{mathpar}
-  \inferrule*
+  \inferrule* [Left=PA-Ind]
      {
        \overbrace{P(0)}^{\mathrm{base}}
        \\
@@ -26,27 +30,131 @@ Here the induction schema from looks like this:
      { \fa{x} P(x) }
 \end{mathpar}
 
-This is a axioms schema since it is not possible to quantify over the
-predicate $P$ in FOL. Rather, it is a infinite set of axioms, one for
-each (well-formed) formula instantiated in place for $P$. Generally,
-ATPs do not instantiate schemas themselves but it has to be done
-manually, with an appropriate formula for $P$.
+Different parts of this rule has been highlighted that are common
+names for induction proofs: the induction base, the induction step
+with the assumed hypothesis and the obligated conclusion.  This is a
+axiom schema since it is not possible to quantify over the predicate
+$P$ in FOL. Rather, it is a infinite set of axioms, one for each
+(well-formed) formula instantiated in place for $P$. Generally, ATPs
+do not instantiate schemas themselves but it has to be done manually,
+with an appropriate formula for $P$.
 
-Any non-recursive, or more importantly recursive data type gives rise
-to induction schemata.
+\note{
+The set of relevant things to say here are probably not even
+recursively enumerable: we could go on presenting induction in
+different theories and how it encodes or generates axioms for
+structural induction.}
 
-\footnote{Haskell's natural numbers are of course also cluttered with
-  elements that are not natural numbers, such as $\bot$, but also the
-  infinite ``natural number'' defined by \hs{infinite = Succ infinite}}
-, defined the usual way in Haskell by \hs{data Nat = Zero | Succ Nat}
-yields this induction axiom schema:
+To prove a property of the total and finite Peano Natural numbers in
+Haskell since the have the same structure as numbers in PA, the
+following axiom schema is used:
 
 \begin{mathpar}
   \inferrule*
      {
-       P(\fn{Zero})
+       P(\hs{Zero})
        \\
-       \fa{x} P(x) \rightarrow P(\fn{Succ}(x))
+       \fa{x} P(x) \rightarrow P(\hs{Succ}(x))
+     }
+     { \fa{x} x \mathrm{\w finite \w and \w total} \rightarrow P(x) }
+\end{mathpar}
+
+If $P$ is a predicate that preserves $\sqsubseteq$-chains, further
+discussed in \ref{sec:admissibility}, then if you prove $P(\bot)$,
+then $P(x)$ is true for all $x$, as well as partial and infinite. This
+is because this is a $\sqsubseteq$-chain:
+
+\begin{equation*}
+\bot \sqsubseteq
+\hs{Succ} \w \bot \sqsubseteq
+\hs{Succ} \w (\hs{Succ} \w \bot) \sqsubseteq
+\hs{Succ} \w (\hs{Succ} \w (\hs{Succ} \w \bot)) \sqsubseteq
+\cdots
+\end{equation}
+
+with limit \hs{inf}, defined as \hs{inf = Succ inf}. If $P$ then
+preserves $\sqsubseteq$-chains, the property also holds for
+\hs{inf}. Equality properties are admissible.
+
+Any non-recursive, or more importantly recursive data type gives rise
+to induction schemata, and this is called structural induction. Here
+are the axiom schemata for potentially partial and infinite lists and
+the \hs{Tree} type defined in \ref{sec:treetrans}:
+
+\begin{mathpar}
+  \inferrule* [left=List-Ind]
+     {
+       P(\bot)
+       \\
+       P(\hs{[]})
+       \\
+       \faa{x}{xs} P(xs) \rightarrow P(x\hs{:}xs)
+     }
+     { \fa{x} P(x) }
+
+  \inferrule* [left=Tree-Ind]
+     {
+       P(\bot)
+       \\
+       P(\hs{Empty})
+       \\
+       \faaa{l}{x}{r} P(l) \wedge P(r) \rightarrow P(\hs{Branch} \w l \w x \w r)
      }
      { \fa{x} P(x) }
 \end{mathpar}
+
+For such simple indexed sum of products data types the translation is
+straightforward: for a data type $T$, with a constructor $K$ you get
+all recursive arguments of $T$ to $K$ as hypotheses. It is also
+possible to get structural induction for exponential data types. An
+example is higher-order abstract syntax, another is
+\note{Cite, for example, Dixon's thesis}the Brouwer ordinals, defined as:
+
+\begin{verbatim}
+data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
+\end{verbatim}
+
+\note{This is actually not yet implemented :(}
+The induction schema for this data type is:
+
+\begin{mathpar}
+  \inferrule* [left=Ord-Ind]
+     {
+       P(\bot)
+       \\
+       P(\hs{Zero})
+       \\
+       \fa{f} (\fa{x} P(f \w x)) \rightarrow P(\hs{Lim} \w f)
+     }
+     { \fa{x} P(x) }
+\end{mathpar}
+
+\subsection{Applications}
+
+The examples where
+
+\subsection{Generalizations}
+
+The structural induction schemata we have seen so far only go one
+depth down the data type, and that is of limited use when proving
+properties about functions defined with recursion with a bigger
+depth. For instance, the induction on Peano numbers in Haskell is
+adjusted to depth two in this way:
+
+\begin{mathpar}
+  \inferrule* [left=Nat-Ind-Depth-Two]
+     {
+       P(\bot)
+       \and
+       P(\hs{Zero})
+       \and
+       P(\hs{Succ Zero})
+       \\
+       \fa{x} P(x) \wedge P(\hs{Succ} \w x) \rightarrow P(\hs{Succ} \w (\hs{Succ} \w x))
+     }
+     { \fa{x} P(x) }
+\end{mathpar}
+
+If you want to prove a property that has a list of natural numbers as
+property, you can get a very strong induction hypothesis, by unrolling
+the data type enough.
