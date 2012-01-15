@@ -683,15 +683,19 @@ and if' will have that everything but True and Bottom goes to b.
 Is this OK?
 ** Equistential quantification in cnf
 ** TODO Fixed point induction
-*** Good when you don't have anything to do induction on
-*** Examples of examples
+*** DONE Good when you don't have anything to do induction on
+CLOSED: [2012-01-13 Fri 13:07]
+*** DONE Examples of examples
+CLOSED: [2012-01-13 Fri 13:07]
 **** map-iterate
 **** repeat-iterate
 **** append / plus
 **** mirror-treeIterate
-*** On mutual and subset of occuring functions
-*** How it was implemented
-*** Future work: depth machines
+*** DONE On mutual and subset of occuring functions
+CLOSED: [2012-01-13 Fri 13:06]
+*** DONE How it was implemented
+CLOSED: [2012-01-13 Fri 13:06]
+*** TODO Future work: depth machines
 ** TODO Structural induction
 *** Compare to normal PA induction
 *** Chain complete predicates -> infinite properties
