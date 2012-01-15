@@ -1,0 +1,40 @@
+
+Infinite values in Haskell are commonplace, but why care about partial
+values? They are still present because of non-terminating programs,
+calls to the error function and pattern-match
+failures \cite{chasingbot}.
+
+Why is equality important? There are many reasons why you would want
+to know why two Haskell expressions are equal. You might have a naive
+way of implementing an algorithm, and an efficient way, and you want
+to know that those two implementations behave equally. Your functions
+may be a familiar algebraic structure: monoid, group, ring, lattice
+and so on, and you want to know that your implementation satisfies all
+laws, or your functions may not have such a rich structure but still
+have a lot of properties, like idempotency: sorting twice is the same
+as sorting one, involution: reversing twice is the same as doing
+nothing (but only for finite lists!). Functions could also be
+homomorphisms over structures:
+\hs{length (xs ++ ys)}$\eq$\hs{length xs + length xs} is an example of
+a monoid homomorphism between list concatenation and addition. Haskell
+is also known for its type classes like Functor, Applicative and
+Monad, and all instances of these should satisfy certain equational
+laws.
+
+What is equality? In the general context, a binary relation is an
+equivalence relation if it is reflexive ($\fa{x} x \eq x$), symmetric
+($\faa{x}{y} x \eq y \rightarrow y \eq x$) and transitive
+($\faaa{x}{y}{z} x \eq y \wedge y \eq z \rightarrow x \eq z$). In
+Haskell, it is indeed so that every data type can have its own
+instance of the \hs{Eq} type class, gives a computable function given
+two values of the type and determines if they are equal, the result
+given as true or false in a \hs{Bool}. In this project we have made
+the simplification that two Haskell values are equal if they have
+exactly the same structure: the same constructor at every depth. We
+also regard the undefined value $\bot$ as a constructor, so
+$\hs{x:}\bot$ is not equal to $\hs{x:[]}$. If the concept of $\bot$ is
+unfamiliar to you, do not fear: it will be explained in great
+detail. The reason for this simplification is that it will coincide
+exactly with the equality in first order logic and allows us to use its
+substitution.
+\note{Congruence relations!}

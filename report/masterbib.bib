@@ -1,14 +1,14 @@
 \usepackage{url}
 @article{corecursive,
-  author = {Jeremy Gibbons and Graham Hutton},
-  title = {Proof Methods for Corecursive Programs},
-  journal = {Fundamenta Informatica},
-  year = {2005},
-  volume = {66},
-  number = {4},
-  pages = {353-366},
-  month = {April/May},
-  url = {http://www.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/corecursive.pdf},
+  author   = {Jeremy Gibbons and Graham Hutton},
+  title    = {Proof Methods for Corecursive Programs},
+  journal  = {Fundamenta Informatica},
+  year     = {2005},
+  volume   = {66},
+  number   = {4},
+  pages    = {353-366},
+  month    = {April/May},
+  url      = {http://www.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/corecursive.pdf},
   abstract = {Recursion is a well-known and powerful programming
      technique, with a wide variety of applications.  The dual technique
      of corecursion is less well-known, but is increasingly proving to be
@@ -16,82 +16,147 @@
      for proving properties of corecursive programs: fixpoint induction,
      the approximation (or take) lemma, coinduction, and fusion.}
 }
+
+@techreport{zeno,
+    title  = {{Zeno: A tool for the automatic verification of algebraic properties of functional programs}},
+    author = {Sonnex, William and Drossopoulou, Sophia and Eisenbach, Susan},
+    month  = {February},
+    year   = {2011},
+    url	   = {http://pubs.doc.ic.ac.uk/zeno/}
+}
+
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.5825, url added
 @article{genapprox,
-    author = {Graham Hutton and Jeremy Gibbons},
-    title = {The Generic Approximation Lemma},
+    author  = {Graham Hutton and Jeremy Gibbons},
+    title   = {The Generic Approximation Lemma},
     journal = {Information Processing Letters},
-    year = {2001},
-    volume = {79},
-    pages = {2001},
-    url = {http://eprints.nottingham.ac.uk/225/1/approx.pdf}
+    year    = {2001},
+    volume  = {79},
+    pages   = {2001},
+    url     = {http://eprints.nottingham.ac.uk/225/1/approx.pdf}
 }
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.62.9454, url added
 @inproceedings{chasingbot,
-    author = {Nils Anders Danielsson and Patrik Jansson},
-    title = {Chasing bottoms: A case study in program verification in the presence of partial and infinite values},
+    author    = {Nils Anders Danielsson and Patrik Jansson},
+    title     = {Chasing bottoms: A case study in program verification in the presence of partial and infinite values},
     booktitle = {In MPC 2004, volume 3125 of LNCS},
-    year = {2004},
-    pages = {85--109},
+    year      = {2004},
+    pages     = {85--109},
     publisher = {Springer},
-    url = {http://www.cse.chalmers.se/\~{}nad/publications/danielsson-jansson-mpc2004.pdf}
+    url       = {http://www.cse.chalmers.se/\~{}nad/publications/danielsson-jansson-mpc2004.pdf}
 }
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.59.8232 (url added and corrected)
 @article{fastandloose,
     author = {Nils Anders Danielsson and John Hughes and Patrik Jansson},
-    title = {Fast and Loose Reasoning is Morally Correct},
-    year = {2006},
-    url = {http://www.cse.chalmers.se/\~{}nad/publications/danielsson-popl2006-tr.pdf}
+    title  = {Fast and Loose Reasoning is Morally Correct},
+    year   = {2006},
+    url    = {http://www.cse.chalmers.se/\~{}nad/publications/danielsson-popl2006-tr.pdf}
+}
+%
+@inproceedings{productivity,
+    author = {Nils Anders Danielsson},
+    title = {Beating the Productivity Checker Using Embedded Languages},
+    year = {2010},
+    url = {http://www.cse.chalmers.se/\~{}nad/publications/danielsson-productivity.pdf}
 }
 % Hand written
 @article{agdaatp,
   author = {Ana Bove and Peter Dybjer and Andrés Sicard-Ramírez},
-  title = {Combining Interactive and Automatic Reasoning in First Order Theories of Functional Programs},
-  url = {http://www1.eafit.edu.co/asicard/pubs/fotc.pdf},
-  year = {2011}
+  title  = {Combining Interactive and Automatic Reasoning in First Order Theories of Functional Programs},
+  url    = {http://www1.eafit.edu.co/asicard/pubs/fotc.pdf},
+  year   = {2011}
 }
+@article{dtatp,
+  author    = {Alasdair Armstrong and
+               Simon Foster and
+               Georg Struth},
+  title     = {Dependently Typed Programming based on Automated Theorem
+               Proving},
+  journal   = {CoRR},
+  volume    = {abs/1112.3833},
+  year      = {2011},
+  ee        = {http://arxiv.org/abs/1112.3833},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+%Isaplanner
+@Misc{isaplanner,
+    author = { Lucas Dixon and Moa Johansson },
+    title = {IsaPlanner 2: A Proof Planner in Isabelle},
+    year = 2007,
+    url = {http://dream.inf.ed.ac.uk/projects/isaplanner/docs/isaplanner-v2-07.pdf},
+    note = {DReaM Technical Report (System description)},
+}
+
+%Dixon
+@phdthesis{dixonphd,
+  author = {L. Dixon},
+  title = {A Proof Planning Framework for {Isabelle}},
+  school = {University of Edinburgh},
+  year = {2005},
+}
+
+% Hand written
+@article{streams,
+  author  = {Ralf Hinze},
+  title   = {Concrete stream calculus: An extended study.},
+  journal = {Journal of Functional Programming},
+  year    = {2010},
+  pages   = {463-535},
+  url     = {http://www.cs.ox.ac.uk/ralf.hinze/publications/CSC.pdf}
+}
+% From http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.5609
+@article{productiveuse,
+    author  = {Andrew Ireland and Alan Bundy},
+    title   = {Productive Use of Failure in Inductive Proof},
+    journal = {Journal of Automated Reasoning},
+    year    = {1995},
+    volume  = {16},
+    pages   = {16--1}
+}
+
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.40.7517, url added
 @article{totalcorrectness,
-    author = {David Sands},
-    title = {Total Correctness by Local Improvement in the Transformation of Functional Programs},
+    author  = {David Sands},
+    title   = {Total Correctness by Local Improvement in the Transformation of Functional Programs},
     journal = {ACM Transactions on Programming Languages and Systems},
-    year = {1996},
-    volume = {18},
-    pages = {175--234},
-    url = {http://repository.readscheme.org/ftp/papers/topps/D-221.pdf}
+    year    = {1996},
+    volume  = {18},
+    pages   = {175--234},
+    url     = {http://repository.readscheme.org/ftp/papers/topps/D-221.pdf}
 }
 
 % Hand written, add more details
 @book{introfp,
      author = {Richard Bird and Philip Wadler},
-     title = {Introduction to Functional Programming},
-     year = {1988}
+     title  = {Introduction to Functional Programming},
+     year   = {1988}
 }
 % Hand written, add more details
 @books{domains,
      author = {Gordon Plotkin},
-     title = {Domains},
-     year = {1983},
-     url = {http://homepages.inf.ed.ac.uk/gdp/publications/Domains\_a4.ps}
+     title  = {Domains},
+     year   = {1983},
+     url    = {http://homepages.inf.ed.ac.uk/gdp/publications/Domains\_a4.ps}
 }
 
 % from http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.5825, url added
 @article{genapprox,
-    author = {Graham Hutton and Jeremy Gibbons},
-    title = {The Generic Approximation Lemma},
+    author  = {Graham Hutton and Jeremy Gibbons},
+    title   = {The Generic Approximation Lemma},
     journal = {Information Processing Letters},
-    year = {2001},
-    volume = {79},
-    pages = {2001},
-    url = {http://eprints.nottingham.ac.uk/225/1/approx.pdf}
+    year    = {2001},
+    volume  = {79},
+    pages   = {2001},
+    url     = {http://eprints.nottingham.ac.uk/225/1/approx.pdf}
 }
 
 %% UNUSED
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.27.5077
 @MISC{algebrascoalgebras,
     author = {Neil Ghani and Christoph Lüth and Federico De Marchi and John Power},
-    title = {Algebras, Coalgebras, Monads and Comonads},
-    year = {2001}
+    title  = {Algebras, Coalgebras, Monads and Comonads},
+    year   = {2001}
 }
 
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.29.7273
@@ -99,22 +164,22 @@
 % ntrunc-lemma, (take lemma mentioned), bisimulation, etc etc
 % url added (it is a pdf actually, despite the adress)
 @ARTICLE{mechanizingcoinduction,
-    author = {Lawrence C. Paulson},
-    title = {Mechanizing Coinduction and Corecursion in Higher-order Logic},
+    author  = {Lawrence C. Paulson},
+    title   = {Mechanizing Coinduction and Corecursion in Higher-order Logic},
     journal = {Journal of Logic and Computation},
-    year = {1997},
-    volume = {7},
-    url = {http://arxiv.org/pdf/cs/9711105}
+    year    = {1997},
+    volume  = {7},
+    url     = {http://arxiv.org/pdf/cs/9711105}
 }
 
 % From http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.37.3914
 % url added
 @inproceedings{coindtutorial,
-    author = {Andrew D. Gordon},
-    title = {A Tutorial on Co-induction and Functional Programming},
+    author    = {Andrew D. Gordon},
+    title     = {A Tutorial on Co-induction and Functional Programming},
     booktitle = {IN GLASGOW FUNCTIONAL PROGRAMMING WORKSHOP},
-    year = {1994},
-    pages = {78--95},
+    year      = {1994},
+    pages     = {78--95},
     publisher = {Springer},
-    url = {http://kyhcs.ustcsz.edu.cn/\~{}smyang/report/coinduction/gordon94tutorial.pdf}
+    url       = {http://kyhcs.ustcsz.edu.cn/\~{}smyang/report/coinduction/gordon94tutorial.pdf}
 }
