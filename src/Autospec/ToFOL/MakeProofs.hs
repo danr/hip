@@ -37,10 +37,22 @@ makeProofDecls :: [Decl] -> Set Name -> Type -> Decl -> [TM ProofDecl]
 makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
     let typedArgs = case ty of TyApp ts -> zip args ts
                                _        -> []
+
         resTy     = unProp $ case ty of TyApp ts -> last ts
                                         t        -> t
+
         prove' :: Bool -> Expr -> Expr -> [TM ProofDecl]
-        prove' = prove fundecls recfuns resTy fname typedArgs
+        prove' b lhs rhs = case resTy of
+              -- Prop (a -> b) ~= a -> Prop b
+              TyApp ts -> let extraTyArgs =  zip [ "x." ++ show x | x <- [0..] ]
+                                                 (init ts)
+                          in  prove fundecls recfuns
+                                    (last ts)
+                                    fname
+                                    (typedArgs ++ extraTyArgs) b
+                                    (foldl app lhs (map (Var . fst) extraTyArgs))
+                                    (foldl app rhs (map (Var . fst) extraTyArgs))
+              _        -> prove fundecls recfuns resTy fname typedArgs b lhs rhs
     case e of
       App "proveBool" [lhs]             -> prove' False lhs (Con "True" [])
       App "prove" [App "=:=" [lhs,rhs]] -> prove' False lhs rhs
@@ -80,12 +92,12 @@ prove :: [Decl]
 prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
         powset = powerset indargs
-    in  -- plainProof ++
-        proofByFixpointInduction -- ++
---        proofByApproxLemma ++
---        map (proofByStructInd True 2) (filter ((<2) .  length) powset) ++
---        map (proofByStructInd False 2) (filter ((<3) .  length) powset) ++
---        map proofBySimpleInduction indargs
+    in  plainProof ++
+        proofByFixpointInduction ++
+        proofByApproxLemma ++
+        map (proofByStructInd True 1) (filter ((<3) .  length) powset) ++
+        map (proofByStructInd False 1) (filter ((<3) .  length) powset) ++
+        map proofBySimpleInduction indargs
   where
     pstr :: String
     pstr = prettyCore lhs ++

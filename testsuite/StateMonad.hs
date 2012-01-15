@@ -145,13 +145,13 @@ prop_returnl_right3l f a = (returnl a `bind3l` f) =:= f a
 (>=>) :: (a -> State s b) -> (b -> State s c) -> a -> State s c
 m >=> n = \a s -> uncurry n (m a s)
 
-prop_right_kliesli :: (a -> State s b) -> Prop (a -> State s d)
+prop_right_kliesli :: (a -> b -> (s,b)) -> Prop (a -> d -> (s,d))
 prop_right_kliesli f = (f >=> return) =:= f
 
-prop_left_kliesli :: (a -> State s b) -> Prop (a -> State s d)
+prop_left_kliesli :: (a -> b -> (s,b)) -> Prop (a -> d -> (s,d))
 prop_left_kliesli f = (return >=> f) =:= f
 
-prop_assoc_kliesli :: (a -> State s b) -> (b -> State s c) -> (c -> State s d) -> Prop (a -> State s d)
+prop_assoc_kliesli :: (a -> b -> (s,b)) -> (b -> c -> (s,c)) -> (c -> d -> (s,d)) -> Prop (a -> d -> (s,d))
 prop_assoc_kliesli f g h = ((f >=> g) >=> h) =:= (f >=> (g >=> h))
 
 -- Let's join and fmap these beasts -------------------------------------------

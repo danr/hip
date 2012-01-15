@@ -23,17 +23,17 @@ prop_malins_identity x y = const id x y =:= flip const x y
 prop_malins_identity' :: Prop (a -> b -> b)
 prop_malins_identity' = const id =:= flip const
 
-prop_mikaels_identity :: (a -> b) -> a -> Prop b
-prop_mikaels_identity f x = id f x =:= f x
+prop_mikaels_identity :: (a -> b) -> Prop (a -> b)
+prop_mikaels_identity f = id f =:= f
 
 prop_dans_identity :: a -> a -> Prop a
 prop_dans_identity x y = const x y =:= id x
 
 prop_dans_nonidentity :: a -> a -> Prop a
-prop_dans_nonidentity x y = const y x =:= id x
+prop_dans_nonidentity x y = const y x =/= id x
 
 prop_nonidentity :: a -> Prop (a -> a)
-prop_nonidentity x = const x =:= id
+prop_nonidentity x = const x =/= id
 
 uncurry :: (a -> b -> c) -> (a,b) -> c
 uncurry f (a,b) = f a b
@@ -77,8 +77,8 @@ prop_comp_equal = (.) =:= (...)
 prop_comp_assoc :: (c -> d) -> (b -> c) -> (a -> b) -> Prop (a -> d)
 prop_comp_assoc f g h = ((f . g) . h) =:= (f . (g . h))
 
-prop_comp_assoc' :: (c -> d) -> (b -> c) -> (a -> b) -> a -> Prop d
-prop_comp_assoc' f g h a = ((f . g) . h) a =:= (f . (g . h)) a
+--prop_comp_assoc' :: (c -> d) -> (b -> c) -> (a -> b) -> a -> Prop d
+--prop_comp_assoc' f g h a = ((f . g) . h) a =:= (f . (g . h)) a
 
 prop_comp_assocl :: (c -> d) -> (b -> c) -> (a -> b) -> Prop (a -> d)
 prop_comp_assocl f g h = ((f ... g) ... h) =:= (f ... (g ... h))

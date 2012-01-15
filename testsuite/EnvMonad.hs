@@ -57,7 +57,7 @@ prop_returnl_right f a = (returnl a >>== f) =:= f a
 
 -- With applied environment ---------------------------------------------------
 
-
+{-
 prop_app_return_leftl :: (e -> a) -> e -> Prop a
 prop_app_return_leftl f e = (f >>= return) e =:= f e
 
@@ -90,7 +90,7 @@ prop_app_returnl_left f e = (f >>== returnl) e =:= f e
 
 prop_app_returnl_right :: (a -> e -> a) -> a -> e -> Prop a
 prop_app_returnl_right f a e = (returnl a >>== f) e =:= f a e
-
+-}
 
 -- Let's join and fmap these beasts -------------------------------------------
 
