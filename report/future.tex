@@ -1,0 +1,104 @@
+\section{Future work}
+
+The current work has some irritating limitations that we would like to address.
+
+\subsection{Lemmas}
+
+For many proofs, it is essential to use some lemma to reach the
+goal. For commutativity of plus, we already touched on this aspect, it
+needs the left identity as well as the $s(n) + m \eq n + s(m)$
+lemma. Furthermore, to prove associativity of multiplication you need
+at least associativity of addition.
+
+Implementing addition of lemmas for properties that always hold, i.e,
+for also partial and infinite values is straightforward; you can just
+add the universally quantified property to the theory. The problem is
+when it only holds for finite or total values: you will need FOL
+predicates or functions to describe exactly when the property
+holds. Research has been made how to use such predicates
+\cite{sortMonotonicity}, \cite{polyMonotonicity}, but it is not
+decided yet on which way to encode types. Furthermore, you will need
+to prove that functions return finite or total values on such
+input. For instance, append for lists gives a total list if both input
+lists are total, but on the other hand, if the result list is total
+but potentially infinite, we can only draw the conclusion that the
+first list is total, since that might be the infinite one. So, to
+prove properties that does not always hold you will need to prove a
+lot more properties about your functions.
+
+Another way to reason about this is to assume that the undefined value
+does not exist, and this could be deemed as morally correct
+\cite{fastandloose}. Then you cannot use fixed point induction but you
+can still use structural induction.
+
+\note{Discuss this with Moa and get references}
+Another aspect of this is where to get the lemmas from. In the Isabel
+induction and rippling community, there are concepts such as critics,
+which makes lemmas and generalizations when the term rewriting
+heuristic rippling fails, and lemma calculation, which tries to
+syntactically analyze the problem before proving in order to figure
+out suitable lemmas. Another approach is to do property speculation,
+implemented for Isabell \cite{isacosy} and Haskell \cite{quickspec},
+where you simply tell the QuickSpec program all functions in your
+program, and it tries to find equality properties by creating small syntax
+trees of the functions. It would be very interesting to see how useful
+such properties are as lemmas.
+
+The third aspect is how should the user inform the program which
+lemmas are needed? One solution is to allow the user to annotate the
+source code where the properties are entered which lemmas might be
+appropriate to use. Another is to first try to prove all properties,
+and for those which did not turn out to be a theorem, add all the
+succeeded properties as a lemma and iterate until you reach a fixed
+point. This could probably be optimized: if a lemma only concerns
+functions that are not relevant for a given property, it is
+unnecessary to add it to the theory.
+
+\subsection{Material implication}
+
+Implications
+
+\subsection{Proving non termination}
+
+Since we will need to prove termination for functions, how would one
+prove non-termination (for some inputs)? Then we could get more
+completeness: this function with these inputs would be $\bot$.
+
+\subsection{Extending techniques}
+
+Each of the proof methods have their own future work chapter, but it
+would be nice to have some finite fixed point induction on terminating
+functions and a finite approximation lemma.
+
+You can also do as with the approximation lemma which became just a
+fixpoint induction over a structural identity function, but instead of
+putting one of each side of the equality, you can do it on the
+individual variables or sub trees of an expression: this would be like
+structural induction encoded as approximation lemma/fixed point induction.
+
+Another technique is recursion induction \cite{recind}, where you
+prove that two functions are equal by asserting that one of them
+fulfills the same equations as the other.
+\note{elaborate}
+
+\subsection{More of Haskell}
+
+There are still parts of Haskell that are not supported, most notably
+type classes, but also do-notation do-notation, list comprehensions,
+records, pattern bindings, irrefutable patterns, \hs{seq} and bang
+patterns, another notable improvement could be to unroll \hs{Type}
+definitions, so you can use them in the type signature of your
+properties. While it is already possible to prove a lot of interesting
+Haskell properties, it is far from able to prove things about bigger
+Haskell projects which usually use a richer part of the language.
+
+\subsection{Faster proof searches via predicates}
+
+\note{Ask Koen how this really works!}
+It is possible to add annotations in the equations generated for
+functions to make the theorem prover not unroll unnecessary
+definitions and regard these equalities more like definitions, so they
+do not rewrite from the wrong direction. One way is to add a
+min-predicate (named so for historical reasons), that can also
+sometimes lead to finite models.
+

@@ -10,7 +10,6 @@
 \lstset{showstringspaces=false}
 \lstloadlanguages{haskell,tptp}
 
-
 * Github repo
 [[http://github.com/danr/autospec/][Link to the github repository.]]
 
@@ -682,7 +681,8 @@ and if' will have that everything but True and Bottom goes to b.
 
 Is this OK?
 ** Equistential quantification in cnf
-** TODO Fixed point induction
+** DONE Fixed point induction
+CLOSED: [2012-01-16 Mon 12:35]
 *** DONE Good when you don't have anything to do induction on
 CLOSED: [2012-01-13 Fri 13:07]
 *** DONE Examples of examples
@@ -695,31 +695,33 @@ CLOSED: [2012-01-13 Fri 13:07]
 CLOSED: [2012-01-13 Fri 13:06]
 *** DONE How it was implemented
 CLOSED: [2012-01-13 Fri 13:06]
-*** TODO Future work: depth machines
-** TODO Structural induction
+*** DONE Future work: depth machines
+CLOSED: [2012-01-16 Mon 12:35]
+** DONE Structural induction
+CLOSED: [2012-01-16 Mon 12:35]
 *** Compare to normal PA induction
 *** Chain complete predicates -> infinite properties
 *** Structural induction on exponential types
 *** Deeper structural induction
 *** Future work: induction machines
-** TODO Related work
-*** Coinduction work in Agda by NAD
+** DONE Related work
+CLOSED: [2012-01-16 Mon 12:34]
+*** DONE Coinduction work in Agda by NAD
+CLOSED: [2012-01-16 Mon 12:35]
 ** TODO Future work
 *** Properties of implication
 **** x + y = x + z -> y = x
 needs induction on the whole property, you cannot simply the
 antecedent as a lemma
 * Week 3 (16 Jan - 22 Jan)
-** Write report
-SCHEDULED: <2012-01-20 Fri>
-** Prepare presentation
-SCHEDULED: <2012-01-20 Fri>
 
+** Good bibtex, bad bibtex
+** Hasse diagrams
+** Better name than autospec!
+** How does the min predicate work
 * Week 4 (23 Jan - 29 Jan)
 ** Prepare presentation
-
-** Final presentation
-
+** Final presentation 27th!!!!!
 * Week 5 (30 Jan - 5 Feb)
 ** Report done
 
