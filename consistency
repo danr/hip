@@ -15,7 +15,7 @@ fi
 
 OUTFILE=tmp/`basename $1.tptp`
 
-autospec $1 -f > $OUTFILE
+autospec $1 -f -q > $OUTFILE
 
 if [ $? == 0 ]; then
     $PROGRAM -tAuto -xAuto --tptp3-format --memory-limit=1000 $FLAG $OUTFILE

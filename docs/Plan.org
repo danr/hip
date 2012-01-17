@@ -714,11 +714,12 @@ CLOSED: [2012-01-16 Mon 12:35]
 needs induction on the whole property, you cannot simply the
 antecedent as a lemma
 * Week 3 (16 Jan - 22 Jan)
-
 ** Good bibtex, bad bibtex
 ** Hasse diagrams
 ** Better name than autospec!
 ** How does the min predicate work
+** Adimissibility of equality
+** Ardent time planning
 * Week 4 (23 Jan - 29 Jan)
 ** Prepare presentation
 ** Final presentation 27th!!!!!
