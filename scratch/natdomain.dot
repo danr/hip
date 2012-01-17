@@ -1,0 +1,35 @@
+graph natdomain
+{
+        rankdir=BT
+
+	node [shape=plaintext]
+
+        {       rank = same;
+                cl [label="Succ (Succ Zero)"];
+                cr [label="&#8942;"];
+        }
+
+	{	rank = same;
+                bl [label="Succ Zero"];
+                br [label="Succ (Succ &perp;)"];
+	}
+
+	{	rank = same;
+		al [label="Succ &perp;"];
+		ar [label="Zero"];
+	}
+
+        {       rank = same;
+                bot [label="&perp;"];
+        }
+
+        bot -- al;
+        bot -- ar;
+
+        ar -- bl;
+        ar -- br;
+
+        br -- cl;
+        br -- cr;
+
+}
