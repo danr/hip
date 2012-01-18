@@ -28,3 +28,5 @@ tmp/
 *blg
 *toc
 *sty
+testsuite/prover9/*\.xml
+testsuite/prover9/*\.out
