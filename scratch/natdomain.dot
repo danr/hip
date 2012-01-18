@@ -15,8 +15,8 @@ graph natdomain
 	}
 
 	{	rank = same;
-		al [label="Succ &perp;"];
-		ar [label="Zero"];
+		al [label="Zero"];
+        	ar [label="Succ &perp;"];
 	}
 
         {       rank = same;

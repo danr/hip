@@ -4,7 +4,7 @@
 \newcommand{\myGlobalTransformation}[2]
 {
     \pgftransformreset;
-    \pgftransformcm{1.6}{0}{0.8}{0.5}{\pgfpoint{#1cm}{#2cm}}
+    \pgftransformcm{1.6}{0}{0.6}{0.5}{\pgfpoint{#1cm}{#2cm}}
 }
 
 \newcommand\tru{\mathrm{T}}
@@ -27,24 +27,23 @@
 
     %draws lower graph lines and those in z-direction:
     \begin{scope}
-        \myGlobalTransformation{0}{0};
+        \myGlobalTransformation{0}{0.7};
         \node (bottom) at (0,0) {$\bot$};
 
-        \myGlobalTransformation{0}{2};
+        \myGlobalTransformation{0}{2.1};
         \node (botbot) at (0,0) {$(\bot,\bot)$};
 
         \myGlobalTransformation{0}{4};
-        \node (trubot) at (-1,1)  {$(\tru,\bot)$};
-        \node (bottru) at (1,1)   {$(\bot,\tru)$};
-        \node (falbot) at (1,-1)  {$(\fal,\bot)$};
-        \node (botfal) at (-1,-1) {$(\bot,\fal)$};
+        \node (trubot) at (-1,0)  {$(\tru,\bot)$};
+        \node (bottru) at (0,1)  {$(\bot,\tru)$};
+        \node (falbot) at (1,0) {$(\fal,\bot)$};
+        \node (botfal) at (0,-1) {$(\bot,\fal)$};
 
-
-        \myGlobalTransformation{0}{7};
-        \node (trutru) at (0,1)  {$(\tru,\tru)$};
-        \node (faltru) at (1,0)  {$(\fal,\tru)$};
-        \node (falfal) at (0,-1) {$(\fal,\fal)$};
-        \node (trufal) at (-1,0) {$(\tru,\fal)$};
+        \myGlobalTransformation{0}{6.3};
+        \node (trutru) at (-0.7, 0.7) {$(\tru,\tru)$};
+        \node (faltru) at ( 0.7, 0.7) {$(\fal,\tru)$};
+        \node (falfal) at ( 0.7,-0.7) {$(\fal,\fal)$};
+        \node (trufal) at (-0.7,-0.7) {$(\tru,\fal)$};
 
         \draw (bottom) -- (botbot);
 
@@ -55,12 +54,12 @@
 
         \ddraw{trubot}{trutru};
         \ddraw{bottru}{trutru};
+        \ddraw{falbot}{faltru};
+        \ddraw{bottru}{faltru};
         \ddraw{trubot}{trufal};
         \ddraw{botfal}{trufal};
         \ddraw{botfal}{falfal};
         \ddraw{falbot}{falfal};
-        \ddraw{falbot}{faltru};
-        \ddraw{bottru}{faltru};
 
     \end{scope}
 
