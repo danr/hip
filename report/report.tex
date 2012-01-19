@@ -5,24 +5,62 @@
 \usepackage{graphicx}
 \usepackage{mathpartir}
 \usepackage[margin=1.5in]{geometry}
-\usepackage{parsetree}
 \usepackage{verbatim}
 \usepackage{subfig}
 \usepackage{wrapfig}
-\usepackage{tipa}
-\usepackage{textcomp}
 \usepackage{float}
-%\usepackage{courier}
+\usepackage{bold-extra}
+\usepackage{tikz}
+\usepackage{palatino}
+\usepackage{courier}
+% \usepackage{textcomp} % Supports the Text Companion fonts which
+% provide many text symbols (such as baht, bullet, copyright,
+% musicalnote, onequarter, section, and yen) in the TS1 encoding.
+
+\makeatletter
+\newcommand*{\rom}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@.}}
+\makeatother
+
+\usepackage{listings}
+\lstset{ %
+  language=Haskell,                % the language of the code
+  basicstyle=\ttfamily\footnotesize,           % the size of the fonts that are used for the code
+%  numbers=left,                   % where to put the line-numbers
+%  numberstyle=\footnotesize,          % the size of the fonts that are used for the line-numbers
+%  stepnumber=2,                   % the step between two line-numbers. If it's 1, each line
+%                                  % will be numbered
+%  numbersep=5pt,                  % how far the line-numbers are from the code
+  backgroundcolor=\color{white},      % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  frame=single,                   % adds a frame around the code
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=r,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  title=\lstname,                   % show the filename of files included with \lstinputlisting;
+                                  % also try caption instead of title
+  numberstyle=\tiny\color{gray},        % line number style
+  keywordstyle=\bfseries,          % keyword style
+  commentstyle=\color{dkgreen},       % comment style
+  stringstyle=\color{mauve},         % string literal style
+  escapeinside={\%*}{*)},            % if you want to add a comment within your code
+  morekeywords={*,...}               % if you want to add more keywords to the set
+}
 
 \newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
 \newcommand\hs[1]{\verb~#1~}
 \newcommand\fn[1]{\mathrm{#1}}
 \newcommand\ptr[1]{\fn{#1.ptr}}
-\newcommand\app[2]{#1 \, @ \, #2}
+\newcommand\appfn{@}
+\newcommand\app[2]{#1 \, \appfn \, #2}
 \newcommand\ex[1]{\exists \, #1 \, . \,}
-\newcommand\fa[1]{\forall \, #1 \, . \,}
-\newcommand\faa[2]{\forall \, #1 , #2 \, . \,}
-\newcommand\faaa[3]{\forall \, #1 , #2 , #3 \, . \,}
+\newcommand\nexxx[3]{\nexists \, #1 , #2 , #3 . \,}
+\newcommand\fa[1]{\forall \, #1 . \,}
+\newcommand\faa[2]{\forall \, #1 , #2 . \,}
+\newcommand\faaa[3]{\forall \, #1 , #2 , #3 . \,}
+\newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 \, #4 , #5 , #6 . \,}
 
 \newcommand\tofix[1]{#1_{\mathrm{tofix}}}
 \newcommand\unfix[1]{#1_{\mathrm{unfix}}}
@@ -37,24 +75,22 @@
 \newcommand\defof[1]{definition \, of \, #1}
 
 \newcommand\w[0]{\,\,}
-\newcommand\eq[0]{=}
+\newcommand\eq[0]{ = }
 
+\newcommand{\defBNF}[4] {\text{#1}\quad&#2&::=&\;#3&\text{#4}}
+\newcommand{\defaltBNF}[2] {&&|&\;#1&\text{#2}}
 
-%\begin{comment}
-%%\begin{document}
-%
-%\chapter{Proof Methods}
-%
-%\noindent
-%\input{induction}
-%
-%\bibliographystyle{apalikeurl}
-%\bibliography{masterbib}
-%
-%%\end{document}
-%\end{commment}
-%
-%%\begin{comment}
+\begin{document}
+
+\noindent
+\input{translation}
+
+\bibliographystyle{apalikeurl}
+\bibliography{masterbib}
+
+\end{document}
+
+\begin{comment}
 
 \begin{document}
 
@@ -139,4 +175,4 @@ Test suite
 \bibliography{masterbib}
 \end{document}
 
-%\end{comment}
+\end{comment}

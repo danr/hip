@@ -1,5 +1,228 @@
 \chapter{Haskell to First Order Logic}
 
+To enable automated theorem provers to do equational reasoning of
+Haskell programs, we translate them to first order logic. It is
+referred to as a translation, but it could also be regarded as a
+compilation. The idea is to use constants and functions in first order
+logic to correspond to constructors and functions, and arguments to
+functions need to be universally quantified. We shall try to do a
+na\"{\i}ve attempt of a translation with this ideas and see how far it
+takes us.
+
+\section{Na\"{\i}ve translation}
+
+We will use a data type of binary trees with an element at every
+branch, and consider some examples of functions defined on it. This
+is the Haskell definition of the data type we will be using:
+
+\begin{lstlisting}
+data Tree a = Fork (Tree a) a (Tree a) | Leaf
+\end{lstlisting}
+With the idea above, occurrences of the \hs{Fork} constructor in the
+source code should be translated to a logic function $\fn{fork}$, and
+similarly a constant for \hs{Leaf}. How should we then translate the
+\hs{singleton} function, defined below?
+
+\begin{lstlisting}
+singleton :: a -> Tree a
+singleton x = Fork Leaf x Leaf
+\end{lstlisting}
+
+\noindent
+Following our intuition and make an universal quantification for
+\hs{x}, and make a new logic function for \hs{singleton}. The result
+is this axiom:
+\begin{equation*}
+\fa{x} \fn{singleton}(x) = \fn{fork}(\fn{leaf},x,\fn{leaf})
+\end{equation*}
+
+\noindent
+So far so good, but what if someone wants to prove that \hs{singleton x}
+is a \hs{Leaf}? With only this axiom in the theory, it would be
+possible: there are models with only one element where \hs{Leaf} is
+equal to \hs{Fork}. Indeed, we will need to add axioms that values
+created from the different constructors are unequal. We will call
+those disjoint constructor axioms, and for the \hs{Tree} data type, we
+get this axiom:
+\begin{equation*}
+\faaa{l}{x}{r} \fn{leaf} \neq \fn{fork}(l,x,r)
+\end{equation*}
+
+Constructors should also be injective to get regular models, and
+adding such axioms are straightforward. Since \hs{Fork} has arguments,
+it needs an injectivity axiom:
+\begin{equation*}
+\faaaaaa{l_0}{l_1}{x_0}{x_1}{r_0}{r_1} \fn{fork}(l_0,x_0,r_0) \eq
+\fn{fork}(l_1,x_1,r_1) \rightarrow l_0 \eq l_1 \wedge x_0 \eq x_1 \wedge r_0 \eq r_1
+\end{equation*}
+
+For the \hs{mirror} function, which recursively mirrors the left sub
+tree with the right and vice-versa, we follow our intuition to
+translate the pattern matching and get these two axioms\footnote
+{Axioms are enumerated by Roman numerals to tell them apart.}:
+
+\begin{lstlisting}
+mirror :: Tree a -> Tree a
+mirror (Fork l x r) = Fork (mirror r) x (mirror l)
+mirror Leaf         = Leaf
+\end{lstlisting}
+\begin{align*}
+\rom{1} && \faaa{l}{x}{r} & \fn{mirror}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
+\rom{2} &&                & \fn{mirror}(\fn{leaf}) \eq \fn{leaf}
+\end{align*}
+
+A problem with this translation is that there are no axioms for other
+arguments of \fn{mirror} than leafs and forks, and we have models that
+include other values than leafs and forks. Another problem is
+encountered for \hs{singleton}'s left inverse, \hs{top}, code below,
+which returns the top element of a \hs{Tree}. This is a partial
+function since it does not cover all patterns.
+
+\begin{lstlisting}[label=lst:top]
+top :: Tree a -> a
+top (Fork l x r) = x
+\end{lstlisting}
+
+The translation must capture the pattern match failure that results
+from trying to evaluate top applied to a leaf. We conclude that
+this na\"{\i}ve translation does not take us further, but we shall see
+in the next section how to fix this.
+
+\section{Bottom and pattern matching}
+
+In domain theory there is a concept of bottom, denoted $\bot$. It is
+used for the least defined value: pattern match failures, use of
+\hs{error} and \hs{undefined} in the source code, but also for
+non-terminating programs.  \note{Refer to a short introduction of
+  domain theory at the end of this chapter (or elsewhere, appendix?)}
+For \hs{top} the idea is to add an axiom so that \fn{top} of anything
+that is not a \hs{Fork} is bottom. This is an example of such an
+axiomatization:
+\begin{align*}
+\rom{1} && \faaa{l}{x}{r} & \fn{top}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
+\rom{2} && \fa{i}         & (\nexxx{l}{x}{r} \fn{fork}(l,x,r)) \eq i) \rightarrow \fn{top}(i) \eq \bot
+\end{align*}
+
+Most theorem provers would \note{citation needed}skolemize the second
+axiom. A new unary function would be introduced for $l$, $x$ and $r$,
+depending on $i$, an arbitrary choice of names are $\fn{top}$
+appended to the original variable. The axiom becomes:
+\begin{align*}
+\rom{2}' && \fa{i} & (\fn{fork}(\fn{topl}(i),\fn{topx}(i),\fn{topr}(i))) \neq i) \rightarrow \fn{top}(i) \eq \bot
+\end{align*}
+
+For another function, like \hs{mirror} above, the skolemized function
+could be called $\fn{mirror}$ and the variable name. Since axioms of
+injective constructors are also added, we could conclude that
+$\faaa{l}{x}{r} \fn{mirrorl}(\fn{fork}(l,x,r)) \eq
+\fn{topl}(\fn{fork}(l,x,r)) \eq l$. But what happens if we introduce
+such skolemized ``selector'' functions for every constructor manually?
+We call them $\fn{fork_0}$ up to $\fn{fork_2}$, and their axioms are:
+\begin{align*}
+\rom{1} \qquad \faaa{l}{x}{r} \fn{fork_{0}}(\fn{fork}(l,x,r)) & \eq l\\
+\rom{2} \qquad \faaa{l}{x}{r} \fn{fork_{1}}(\fn{fork}(l,x,r)) & \eq x\\
+\rom{3} \qquad \faaa{l}{x}{r} \fn{fork_{2}}(\fn{fork}(l,x,r)) & \eq r\\
+\end{align*}
+The translation of \hs{top} then becomes:
+\begin{align*}
+\rom{1} && \faaa{l}{x}{r} & \fn{top}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
+\rom{2} && \fa{i}         & (\fn{fork}(\fn{fork_0}(i),\fn{fork_1}(i),\fn{fork_2}(i))) \neq i) \rightarrow \fn{top}(i) \eq \bot
+\end{align*}
+Another nice side effect of writing in this skolemized selector style
+is that implies injective constructors, for assume we have
+$\fn{fork}(l_0,x_0,r_0) = \fn{fork}(l_1,x_1,r_1)$ then the first
+projection, $\fn{fork_0}$, gives us that $l_0=l_1$. Analogously,
+and the second and the third give $x_0=x_1$ and $r_0=r_1$,
+respectively. So we add selector axioms instead of injectivity
+axioms.
+
+Now we have a good idea how to translate pattern matching, but
+in Haskell we can pattern match almost everywhere! How would we
+proceed to translate a function like this, taken from the
+implementation of \hs{scanr} in the \hs{Prelude}?
+
+\begin{lstlisting}
+scanr             :: (a -> b -> b) -> b -> [a] -> [b]
+scanr f q0 []     =  [q0]
+scanr f q0 (x:xs) =  f x q : qs
+                     where qs = scanr f q0 xs
+                           q = case qs of
+                                 q : _ -> q
+\end{lstlisting}
+
+There is both pattern matching on the direct arguments, but also
+pattern matching in a case statements in the where function
+\hs{q}. There can also be pattern matching in lambdas. To help with
+these difficulties, we define an intermediate language in the next
+section.
+
+\section{The Intermediate Language}
+
+To address the difficulties of pattern matching elsewhere than the
+arguments of a function, a little small intermediate language is
+designed that can only do pattern matching at a very controlled
+location: in a case statement that is the entire body of a function,
+and all arms are just simple expressions consisting of function and
+constructor applications and variables. Haskell is translated to this,
+and pattern matching at other locations is translated to this in a new
+top level definition. Functions definined in \hs{let} and \hs{where}
+are raised to the top level, with the necessary variables in scope as
+additional arguments. The same is done for sections and lambda
+functions. The BNF for the language is this:
+
+\begin{equation*}
+\begin{aligned}
+\text{Variables} \quad & x,f \\
+\text{Constructors} \quad & C \\
+\text{Type variables} \quad & \tau \\
+\text{Type constructors} \quad & T \\
+\defBNF{Declarations}{decl}{ f \; \overline{x} \; \hs{=} \; body}{function declaration} \\
+    \defaltBNF{f \; \hs{::} \; t}{type signature} \\
+    \defaltBNF{\hs{data} \; T \; \overline{\tau} \; \hs{=} \; \overline{C \; \overline{t}}}{data type declaration} \\
+\defBNF{Function body}{body}{\hs{case} \; e \; \hs{of} \; \overline{alt}}{case body} \\
+    \defaltBNF{e}{expression body} \\
+\defBNF{Expressions}{e}{x}{variable} \\
+    \defaltBNF{f \; \overline{e}}{function application} \\
+    \defaltBNF{C \; \overline{e}}{constructor application} \\
+\defBNF{Alternative}{alt}{pat \rightarrow e}{branch without guard} \\
+    \defaltBNF{pat \; \hs{|} \; e \rightarrow e}{branch with guard} \\
+\defBNF{Pattern}{p}{x}{pattern variable} \\
+    \defaltBNF{C \; \overline{p}}{constructor pattern} \\
+\defBNF{Types}{t}{\tau}{type variable} \\
+    \defaltBNF{t \; \rightarrow \; t}{function type} \\
+    \defaltBNF{T \; \overline{\tau}}{type constructor application} \\
+\defBNF{Programs}{prog}{\overline{decl}}{} \\
+\end{aligned}
+\end{equation*}
+
+
+
+
+\section{Summary}
+
+We summarize the translation in Table~\ref{tab:transtable}.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|l|}
+    \hline
+    Haskell                    & First Order Logic \\
+    \hline
+    function                   & function or constant \\
+    constructor                & function or constant \\
+    data type                  & disjoint constructors and selector axioms \\
+    pattern matching           & insertion of bottoms and upwards axioms \\
+    guards                     & equality to true and bottom plus upwards axioms \\
+    partial application        & $\appfn$ on pointer constant \\
+    partially applied function & pointer constant and $\appfn$ rule \\
+    sections, lambdas, let     & new functions with variables in scope as arguments \\
+    \hline
+  \end{tabular}
+  \caption{Translation of different Haskell constructs
+    \label{tab:transtable}
+  }
+\end{table}
+
 The goal of this translation is to enable equational reasoning of
 Haskell programs, in FOL. It is here referred to as a translation, but
 it could also in be regarded as compilation.
@@ -68,7 +291,7 @@ constructor of the Tree example, we get the following projections:
 \begin{align*}
  \forall \, l \, x \, r \, . \,  \fn{Branch_{0}}(\fn{Branch}(l,x,r)) &  = l\\
  \forall \, l \, x \, r \, . \,  \fn{Branch_{1}}(\fn{Branch}(l,x,r)) &  = x\\
- \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r
+ \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r\\
 \end{align*}
 
 These ternary functions are bluntly named by indexing on the projected
