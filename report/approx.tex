@@ -216,7 +216,19 @@ lists becomes:
 
 The step case in induction $P(\unfix{id}) \rightarrow P(\tofix{id})$
 is then exactly the same strength as the approximation lemma with
-natural numbers.
+natural numbers. We get this simple rule for approximation lemma:
+
+\begin{mathpar}
+  \inferrule*
+     {
+                    \unfix{\fn{ind}} \w e_1 \eq \unfix{\fn{ind}} \w e_2
+        \rightarrow \tofix{\fn{ind}} \w e_1 \eq \tofix{\fn{ind}} \w e_2
+     }
+     {
+        e_1 \eq e_2
+     }
+\end{mathpar}
+
 
 \subsection{Implementation} The implementation of approximation lemma
 was the simplest to implement, after definitional equality. First,

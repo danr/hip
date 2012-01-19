@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass{book}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -11,9 +11,20 @@
 \usepackage{float}
 \usepackage{bold-extra}
 \usepackage{tikz}
-%\usepackage{palatino}
-%\usepackage{courier}
+\usepackage{palatino}
+\usepackage{courier}
 
+\usepackage{fancyheadings}
+\pagestyle{fancy}
+%\addtolength{\headwidth}{\marginparsep}
+%\addtolength{\headwidth}{\marginparwidth}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\lhead[\fancyplain{}{\bfseries\thepage}]
+{\fancyplain{}{\bfseries\rightmark}}
+\rhead[\fancyplain{}{\bfseries\leftmark}]
+{\fancyplain{}{\bfseries\thepage}}
+\cfoot{}
 
 % \usepackage{textcomp} % Supports the Text Companion fonts which
 % provide many text symbols (such as baht, bullet, copyright,
@@ -78,8 +89,8 @@
 \newcommand\faaa[3]{\forall \, #1 , #2 , #3 . \,}
 \newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 \, #4 , #5 , #6 . \,}
 
-\newcommand\tofix[1]{#1_{\mathrm{tofix}}}
-\newcommand\unfix[1]{#1_{\mathrm{unfix}}}
+\newcommand\tofix[1]{#1^{\bullet}}
+\newcommand\unfix[1]{#1^{\circ}}}
 
 \newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
 \newcommand{\desca}[1]{  & \hspace{44.5mm}                            \{ \mathrm{#1} \}}
@@ -96,23 +107,24 @@
 \newcommand{\defBNF}[4] {\text{#1}\quad&#2&::=&\;#3&\text{#4}}
 \newcommand{\defaltBNF}[2] {&&|&\;#1&\text{#2}}
 
-\begin{document}
-
-\noindent
-\input{translation}
-
-\bibliographystyle{apalikeurl}
-\bibliography{masterbib}
-
-\end{document}
-
-\begin{comment}
+%\begin{document}
+%
+%\noindent
+%\input{translation}
+%
+%\bibliographystyle{apalikeurl}
+%\bibliography{masterbib}
+%
+%\end{document}
+%
+%\begin{comment}
 
 \begin{document}
 
 %% Title ----------------------------------------------------------------------
 \title{Proving Equational Haskell Properties Using ATPs}
 \author{Dan Rosén}
+\date{\today}
 \maketitle
 
 %% Abstract -------------------------------------------------------------------
@@ -146,8 +158,10 @@ breeze.
 
 \input{intro}
 
-% First order logic and FOL and ATPs
-\input{logic}
+It is assumed that the reader knows a little Haskell, a good book to
+read is learn you a Haskell, some first order logic on both models and
+syntactically, and can imagine what an automated theroem prover is and
+how to run one on a first order theory.
 
 % Related work
 \input{related}
