@@ -15,18 +15,18 @@ We will use a data type of binary trees with an element at every
 branch, and consider some examples of functions defined on it. This
 is the Haskell definition of the data type we will be using:
 
-\begin{lstlisting}
+\begin{code}
 data Tree a = Fork (Tree a) a (Tree a) | Leaf
-\end{lstlisting}
+\end{code}
 With the idea above, occurrences of the \hs{Fork} constructor in the
 source code should be translated to a logic function $\fn{fork}$, and
 similarly a constant for \hs{Leaf}. How should we then translate the
 \hs{singleton} function, defined below?
 
-\begin{lstlisting}
+\begin{code}
 singleton :: a -> Tree a
 singleton x = Fork Leaf x Leaf
-\end{lstlisting}
+\end{code}
 
 \noindent
 Following our intuition and make an universal quantification for
@@ -61,27 +61,28 @@ tree with the right and vice-versa, we follow our intuition to
 translate the pattern matching and get these two axioms\footnote
 {Axioms are enumerated by Roman numerals to tell them apart.}:
 
-\begin{lstlisting}
+\begin{code}
 mirror :: Tree a -> Tree a
 mirror (Fork l x r) = Fork (mirror r) x (mirror l)
 mirror Leaf         = Leaf
-\end{lstlisting}
+\end{code}
 \begin{align*}
 \rom{1} && \faaa{l}{x}{r} & \fn{mirror}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
 \rom{2} &&                & \fn{mirror}(\fn{leaf}) \eq \fn{leaf}
 \end{align*}
 
+\noindent
 A problem with this translation is that there are no axioms for other
-arguments of \fn{mirror} than leafs and forks, and we have models that
+arguments of $\fn{mirror}$ than leafs and forks, and we have models that
 include other values than leafs and forks. Another problem is
 encountered for \hs{singleton}'s left inverse, \hs{top}, code below,
 which returns the top element of a \hs{Tree}. This is a partial
 function since it does not cover all patterns.
 
-\begin{lstlisting}[label=lst:top]
+\begin{code}[label=lst:top]
 top :: Tree a -> a
 top (Fork l x r) = x
-\end{lstlisting}
+\end{code}
 
 The translation must capture the pattern match failure that results
 from trying to evaluate top applied to a leaf. We conclude that
@@ -99,8 +100,8 @@ For \hs{top} the idea is to add an axiom so that \fn{top} of anything
 that is not a \hs{Fork} is bottom. This is an example of such an
 axiomatization:
 \begin{align*}
-\rom{1} && \faaa{l}{x}{r} & \fn{top}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
-\rom{2} && \fa{i}         & (\nexxx{l}{x}{r} \fn{fork}(l,x,r)) \eq i) \rightarrow \fn{top}(i) \eq \bot
+\rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
+\rom{2} \qquad & \fa{t}         (\nexxx{l}{x}{r} \fn{fork}(l,x,r)) \eq t) \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
 
 Most theorem provers would \note{citation needed}skolemize the second
@@ -108,7 +109,7 @@ axiom. A new unary function would be introduced for $l$, $x$ and $r$,
 depending on $i$, an arbitrary choice of names are $\fn{top}$
 appended to the original variable. The axiom becomes:
 \begin{align*}
-\rom{2}' && \fa{i} & (\fn{fork}(\fn{topl}(i),\fn{topx}(i),\fn{topr}(i))) \neq i) \rightarrow \fn{top}(i) \eq \bot
+\rom{2}' \qquad & \fa{t} (\fn{fork}(\fn{topl}(t),\fn{topx}(t),\fn{topr}(t))) \neq t) \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
 
 For another function, like \hs{mirror} above, the skolemized function
@@ -121,35 +122,50 @@ We call them $\fn{fork_0}$ up to $\fn{fork_2}$, and their axioms are:
 \begin{align*}
 \rom{1} \qquad \faaa{l}{x}{r} \fn{fork_{0}}(\fn{fork}(l,x,r)) & \eq l\\
 \rom{2} \qquad \faaa{l}{x}{r} \fn{fork_{1}}(\fn{fork}(l,x,r)) & \eq x\\
-\rom{3} \qquad \faaa{l}{x}{r} \fn{fork_{2}}(\fn{fork}(l,x,r)) & \eq r\\
+\rom{3} \qquad \faaa{l}{x}{r} \fn{fork_{2}}(\fn{fork}(l,x,r)) & \eq r
 \end{align*}
-The translation of \hs{top} then becomes:
+
+\noindent
+The translation of \hs{top} with these selector functions is:
 \begin{align*}
-\rom{1} && \faaa{l}{x}{r} & \fn{top}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
-\rom{2} && \fa{i}         & (\fn{fork}(\fn{fork_0}(i),\fn{fork_1}(i),\fn{fork_2}(i))) \neq i) \rightarrow \fn{top}(i) \eq \bot
+\rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq \fn{fork}(\fn{mirror}(r),x,\fn{mirror}(l)) \\
+\rom{2} \qquad & \fa{t}         (\fn{fork}(\fn{fork_0}(t),\fn{fork_1}(t),\fn{fork_2}(t))) \neq t) \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
+
+\noindent
 Another nice side effect of writing in this skolemized selector style
-is that implies injective constructors, for assume we have
-$\fn{fork}(l_0,x_0,r_0) = \fn{fork}(l_1,x_1,r_1)$ then the first
-projection, $\fn{fork_0}$, gives us that $l_0=l_1$. Analogously,
-and the second and the third give $x_0=x_1$ and $r_0=r_1$,
-respectively. So we add selector axioms instead of injectivity
-axioms.
+is that implies injective constructors. Assume we have
+$\fn{fork}(l_0,x_0,r_0)=\fn{fork}(l_1,x_1,r_1)$ then the first
+projection, $\fn{fork_0}$, gives us that $l_0=l_1$. Analogously, and
+the second and the third give $x_0=x_1$ and $r_0=r_1$,
+respectively. Thus selector axioms are added in place of of
+injectivity axioms.
+
+With the bottom constant in the theory, the axioms disjointedness of
+needs to be added. It can be seen as an implicit constructor for every
+data type. For the \hs{Tree} data type the axioms are:
+
+\begin{align*}
+\rom{1} \qquad & \faaa{l}{x}{r} \fn{fork}(l,x,r) \neq \fn{leaf} \\
+\rom{2} \qquad & \faaa{l}{x}{r} \fn{fork}(l,x,r) \neq \bot      \\
+\rom{3} \qquad & \bot \neq \fn{leaf}
+\end{align*}
 
 Now we have a good idea how to translate pattern matching, but
 in Haskell we can pattern match almost everywhere! How would we
 proceed to translate a function like this, taken from the
 implementation of \hs{scanr} in the \hs{Prelude}?
 
-\begin{lstlisting}
+\begin{code}
 scanr             :: (a -> b -> b) -> b -> [a] -> [b]
 scanr f q0 []     =  [q0]
 scanr f q0 (x:xs) =  f x q : qs
                      where qs = scanr f q0 xs
                            q = case qs of
                                  q : _ -> q
-\end{lstlisting}
+\end{code}
 
+\noindent
 There is both pattern matching on the direct arguments, but also
 pattern matching in a case statements in the where function
 \hs{q}. There can also be pattern matching in lambdas. To help with
@@ -195,195 +211,118 @@ functions. The BNF for the language is this:
 \end{aligned}
 \end{equation*}
 
+This language is a strict subset of Haskell. Data declarations are
+added for disjointedness and selector axioms, and type signatures are
+just skipped in the translation, but the proof techniques introduced
+later use this information.
 
+A function is just a function name with a number of variables, and
+then a function body, which is either an expression of variables,
+functions and constructors, or a case statements with an expression
+scrutinee. Branches consists of a pattern, possibly with nested uses
+of constructors, and an optional guard, and in the arm is an
+expression.
 
+Now we need to distinguish between two translations: the intermediate
+translation from Haskell to the intermediate language, and the logic
+translation from this language to first order logic.
 
-\section{Summary}
+\section{The intermediate translation}
 
-We summarize the translation in Table~\ref{tab:transtable}.
+After this section, we will only concentrate on the logic translation.
 
-\begin{table}[h]
-  \centering
-  \begin{tabular}{|l|l|}
-    \hline
-    Haskell                    & First Order Logic \\
-    \hline
-    function                   & function or constant \\
-    constructor                & function or constant \\
-    data type                  & disjoint constructors and selector axioms \\
-    pattern matching           & insertion of bottoms and upwards axioms \\
-    guards                     & equality to true and bottom plus upwards axioms \\
-    partial application        & $\appfn$ on pointer constant \\
-    partially applied function & pointer constant and $\appfn$ rule \\
-    sections, lambdas, let     & new functions with variables in scope as arguments \\
-    \hline
-  \end{tabular}
-  \caption{Translation of different Haskell constructs
-    \label{tab:transtable}
-  }
-\end{table}
+\paragraph{Argument pattern matching} A function that does pattern matching will be translated to one that
+takes in unmatched arguments and with a case in the body. The
+\hs{mirror} function above is thus translated to this:
 
-The goal of this translation is to enable equational reasoning of
-Haskell programs, in FOL. It is here referred to as a translation, but
-it could also in be regarded as compilation.
+\begin{code}
+mirror :: Tree a -> Tree a
+mirror t = case t of
+   Fork l x r -> Fork (mirror r) x (mirror l)
+   Leaf       -> Leaf
+\end{code}
 
-Equational reasoning is traditional in proving corrected of Haskell
-programs, but it assumes that a simple denotational semantics exists,
-and there is not even a formal semantics for the language
-\cite{chasingbot}.
+\noindent
+If you do pattern matching on several arguments, the scrutinee in the
+case will be a tuple of all the arguments.
 
-\section{Haskell}
+\paragraph{Local definitions} Where-clauses and let-expressions are raised
+to the top level, with all necessary variables as arguments. This
+example of an accumulator definition of multiplication needs such a
+rewrite:
 
-Describe some of the features of Haskell, types, lazy evaluation,
-bottoms, pattern-matching, data types, type classes.
+\begin{code}
+(*) :: Nat -> Nat -> Nat
+x * y = go Zero x
+  where
+    go acc Zero    = acc
+    go acc (Suc n) = go (acc + y) n
+\end{code}
 
-Haskell is declarative and side-effect free which makes it easy
-to model in logic in comparison to imperative effectful programming languages.
+\noindent
+The \hs{go} function has the \hs{y} in scope but not as argument so it
+is appended to the arguments to the top level lifted version of \hs{go}:
 
-\section{Domains}
+\begin{code}
+go acc Zero    y = acc
+go acc (Suc n) y = go (acc + y) n y
 
-This is the right place to introduce some notions of domain theory:
-values of a data type form a complete partial order with least element
-$\bot$, and introduce concepts of monotonicity,
-$\omega$-$\sqsubseteq$-limits and continuity.
+x * y = go Zero x y
+\end{code}
 
-% Whoa, much in this section
-\section{Data types}
-\label{sec:treetrans}
+\noindent
+Finally \hs{go} is translated using a case expression:
 
-Haskell's data types and its consequence pattern matching is
-translated by giving each constructor a function or constant symbol.
+\begin{code}
+go acc x y = case x of
+     Zero  -> acc
+     Suc n -> go (acc + y) n y
+\end{code}
 
-Consider this examples of binary trees in Haskell style:
+A similar translation is done for let expressions.
 
-\begin{verbatim}
-data Tree a = Empty | Branch (Tree a) a (Tree a)
-\end{verbatim}
+\paragraph{Lambda functions} These are translated to top level
+definitions. Take this example of defining \hs{fmap} in terms of the
+functions from the \hs{Monad} type class:
 
-We get one constant $\fn{Empty}$ for \hs{Empty}, and one trinary
-function $\fn{Branch}$ for \hs{Branch}. Normally, it is custom
-to write functions in logic with lowercase letters, but this
-convention is disregarded here. The values of these constructors are
-distinct, so the following disjointedness axioms are added to the
-theory of a Haskell program with this data type.
+\begin{code}
+fmap' :: Monad m => (a -> b) -> m a -> m b
+fmap' f m = m >>= \x -> return (f x)
+\end{code}
 
-\begin{align*}
-\fn{\bot} &  \neq \fn{Empty}\\
- \forall \, l \,  x \,  r \,  . \,  \fn{\bot} &  \neq \fn{Branch}(l,x,r)\\
- \forall \, l \,  x \,  r \,  . \,  \fn{Empty} &  \neq \fn{Branch}(l,x,r)
-\end{align*}
+\noindent
+In the lambda, \hs{f} is a free variable so it becomes an argument to
+the new top level function called \hs{lambda} below:
 
-Notice that in Haskell, each data type also has an extra value, bottom, which
-can come from the functions \hs{undefined} or \hs{error}, as well as
-irrefutable pattern matches but also non-terminating programs. The constant
-$\bot$ captures this notion and is naturally also distinct from the values
-of \hs{Empty} and \hs{Branch}.
+\begin{code}
+lambda f x = return (f x)
 
-\section{Injective constructors and projections}
+fmap' :: Monad m => (a -> b) -> m a -> m b
+fmap' f m = m >>= lambda f
+\end{code}
 
-We also want injectivity of constructors, for example if we have the
-cons constructor, \hs{:} in Haskell, and \hs{x:xs = y:ys} then
-\hs{x = y} and \hs{xs = ys}. As we will see later, we also want the
-projections of the left and right sub tree, and the value in a Branch.
-It turns out that the projections imply the injectivity. For the Branch
-constructor of the Tree example, we get the following projections:
+A similar translation is done for sections.
 
-\begin{align*}
- \forall \, l \, x \, r \, . \,  \fn{Branch_{0}}(\fn{Branch}(l,x,r)) &  = l\\
- \forall \, l \, x \, r \, . \,  \fn{Branch_{1}}(\fn{Branch}(l,x,r)) &  = x\\
- \forall \, l \, x \, r \, . \,  \fn{Branch_{2}}(\fn{Branch}(l,x,r)) &  = r\\
-\end{align*}
+\section{Pattern matching revisited}
 
-These ternary functions are bluntly named by indexing on the projected
-coordinate, but could just as well have more descriptive names as
-$\fn{left}$, $\fn{value}$ and $\fn{right}$.
+\paragraph{Overlapping patterns} First of all, overlapping patterns need to be removed, otherwise we
+easily get an inconsistent theory, consider
 
-Now, these projections imply injective constructors. Assume we have
-$\fn{Branch}(l,x,r) = \fn{Branch}(l',x',r')$ then the first
-projection, $\fn{Branch_0}$, gives us that $l=l'$. Analogously,
-and the second and the third give $x=x'$ and $r=r'$, respectively.
-
-\section{Translation of functions}
-
-Translating functions that do not use pattern matching is
-straightforward. Consider this Haskell definition of a singleton tree:
-
-\begin{verbatim}
-leaf :: a -> Tree a
-leaf x = Branch Empty x Empty
-\end{verbatim}
-
-We simply introduce a new function symbol, $\fn{leaf}$, and due
-to referential transparency we can turn the definition into an
-equality with quantified variables:
-
-\begin{align*}
- \forall \, x \, . \, \fn{leaf}(x) &  = \fn{Branch}(\fn{Empty},x,\fn{Empty})
-\end{align*}
-
-\section{Pattern matching}
-
-Let's now consider \hs{leaf}'s partial inverse, \hs{top} that
-yields the top element of the tree if there is one, or is undefined
-otherwise:
-
-\begin{verbatim}
-top :: Tree a -> a
-top (Branch _ x _) = x
-\end{verbatim}
-
-The function call of \hs{top Empty} would yield a run time error
-since this pattern is not covered, equivalent to an undefined
-value. Indeed, an equivalent formulation would be to cover the
-\hs{Empty} case by \hs{undefined} or a helpful message from
-\hs{error}, but the run time error is still remains, and this
-behavior is modeled by the $\bot$ value in the theory. Thus the
-translation to an equality is as follows: if the argument is
-constructed with \hs{Branch}, it is equivalent to the top value,
-otherwise, it is $\bot$:
-
-\begin{align*}
- \forall \, l \, x \, r \, & . \, \fn{top}(\fn{Branch}(l,x,r) = x\\
- \forall \, t \, & . \, t \neq
- \fn{Branch}(\fn{Branch_{0}}(t),\fn{Branch_{1}}(t),\fn{Branch_{2}}(t))
- \rightarrow \, \fn{top}(t)  = \fn{\bot}
-\end{align*}
-
-Here the projections functions come in handy. Indeed, an equivalent
-but skolemized formulations of the second formulas are:
-
-\begin{align*}
- \forall \, t \, & . \neg (\exists \, l \, x \, r . \, t =
- \fn{Branch}(l,x,r))
- \rightarrow \, \fn{top}(t) = \bot \\
- \forall \, t \, & . (\forall \, l \, x \, r . \, t \neq
- \fn{Branch}(l,x,r))
- \rightarrow \, \fn{top}(t) = \bot
-\end{align*}
-
-But as we saw earlier, projections also imply injectivity so this is
-the approach used here but the choice is of little importance (or is
-it? benchmark!!)
-
-\section{Overlapping patterns}
-
-Overlapping patterns need to be removed, otherwise we could easily get
-an inconsistent theory, consider
-
-\begin{verbatim}
+\begin{code}
 overlap :: Bool -> Bool
-overlap True = True
-overlap True = False
-\end{verbatim}
+overlap b = case b of
+              True -> True
+              True -> False
+\end{code}
 
-Certainly, we cannot translate this to
+Certainly, this cannot be translated to:
 \begin{align*}
-\fn{overlap}(\fn{True}) & = \fn{True} \\
-\fn{overlap}(\fn{True}) & = \fn{False} \\
-\forall \, b \, . \, b \neq True & \rightarrow \fn{overlap}(b) = \bot
+\rom{1} \qquad & \fn{overlap}(\fn{true}) = \fn{true} \\
+\rom{2} \qquad & \fn{overlap}(\fn{true}) = \fn{false} \\
+\rom{3} \qquad & \fa{b} b \neq \fn{true} \rightarrow \fn{overlap}(b) = \bot
 \end{align*}
 
-Transitivity of equality then yields $\fn{True} = \fn{False}$,
+Transitivity of equality then yields $\fn{true} = \fn{false}$,
 and this together with the axioms of disjoint constructors gives a
 contradiction.
 
@@ -392,9 +331,7 @@ definition, making the second match of True to never occur. Thus, the
 translation to FOL also removes all subsequent patterns that are
 instances of any pattern above.
 
-\section{Nested patterns and bottoms}
-
-The translation also handles patterns in more than one depth. At every
+\paragraph{Nested patterns and bottoms} The translation also handles patterns in more than one depth. At every
 location in a pattern where a constructor is matched against, a
 pattern with bottom at that spot is also added, defined to
 bottom. This definition that balances a tree to the left is defined
@@ -421,9 +358,7 @@ unbalance Bottom                       = Bottom
 And such an addition of bottoms is made by the translation.
 \note{This writing actually discovered a bug. Report the solution and how it was tested}
 
-\section{Guards}
-
-Guards are not much of a complication. Either the guard expression is
+\paragraph{Guards} Guards are not much of a complication. Either the guard expression is
 \hs{True}, then that branch is picked. If the expression returns
 bottom, then for this argument, the function is bottom. Care needs to
 be taken when looking ``upwards'' the branches, to not collide with
@@ -474,64 +409,71 @@ only partially applied. This is the translated axiom:
 \end{equation*}
 
 If \hs{incr} is applied to an argument $xs$, then \hs{incr} is applied
-to more arguments then it takes, so we add $\, @ \,$ so the
+to more arguments than it takes, so we add $\appfn$ so the
 corresponding formula becomes $\app{\fn{incr}}{xs}$, and by equational
 substitution from the definition of $\fn{incr}$ we get
 $\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
 the axiom of $\fn{map.ptr}$ then equals this to
 $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
-\section{The intermediate language}
+\section{Summary}
 
-Everything becomes top level definitions, \hs{let} and \hs{where} are
-floated to the top, with the free variables added as extra parameters,
-as well as lambda functions, the same approach was taken for extra or
-nested case-expressions. Extra care needs to be taken for mutually
-recursive \hs{let} and \hs{where} functions, which potentially need's
-each other's free variables as arguments.
-\note{Incomplete, add examples}
+We summarize the translation in Table~\ref{tab:transtable}.
 
-Functions do not do any pattern matching on their arguments directly,
-but in a case statement that is the entire body of the function. The
-branch expressions are just constructor or function application.
-\note{Add BNF}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|l|}
+    \hline
+    Haskell                    & First Order Logic \\
+    \hline
+    function                   & function or constant \\
+    constructor                & function or constant \\
+    data type                  & disjoint constructors and selector axioms \\
+    pattern matching           & removal of overlap, insertion of bottoms and upwards axioms \\
+    guards                     & equality to true and bottom plus upwards axioms \\
+    partial application        & $\appfn$ on pointer constant \\
+    partially applied function & pointer constant and $\appfn$ rule \\
+    sections, lambdas, let     & new functions with variables in scope as arguments \\
+    \hline
+  \end{tabular}
+  \caption{Translation of different Haskell constructs
+    \label{tab:transtable}
+  }
+\end{table}
 
-Type-signatures and data types are also supported since this
-information is needed for different proof techniques.
+Equational reasoning is traditional in proving corrected of Haskell
+programs, but it assumes that a simple denotational semantics exists,
+and there is not even a formal semantics for the language
+\cite{chasingbot}.
 
 \section{Haskell coverage}
 
 Haskell is a big language, and translating it all in one go is a
 daunting task. Therefore, some restrictions were settled to be able to
-focus on proving rather than translating.
-\note{Maybe move this to background?}
-The goal was to add enough of the Haskell language to enable to prove
-interesting properties, but much of the widely available sugar in
-Haskell was omitted since it does not add extra
-expressibility. Therefore there is no support for
-list comprehensions, do-notation, pattern bindings and type classes .
+focus on proving rather than translating.  \note{Maybe move this to
+  background?}  The goal was to add enough of the Haskell language to
+enable to prove interesting properties, but much of the widely
+available sugar in Haskell was omitted since it does not add extra
+expressibility. Therefore there is no support for list comprehensions,
+do-notation, pattern bindings and type classes .
 
 A more serious omitted feature is the lack of built-in types like \hs{Int},
 \hs{Integer}, \hs{Double}, \hs{Char}, etc.
 
-(Higher-kinded type variables are currently not supported)
+Higher-kinded type variables are currently not supported.
 
 \section{Uncategorized}
 
 \begin{itemize}
 
-\item $\checkmark$ Describe (and motivate here?) the intermediate language
-
-\item $\checkmark$ Pattern-matching and bottoms
-
-\item $\checkmark$ Higher order functions and function pointers
-
-\item $\checkmark$ Axioms of disjointedness
-
-\item $\checkmark$ Axioms of projections and injectivity of constructors
-
-\item $\checkmark$ Extensional equality and application of bottom
-
 \item Remove unnecessary definitions for a given proof
 
 \end{itemize}
+
+\section{Domain Theory}
+
+This section explains some key concepts in domain theory: monotonicity
+and continutity. It shows some nice partial orderings for some
+domains. It also gives an example how monotonicity can be used to
+check the translation for bugs, and explains why it is problematic to
+do for contiunity.

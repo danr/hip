@@ -201,6 +201,13 @@ consider the predicate P to be “is not infinite”, and then you can
 prove for a lot of functions that they return finite objects. For
 instance, define this function:
 
+\note{CHANGE THIS
+
+  Instead do the finite list predicate, and use $\neq
+  \hs{False}$. This then servers for an example why inequality
+  predicates are not admissible!
+}
+
 \begin{verbatim}
 listrec :: ([a] -> [a]) -> [a] -> [a]
 listrec i [] = []
