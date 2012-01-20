@@ -79,9 +79,9 @@ arguments of $\fn{mirror}$ than leafs and forks, and we have models that
 include other values than leafs and forks. Another problem is
 encountered for \hs{singleton}'s left inverse, \hs{top}, code below,
 which returns the top element of a \hs{Tree}. This is a partial
-function since it has to pattern for the \hs{Leaf} constructor.
+function since it has no pattern for the \hs{Leaf} constructor.
 
-\begin{code}[label=lst:top]
+\begin{code}
 top :: Tree a -> a
 top (Fork l x r) = x
 \end{code}
@@ -98,9 +98,10 @@ used for the least defined value: pattern match failures, use of
 \hs{error} and \hs{undefined} in the source code, but also for
 non-terminating programs.  \note{Refer to a short introduction of
   domain theory at the end of this chapter (or elsewhere, appendix?)}
-For \hs{top} the idea is to add an axiom so that \fn{top} of anything
-that is not a \hs{Fork} is bottom. This is an example of such an
-axiomatization:
+For \hs{top} the idea is to add an axiom so that $\fn{top}$ of
+anything that is not a \hs{Fork} is bottom. This is an example of such
+an axiomatization:
+
 \begin{align*}
 \rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq x \\
 \rom{2} \qquad & \fa{t}         (\nexxx{l}{x}{r} \fn{fork}(l,x,r)) \eq t) \rightarrow \fn{top}(t) \eq \bot
@@ -160,7 +161,7 @@ data type. For the \hs{Tree} data type the axioms are:
 Now we have a good idea how to translate pattern matching, but
 in Haskell we can pattern match almost everywhere! How would we
 proceed to translate a function like this, taken from the
-implementation of \hs{scanr} in the \hs{Prelude}?
+implementation of \hs{scanr} from the \hs{Prelude}?
 
 \begin{code}
 scanr             :: (a -> b -> b) -> b -> [a] -> [b]
@@ -330,41 +331,61 @@ Certainly, this cannot be translated to:
 \rom{3} \qquad & \fa{b} b \neq \fn{true} \rightarrow \fn{overlap}(b) = \bot
 \end{align*}
 
-Transitivity of equality then yields $\fn{true} = \fn{false}$,
-and this together with the axioms of disjoint constructors gives a
-contradiction.
+Starting from the immediate truth $\fn{overlap}(\fn{true}) =
+\fn{overlap}(\fn{true})$, transitivity of the equalities in the axioms
+$\romnodot{1}$ and $\romnodot{2}$ gives the equality $\fn{true} =
+\fn{false}$. This together with the axiom from disjoint constructors,
+$\fn{true} \neq \fn{false}$, gives a contradiction.
 
 In Haskell, pattern matching is done from top to bottom of the
-definition, making the second match of \hs{True} to never occur. Thus, the
-translation to FOL also removes all subsequent patterns that are
+definition, making the second match of \hs{True} to never occur. Thus,
+the translation to FOL also removes all subsequent patterns that are
 instances of any pattern above.
 
-\paragraph{Nested patterns and bottoms} The translation also handles patterns in more than one depth. At every
-location in a pattern where a constructor is matched against, a
-pattern with bottom at that spot is also added, defined to
-bottom. This definition that balances a tree to the left is defined
-with pattern matching on depth two:
+\paragraph{Nested patterns and bottoms} The translation also handles
+patterns in more than one depth. At every location in a pattern where
+a constructor is matched against, a pattern with bottom at that spot
+is also added, defined to bottom. This is a definition for a balancing
+function for Red-Black trees\footnote{From
+  http://www.cs.kent.ac.uk/people/staff/smk/redblack/TypedExist.hs}:
 
-\begin{verbatim}
-unbalance :: Tree a -> Tree a
-unbalance (Branch (Branch l x r) y r') = unbalance (Branch l x (Branch r y r'))
-unbalance (Branch l x r)               = Branch l x (unbalance r)
-unbalance Empty                        = Empty
-\end{verbatim}
+\begin{code}
+balance :: RR a [b] -> a -> RR a [b] -> Red Black a b
+balance (R a) y (R b) = R(B a,y,B b)
+balance (C a) x b     = balanceR a x b
+balance a     x (C b) = balanceL a x b
+\end{code}
 
-If we could see the bottoms in Haskell, the definition would look like this:
+\noindent
+For the sake of readability it is not presented as a case expression
+pattern matching on a tuple, thought this is what the intermediate
+translation would transform it to.
 
-\begin{verbatim}
-unbalance :: Tree a -> Tree a
-unbalance (Branch (Branch l x r) y r') = unbalance (Branch l x (Branch r y r'))
-unbalance (Branch Bottom _ _)          = Bottom
-unbalance (Branch l x r)               = Branch l x (unbalance r)
-unbalance Empty                        = Empty
-unbalance Bottom                       = Bottom
-\end{verbatim}
+For each matched constructor, we need to add a new match to bottom,
+which evaluates to bottom. Unnecessary bottoms can be carelessly added
+since overlapping patterns are removed \emph{afterwards}. Furthermore,
+a wild pattern is added at the end that goes to bottom in case there
+are other constructors for the data type not mentioned in the
+patterns.
 
-And such an addition of bottoms is made by the translation.
-\note{This writing actually discovered a bug. Report the solution and how it was tested}
+No type information is needed to do this: it is merely an
+inspection. Could the bottoms be seen in this Haskell definition it
+would be this after the insertion of bottoms and removal of
+overlapping patterns:
+
+\begin{code}[mathescape]
+balance :: RR a [b] -> a -> RR a [b] -> Red Black a b
+balance (R a) y (R b) = R(B a,y,B b)
+balance $\bot$      _ _     = $\bot$
+balance _     _ $\bot$      = $\bot$
+balance (C a) x b     = balanceR a x b
+balance a     x (C b) = balanceL a x b
+balance _     _ _     = $\bot$
+\end{code}
+
+Haskell's behavior of matching patterns from top to bottom is
+justified with implications ensuring the \emph{upward agreement}.
+
 
 \paragraph{Guards} Guards are not much of a complication. Either the guard expression is
 \hs{True}, then that branch is picked. If the expression returns
@@ -437,8 +458,8 @@ We summarize the translation in Table~\ref{tab:transtable}.
     function                   & function or constant \\
     constructor                & function or constant \\
     data type                  & disjoint constructors and selector axioms \\
-    pattern matching           & removal of overlap, insertion of bottoms and upwards axioms \\
-    guards                     & equality to true and bottom plus upwards axioms \\
+    pattern matching           & overlap removal, bottoms insertion, upward agreement \\
+    guards                     & equality to true and bottom and upward agreement \\
     partial application        & $\appfn$ on pointer constant \\
     partially applied function & pointer constant and $\appfn$ rule \\
     sections, lambdas, let     & new functions with variables in scope as arguments \\

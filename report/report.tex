@@ -12,7 +12,15 @@
 \usepackage{bold-extra}
 \usepackage{tikz}
 \usepackage{palatino}
-\usepackage{courier}
+\usepackage[T1]{fontenc}
+\usepackage{inconsolata}
+
+
+%\usepackage{fontspec}
+%\fontspec[BoldFont={* Bold}]{Palatino}
+%\setmainfont{Palatino}
+%\setboldmainfont{Palatino Bold}
+%\setmonofont[Scale=MatchLowercase]{Inconsolata}
 
 \usepackage{fancyheadings}
 \pagestyle{fancy}
@@ -25,14 +33,6 @@
 \rhead[\fancyplain{}{\bfseries\leftmark}]
 {\fancyplain{}{\bfseries\thepage}}
 \cfoot{}
-
-% \usepackage{textcomp} % Supports the Text Companion fonts which
-% provide many text symbols (such as baht, bullet, copyright,
-% musicalnote, onequarter, section, and yen) in the TS1 encoding.
-
-\makeatletter
-\newcommand*{\rom}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@.}}
-\makeatother
 
 \usepackage{listings}
 
@@ -48,33 +48,10 @@
            #1}}
   {\endminipage}
 
-%\lstset{ %
-%  language=Haskell,                % the language of the code
-%  basicstyle=\ttfamily\small,           % the size of the fonts that are used for the code
-%%  numbers=left,                   % where to put the line-numbers
-%%  numberstyle=\footnotesize,          % the size of the fonts that are used for the line-numbers
-%%  stepnumber=2,                   % the step between two line-numbers. If it's 1, each line
-%%                                  % will be numbered
-%%  numbersep=5pt,                  % how far the line-numbers are from the code
-%  backgroundcolor=\color{white},      % choose the background color. You must add \usepackage{color}
-%  showspaces=false,               % show spaces adding particular underscores
-%  showstringspaces=false,         % underline spaces within strings
-%  showtabs=false,                 % show tabs within strings adding particular underscores
-%  frame=single,                   % adds a frame around the code
-%  tabsize=2,                      % sets default tabsize to 2 spaces
-%  captionpos=r,                   % sets the caption-position to bottom
-%  breaklines=true,                % sets automatic line breaking
-%  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
-%  title=\lstname,                   % show the filename of files included with \lstinputlisting;
-%                                  % also try caption instead of title
-%  numberstyle=\tiny\color{gray},        % line number style
-%  keywordstyle=\color{black},
-%%  keywordstyle=\bfseries,          % keyword style
-%  commentstyle=\color{dkgreen},       % comment style
-%  stringstyle=\color{mauve},         % string literal style
-%  escapeinside={\%*}{*)},            % if you want to add a comment within your code
-%  morekeywords={Zero,Suc,Fork,Leaf}               % if you want to add more keywords to the set
-%}
+\makeatletter
+\newcommand*{\rom}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@.}}
+\newcommand*{\romnodot}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@}}
+\makeatother
 
 \newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
 \newcommand\hs[1]{\verb~#1~}
@@ -90,7 +67,7 @@
 \newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 \, #4 , #5 , #6 . \,}
 
 \newcommand\tofix[1]{#1^{\bullet}}
-\newcommand\unfix[1]{#1^{\circ}}}
+\newcommand\unfix[1]{#1^{\circ}}
 
 \newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
 \newcommand{\desca}[1]{  & \hspace{44.5mm}                            \{ \mathrm{#1} \}}
@@ -107,17 +84,17 @@
 \newcommand{\defBNF}[4] {\text{#1}\quad&#2&::=&\;#3&\text{#4}}
 \newcommand{\defaltBNF}[2] {&&|&\;#1&\text{#2}}
 
-%\begin{document}
-%
-%\noindent
-%\input{translation}
-%
+\begin{document}
+
+\noindent
+\input{translation}
+
 %\bibliographystyle{apalikeurl}
 %\bibliography{masterbib}
-%
-%\end{document}
-%
-%\begin{comment}
+
+\end{document}
+
+\begin{comment}
 
 \begin{document}
 
@@ -153,6 +130,7 @@ breeze.
 
 \newpage
 \setcounter{page}{1}
+
 
 \chapter{Introduction}
 
@@ -200,6 +178,7 @@ Test suite
 \section{Conclusion}
 
 %% References -----------------------------------------------------------------
+
 
 \bibliographystyle{apalikeurl}
 \bibliography{masterbib}
