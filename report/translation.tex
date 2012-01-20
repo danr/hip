@@ -521,10 +521,10 @@ Table~\ref{tab:transtable}.
 \section{Domain Theory}
 
 This section explains some key concepts in domain theory: monotonicity
-and continutity. It shows some nice partial orderings for some
+and continuity. It shows some nice partial orderings for some
 domains. It also gives an example how monotonicity can be used to
 check the translation for bugs, and explains why it is problematic to
-do for contiunity.
+do for continuity.
 
 \section{Future Work}
 
@@ -562,14 +562,14 @@ language.
 \subsection{Irrefutable Patterns and Pattern Bindings}
 
 Irrefutable patterns can be defined in terms of strict projections,
-not unlike those that already exist (\hs{fst}, \hs{snd}, \hs{head},
-\hs{fromJust}, and so on.) Each irrefutable pattern is translated to
-a constant, and when you use the variables in the pattern, you
-translate it to appropriate use of strict projections. One example is
-the translation of the \hs{uncurry} function:
+like those that already exist (\hs{fst}, \hs{snd}, \hs{head},
+\hs{fromJust}, and so on.) Each irrefutable pattern is translated to a
+constant, and when you use the variables in the pattern, you translate
+it to appropriate use of strict projections. One example is the
+translation of the \hs{uncurry} function:
 
-\begin{code}
-uncurry f ~(x,y) = f x y    <=>  uncurry f t = f (fst t) (snd t)
+\begin{code}[mathescape]
+uncurry f ~(x,y) = f x y        $\Leftrightarrow$      uncurry f t = f (fst t) (snd t)
 \end{code}
 
 \noindent
@@ -583,8 +583,8 @@ is replaced with a constant, and when the variables from the pattern
 are used, you again replace it with strict projections. This is how it
 could look for a simple \hs{fromJust . lookup} implementation:
 
-\begin{code}
-unsafeLookup x xs = v           <=>   unsafeLookup x xs = fromJust t
+\begin{code}[mathescape]
+unsafeLookup x xs = v           $\Leftrightarrow$      unsafeLookup x xs = fromJust t
   where Just v = lookup x xs            where t = lookup x xs
 \end{code}
 
