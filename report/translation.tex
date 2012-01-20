@@ -345,21 +345,22 @@ instances of any pattern above.
 \paragraph{Nested patterns and bottoms} The translation also handles
 patterns in more than one depth. At every location in a pattern where
 a constructor is matched against, a pattern with bottom at that spot
-is also added, defined to bottom. This is a definition for a balancing
-function for Red-Black trees\footnote{From
-  http://www.cs.kent.ac.uk/people/staff/smk/redblack/TypedExist.hs}:
+is also added, defined to bottom. This Haskell function \hs{even}
+determines if a list is of even length:
 
 \begin{code}
-balance :: RR a [b] -> a -> RR a [b] -> Red Black a b
-balance (R a) y (R b) = R(B a,y,B b)
-balance (C a) x b     = balanceR a x b
-balance a     x (C b) = balanceL a x b
+even :: List a -> Bool
+even (Cons x (Cons y ys)) = even ys
+even (Cons x xs)          = False
+even Nil                  = True
 \end{code}
 
 \noindent
-For the sake of readability it is not presented as a case expression
-pattern matching on a tuple, thought this is what the intermediate
-translation would transform it to.
+For the sake of readability it is not presented with a case
+expression, though this is what the intermediate translation would
+transform it to. Furthermore the constructors \hs{Cons} and \hs{Nil}
+are used since the projections $\fn{:_0}$ and $\fn{:_1}$ for the
+normal cons are hard to read.
 
 For each matched constructor, we need to add a new match to bottom,
 which evaluates to bottom. Unnecessary bottoms can be carelessly added
@@ -370,29 +371,40 @@ patterns.
 
 No type information is needed to do this: it is merely an
 inspection. Could the bottoms be seen in this Haskell definition it
-would be this after the insertion of bottoms and removal of
-overlapping patterns:
+would be this after the insertion of bottoms:
 
 \begin{code}[mathescape]
-balance :: RR a [b] -> a -> RR a [b] -> Red Black a b
-balance (R a) y (R b) = R(B a,y,B b)
-balance $\bot$      _ _     = $\bot$
-balance _     _ $\bot$      = $\bot$
-balance (C a) x b     = balanceR a x b
-balance a     x (C b) = balanceL a x b
-balance _     _ _     = $\bot$
+even :: List a -> Bool
+even (Cons x (Cons y ys)) = even ys
+even (Cons x $\bot$)            = $\bot$
+even $\bot$                     = $\bot$
+even (Cons x xs)          = False
+even Nil                  = True
+even _                    = $\bot$
 \end{code}
 
 Haskell's behavior of matching patterns from top to bottom is
-justified with implications ensuring the \emph{upward agreement}.
+justified with implications ensuring the \emph{upward agreement}. The
+axioms for this definitions are:
+\newcommand\uncons[1]{\cons{\fn{cons_0}(#1)}{\fn{cons_1}(#1)}}
+\newcommand\even[1]{\fn{even}(#1)}
+\newcommand\cons[2]{\fn{cons}(#1,#2)}
+\begin{align*}
+\rom{1} && \faaa{x}{y}{ys} & \even{\cons{x}{\cons{y}{ys}}} = \even{ys} \\
+\rom{2} && \fa{x}          & \even{\cons{x}{\bot}}         = \bot      \\
+\rom{3} &&                 & \even{\bot} = \bot \\
+\rom{4} && \faa{x}{xs}     & xs \neq \uncons{xs} \wedge xs \neq \bot \rightarrow \even{\cons{x}{xs}} = \fn{false}  \\
+\rom{5} &&                 & \even{\fn{nil}} = \fn{true} \\
+\rom{6} && \fa{xs}         & xs \neq \fn{nil} \wedge
+                             xs \neq \uncons{xs} \wedge
+                             xs \neq \bot \rightarrow \even{xs} = \bot
+\end{align*}
 
-
-\paragraph{Guards} Guards are not much of a complication. Either the guard expression is
-\hs{True}, then that branch is picked. If the expression returns
-bottom, then for this argument, the function is bottom. Care needs to
-be taken when looking ``upwards'' the branches, to not collide with
-the guards.
-\note{Add example}
+Some room for improvement can be seen: the inserted
+\hs{even }$\bot$\hs{ = }$\bot$ case is redundant as it is implied by
+the wild pattern to $\bot$. The upward agreement implications can
+readily be seen, an example is
+$xs \neq \uncons{xs} \wedge xs \neq \bot$ in axiom $\romnodot{3}$.
 
 \section{Functions as Arguments}
 
@@ -445,9 +457,37 @@ $\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
 the axiom of $\fn{map.ptr}$ then equals this to
 $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
+\section{Guards}
+
+Guards are treated much like pattern matching. If a
+guard expression evaluates to \hs{True}, that branch is picked. The
+expression could also evaluate to $\bot$, and then the result should
+be $\bot$. Let us consider the \hs{filter} function:
+
+\begin{code}
+filter :: (a -> Bool) -> List a -> List a
+filter p (Cons x xs) | p x = Cons x (filter p xs)
+filter p (Cons x xs)       = filter p xs
+filter p Nil               = Nil
+\end{code}
+
+
+To translation this to logic it is needed to ensure that if \hs{p x}
+evaluates to $\bot$, then so should the function. The axioms look
+like this:
+\newcommand\filter[2]{\fn{filter}(#1,#2)}
+\begin{align*}
+\rom{1} && \faaa{p}{x}{xs} & (\app{p}{x}) = \fn{true}                                  \rightarrow \filter{p}{\cons{x}{\cons{y}{ys}}} = \cons{x}{\filter{p}{xs}} \\
+\rom{2} && \faaa{p}{x}{xs} & (\app{p}{x}) = \bot                                       \rightarrow \filter{p}{\cons{x}{\cons{y}{ys}}} = \bot \\
+\rom{3} && \faaa{p}{x}{xs} & (\app{p}{x}) \neq \fn{true} \wedge (\app{p}{x}) \neq \bot \rightarrow \filter{p}{\cons{x}{\cons{y}{ys}}} = \filter{p}{xs} \\
+\rom{4} &&                 & \filter{p}{\fn{nil}} = \fn{nil} \\
+\rom{5} && \fa{xs}         & xs \neq \fn{nil} \wedge xs \neq \uncons{xs} \rightarrow \filter{p}{xs} = \bot
+\end{align*}
+
 \section{Summary}
 
-We summarize the translation in Table~\ref{tab:transtable}.
+The translation of different Haskell concepts is summarized in
+Table~\ref{tab:transtable}.
 
 \begin{table}[h]
   \centering
