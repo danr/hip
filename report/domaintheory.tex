@@ -1,7 +1,8 @@
 \section{Domain Theory}
 
+
 This section is optional, especially if you already know the basics of
-Domain Theory: complete partial orders, monotonicity and
+Domain Theory: comp\-lete partial orders, monotonicity and
 continuity.
 %It explains these concepts and discusses how it can be
 %used to verify the translation, furthermore it is used as a reference
@@ -10,11 +11,11 @@ The section explains these concepts and acts as a reference in future
 sections that rely on concepts from domain theory.
 
 The values of every data type are ordered on how much ``information''
-they contain. The least element bottom, denoted $\bot$ is contains
-least information. It corresponds to all kinds of crashes Haskell: use
-of \hs{undefined}, non-termination or irrefutable pattern matchings.
+they contain. The least element bottom, denoted $\bot$, contains least
+information. It corresponds to all kinds of crashes in Haskell; use of
+\hs{undefined}, non-termination or irrefutable pattern matches.
 Different constructors hold different information, so they are not
-related by the ordering: this is a partial order, a relation that is
+related by the ordering; this is a partial order, a relation that is
 reflexive, transitive and antisymmetric. The ordering is usually
 written $\sqsubseteq$ sometimes with a subscript indicating the type.
 
@@ -23,7 +24,7 @@ written $\sqsubseteq$ sometimes with a subscript indicating the type.
 \centering \input{boolcpo}
 \vspace{-7pt}
 \caption{
-    The cpo of Bool values.
+    The order of Bool values.
     \label{fig:boolcpo}
 }
 \end{wrapfigure}
@@ -33,7 +34,7 @@ picture it is understood that $\bot$ is the least element, and the
 line from it to \hs{False} means that $\bot \sqsubseteq \hs{False}$,
 since $\bot$ is below $\hs{False}$. Correspondingly for $\hs{True}$,
 the diagram tells us that $\bot \sqsubseteq \hs{True}$. It can also
-been seen that $\hs{True} \nsqsubseteq \hs{False}$: they are unrelated
+been seen that $\hs{True} \nsqsubseteq \hs{False}$; they are unrelated
 since there is no line between them.
 
 %\begin{figure}[h]
@@ -55,7 +56,7 @@ since there is no line between them.
 
 \begin{wrapfigure}[25]{r}{0.4\textwidth} %\begin{figure}\begin{figure}[h!]
 \begin{center}
-\vspace{-12pt}
+\vspace{-30pt}
 \input{boolboolcpo}
 \caption{
     \texttt{(Bool,Bool)} partial order.
@@ -72,20 +73,22 @@ x_0 \sqsubseteq_a x_1 \text{\w and \w} y_0 \sqsubseteq_b y_1
 
 The Hasse Diagram for the \hs{(Bool,Bool)} values can be seen in
 Figure \ref{fig:boolboolcpo}. Here \hs{True} is abbreviated for \hs{T}
-and similarly for \hs{False}. It is not flat as the one for \hs{Bool}:
+and similarly for \hs{False}. It is not flat as the one for \hs{Bool};
 it can be seen as three dimensional. On the lowest layer the only
 value is $\bot$, on the next layer $\hstup{\bot}{\bot}$. Above that
 the tuples with one $\bot$, and finally the total values at the
 top.
 
-\vspace{30pt}
+\vspace{55pt}
 
 \subsection{Monotonicity}
  An important property all safe Haskell functions have is that they are
-monotone with respect to this ordering. A function $f$ is monotone iff
+monotone with respect to this ordering.
+
+\paragraph{Definition} A function $f$ is \emph{monotone} iff
 
 \begin{equation*}
-\faa{x}{y} \quad x \sqsubseteq y \quad \Rightarrow \quad f(x) \sqsubseteq f(y)
+\faa{x}{y} \quad x \sqsubseteq y \quad \Rightarrow \quad f(x) \sqsubseteq f(y).
 \end{equation*}
 
 This can be understood in many ways. One way to see it is if you have
@@ -129,7 +132,9 @@ Diagram can be seen in Figure \ref{fig:natcpo}.
 \end{figure}
 
 At the top we have the infinite value \hs{inf}, defined in Haskell as
-\hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of the chain
+\hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of an
+$\omega$-chain, i.e a chain with the same number of elements as
+$\omega$, the natural numbers. The chain is:
 
 \begin{equation*}
 \bot \sqsubseteq
@@ -139,27 +144,26 @@ At the top we have the infinite value \hs{inf}, defined in Haskell as
 \cdots
 \end{equation*}
 
-This is an $\omega$-chain, because it has $\omega$ elements ($\omega$
-are the natural numbers), and could succinctly be written
-$\langle \hs{Succ}^n \, \bot \rangle_{n \in \omega}$.
-Here $\hs{Succ}^n$ means
-$n$ applications of the \hs{Succ} constructor. The limit is written
-$\lub{n \in \omega} (\hs{Succ}^n \, \bot)$ and is equal to \hs{inf}.
-$\lub{}$ is the least upper bound: all elements in the chain satisfy
-the property of being less than or equal to the limit i.e
-$\hs{Succ}^n \, \bot \sqsubseteq \hs{inf}$.
-Usually, $\omega$ is implicit in the subscripts and therefore omitted.
+This chain could succinctly be written $\langle \hs{Succ}^n \, \bot
+\rangle_{n \in \omega}$.  Here $\hs{Succ}^n$ means $n$ applications of
+the \hs{Succ} constructor. The limit is written $\lub{n \in
+  \omega}(\hs{Succ}^n \, \bot)$ and is equal to \hs{inf}, where
+$\lub{}$ is the least upper bound. All elements in the chain satisfy
+the property of being less than or equal to the limit: $\hs{Succ}^n \,
+\bot \sqsubseteq \hs{inf}$.
 
 A partial order is a complete partial order iff there is a limit for
 every $\omega$ chain. All data types in Haskell are complete partial
-orders\footnote{Notice that the data type
-  \hs{data StrictNat = Zero | Succ !StrictNat} is flat and therefore complete.}.
-Now we can define continuity: A function $f$ is continuous iff it is
-monotone and preserves the $\lub{}$ of all $\omega$-chains, i.e.
-assume a chain $\langle x_n \rangle$, then:
+orders\footnote{Notice that the data type \hs{data StrictNat = Zero |
+    Succ !StrictNat} is flat and therefore complete.}. Now we can
+define continuity.
+
+\paragraph{Definition} A function $f$ is \emph{continuous} iff it is
+monotone and preserves the $\lub{}$ of all $\omega$-chains: i.e.
+assume any chain $\langle x_n \rangle_{x \in \omega}$, then:
 
 \begin{equation*}
-\lub{n} \, (f \, x_n) \eq f \, (\lub{n} \, x_n)
+\lub{n \in \omega} \, (f \, x_n) \eq f \, (\lub{n \in \omega} \, x_n).
 \end{equation*}
 
 Just as with monotonicity, there are several ways to interpret
@@ -185,18 +189,31 @@ is given by Plotkin \cite{domains}:
 In GHC, you can use \hs{unsafePerformIO} and \hs{catch} from
 \hs{Control.Exception} and other tricks to unsafely catch errors
 (bottoms). With this machinery it is possible to write a function
-\hs{isBottom :: a -> Bool} to catch calls to \hs{undefined},
-pattern match failures, etcetera. In addition, some non-termination some can
+\hs{isBottom :: a -> Bool} to catch calls to \hs{undefined}, pattern
+match failures, etcetera. In addition, some non-termination some can
 also be catched in Haskell because of the \emph{blackhole} run time
 object that replaces a \emph{thunk} that is being currently
-evaluated. It does not cover all non terminating functions, and
-cannot, because of the undecidability of the Halting problem.
+evaluated. It does not and indeed cannot cover all non terminating
+functions because of the undecidability of the Halting problem.
 
-The domain theoretic results remain: one can see $\bot$ as another,
-but inconveniently inspected, constructor to the data type. There are
-no irrefutable patterns: every function has an implicit match any
+The domain theoretic results remain; one can see $\bot$ as another,
+albeit inconveniently inspected, constructor to every data type. There
+are no irrefutable patterns, every function has an implicit match any
 pattern to $\bot$.  Then we add a \emph{true} bottom to the domain
-denotes the uncatchable bottoms: undeterminable non termination. With
+denotes the uncatchable bottoms; undeterminable non termination. With
 this setting all Haskell functions are continuous with respect to the
 \emph{true} bottoms. But for the rest of this thesis, we shall only
 consider pure and safe Haskell functions.
+
+\subsection{Monotonicity as Verification}
+
+Continuity is a concept that is hard to express in first order logic:
+it in not able to express countability. We can come close with an
+axiomatization of set theory, but we leave that issue and focus on
+monotonicity. A way to verify the translation is to add axioms to the
+generated theory describing the $\sqsubseteq$ relation, and axioms
+that asserts that each function is monotone. An automated theorem
+prover could not easily show that it is a satisfiable theory since it
+will normally only have infinite models. However, a long run without
+any counter model could be seen as a witness for a successful
+translation in this respect.
