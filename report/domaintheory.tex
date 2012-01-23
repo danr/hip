@@ -1,0 +1,202 @@
+\section{Domain Theory}
+
+This section is optional, especially if you already know the basics of
+Domain Theory: complete partial orders, monotonicity and
+continuity.
+%It explains these concepts and discusses how it can be
+%used to verify the translation, furthermore it is used as a reference
+%in the future sections that rely on concepts from domain theory.
+The section explains these concepts and acts as a reference in future
+sections that rely on concepts from domain theory.
+
+The values of every data type are ordered on how much ``information''
+they contain. The least element bottom, denoted $\bot$ is contains
+least information. It corresponds to all kinds of crashes Haskell: use
+of \hs{undefined}, non-termination or irrefutable pattern matchings.
+Different constructors hold different information, so they are not
+related by the ordering: this is a partial order, a relation that is
+reflexive, transitive and antisymmetric. The ordering is usually
+written $\sqsubseteq$ sometimes with a subscript indicating the type.
+
+\begin{wrapfigure}{O}{0.4\textwidth} %\begin{figure}
+\vspace{-7pt}
+\centering \input{boolcpo}
+\vspace{-7pt}
+\caption{
+    The cpo of Bool values.
+    \label{fig:boolcpo}
+}
+\end{wrapfigure}
+For the \hs{Bool} data type the partial order can be drawn as a Hasse
+Diagram and this can be shown in Figure \ref{fig:boolcpo}.  From the
+picture it is understood that $\bot$ is the least element, and the
+line from it to \hs{False} means that $\bot \sqsubseteq \hs{False}$,
+since $\bot$ is below $\hs{False}$. Correspondingly for $\hs{True}$,
+the diagram tells us that $\bot \sqsubseteq \hs{True}$. It can also
+been seen that $\hs{True} \nsqsubseteq \hs{False}$: they are unrelated
+since there is no line between them.
+
+%\begin{figure}[h]
+%\centering
+%\input{boolcpo}
+%\caption{The partial order for \texttt{Bool} as a Hasse Diagram
+%  \label{fig:boolcpo}
+%}
+%\end{figure}
+
+%\begin{figure}[h]
+%  \centering
+%  \subfloat[\texttt{Bool}]{\label{fig:boolcpo}\input{boolcpo}}
+%  \hspace{20pt}
+%  \subfloat[\texttt{(Bool,Bool)}]{\label{fig:boolboolcpo}\input{boolboolcpo}}
+%  \caption{Two partial orders as Hasse Diagrams}
+%  \label{fig:pos}
+%\end{figure}
+
+\begin{wrapfigure}[25]{r}{0.4\textwidth} %\begin{figure}\begin{figure}[h!]
+\begin{center}
+\vspace{-12pt}
+\input{boolboolcpo}
+\caption{
+    \texttt{(Bool,Bool)} partial order.
+    \label{fig:boolboolcpo}
+}
+\end{center}
+\end{wrapfigure} %\end{figure}
+For tuples and other constructors that take other data types as
+parameters, the ordering is:
+\begin{equation*}
+\hstup{x_0}{y_0} \sqsubseteq_{(a,b)} \hstup{x_1}{y_1} \text{\quad iff \quad}
+x_0 \sqsubseteq_a x_1 \text{\w and \w} y_0 \sqsubseteq_b y_1
+\end{equation*}
+
+The Hasse Diagram for the \hs{(Bool,Bool)} values can be seen in
+Figure \ref{fig:boolboolcpo}. Here \hs{True} is abbreviated for \hs{T}
+and similarly for \hs{False}. It is not flat as the one for \hs{Bool}:
+it can be seen as three dimensional. On the lowest layer the only
+value is $\bot$, on the next layer $\hstup{\bot}{\bot}$. Above that
+the tuples with one $\bot$, and finally the total values at the
+top.
+
+\vspace{30pt}
+
+\subsection{Monotonicity}
+ An important property all safe Haskell functions have is that they are
+monotone with respect to this ordering. A function $f$ is monotone iff
+
+\begin{equation*}
+\faa{x}{y} \quad x \sqsubseteq y \quad \Rightarrow \quad f(x) \sqsubseteq f(y)
+\end{equation*}
+
+This can be understood in many ways. One way to see it is if you have
+two inputs to a function, one containing \emph{less} information that
+the other, i.e. more bottoms, it is impossible to return \emph{more}
+information from the input with less information.
+
+One simple example of a consequence of this is the impossibility to
+make a function \hs{isBottom :: a -> Bool}, returning \hs{True} if the
+argument is bottom, and \hs{False} otherwise:
+
+\begin{align*}
+& \hs{isBottom} \w :: \hs{a} \rightarrow \hs{Bool} \\
+& \hs{isBottom} \w \bot = \hs{True} \\
+& \hs{isBottom} \w x \, = \hs{False}, \qquad x \neq \bot
+\end{align*}
+
+\noindent
+Since $\bot \sqsubseteq x$ for any $x$, then by monotonicity we must
+necessarily have
+$$\hs{isBottom} \w \bot \sqsubseteq \hs{isBottom} \w x.$$
+Take any non-bottom $x$, and this equation gives
+$\hs{True} \sqsubseteq \hs{False}$, which is false. Hence
+\hs{isBottom} is not monotone.
+
+\subsection{Continuity}
+Another domain theoretic property that Haskell functions have is that
+they are continuous. This is a property that gives us insight in how
+functions behave on infinite input.  To describe this, we need to
+consider the partial order of a data type with infinite values. The
+prime candidate \hs{data Nat = Zero | Succ Nat} is used and Hasse
+Diagram can be seen in Figure \ref{fig:natcpo}.
+
+\begin{figure}[h]
+\centering
+\input{natcpo}
+\caption{
+    The (complete) partial order for \texttt{Nat}, with \hs{inf = Succ inf.}
+    \label{fig:natcpo}
+}
+\end{figure}
+
+At the top we have the infinite value \hs{inf}, defined in Haskell as
+\hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of the chain
+
+\begin{equation*}
+\bot \sqsubseteq
+\hs{Succ} \, \bot \sqsubseteq
+\hs{Succ} \, (\hs{Succ} \, \bot) \sqsubseteq
+\hs{Succ} \, (\hs{Succ} \, (\hs{Succ} \, \bot)) \sqsubseteq
+\cdots
+\end{equation*}
+
+This is an $\omega$-chain, because it has $\omega$ elements ($\omega$
+are the natural numbers), and could succinctly be written
+$\langle \hs{Succ}^n \, \bot \rangle_{n \in \omega}$.
+Here $\hs{Succ}^n$ means
+$n$ applications of the \hs{Succ} constructor. The limit is written
+$\lub{n \in \omega} (\hs{Succ}^n \, \bot)$ and is equal to \hs{inf}.
+$\lub{}$ is the least upper bound: all elements in the chain satisfy
+the property of being less than or equal to the limit i.e
+$\hs{Succ}^n \, \bot \sqsubseteq \hs{inf}$.
+Usually, $\omega$ is implicit in the subscripts and therefore omitted.
+
+A partial order is a complete partial order iff there is a limit for
+every $\omega$ chain. All data types in Haskell are complete partial
+orders\footnote{Notice that the data type
+  \hs{data StrictNat = Zero | Succ !StrictNat} is flat and therefore complete.}.
+Now we can define continuity: A function $f$ is continuous iff it is
+monotone and preserves the $\lub{}$ of all $\omega$-chains, i.e.
+assume a chain $\langle x_n \rangle$, then:
+
+\begin{equation*}
+\lub{n} \, (f \, x_n) \eq f \, (\lub{n} \, x_n)
+\end{equation*}
+
+Just as with monotonicity, there are several ways to interpret
+this. One way is to say that what a function does on a chain, it must
+also do on the chain's limit, as with \hs{map} on increasingly longer
+lists. Another is to say that a function cannot produce finite output by
+inspecting infinite input: there is no function
+\hs{isFinite :: [a] -> Bool} returning \hs{True} on finite lists and
+\hs{False} on infinite lists. On the increasing chain
+$$ \bot \sqsubseteq x_0 \hs{:} \bot \sqsubseteq x_0 \hs{:} x_1 \hs{:} \bot
+\sqsubseteq \cdots$$
+the function \hs{isFinite} returns \hs{True} (or $\bot$), but the
+limit should return \hs{False}, so this is not a continuous function.
+
+An interesting formulation of Church's Thesis in terms of continuity
+is given by Plotkin \cite{domains}:
+
+\begin{center}
+\emph{A function is continuous iff it is physically feasible.}
+\end{center}
+
+\subsection{Unsafe Haskell}
+In GHC, you can use \hs{unsafePerformIO} and \hs{catch} from
+\hs{Control.Exception} and other tricks to unsafely catch errors
+(bottoms). With this machinery it is possible to write a function
+\hs{isBottom :: a -> Bool} to catch calls to \hs{undefined},
+pattern match failures, etcetera. In addition, some non-termination some can
+also be catched in Haskell because of the \emph{blackhole} run time
+object that replaces a \emph{thunk} that is being currently
+evaluated. It does not cover all non terminating functions, and
+cannot, because of the undecidability of the Halting problem.
+
+The domain theoretic results remain: one can see $\bot$ as another,
+but inconveniently inspected, constructor to the data type. There are
+no irrefutable patterns: every function has an implicit match any
+pattern to $\bot$.  Then we add a \emph{true} bottom to the domain
+denotes the uncatchable bottoms: undeterminable non termination. With
+this setting all Haskell functions are continuous with respect to the
+\emph{true} bottoms. But for the rest of this thesis, we shall only
+consider pure and safe Haskell functions.

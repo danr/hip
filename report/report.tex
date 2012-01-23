@@ -1,4 +1,4 @@
-\documentclass{book}
+\documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -7,6 +7,7 @@
 \usepackage[margin=1.5in]{geometry}
 \usepackage{verbatim}
 \usepackage{subfig}
+%\usepackage{pxfonts} % for \nsqsubseteq, not good, makes equations look crap
 \usepackage{wrapfig}
 \usepackage{float}
 \usepackage{bold-extra}
@@ -14,25 +15,21 @@
 \usepackage{palatino}
 \usepackage[T1]{fontenc}
 \usepackage{inconsolata}
+\usepackage{tikz}
 
+% \usepackage{mathdots} % for \iddots
 
-%\usepackage{fontspec}
-%\fontspec[BoldFont={* Bold}]{Palatino}
-%\setmainfont{Palatino}
-%\setboldmainfont{Palatino Bold}
-%\setmonofont[Scale=MatchLowercase]{Inconsolata}
-
-\usepackage{fancyheadings}
-\pagestyle{fancy}
-%\addtolength{\headwidth}{\marginparsep}
-%\addtolength{\headwidth}{\marginparwidth}
-\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
-\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
-\lhead[\fancyplain{}{\bfseries\thepage}]
-{\fancyplain{}{\bfseries\rightmark}}
-\rhead[\fancyplain{}{\bfseries\leftmark}]
-{\fancyplain{}{\bfseries\thepage}}
-\cfoot{}
+%\usepackage{fancyheadings}
+%\pagestyle{fancy}
+%%\addtolength{\headwidth}{\marginparsep}
+%%\addtolength{\headwidth}{\marginparwidth}
+%\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+%\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+%\lhead[\fancyplain{}{\bfseries\thepage}]
+%{\fancyplain{}{\bfseries\rightmark}}
+%\rhead[\fancyplain{}{\bfseries\leftmark}]
+%{\fancyplain{}{\bfseries\thepage}}
+%\cfoot{}
 
 \usepackage{listings}
 
@@ -84,13 +81,18 @@
 \newcommand{\defBNF}[4] {\text{#1}\quad&#2&::=&\;#3&\text{#4}}
 \newcommand{\defaltBNF}[2] {&&|&\;#1&\text{#2}}
 
+\newcommand{\hstup}[2]{\hs{(} #1 \hs{,} #2 \hs{)}}
+
+\newcommand{\nsqsubseteq}{\,\,\, /\!\!\!\!\!\!\sqsubseteq}
+
 \begin{document}
 
+%\chapter{Domain Theory}
 \noindent
-\input{translation}
+\input{domaintheory}
 
-%\bibliographystyle{apalikeurl}
-%\bibliography{masterbib}
+\bibliographystyle{apalikeurl}
+\bibliography{masterbib}
 
 \end{document}
 
@@ -178,7 +180,6 @@ Test suite
 \section{Conclusion}
 
 %% References -----------------------------------------------------------------
-
 
 \bibliographystyle{apalikeurl}
 \bibliography{masterbib}

@@ -1,0 +1,53 @@
+\usetikzlibrary{positioning,shadows,arrows}
+
+\def\adots{\mathinner{\mkern2mu\raise\hbox{.}
+\mkern2mu\raise4\hbox{.}\mkern1mu
+\raise8\vbox{\kern7\hbox{.}}\mkern1mu}}
+
+
+%\begin{tikzpicture}[scale=10]
+%
+%  \node (bottom)                          {$\bot$};
+%  \node (zero)        [above=of bottom]   {$Zero$};
+%  \node (suc bot)     [right=of zero]     {$Suc \, \bot$};
+%  \node (suc zero)    [above=of suc bot]  {$Suc \, Zero$};
+%  \node (suc suc bot) [right=of suc zero] {$Suc \, (Suc \, \bot)$};
+%
+%  \draw [-] (bottom) -- (zero);
+%  \draw [-] (bottom) -- (suc bot);
+%  \draw [-] (suc bot) -- (suc zero);
+%  \draw [-] (suc bot) -- (suc suc bot);
+%
+%\end{tikzpicture}
+%
+\begin{tikzpicture}[grow'=up,
+%    level distance=-1.25cm,
+%    growth parent anchor=north,
+    sibling distance=2.5cm
+]
+\node {$\bot$}
+    child {
+        node {$\hs{Zero}$}
+    }
+    child {
+        node {$\hs{Succ} \, \bot$}
+        child {
+            node {$\hs{Succ} \, \hs{Zero}$}
+        }
+        child {
+            node {$\hs{Succ} \, (\hs{Succ} \, \bot)$}
+            child {
+                node {$\hs{Succ} \, (\hs{Succ} \, \hs{Zero})$}
+            }
+            child {
+              node {$ ^{ ^{\adots}}$}
+              child [edge from parent/.style={red}] { }
+              child {
+                node {$\hs{inf}$}
+              }
+            }
+        }
+    };
+
+\end{tikzpicture}
+

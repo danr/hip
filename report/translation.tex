@@ -518,13 +518,10 @@ Table~\ref{tab:transtable}.
 
 % Remove unnecessary definitions for a given proof
 
-\section{Domain Theory}
 
-This section explains some key concepts in domain theory: monotonicity
-and continuity. It shows some nice partial orderings for some
-domains. It also gives an example how monotonicity can be used to
-check the translation for bugs, and explains why it is problematic to
-do for continuity.
+%% Domain theory
+
+\input{domaintheory}
 
 \section{Future Work}
 
@@ -534,22 +531,24 @@ focus on proving rather than translating.  \note{Maybe move this to
   background?}  The goal was to add enough of the Haskell language to
 enable to prove interesting properties, but much of the widely
 available sugar in Haskell was omitted since it does not add extra
-expressibility. Therefore there is no support for list comprehensions,
-do-notation, pattern bindings and type classes .
+expressibility.
 
-A more serious omitted feature is the lack of built-in types like \hs{Int},
-\hs{Integer}, \hs{Double}, \hs{Char}, etc.
-
-Higher-kinded type variables are currently not supported.
-
-There are still parts of Haskell that are not supported. List
+Some parts of Haskell that are not supported are list
 comprehensions and do-notation can be added by its rewriting rules.
 \hs{Type} definitions should be unrolled , so they could be used in
 the signature for properties. Type classes is probably the most
 interesting thing to add, and an approach would be to use dictionary
 passing, and inline for concrete types. However, more type information
 would be needed but it is possible that much of it could be extracted
-from example GHC.
+from example GHC. Since type classes are not not translated,
+higher-kinded type variables are neither.
+
+Another interesting but omitted feature are the built-in types like
+\hs{Int}, \hs{Integer}, \hs{Double}, \hs{Char}, etc. For \hs{Integer}
+appropriate axioms could be added that hold for $\mathbb{Z}$, the
+canonical infinite discretely ordered commutative ring. For the other
+data types it is as simple because of different bit sizes and overflow
+and precision errors.
 
 Syntactic features for controlling lazy and strict evaluation like
 irrefutable patterns, \hs{seq} and bang patterns, and richer pattern
@@ -618,13 +617,13 @@ strictness fields.
 
 \subsection{Pattern Guards}
 
-Patterns guards are a GHC specific extension to Haskell, that allows
-you to pattern match against values returned from a function in a
-guard. An example is this elaboration of the \hs{lookup} function from
-the \hs{Prelude}, which applies a function to the found element:
+Patterns guards is a GHC specific extension to Haskell, allowing
+arbitrary pattern matching on an expression in a guard. An example is
+this elaboration of the \hs{lookup} function from the \hs{Prelude},
+which applies a function to the element, if found:
 
 \begin{code}
-transformLookup :: k -> [(k,v)] -> (k -> v -> b) -> Maybe b
+transformLookup :: Eq k => k -> [(k,v)] -> (k -> v -> b) -> Maybe b
 transformLookup k xs f | Just v <- lookup k xs = Just (f k v)
                        | otherwise             = Nothing
 \end{code}
