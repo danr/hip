@@ -1,20 +1,24 @@
 \section{Structural induction}
+\label{sec:induction}
+
+Properties that are true merely by rewriting the definitions are
+neither abundant nor especially interesting. The fundamental concept
+of constructors and pattern matching in Haskell is closely related to
+induction. The values of an argument with a concrete type can only
+range over the data type's different constructors. Such a case
+analysis combined with induction is especially strong.
 
 Induction is a very fundamental concept of mathematics and is directly
-or indirectly an axiom in axiomatizations of mathematics: directly in
-Peano Arithmetic (abbreviated PA), indirectly in Zermelo-Fraenkel Set
-Theory (commonly abbreviated ZF or ZFC with the Axiom of Choice). In
-type theory there are different approaches: the proof assistants Coq
-and Isabell/HOL generates an induction schema for each data type, and
-in Agda, based on Martin-Löf Type Theory with inductive families,
-induction is a matter of recursion.
+or indirectly an axiom in axiomatizations of mathematics. We shall
+take the Peano Arithmetic, $\PA$, axioms for true. This theory has
+the natural numbers as standard model with a small vocabulary
+consisting only of the constant $0$, the unary successor function $s$,
+and binary plus and multiplication. Induction in $\PA$ allows proving
+properties that hold for all natural numbers. The first proof
+obligation in a proof by induction is to prove that the property holds
+for 0. For the second it is if it holds for an arbitrary then it must
+hold for its successor. The induction schema is formally written as this:
 
-PA, or first order aritmetic, has the natural numbers as standard
-model and small vocabulary consisting only of the constant $0$, the unary
-successor function $s$, and binary plus and multiplication.  Here the
-induction schema from looks like this:
-
-\note{One could also be explicit about the free variables in $P$}
 \begin{mathpar}
   \inferrule* % [Left=PA-Ind]
      {
@@ -37,32 +41,61 @@ axiom schema since it is not possible to quantify over the predicate
 $P$ in FOL. Rather, it is a infinite set of axioms, one for each
 (well-formed) formula instantiated in place for $P$. Generally, ATPs
 do not instantiate schemas themselves but it has to be done manually,
-with an appropriate formula for $P$.
+with an appropriate formula for $P$. In this thesis, the predicates
+will mainly be equalities that depend on the argument to $P$. For
+example, if you want to prove that the functions $f$ and $g$ are
+equal, you can then define $P(x)$ to $f(x)=g(x)$.
 
-\note{
-The set of relevant things to say here are probably not even
-recursively enumerable: we could go on presenting induction in
-different theories and how it encodes or generates axioms for
-structural induction.}
-
-To prove a property of the total and finite Peano Natural numbers in
-Haskell since the have the same structure as numbers in PA, the
-following axiom schema is used:
+To prove a property with induction in Haskell, induction can be
+carried out on the number of constructors in a value. It is possible
+to get many base cases, one for each non-recursive constructor and
+then a step case for each recursive constructor. As an example, we can
+consider one of the simplest recursive data structure in Haskell, the
+Peano Natural numbers in Haskell, defined as
+\hs{data Nat = Zero | Succ Nat}. This axiom schema is used and
+follows the same structure as in $\PA$:
 
 \begin{mathpar}
   \inferrule*
      {
        P(\hs{Zero})
        \\
-       \fa{x} P(x) \rightarrow P(\hs{Succ}(x))
+       \fa{x} P(x) \rightarrow P(\hs{Succ} \w x)
      }
-     { \fa{x} x \mathrm{\w finite \w and \w total} \rightarrow P(x) }
+     { \fa{x} x \text{ finite and total} \rightarrow P(x) }
 \end{mathpar}
 
-If $P$ is a predicate that preserves $\sqsubseteq$-chains, also
-discussed in Section \ref{sec:admissible}, then if you prove $P(\bot)$,
-then $P(x)$ is true for all $x$, as well as partial and infinite. This
-is because this is a $\sqsubseteq$-chain:
+Any data type gives rise to induction schemata, and this is called
+structural induction. These are the axiom schemata for lists and the
+\hs{Tree} type defined in \ref{sec:treetrans}:
+
+\begin{mathpar}
+  \inferrule* % [left=List-Ind]
+     {
+       P(\hs{[]})
+       \\
+       \faa{x}{xs} P(xs) \rightarrow P(x\hs{:}xs)
+     }
+     { \fa{xs} xs \text{ finite and total} \rightarrow P(xs) }
+
+  \inferrule* % [left=Tree-Ind]
+     {
+       P(\hs{Empty})
+       \\
+       \faaa{l}{x}{r} P(l) \wedge P(r) \rightarrow P(\hs{Branch} \w l \w x \w r)
+     }
+     { \fa{t} t \text{ finite and total} \rightarrow P(t) }
+\end{mathpar}
+
+For such simple indexed sum of products data types the translation is
+straightforward: for a data type $T$, with a constructor $K$ you get
+all recursive arguments of $T$ to $K$ as hypotheses.
+
+\subsection{Partial and infinite values}
+
+Predicates $P$ that preserves $\omega$-chains of $\sqsubseteq$ (see
+section \ref{sec:domaintheory}) are called \emph{admissible} (among
+other names). Such a chain can for instance be this one:
 
 \begin{equation*}
 \bot \sqsubseteq
@@ -72,15 +105,45 @@ is because this is a $\sqsubseteq$-chain:
 \cdots
 \end{equation*}
 
-with limit \hs{inf}, defined as \hs{inf = Succ inf}. If $P$ then
-preserves $\sqsubseteq$-chains, the property also holds for
-\hs{inf}. In this work we are only concerned with equality properties,
-and they are all admissible.
+This chain has the limit \hs{inf}, defined as \hs{inf = Succ
+  inf}. If $P$ is an admissible predicate, then if $P$
+holds for every element in that chain then $P(\hs{inf})$. In general
+terms, preserving $\omega$-chains means that for every chain $\langle
+x_n \rangle_{n \in \omega}$} this holds:
 
-Any non-recursive, or more importantly recursive data type gives rise
-to induction schemata, and this is called structural induction. Here
-are the axiom schemata for potentially partial and infinite lists and
-the \hs{Tree} type defined in \ref{sec:treetrans}:
+\begin{equation*}
+(\fa{n} P(x_n)) \Rightarrow P(\lub{n \in \omega}(x_n))
+\end{equation*}
+
+Equality of continuous functions is admissible: assume two such
+functions $f$ and $g$, and define the predicate as
+$P(x) :\Leftrightarrow f(x) = g(x)$. Take any chain
+$\langle x_n \rangle_{n \in \omega}$, and assume $P$ holds for every
+element in the chain, then:
+
+\begin{align*}
+\desca{assumption}               \\
+& \fa{n} P(x_n)                    \\
+\desclra{definition}             \\
+& \fa{n} f(x_n) = g(x_n)           \\
+\descra{limits}                  \\
+& \lub{n}(f(x_n)) = \lub{n}(g(x_n))  \\
+\desclra{continuity}             \\
+& f(\lub{n}(x_n)) = g(\lub{n}(x_n))  \\
+\desclra{definition}             \\
+& P(\lub{n}(x_n))
+\end{align*}
+
+This result generalizes to equalities of compositions of continuous
+functions. One way to approach this is to use that the continuous
+functions over a complete partial order form a category with products
+and exponentials which has the necessary components of composition and
+application.
+
+In short: if you want to show that an admissible property holds for
+partial and infinite values you also need to consider $\bot$ as a
+constructor for the data type. As an example, the induction principle
+for possibly partial and infinite lists is:
 
 \begin{mathpar}
   \inferrule* % [left=List-Ind]
@@ -90,45 +153,12 @@ the \hs{Tree} type defined in \ref{sec:treetrans}:
        P(\hs{[]})
        \\
        \faa{x}{xs} P(xs) \rightarrow P(x\hs{:}xs)
-     }
-     { \fa{x} P(x) }
-
-  \inferrule* % [left=Tree-Ind]
-     {
-       P(\bot)
        \\
-       P(\hs{Empty})
-       \\
-       \faaa{l}{x}{r} P(l) \wedge P(r) \rightarrow P(\hs{Branch} \w l \w x \w r)
+       P \text{ admissible}
      }
-     { \fa{x} P(x) }
+     { \fa{xs} P(xs) }
 \end{mathpar}
 
-For such simple indexed sum of products data types the translation is
-straightforward: for a data type $T$, with a constructor $K$ you get
-all recursive arguments of $T$ to $K$ as hypotheses. It is also
-possible to get structural induction for exponential data types. An
-example is higher-order abstract syntax, another is
-\note{Cite, for example, Dixon's thesis}the Brouwer ordinals, defined as:
-
-\begin{verbatim}
-data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
-\end{verbatim}
-
-\note{This is actually not yet implemented :(}
-The induction schema for this data type is:
-
-\begin{mathpar}
-  \inferrule* % [left=Ord-Ind]
-     {
-       P(\bot)
-       \\
-       P(\hs{Zero})
-       \\
-       \fa{f} (\fa{x} P(f \w x)) \rightarrow P(\hs{Lim} \w f)
-     }
-     { \fa{x} P(x) }
-\end{mathpar}
 
 \subsection{Generalizations}
 \label{sec:genind}
@@ -201,13 +231,10 @@ needed if you do this with induction on the first argument:
 
 The commutativity of plus does only hold for total values since we have
 $$\bot \eq \bot + \hs{Succ Zero} \, \neq \, \hs{Succ Zero} + \bot \eq \hs{Succ} \w \bot$$
-If you want to show that a property holds for partial and infinite
-values you also need to consider $\bot$ as a constructor for the data
-type.
 
 This kind of unrolling data types also work well with mixed data
-types, a standard example is the definition of $\mathbb{Z}$ defined as
-a disjoint union as $\mathbb{N} + \mathbb{N}$, or in Haskell
+types, a standard example is the definition of $\mathbb{Z}$ defined
+with a disjoint union as $\mathbb{N} + \mathbb{N}$, or in Haskell
 
 \begin{verbatim}
 data Z = Pos Nat | Neg Nat
@@ -266,12 +293,12 @@ $\fa{t} \hs{mirror} \w (\hs{mirror} \w t) = t$ where $t : \hs{Tree a}$,
 the Branch case generates this call to the theorem prover:
 
 \begin{align*}
-T \, & , \, \hs{mirror} \w (\hs{mirror} \w x_1) \eq x_1 \\
-  \, & , \, \hs{mirror} \w (\hs{mirror} \w x_3) \eq x_3 \\
-&\vdash \hs{mirror} \w (\hs{mirror} \w (\hs{Branch} \w x_1 \w x_2\w x_3) \eq \hs{Branch} \w x_1 \w x_2\w x_3
+\mathcal{T} \, & , \, \hs{mirror} \w (\hs{mirror} \w x_1) \eq x_1 \\
+            \, & , \, \hs{mirror} \w (\hs{mirror} \w x_3) \eq x_3 \\
+               &\vdash \hs{mirror} \w (\hs{mirror} \w (\hs{Branch} \w x_1 \w x_2\w x_3) \eq \hs{Branch} \w x_1 \w x_2\w x_3
 \end{align*}
 
-Here $T$ is the theory for this Haskell program: it includes the
+Here $\mathcal{T}$ is the theory for this Haskell program: it includes the
 definition of $\hs{mirror}$, along with axioms that $\hs{Branch}$,
 $\hs{Empty}$ and $\bot$ are disjoint.  Hypotheses for $x_1$ and $x_3$
 are added since the first and the third argument for the \hs{Branch}
@@ -306,15 +333,44 @@ depends on what you need to show.
 \subsection{Future work}
 \label{sec:futind}
 
-In this section we will mainly be discuss induction in Peano
-Arithmetic, with $0$ and the successor function $s$.
-If you need induction on two variables, to show $\faa{x}{y} P(x,y)$, an other
-way is to use lexicographic induction. First you do induction on $x$
-to get the proof obligations $\fa{y} P(0,y)$ and
-$(\fa{y} P(x,y)) \rightarrow (\fa{y} P(s(x),y))$. Notice that in the
-step case, $y$ is universally quantified in both the hypothesis and in
-the conclusion. In both the base and in the step you can now do
-induction on $y$ to get this inference rule:
+\paragraph{Exponential Types} It is also possible to get structural
+induction for exponential data types. An example is higher-order
+abstract syntax, another is the Brouwer ordinals defined by
+\citet{dixonphd} as:
+
+\begin{code}
+data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
+\end{code}
+
+The induction schema for this data type is:
+
+\begin{mathpar}
+  \inferrule* % [left=Ord-Ind]
+     {
+       P(\bot)
+       \\
+       P(\hs{Zero})
+       \\
+       \fa{x} P(x) \rightarrow P(\hs{Succ} \w x)
+       \\
+       \fa{f} (\fa{x} P(f \w x)) \rightarrow P(\hs{Lim} \w f)
+     }
+     { \fa{x} P(x) }
+\end{mathpar}
+
+This was never implemented since the lack of examples with exponential
+data types.
+
+\paragraph{Lexicographic Induction} In the rest of this section we
+will mainly be discuss induction in $\PA$, again with $0$ as zero and
+the successor function $s$.  If you need induction on two variables,
+to show $\faa{x}{y} P(x,y)$, an other way is to use lexicographic
+induction. First you do induction on $x$ to get the proof obligations
+$\fa{y} P(0,y)$ and
+$(\fa{y} P(x,y)) \rightarrow (\fa{y} P(s(x),y))$.
+Notice that in the step case, $y$ is universally quantified in both
+the hypothesis and in the conclusion. In both the base and in the step
+you can now do induction on $y$ to get this inference rule:
 
 \begin{mathpar}
   \inferrule* % [left=Nat-Ind-Depth-Two]
@@ -345,13 +401,13 @@ induction is to allow the user to annotate in the source code the
 desired way to do induction: furthermore, it does not blend well that
 this should be a fully automated way of proving Haskell properties.
 
-Another way to do this is to encode different induction ways by means
-of axioms in the theory itself. A simple example of this is to prove a
-property $P$ on one Peano natural number, and choose how many base
-cases in form of $P(0)$, $P(1)$, up to $P(n)$ and can then get a
-stronger induction hypothesis
-$P(x)\wedge P(x+1)\wedge \cdots\wedge P(x+n)\rightarrow P(x+n+1)$. It is
-possible to encode such a ``machine'' in terms of first order logic as this:
+\paragraph{Automated Depth} Another way to do this is to encode
+different induction ways by means of axioms in the theory itself. A
+simple example of this is to prove a property $P$ on one Peano natural
+number, and choose how many base cases in form of $P(0)$, $P(1)$, up
+to $P(n)$ to get a stronger induction hypothesis $P(x)\wedge
+P(x+1)\wedge \cdots\wedge P(x+n-1)\rightarrow P(x+n)$. It is possible
+to axiomatize such a ``machine'' in first order logic as this:
 
 \newcommand{\QZ}[2]{\inferrule* [left=q-0]{ }{Q(#1,#2)}}
 \newcommand{\QS}[3]{\inferrule* [left=q-s]{P(#2) \and #3}{Q(#1,#2)}}
@@ -393,7 +449,7 @@ come from $n=0$:
 
 A little bit of expanding is necessary when $n=2$. It looks like this
 
-\begin{mathpar}
+p\begin{mathpar}
     \inferrule*
       {
         \QS{2}{0}{\QS{1}{1}{\QZ{0}{2}}}
@@ -418,3 +474,4 @@ A little bit of expanding is necessary when $n=2$. It looks like this
 The complexity is greatly increased with more irregular data types
 than natural numbers, and it is unclear how well theorem provers would
 be able to handle this.
+
