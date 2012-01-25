@@ -1,14 +1,13 @@
 \section{Domain Theory}
 
-
-This section is optional, especially if you already know the basics of
-Domain Theory: comp\-lete partial orders, monotonicity and
-continuity.
-%It explains these concepts and discusses how it can be
-%used to verify the translation, furthermore it is used as a reference
-%in the future sections that rely on concepts from domain theory.
-The section explains these concepts and acts as a reference in future
-sections that rely on concepts from domain theory.
+This section is stand alone, and could be skipped especially if you
+already know the basics of Domain Theory: comp\-lete partial orders,
+monotonicity and continuity.
+It explains these concepts and discusses how it can be
+used to verify the translation, furthermore it is used as a reference
+in the future sections that rely on concepts from domain theory.
+%The section explains these concepts and acts as a reference in future
+%sections that rely on concepts from domain theory.
 
 The values of every data type are ordered on how much ``information''
 they contain. The least element bottom, denoted $\bot$, contains least
@@ -100,6 +99,7 @@ One simple example of a consequence of this is the impossibility to
 make a function \hs{isBottom :: a -> Bool}, returning \hs{True} if the
 argument is bottom, and \hs{False} otherwise:
 
+\note{rewrite with code}
 \begin{align*}
 & \hs{isBottom} \w :: \hs{a} \rightarrow \hs{Bool} \\
 & \hs{isBottom} \w \bot = \hs{True} \\
@@ -159,11 +159,11 @@ orders\footnote{Notice that the data type \hs{data StrictNat = Zero |
 define continuity.
 
 \paragraph{Definition} A function $f$ is \emph{continuous} iff it is
-monotone and preserves the $\lub{}$ of all $\omega$-chains: i.e.
-assume any chain $\langle x_n \rangle_{x \in \omega}$, then:
+monotone and preserves the $\lub{ }$ of all $\omega$-chains: i.e.
+assume any chain $\langle x_n \rangle_{n \in \omega}$, then:
 
 \begin{equation*}
-\lub{n \in \omega} \, (f \, x_n) \eq f \, (\lub{n \in \omega} \, x_n).
+\lub{n \in \omega} \, (f \, x_n) \eq f \, (\lub{n \in \omega} \, x_n)
 \end{equation*}
 
 Just as with monotonicity, there are several ways to interpret
@@ -184,6 +184,10 @@ is given by Plotkin \cite{domains}:
 \begin{center}
 \emph{A function is continuous iff it is physically feasible.}
 \end{center}
+
+This means that all computable functions are contiuous, and the other
+way around. The conclusion for us is that all Haskell functions are
+continuous.
 
 \subsection{Unsafe Haskell}
 In GHC, you can use \hs{unsafePerformIO} and \hs{catch} from

@@ -1,41 +1,42 @@
 \chapter{Proof Techniques}
 
-\note{Need to decide some running example}
-
 To prove things using this technique, properties are entered in the
 Haskell source code. A small prelude called \hs{AutoPrelude} needs to
 be imported that gives access to the relevant functions. One example
 is the associativity of list concatenation:
 
-\begin{verbatim}
+\begin{code}
 import AutoPrelude
 
 prop_app_assoc :: [a] -> [a] -> [a] -> Prop [a]
 prop_app_assoc xs ys zs = xs ++ (ys ++ zs) =:= (xs ++ ys) ++ zs
-\end{verbatim}
+\end{code}
 
-The infix function \hs{=:=} comes from the imported library, as well
-as the type constructor \hs{Prop}. The type signature cannot be
-omitted as this is used for instance to see which kind of induction we
-will use.
+The infix function \hs{=:=} comes from the import, as well as the type
+constructor \hs{Prop}. The type signature cannot be omitted as this is
+used for some proof techinques. For induction, you need to see which
+kind of induction we will use.
 
 Running the program is simple. Just save the file as for instance
 \hs{ListProps.hs} and run
 
-\begin{verbatim}
+\begin{code}
 autospec ListProps.hs
-\end{verbatim}
+\end{code}
 
+\noindent
 and the program will report if it was provable or not, and which
-techniques succeeded.
+techniques succeeded. Equational properties written like this are also
+testable with QuickCheck, so you can run the normal \hs{quickCheck}
+function on them, given that there are appropriate \hs{Eq} and
+\hs{Arbitrary} instances provided.
 
-These properties are also QuickCheck-testable, so you can run the
-normal \hs{quickCheck} function on them, given that there are
-relevant \hs{Eq} and \hs{Arbitrary} instances provided.
-
-Let's now take a look what different proof methods that are supported.
-\note{This is too informal}
-
+The rest of this chapter explains the different proof methods
+supported in this tool: definitional equality (Section
+\ref{sec:equality}), structural induction (Section
+\ref{sec:induction}), fixed point induction (Section
+\ref{sec:fixpoint}) and approximation lemma (Section
+\ref{sec:approx}).
 % Definitional Equality -------------------------------------------------------
 
 \input{equality}

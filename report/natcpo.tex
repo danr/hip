@@ -20,11 +20,7 @@
 %
 %\end{tikzpicture}
 %
-\begin{tikzpicture}[grow'=up,
-%    level distance=-1.25cm,
-%    growth parent anchor=north,
-    sibling distance=2.5cm
-]
+\begin{tikzpicture}[grow'=up,sibling distance=2cm]
 \node {$\bot$}
     child {
         node {$\hs{Zero}$}
@@ -41,13 +37,13 @@
             }
             child {
               node {$ ^{ ^{\adots}}$}
-              child [edge from parent/.style={red}] { }
+              child [edge from parent/.style={draw=white}] { }
               child {
                 node {$\hs{inf}$}
               }
             }
         }
-    };
+    }
 
 \end{tikzpicture}
 

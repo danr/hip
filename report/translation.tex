@@ -96,21 +96,19 @@ in the next section how to fix this.
 In domain theory there is a concept of bottom, denoted $\bot$. It is
 used for the least defined value: pattern match failures, use of
 \hs{error} and \hs{undefined} in the source code, but also for
-non-terminating programs.  \note{Refer to a short introduction of
-  domain theory at the end of this chapter (or elsewhere, appendix?)}
-For \hs{top} the idea is to add an axiom so that $\fn{top}$ of
-anything that is not a \hs{Fork} is bottom. This is an example of such
-an axiomatization:
+non-terminating programs. For \hs{top} the idea is to add an axiom so
+that $\fn{top}$ of anything that is not a \hs{Fork} is bottom. This is
+an example of such an axiomatization:
 
 \begin{align*}
 \rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq x \\
 \rom{2} \qquad & \fa{t}         (\nexxx{l}{x}{r} \fn{fork}(l,x,r)) \eq t) \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
 
-Most theorem provers would as a preprocessing step \note{citation
+Most theorem provers would as a preprocessing step \note{\qquad \qquad citation
   needed}skolemize the existential quantification in the second
 axiom. A new unary function would be introduced for $l$, $x$ and $r$,
-depending on $i$, an arbitrary choice of names are $\fn{top}$ appended
+depending on $t$, an arbitrary choice of names are $\fn{top}$ appended
 to the original variable. The axiom then looks like
 this\footnote{Lambda functions bind as far to the right as possible,
   and this thesis uses the same convention for quantifiers.}:
@@ -127,8 +125,8 @@ such skolemized ``selector'' functions for every constructor manually?
 For the \hs{Fork} constructor call them $\fn{fork_0}$, $\fn{fork_1}$
 and $\fn{fork_2}$, and their axioms are:
 \begin{align*}
-\rom{1} \qquad \faaa{l}{x}{r} \fn{fork_{0}}(\fn{fork}(l,x,r)) & \eq l\\
-\rom{2} \qquad \faaa{l}{x}{r} \fn{fork_{1}}(\fn{fork}(l,x,r)) & \eq x\\
+\rom{1} \qquad \faaa{l}{x}{r} \fn{fork_{0}}(\fn{fork}(l,x,r)) & \eq l \\
+\rom{2} \qquad \faaa{l}{x}{r} \fn{fork_{1}}(\fn{fork}(l,x,r)) & \eq x \\
 \rom{3} \qquad \faaa{l}{x}{r} \fn{fork_{2}}(\fn{fork}(l,x,r)) & \eq r
 \end{align*}
 
@@ -527,11 +525,10 @@ Table~\ref{tab:transtable}.
 
 Haskell is a big language, and translating it all in one go is a
 daunting task. Therefore, some restrictions were settled to be able to
-focus on proving rather than translating.  \note{Maybe move this to
-  background?}  The goal was to add enough of the Haskell language to
-enable to prove interesting properties, but much of the widely
-available sugar in Haskell was omitted since it does not add extra
-expressibility.
+focus on proving rather than translating.  The goal was to add enough
+of the Haskell language to enable to prove interesting properties, but
+much of the widely available sugar in Haskell was omitted since it
+does not add extra expressibility.
 
 Some parts of Haskell that are not supported are list
 comprehensions and do-notation can be added by its rewriting rules.

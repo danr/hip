@@ -15,21 +15,22 @@
 \usepackage{palatino}
 \usepackage[T1]{fontenc}
 \usepackage{inconsolata}
+\usepackage{natbib}
 \usepackage{tikz}
-
+\usetikzlibrary{\trees,positioning,arrows}
 % \usepackage{mathdots} % for \iddots
 
-%\usepackage{fancyheadings}
-%\pagestyle{fancy}
-%%\addtolength{\headwidth}{\marginparsep}
-%%\addtolength{\headwidth}{\marginparwidth}
-%\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
-%\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
-%\lhead[\fancyplain{}{\bfseries\thepage}]
-%{\fancyplain{}{\bfseries\rightmark}}
-%\rhead[\fancyplain{}{\bfseries\leftmark}]
-%{\fancyplain{}{\bfseries\thepage}}
-%\cfoot{}
+\usepackage{fancyheadings}
+\pagestyle{fancy}
+%\addtolength{\headwidth}{\marginparsep}
+%\addtolength{\headwidth}{\marginparwidth}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\lhead[\fancyplain{}{\bfseries\thepage}]
+{\fancyplain{}{\bfseries\rightmark}}
+\rhead[\fancyplain{}{\bfseries\leftmark}]
+{\fancyplain{}{\bfseries\thepage}}
+\cfoot{}
 
 \usepackage{listings}
 
@@ -51,6 +52,7 @@
 \makeatother
 
 \newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
+\newcommand\PA{\mathcal{P\!A}}
 \newcommand\hs[1]{\verb~#1~}
 \newcommand\fn[1]{\mathrm{#1}}
 \newcommand\ptr[1]{\fn{#1.ptr}}
@@ -88,7 +90,8 @@
 %\begin{document}
 %
 %\noindent
-%\input{translation}
+%\chapter{Proof Techniques}
+%\input{induction}
 %
 %\bibliographystyle{apalikeurl}
 %\bibliography{masterbib}
