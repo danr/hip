@@ -1,18 +1,19 @@
 \section{Definitional Equality}
+\label{sec:equality}
 
 Some properties cannot or need not use induction or some more
 sophisticated technique, since they are true by definition. Examples
 are properties for fully polymorphic functions such as the definition
 of \hs{id} in the SK-calculus, here
 
-\begin{verbatim}
+\begin{code}
 s f g x = f x (g x)
 k x y = x
 id x = x
 
 prop_skk_id :: Prop (a -> a)
 prop_skk_id = s k k =:= id
-\end{verbatim}
+\end{code}
 
 Then, the generated conjecture is simply
 
@@ -33,25 +34,28 @@ equality, postulated with the following axiom
 \faa{f}{g} (\fa{x} \app{f}{x} = \app{g}{x}) \rightarrow f = g
 \end{equation*}
 
+\noindent
 which identifies function pointers and functions composed with $@$.
 One problem with extensional equality in Haskell, is that the presence
 of \hs{seq} breaks it. \hs{seq} is a built in function with the
 following behavior:
 
-\begin{verbatim}
+\begin{code}[mathescape]
 seq :: a -> b -> b
-seq bottom b = bottom
-seq a      b = b
-\end{verbatim}
+seq $\bot$ y = $\bot$
+seq x y = y$, \qquad x \neq
+\end{code}
 
-Where \hs{a} is any other value than $\bot$. With \hs{seq} it is
-possibly to distinguish between these two functions, which otherwise
-are observationally equal:
+It forces the first argument to weak head normal form and returns the
+second. For our purposes, it is only important if the first argument
+is $\bot$, then the function also returns this as it is strict in its
+first argument. With \hs{seq} it is possibly to distinguish between
+these two functions, which otherwise are observationally equal:
 
-\begin{verbatim}
-f = bottom
-g = \x -> bottom
-\end{verbatim}
+\begin{code}[mathescape]
+f = $\bot$
+g = \x -> $\bot$
+\end{code}
 
 Because \hs{seq f ()} evaluates to $\bot$, and \hs{seq g ()} evaluates
 to \hs{()}, but on any argument \hs{f} and \hs{g} gets, they both
@@ -62,45 +66,53 @@ anything applied to $\bot$ is $\bot$:
 \fa{x} \app{\bot}{x} = \bot
 \end{equation*}
 
-However, \hs{seq} is the only function that can do this, so we will
-ignore its presence in Haskell.
-\note{This could be added as a switch \hs{--enable-seq}, which removes
-  extensional equality}
+However, \hs{seq} is the only function that can tell such functions
+apart, so we will ignore its presence in Haskell.  In the future,
+there could be added as a switch \hs{--enable-seq}, which removes
+extensional equality.
 
 Furthermore, if we assume we have extensional equality we also have
 the property that \hs{Prop (a -> b)} is equivalent to
 \hs{a -> Prop b}, by letting the property have an extra argument that
 is applied to the left and right hand side of the equality. This has
-two benefits, firstly it can trigger other proof methods should \hs{a}
+two benefits. Firstly, it can trigger other proof methods should \hs{a}
 or \hs{b} be concrete types (the former for induction and the latter
-for approximation lemma), and secondly it does not need to use the
-extensionality axiom introduced above which is costly and confusing
-for the theorem provers tested.
-\note{Add some support for this claim. For instance, SPASS seems to be
-  utterly horrible at this, but Eprover and Vampire are OK}
+for approximation lemma). Secondly, it does not need to use the
+extensionality axiom introduced above which introduces extra steps in
+the proof search.
 
 \subsection{Future Work: Concrete Concerns}
 
 This only works on non-concrete types because of the way bottoms are
 added. One example when this is a problem with is this plausible
-definition of boolean or
+definition of boolean or, and the property of right identity:
 
-\begin{verbatim}
+\begin{code}
 False || a = a
 True  || _ = True
-\end{verbatim}
 
-\note{This blends a bit with future work. One solution is just to add
-  a predicate describing the elements of the type. Hopefully I will have time
-  to implement this so it need not be in future work. Further, it is
-  pretty sloppily written}
-Then an extra branch is added that matches everything else that goes
-to $\bot$. This is of efficiency reasons: imagine if we had only used
-just a few constructors of a data type with hundreds of constructors,
-then we do not want to write a new line with all those constructors to
-$\bot$. A property that should indeed hold (regardless of presence of
-partial values or not) is \hs{x || False == x} for all
-\hs{x}. However, for models with another point, say $\top$, we get
-that $\top \, \fn{||} \, \fn{False} = \bot$, and the conjecture is
-counter satisfiable.
+prop_or_right_identity :: Bool -> Prop Bool
+prop_or_right_identity x = x || False =:= x
+\end{code}
+
+The translation of \hs{||} makes any element in the domain that is not
+the introduced constants $\fn{false}$ or $\fn{true}$ for \hs{Bool}'s
+constructors, equal $\bot$. Now consider the translation of the
+property:
+
+\begin{equation*}
+\fa{x} x \, \fn{||} \, \fn{false} = x
+\end{equation*}
+
+Now this is false: take a model with another element $\star$ in the
+domain:
+
+$$\star \, \fn{||} \, \fn{false} = \bot$$
+
+The consequence of this is that the proof principle of definitional
+equality is only used on abstract types, rather than polymorphic, as
+they cannot be strict. Do not fear: the property above is trivially
+proved by induction. For the \hs{Bool} type and other non recursive
+data types, induction degenerate into mere case enumeration.
+
 
