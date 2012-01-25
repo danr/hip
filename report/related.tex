@@ -4,51 +4,55 @@
   have it after the technical part to be able to compare different
   approaches.}
 
-Zeno \cite{zeno} is the most similar work to this, proving equational
+Zeno \citep{zeno} is the most similar work to this, proving equational
 properties for Haskell programs. While Zeno supports type classes, and
 implications with equational antecedents, and can generalize goals, it
 makes no attempt to tackle infinite and partial values. Indeed, the
 authors even ask themselves if it is not really a ML theorem prover.
 
-\note{Discuss this with Moa and get references}
-Zeno translates its proofs to Isabel, which could maybe be described
-as a framework for different logics: its most prominent use is as a
-theorem prover for Higher Order Logic, commonly abbreviated
-Isabel/HOL. Different automated proving techniques has been
-implemented, most notably the heuristic Rippling \cite{dixonphd},
-found in IsaPlanner \cite{isaplanner}, which also relies on critics
-\cite{productiveuse} You can also call first order logic theorem
+\note{Discuss this with Moa and get references} Zeno translates its
+proofs to Isabel, which could maybe be described as a framework for
+different logics: its most prominent use is as a theorem prover for
+Higher Order Logic, commonly abbreviated Isabel/HOL
+\citep{isabelbook}. Different automated proving techniques has been
+implemented, most notably the heuristic Rippling \citep{dixonphd},
+found in IsaPlanner \citep{isaplanner}, which also relies on critics
+\citep{productiveuse}. You can also call first order logic theorem
 provers from Isabel/HOL with Sledgehammer.
 
-\note{Ask the Coq guys (Anders, Vincent) for references and clarifications}
 The proof assistant and programming language Coq resembles Isabel in
 the sense that each data type declaration generates an induction
 principle and the user can write own induction procedures should it be
 too weak. Coq has is quite automated in its use of tactics to resolve
-goals, and has an own language Ltac to write such tactics.
+goals, and has an own language Ltac to write such tactics, and a
+rippling tactic has been implemented \citep{automateddtfp},
+\citep{inductioncoq}.
 
 Coq has some support for corecursion, and so has the dependently
-language Agda, whose strong type system based on Martin-Löf type
-theory with inductive families, makes it a proof assistant thanks to
-the Curry-Howard-Lambek correspondence. Its support for corecursion
-has been investigated \cite{productivity}, although all of it is
-manual.
+language Agda \citep{norell:thesis}, whose strong type system based on
+Martin-Löf type theory \citep{mltt} with inductive families, makes it a proof
+assistant thanks to the Curry-Howard-Lambek correspondence. Its
+support for corecursion has been investigated \citep{productivity},
+although all of it is manual.
 
 Effort has been put into automating the proof generation in Agda,
 notably by \cite{agdaatp}, which is quite alike this work in its
 translation from Agda to first order logic. One must however give
 quite much information to the theorem prover, like how to instantiate
-the induction hypotheses. Peter Dybjer maybe said that it could be
-seen as a very nice way to interact with a theorem prover, thanks to
-Agda. We see a more constructive (in the logic sense) approach in
-\cite{dtatp}, where they do not only make calls to the Waldmeister
-theorem prover to assert proof's truth, but they also translate the
-prover's output back to functional code for their dependently language
-Mella, not much unlike Agda. It is still in early stages and has no
-support for data types.
+the induction hypotheses. \note{Peter Dybjer maybe said that it could
+  be seen as a very nice way to interact with a theorem prover, thanks
+  to Agda.} A more constructive approach by \cite{dtatp}, where they
+do not only make calls to the Waldmeister theorem prover to assert
+proof's truth, but they also translate the prover's output back to
+functional code for their dependently language Mella, not much unlike
+Agda. It is still in early stages and has no support for data
+types. A similar approach was taken by \cite{agsy}
+does a search akin to Prolog inspired search, and can also handle
+induction. A living incarnation of this is the Agsy proof search
+assistant in Agda.
 
 These automated approaches to Agda do not handle infinite values. How
 to prove properties about corecursive Haskell programs and similar
 languages has long been researched, insert suitable fixed point
 induction reference, and new approaches to stream processing can be
-found in \cite{streams}.
+found in the work by \cite{streams}.
