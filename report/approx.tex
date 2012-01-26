@@ -1,38 +1,43 @@
 \section{Approximation Lemma}
 \label{sec:approx}
 
-The approximation lemma must be considered a standard technique for
-proving properties about corecursive programs. Just like fixed point
-induction it can be used with functions that are produce infinite
-values, like \hs{repeat} and \hs{iterate}, out of abstract values
-making structural induction impossible \cite{corecursive}, but the
-approximation lemma is much simpler to apply with very positive
-results.
+The approximation lemma is another standard technique for proving
+properties about corecursive programs. Just like fixed point induction
+it can be used with functions that are produce infinite values, like
+\hs{repeat} and \hs{iterate}, out of abstract values making structural
+induction impossible \cite{corecursive}, but the approximation lemma
+usually supersedes lemma fixed point induction since it is much
+simpler to apply.
 
 The approximataion lemma supersedes the classical take lemma
 \cite{introfp} by being easier to apply and generalize: unlike the
-take lemma, it can be applied to equalities of any polynomial
-data type \cite{genapprox}. The definitions of \hs{take} and
-\hs{approx}: % for lists can be viewed in figure \ref{fig:takeapprox}.
+take lemma, it can be applied to equalities of any polynomial data
+type \cite{genapprox}. The definitions of \hs{take} and \hs{approx}
+can be seen in Figure \ref{code:takeapprox}.
 
-%% This is weird!
-
-%\floatstyle{ruled}
-%\newfloat{program}{thp}{lop}
-%\floatname{program}{Program}
-
-\note{how to put/float source code side by side?}
-%\begin{program}
-\begin{verbatim}
-take :: Nat -> [a] -> [a]             approx :: Nat -> [a] -> [a]
-take Zero    _      = []              approx (Suc n) []     = []
-take (Suc n) []     = []              approx (Suc n) (x:xs) = x : approx n xs
+%\note{write this as Haskell code? \newline (those \hs{Nat} are actually $\mathbb{N}$)}
+\begin{figure}[h!]
+\centering
+\begin{minipage}[b]{6.2cm}
+\begin{code}
+take :: Nat -> [a] -> [a]
+take Zero    _      = []
+take (Suc n) []     = []
 take (Suc n) (x:xs) = x : take n xs
-\end{verbatim}
-%\caption{Definition of \hs{take} and \hs{approx} on lists, with Peano-\hs{Nat}s.}
-%\label{fig:takeapprox}
-%\end{program}
-\note{write this as Haskell code? (those \hs{Nat} are actually $\mathbb{N}$)}
+\end{code}
+\end{minipage}
+\hspace{10pt}
+\begin{minipage}[b]{6.7cm}
+\begin{code}
+approx :: Nat -> [a] -> [a]
+approx (Suc n) []     = []
+approx (Suc n) (x:xs) = x : approx n xs
+\end{code}
+\end{minipage}
+\caption{Definition of \texttt{take} and \texttt{approx}
+\label{code:takeapprox}
+}
+\end{figure}
 
 Whereas \hs{take} approximates a list and ends it with \hs{[]},
 \hs{approx} ends it with $\bot$ since the \hs{Zero} case is
@@ -45,15 +50,15 @@ coincides for all natural numbers. The approximation lemma is given thusly
 xs \, = \, ys \quad \Leftrightarrow \quad \fa{n \in \mathbb{N}} \hs{approx} \, n \, xs = \hs{approx} \, n \, ys
 \end{equation}
 
-Equation \ref{eq:approxeq} quantifies over the \emph{true} natural
-numbers, rather than the \emph{polluted} Haskell naturals. Showing an
+Equation \ref{eq:approxeq} quantifies over the real natural numbers
+(i.e. total and finite), rather than the Haskell naturals. Showing an
 equality then amounts to a proof by induction over natural numbers,
 and the base case for $0$ is always true by reflexivity, as the
-approximation is $\bot$.
-The right to left implication is (trivially) true by substitution, and
-the other direction hinges on the lemma that better and better
-approximations form a chain with limit \hs{id}, as illustrated in
-Equation \ref{eq:approxchain}.
+approximation of the two lists is $\bot = \bot$. The right to left
+implication is (trivially) true by substitution, and the other
+direction hinges on the lemma that better and better approximations
+form a chain with limit \hs{id}, as illustrated in Equation
+\ref{eq:approxchain} below.
 
 \begin{equation}
 \label{eq:approxchain}
@@ -72,21 +77,21 @@ Equation \ref{eq:approxchain}.
 \hs{id}
 \end{equation}
 
-The inclusions in \ref{eq:approxchain} are easily given by induction
-on natural numbers and the limit by structural induction on lists.
-For other polynomial data types, this lemma is established by
-the structural induction induced on that data type.
-The desired implication is then readily deduced:
+The inclusions in Equation \ref{eq:approxchain} are easily given by
+induction on natural numbers and the limit by structural induction on
+lists.  For other polynomial data types, this lemma is established by
+the structural induction induced on that data type.  The desired
+implication is then readily deduced:
 
 \begin{align*}
 \xsys{\fa{n} \hs{approx} \, n}{}            \\
 \descra{limits}                             \\
 \xsys{\lub{n} \, (\hs{approx} \, n}{)}      \\
-\desclra{continuity \, of \, application}   \\
+\desclra{continuity of application}   \\
 \xsys{\lub{n} \, (\hs{approx} \, n)}{}      \\
-\desclra{Equation \, \ref{eq:approxchain}} \\
+\desclra{Equation \ref{eq:approxchain}} \\
 \xsys{\hs{id}}{}                            \\
-\desclra{definition \, of \, \hs{id}}       \\
+\desclra{definition of \hs{id}}       \\
 \xsys{}{}                                   \\
 \end{align*}
 
@@ -95,7 +100,7 @@ The desired implication is then readily deduced:
 Consider these definitions of a modest but prototypical expression
 data type, and its mirroring function:
 
-\begin{verbatim}
+\begin{code}
 data Expr = Add Expr Expr | Value Nat
 
 mirror :: Expr -> Expr
@@ -104,31 +109,30 @@ mirror (Value n)   = Value n
 
 prop_mirror_involutive :: Expr -> Prop Expr
 prop_mirror_involutive e = e =:= mirror (mirror e)
-\end{verbatim}
+\end{code}
 
-Two things to notice here is that the type \hs{Expr} does not have a
-nullary constructor. Then the \hs{take} lemma would not be usable as
-there is no such function over these expressions: the list version
-returns the empty list \hs{[]} for the zero case, but there is no such
-alternative for \hs{Expr} above. It is important that the limit of
-approximations is the identity, and we cannot get this property when
-trying to generalise the take lemma.
+The type \hs{Expr} does not have a nullary constructor. Then the
+\hs{take} lemma would not be usable as there is no such function over
+these expressions: the list version returns the empty list \hs{[]} for
+the zero case, but there is no such alternative for \hs{Expr}
+above. It is important that the limit of approximations is the
+identity, and we cannot get this property when trying to generalise
+the take lemma.
 
 Furthermore, fixed point induction fails on this property: choosing
 either or both occurrences of \hs{mirror} on the right side is
 constant bottom for the base case, and the left side is the identity.
-
 
 We shall now proceed to prove that \hs{mirror} is involutive by the
 approximation lemma. The approximation function for \hs{Expr} is
 automatically generated, by approximating each self-recursive
 constructor, and hence \hs{Value}'s \hs{Nat} is not further approximated:
 
-\begin{verbatim}
+\begin{code}
 approx :: Nat -> Expr -> Expr
 approx (Suc n) (Add e1 e2) = Add (approx n e1) (approx n e2)
 approx (Suc n) (Value n)   = Value n
-\end{verbatim}
+\end{code}
 
 \note{Use $\bot$ or bottom in this text?}
 Indeed, we also get a third case for $\bot$ which states that the
@@ -137,10 +141,11 @@ As always in proofs by approximation lemma, we proceed by induction
 over natural numbers, and the base case is always trivial: true by
 reflexivity as both sides are $\bot$. The step case - which indeed is
 the only proof obligation in any proof of this kind - is to prove
+
 this:
 
 \begin{equation*}
-\fa{e}  approx \, (\hs{Suc} \, n) \, e = approx \, (\hs{Suc} \, n) \, (mirror \, (mirror \, e))
+\fa{e}  \hs{approx} \, (\hs{Suc} \, n) \, e = \hs{approx} \, (\hs{Suc} \, n) \, (\hs{mirror} \, (\hs{mirror} \, e))
 \end{equation*}
 
 An important property of the induction hypothesis is the universal
@@ -148,28 +153,28 @@ quantification of the expression $e$, unlike the fixed natural number
 $n$:
 
 \begin{equation*}
-\fa{e}  approx \, n \, e = approx \, n \, (mirror \, (mirror \, e))
+\fa{e}  \hs{approx} \, n \, e = \hs{approx} \, n \, (\hs{mirror} \, (\hs{mirror} \, e))
 \end{equation*}
 
 The proof is by case exhaustion. The case for \hs{Value} and $\bot$
 are trivial: \hs{mirror} is strict in its first argument, and
 mirroring \hs{Value} twice is the identity, so these cases are both
 true by reflexivity. The \hs{Add} case is ever so slightly more
-elaborate, and with names shortened to \hs{app} and \hs{mir} the
+elaborate, and with names shortened to $\hs{app}$ and $\hs{mir}$ the
 reasoning is as follows:
 
 \note{$(\hs{Suc} \, n)$ or $(n + 1)$?}
-\newcommand{\Adds}[2]{\hs{Add} \, #1 e_1 #2 \, #1 e_2 #2}
+\newcommand{\Adds}[2]{\hs{add} \, #1 e_1 #2 \, #1 e_2 #2}
 \newcommand{\Approxn}[0]{\hs{app} \, n \,}
 \newcommand{\ApproxSucn}[0]{\hs{app} \, (\hs{Suc} \, n) \,}
 \newcommand{\mirmir}[0]{\hs{mir} \, (\hs{mir} \, }
 \begin{align*}
 \faa{e_1}{e_2}&  \ApproxSucn (\Adds{}{})  = \ApproxSucn (\mirmir \Adds{}{} ))                                                                   \\
-                                                                                 \desclra{\defof{\hs{mirror}}}                                   \\
+                                                                                 \desclra{\defof{\texttt{mirror}}}                                   \\
 \faa{e_1}{e_2}&  \ApproxSucn (\Adds{}{})  = \ApproxSucn (\Adds{(\mirmir}{))})                                                                    \\
-                                                                                \desclra{\defof{\hs{approx}}}                                    \\
+                                                                                \desclra{\defof{\texttt{approx}}}                                    \\
 \faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn(\mirmir}{)))}                                                                        \\
-                                                                                \desclra{induction \, hypothesis \, twice \, (e_1 \, and \, e_2)} \\
+                                                                                \desclra{induction hypothesis twice ($e_1$ and $e_2$)} \\
 \faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn}{)}                                                                                  \\
                                                                                 \desca{reflexivity}                                              \\
 \end{align*}
@@ -180,16 +185,35 @@ This technique is already simple and widely applicable, however it can
 further be simplified. Implementing it in this form relies on the
 auxiliary structure of Peano natural numbers which also needs to be
 added to the theory. This can be removed by the observation that is
-\note{What is a better name for these functions than \hs{id}?}
-expressed as fixed point induction over a recursive form of \hs{id}.
+expressed as fixed point induction over a recursive form of the
+identity function, called \hs{ind} for its close resemblance of
+induction. For lists and the \hs{Expr} data type, \hs{ind} can be seen
+in Figure \ref{code:ind}.
 
-\begin{verbatim}
-id :: [a] -> [a]              id :: Expr -> Expr
-id []     = []                id (Add e1 e2) = Add (id e1) (id e2)
-id (x:xs) = x : id xs         id (Value n)   = Value n
-\end{verbatim}
+\begin{figure}[h!]
+\centering
+\begin{minipage}[b]{5cm}
+\begin{code}[mathescape]
+ind$_{\texttt{[a]}}$ :: [a] -> [a]
+ind$_{\texttt{[a]}}$ [] = []
+ind$_{\texttt{[a]}}$ (x:xs) = x:ind$_{\texttt{[a]}}$ xs
+\end{code}
+\end{minipage}
+\hspace{10pt}
+\begin{minipage}[b]{8.3cm}
+\begin{code}[mathescape]
+ind$_{\texttt{Expr}}$ :: Expr -> Expr
+ind$_{\texttt{Expr}}$ (Value n) = Value n
+ind$_{\texttt{Expr}}$ (Add e1 e2) = Add (ind$_{\texttt{Expr}}$ e1) (ind$_{\texttt{Expr}}$ e2)
+\end{code}
+\label{code:approx}
+\end{minipage}
+\caption{Definition of \texttt{ind} for lists and \texttt{Expr}
+\label{code:ind}
+}
+\end{figure}
 
-Each \hs{id} function constructed in this way is indeed an identity
+Each \hs{ind} function constructed in this way is indeed an identity
 function, equivalent to the implementation \hs{id x = x} if we
 disregard time and space complexity. Now, to prove
 
@@ -200,18 +224,18 @@ e_1 \, = \, e_2
 we simply use fixed point induction to prove
 
 \begin{equation*}
-\hs{id} \, e_1 \, = \, \hs{id} \, e_2
+\hs{ind} \, e_1 \, = \, \hs{ind} \, e_2
 \end{equation*}
 
-where \hs{id} is a such a specialized recursive identity function over
+where \hs{ind} is a such a specialized recursive identity function over
 the data type of the equality. With the same translation of recursive
-functions as in the fixed point section, the axioms for \hs{id} for, say
+functions as in the fixed point section, the axioms for \hs{ind} for, say
 lists becomes:
 
 \begin{align*}
-            \tofix{id}(\hs{[]})   & \eq \, \hs{[]}                                                           \\
-\faa{x}{xs} \tofix{id}(x\hs{:}xs) & \eq x\hs{:}\unfix{id}(xs)                                                \\
-\fa{xs}     \tofix{id}(xs)        & \eq \bot  \leftarrow    xs \neq [] \wedge xs \neq head(xs)\hs{:}tail(xs) \\
+            & \tofix{id}(\fn{[]})   \eq \, \fn{[]}                                                           \\
+\faa{x}{xs} & \tofix{id}(x\fn{:}xs) \eq x\fn{:}\unfix{id}(xs)                                                \\
+\fa{xs}     & \tofix{id}(xs)        \eq \bot \leftarrow xs \neq \fn{[]} \wedge xs \neq (\fn{:_0})(xs)\hs{:}(\fn{:_1})(xs) \\
 \end{align*}
 
 The step case in induction $P(\unfix{id}) \rightarrow P(\tofix{id})$
@@ -229,25 +253,30 @@ natural numbers. We get this simple rule for approximation lemma:
      }
 \end{mathpar}
 
+Just as fix point induction was introduced to reason about chains
+without explicitly relying on natural numbers, this follows the same
+pattern. This version of the approximation lemma does not rely on natural
+numbers.
 
-\subsection{Implementation} The implementation of approximation lemma
-was the simplest to implement, after definitional equality. First,
-from the type signature from the property, such a recursive identity
-function as above is generated for the data type of the equality. Then
-the lemma $P(\unfix{id})$ is added to the theory, with $P$
-instantiated to the universally quantified equality, and the
-conjecture is $P(\tofix{id})$. The base case need not be proven,
-$P(\bot)$ is always true since it evaluates to $\bot=\bot$.
-\note{Compare this to skolemization for induction? Can $\tofix{id}$ be
-  viewed as a kind of skolemization?}
+
+%\subsection{Implementation} The implementation of approximation lemma
+%was the simplest to implement, after definitional equality. First,
+%from the type signature from the property, such a recursive identity
+%function as above is generated for the data type of the equality. Then
+%the lemma $P(\unfix{id})$ is added to the theory, with $P$
+%instantiated to the universally quantified equality, and the
+%conjecture is $P(\tofix{id})$. The base case need not be proven,
+%$P(\bot)$ is always true since it evaluates to $\bot=\bot$.
+%\note{Compare this to skolemization for induction? Can $\tofix{id}$ be
+%  viewed as a kind of skolemization?}
 
 \subsection{Future Work: Total Approximation Lemma}
 
-It is also possible to adjust the approximation lemma to prove
-properties that are true for total and potentially infinite objects,
-but false for objects with partial values. One such property is the
-idempotence of \hs{nub}. Here is a version of \hs{nub} on booleans,
-and the said property about it:
+It would be nice to adjust the approximation lemma to prove properties
+that are true for total and potentially infinite objects, but false
+for objects with partial values. One such property is the idempotence
+of \hs{nub}. Here is a version of \hs{nub} on booleans, and the said
+property about it:
 
 \begin{verbatim}
 nub :: [Bool] -> [Bool]
@@ -269,8 +298,6 @@ The way to enable the approximation lemma to prove such properties is
 to add predicates of totality, and add axioms like the following to
 the theory:
 
-\note{How to make $Total$ look like one word? The kerning for $T$ in
-  $Total$ looks incorrect}
 \begin{align*}
             & \neg \, Total(\bot) \\
             & Total(\hs{[]}) \\
@@ -278,53 +305,15 @@ the theory:
 \fa{xs}     & Total(xs) \rightarrow Total(\hs{nub} \, xs) \\
 \end{align*}
 
-To use fixed point induction \hs{Total} needs to be an admissible
-predicate. But this is indeed so, for each model with infinite lists,
-we have that all such lists are total.  However, that a total argument
-to \hs{nub} yields a total value also needs to be proven. Furthermore,
-the totality property for the cons case of lists is debatable: should
-the consed element also be total? In this case it must be, but it is
-not generally so.
-\note{Change to an example that highlights this?
-\hs{
-dumb (x:y:ys) = x:y:dumb ys
-dumb xs       = xs
-}
-Not idempotent
-}
+Though \hs{Total} is an admissible predicate, we want to use it as an
+implication, to use fixed point induction on \hs{ind} to prove
+something like this:
 
-The proof obligation is then:
+\begin{equation*}
+\fa{xs} Total(xs)\rightarrow \hs{ind} \w (\hs{f} \w xs) = \hs{ind} \w (\hs{g} \w xs)
+\end{equation*}
 
-\begin{mathpar}
-  \inferrule*
-     {
-        \fa{xs} Total(xs) \Rightarrow \unfix{id}(\hs{nub} (\hs{nub} \, xs)) = \unfix{id}(\hs{nub} \, xs)
-     }
-     {
-        \fa{xs} Total(xs) \Rightarrow \tofix{id}(\hs{nub} (\hs{nub} \, xs)) = \tofix{id}(\hs{nub} \, xs)
-     }
-\end{mathpar}
+\noindent
+However, this is not admissible. We are searching for another
+formulation that is.
 
-It seems like you have to add
-$Total(x) \rightarrow Total(\tofix{id}(x))$ and
-$Total(x) \rightarrow Total(\unfix{id}(x))$ to the theory, too.
-
-\subsection{Uncategorized / old}
-
-After fixed point induction since it is an easy consequence of fixed
-point induction, and how we removed the auxiliary structure of natural
-numbers. This makes it equivalent to fixed point induction of id on
-both sides (or does it?)
-
-Approximation lemma is a generalization of the take lemma, and its
-first form is used for properties about infinite and partial lists,
-but it is easily generalized to other recursive data types.
-In particular, all polynomial data types — for example, any
-sum-of-products data type — can be defined in this way.
-This result generalizes
-to mutually recursive, parameterised, exponential and nested datatypes, but
-for simplicity we only consider polynomial datatypes in this article.
-\cite{genapprox}
-
-How to use approximation lemma on exponential, mutually recursive and
-nested data types? This would be nice.
