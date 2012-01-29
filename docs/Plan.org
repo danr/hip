@@ -1,71 +1,66 @@
 #+TITLE:     Time Plan
+#+FILETAGS:  thesis
 #+AUTHOR:    Dan Rosén
 #+EMAIL:     danr@student.gu.se
 #+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
 #+LATEX_HEADER: \usepackage{fullpage,listings,courier}
 
+
 \lstdefinestyle{numbers}{numberstyle=\tiny}
 \lstset{basicstyle=\ttfamily}
 \lstset{showstringspaces=false}
 \lstloadlanguages{haskell,tptp}
 
-* Github repo
+* Deprecated planning
+** Github repo
 [[http://github.com/danr/autospec/][Link to the github repository.]]
-
-* Week 44 (31 Oct - 6 Nov)
-** DONE Write project proposal
-** DONE Hand in project proposal
+** Week 44 (31 Oct - 6 Nov)
+*** DONE Write project proposal
+*** DONE Hand in project proposal
 CLOSED: [2011-11-04 Fri 11:45] SCHEDULED: <2011-11-01 Tue>
 
-*** DONE Mail Graham
+**** DONE Mail Graham
 CLOSED: [2011-11-02 Wed 08:50]
-** DONE Write time plan
+*** DONE Write time plan
 CLOSED: [2011-11-01 Tue 17:17] SCHEDULED: <2011-11-01 Tue>
 
-** DONE Mail Koen
+*** DONE Mail Koen
 CLOSED: [2011-11-01 Tue 17:00]
 SCHEDULED: <2011-11-01 Tue>
 About time plan, merge-sort implementation, approx lemma and
 typeclasses.
 
-** TODO Write more examples
-SCHEDULED: <2011-11-02 Wed>
-*** DONE Add merge sort
-CLOSED: [2011-11-02 Wed 10:22]
-*** TODO Feldspar examples
-*** TODO Case-Analysis from Moa's project
-[[http://dream.inf.ed.ac.uk/projects/lemmadiscovery/case_results.php][Case-Analysis Results]]
-**** TODO Translate to Haskell
-**** TODO Translate Theorems to Haskell
-** TODO Comparison with Zeno
 *** DONE Write how Zeno compares to this project
 CLOSED: [2011-11-02 Wed 10:42]
-*** TODO How does Zeno handle typeclasses?
-SCHEDULED: <2011-11-02 Wed>
-
-** TODO Haskell $\rightarrow$ Core
+*** DONE Haskell $\rightarrow$ Core
+CLOSED: [2012-01-29 Sun 00:30]
+- State "DONE"       from "TODO"       [2012-01-29 Sun 00:30]
 The translation should cover most of the examples
 SCHEDULED: <2011-11-05 Sat>
-*** DONE Lambdas
+**** DONE Lambdas
 CLOSED: [2011-11-05 Sat 14:04]
-**** TODO More tests needed
-*** DONE Sections
+***** TODO More tests needed
+**** DONE Sections
 CLOSED: [2011-11-05 Sat 15:41]
-*** DONE Add all functions in scope for mutually recursive let/where
+**** DONE Add all functions in scope for mutually recursive let/where
 CLOSED: [2011-11-05 Sat 15:21]
-*** TODO Output declarations together with its definitions
-Accompany a function with its produced floated definitions
-*** DONE Support for pattern matching on lists
+**** DONE Support for pattern matching on lists
 CLOSED: [2011-11-05 Sat 12:45]
-*** DONE Don't recalculate FV for binds
+**** DONE Don't recalculate FV for binds
 CLOSED: [2011-11-05 Sat 15:21]
 Currently, when something needs to be floated uses a where-clause, the
 FV looks inside the definition of the where's definition. This could
 be stored to avoid recalulation and to avoid termination issues.
-*** TODO Tidy up code and comment
-*** TODO Generate code and test
-*** TODO Pattern binds
+**** SOMEDAY Future Haskell to FOL translation plans:
+Just a reminder what is not currently subject for translation
+***** List comprehensions
+***** Do notation
+***** Let in guards
+***** Typeclasses
+***** Records
+***** As-patterns, and
+***** Pattern binds
 #+BEGIN_SRC haskell
 (x,y) = e
 #+END_SRC
@@ -76,27 +71,25 @@ x = case e' x y of (x,y) -> x
 y = case e' x y of (x,y) -> y
 #+END_SRC
 In a let/where stmt there can of course be more free variables in e.
-*** Future plans:
-Just a reminder what is not currently subject for translation
-**** List comprehensions
-**** Do notation
-**** Let in guards
-**** Typeclasses
-**** Records
-**** As-patterns, and
-** TODO Read about different proving techniques
+***** Tidy up code and comment
+***** Output declarations together with its definitions
+Accompany a function with its produced floated definitions
+*** DONE Read about different proving techniques
+CLOSED: [2012-01-29 Sun 00:30]
+- State "DONE"       from "TODO"       [2012-01-29 Sun 00:30]
 
-* Week 45 (7 Nov - 13 Nov)
-** DONE Meeting with Koen
+** Week 45 (7 Nov - 13 Nov)
+*** DONE Meeting with Koen
 CLOSED: [2011-11-07 Mon 14:50]
 Discuss different proving techniques
 
 Present Haskell $\rightarrow$ Core translation
 SCHEDULED: <2011-11-07 Mon>
-** TODO Write report about translation to FOL
-SCHEDULED: <2011-11-08 Tue>
-** TODO Implement proving techniques
-*** First steps:
+*** Write report about translation to FOL
+*** DONE Implement proving techniques
+CLOSED: [2012-01-29 Sun 00:33]
+- State "DONE"       from "TODO"       [2012-01-29 Sun 00:33]
+**** First steps:
 Total and finite input
 
 Later versions can use QuickCheck to see if it holds for partial
@@ -105,20 +98,22 @@ given information and prove with finite, infinite, partial and total.
 
 Implement simple proof techniques: approximation lemma, structural
 induction, fixpoint induction and [[http://www-formal.stanford.edu/jmc/basis1/node11.html][recursion induction]]
-SCHEDULED: <2011-11-11 Fri>
 
-*** Remove unnecessary definitions when proving
+
+**** Remove unnecessary definitions when proving
 Eprover gets totally lost when you have unnecessary axioms in scope.
 These needs to be disabled somehow. Probably not predicates, easy to
 get inconsistencies with a definition being activated and decativated.
 But for each thing you want to prove, one will need to know every
 function and datatype it depends on.
-**** TODO Disable generation of unneccessary haskell-builtin datatypes
+***** DONE Disable generation of unneccessary haskell-builtin datatypes
+CLOSED: [2012-01-29 Sun 00:33]
+- State "DONE"       from "TODO"       [2012-01-29 Sun 00:33]
 Tuples, lists
-** DONE Cabal project file
+*** DONE Cabal project file
 CLOSED: [2011-11-08 Tue 16:59]
-* Week 46 (14 Nov - 20 Nov)
-** DONE Meeting with Koen
+** Week 46 (14 Nov - 20 Nov)
+*** DONE Meeting with Koen
 CLOSED: [2011-11-14 Mon 14:49]
 
 Induction by well-ordering
@@ -139,11 +134,11 @@ $$P(0) \wedge P(\bot) \rightarrow P(pred(a))$$
 
 Termination by well-ordering!
 
-** DONE Bug Sven until registered on course
+*** DONE Bug Sven until registered on course
 Suzanna is handling the registration, and should be done soon.
 CLOSED: [2011-11-16 Wed 08:50] SCHEDULED: <2011-11-15 Tue>
 
-** DONE Evaluate translation
+*** DONE Evaluate translation
 CLOSED: [2011-11-14 Mon 14:55]
 Do we need to add a larger part in the Haskell $\rightarrow$ Core
 translation?
@@ -151,16 +146,15 @@ translation?
 Answer : No, but types were added last week and that was
 a bit unplanned
 
-** Continued work on proving
-SCHEDULED: <2011-11-15 Tue>
+*** Continued work on proving
 
 Answer : No, but types were added last week and that was
 a bit unplanned
 
-** DONE Update examples with the new
-** DONE Proving Work
-*** DONE Solve induction by depth problem
-*** DONE Add approximation lemma
+*** DONE Update examples with the new
+*** DONE Proving Work
+**** DONE Solve induction by depth problem
+**** DONE Add approximation lemma
 Either use this using typeclasses or simply add
 approxType :: Nat -> Type a -> Type a
 to the code
@@ -176,30 +170,30 @@ prop_map_iterate f x = prove (map f (iterate f x) :=: iterate f (f x))
 where type Approx a = a or some equivalent. Maybe it isn't necessary
 to add: no types are concrete so you only option is to use
 approximation lemma.
-*** DONE Make an own timeout and able user to specify timeout
-*** DONE Run proofs in different threads
+**** DONE Make an own timeout and able user to specify timeout
+**** DONE Run proofs in different threads
 Still some work to do here: this only sparks thread for a single
 proof technique (approx lemma
 
-* Week 47 (21 Nov - 27 Nov)
-** DONE Prepare meeting with Koen
+** Week 47 (21 Nov - 27 Nov)
+*** DONE Prepare meeting with Koen
 CLOSED: [2011-11-21 Mon 15:16]
-*** Last week's work:
-**** Depth machine on natural numbers
-**** Examples were updated
-**** Proofs in different threads
-**** Updated argument handling
-**** Remove unnecessary definitions when proving
-**** Approximation lemma
-*** Questions:
-**** How to do induction on several variables easy
-**** How to do induction on more advanced datatypes than Nat in more than one depth
-**** How to handle fixpoint induction easily
-**** Where can I get more examples from?
-**** I need to work on other things this week (NWERC (wee!), Domain Theory)
-**** Still haven't done any report... Take a minor break from coding and do mainly reporting this week?
-** DONE Meeting with Koen
-*** Approximation lemma solution
+**** Last week's work:
+***** Depth machine on natural numbers
+***** Examples were updated
+***** Proofs in different threads
+***** Updated argument handling
+***** Remove unnecessary definitions when proving
+***** Approximation lemma
+**** Questions:
+***** How to do induction on several variables easy
+***** How to do induction on more advanced datatypes than Nat in more than one depth
+***** How to handle fixpoint induction easily
+***** Where can I get more examples from?
+***** I need to work on other things this week (NWERC (wee!), Domain Theory)
+***** Still haven't done any report... Take a minor break from coding and do mainly reporting this week?
+*** DONE Meeting with Koen
+**** Approximation lemma solution
 Don't introduce a new pointer name, rather introduce a new function
 with arity 1. Approximation lemma for lists then becomes:
 
@@ -213,7 +207,7 @@ Step: conjecture , approx lhs = approx rhs
 
 Futhermore, it is possible to inline the whole definition of approx
 instead of treating this as a function.
-*** Negated induction nat machine
+**** Negated induction nat machine
 #+BEGIN_SRC tptp
 ~P(a)
 a = zero | P(pred(a))
@@ -233,7 +227,7 @@ Q(zero,a)
 (I think I remember correctly)
 However, this is pretty difficult to generalize to datatypes with
 
-*** Fixpoint induction solution
+**** Fixpoint induction solution
 plus (S n) m = S (plus n m)
 
 then rewrite plus with a newly created plus' with arity 2 like this:
@@ -243,17 +237,17 @@ plus (S n) m = S (plus' n m)
 Then in order to prove some P which uses plus:
 
 P(bottom) & (P(plus') => P(plus))
-*** More examples needed
-**** More interesting recursion
-**** Using the nice pattern-matching compiler
-**** Weird datatypes
+**** More examples needed
+***** More interesting recursion
+***** Using the nice pattern-matching compiler
+***** Weird datatypes
 Like the domain for lambda calculus:
 
 #+BEGIN_SRC haskell
 data D = Fun (D -> D) | Bottom
 compile :: Expr -> D
 #+END_SRC
-*** Lexicographic induction
+**** Lexicographic induction
 $(x,y) \le (x',y')$ iff $x \le x' \vee (x = x' & y \le y')$
 
 This does not give a normal "induction matrix", but these proof
@@ -266,7 +260,7 @@ P(zero)
 #+END_SRC
 
 Um, is this right? I'm a bit confused now.
-*** Symmetric induction for commutativity
+**** Symmetric induction for commutativity
 #+BEGIN_SRC tptp
 P(zero,zero)
 P(m,zero) => P(suc(m),zero)
@@ -286,7 +280,7 @@ axioms: P(a,c)
         P(b,c*d)
 negated_conjecture: ~ P(a*b,c*d)
 #+END_SRC
-*** Recursion induction (Plotkin)
+**** Recursion induction (Plotkin)
 To prove x + y = y + x try to prove it with +~ defined as
 
 +~ = flip +
@@ -299,27 +293,27 @@ suc x +~ y = suc (x +~ y), ie, y + suc x = suc (y + x),
 
 which is exactly the movesuc lemma. And if these two are proved (by
 induction) we get by Recursion Induction that x + y = y + x. Nice!
-*** Try vampire prover
+**** Try vampire prover
 Koen also talked about the author of Prover9 and the memory ceremony
 for him and his work on Otter.
-*** Agda in the report
+**** Agda in the report
 It is nice to say that Agda was used to verify that some things were
 provable before implementing proof techniques. Like the proof for plus
 commmutativity without lemma.
-*** Make and remove user specifications of tecniques
+**** Make and remove user specifications of tecniques
 Figure out a way for the user to specify which proving techniques she
 would like to use. But these should always be optional and if none are
 supplied, all applicable techniques should be tried.
-*** Stats of which proof techniques could solve which problems
-*** Work on NWERC problems!
-** Proving work
-*** DONE Make threading work correctly
+**** Stats of which proof techniques could solve which problems
+**** Work on NWERC problems!
+*** Proving work
+**** DONE Make threading work correctly
 CLOSED: [2011-12-02 Fri 17:00]
-*** DONE Smarter handling if bottom cannot be proved
+**** DONE Smarter handling if bottom cannot be proved
 CLOSED: [2011-12-02 Fri 17:00]
 Simple induction can answer if it was able to prove the bottom case or
 not.
-*** TODO Tell the prover how long time it will have.
+**** TODO Tell the prover how long time it will have.
 Koen said that this is important for vampire, does eprover have the
 same functionality?
 
@@ -327,11 +321,11 @@ Eprover has --cpu-limit and --soft-cpu-limit that with arguments
 in seconds. Cpu-limit only terminates the program, and soft cpu limit
 prints out unprocesses clauses. This could or could not give a hint
 on where the prover got stuck.
-*** TODO Simple induction on several variables
+**** TODO Simple induction on several variables
 Combine this with the auto-depth problem. This would be nice
-*** DONE Approximation lemma with "skolem functions"
+**** DONE Approximation lemma with "skolem functions"
 CLOSED: [2011-11-21 Mon 15:50]
-*** DONE Fixpoint induction
+**** DONE Fixpoint induction
 CLOSED: [2011-11-22 Tue 17:20]
 To prove P(f) = ! [xs] : lhs(f) = rhs(f):
 
@@ -348,26 +342,26 @@ f xs = chi(f',xs)  where f' is fresh and same arity as f.
 Then all you need to show is P(f') => P(f).
 
 Machinery needed:
-**** Make bottom_n
-**** Instantiate P with a function
-**** Make f xs = chi(f',xs) from f xs
-**** Find all called functions from lhs and rhs to find fixpoint candidates
-**** Check if a function is recursive in itself
+***** Make bottom_n
+***** Instantiate P with a function
+***** Make f xs = chi(f',xs) from f xs
+***** Find all called functions from lhs and rhs to find fixpoint candidates
+***** Check if a function is recursive in itself
 (otherwise fixpoint induction typically won't work)
-*** TODO Add lemmas from previous proofs
+**** TODO Add lemmas from previous proofs
 For instance *-assoc for nat needs +-assoc for nat. Only
 add lemmas if they hold for bottom? Should the user specify
 which lemmas it needs to include?
-*** TODO Recursive structure of function -> induction principle
+**** TODO Recursive structure of function -> induction principle
 A hard problem! Could also be used to show that functions terminate
-** Report proving techniques
-** Report related work
-* Week 48 (28 Nov - 4 Dec)
-** DONE Statistics
+*** Report proving techniques
+*** Report related work
+** Week 48 (28 Nov - 4 Dec)
+*** DONE Statistics
 CLOSED: [2011-12-05 Mon 11:30]
 On how many problems were proved, and which techniques succeeded.
 
-** DONE Properties with pointers
+*** DONE Properties with pointers
 CLOSED: [2011-12-03 Sat 17:00]
 If you want to show
 #+BEGIN_SRC haskell
@@ -408,9 +402,9 @@ fof(exteq,axiom,! [F,G]: ( (! [X] : (app(F,X) = app(G,X))) => F = G)).
 #+END_SRC
 Probably :)
 
-* Week 49 (5 Dec - 11 Dec)
-** Meeting with Koen
-*** Recursion-induction
+** Week 49 (5 Dec - 11 Dec)
+*** Meeting with Koen
+**** Recursion-induction
 if f is defined as F(f'), and g=G(g'), then if we prove that
 g=F(g'), then we know that F(f') <= F(g'). If both g and and f
 terminate, then <= is an equivalence. So this only works for
@@ -421,7 +415,7 @@ terminate. We could have that a function terminates for all finite
 input, as then map terminates, but also take n terminates for all
 finite n, regardless of size of the input list. So it is not
 completely obvious what it means to be a terminating Haskell function.
-*** Induction over (f : A -> B) -> P f
+**** Induction over (f : A -> B) -> P f
 Let's say we want to prove $P(f)$ where
 $f : \mathbb{N} \rightarrow \mathbb{N}$.
 
@@ -439,7 +433,7 @@ P(\x -> 0)
 P(f) => P(\x.if x == a then S (f x) else f x)
 #+END_SRC
 i.e we raise it at one exclusive point.
-*** Extensional equality and seq
+**** Extensional equality and seq
 With seq it is possible to distinguish these two functions:
 #+BEGIN_SRC haskell
 f = bottom
@@ -455,7 +449,7 @@ equality and Prop (a -> b) ~= a -> Prop b if restrict ourselves to
 Haskell without seq. Alternatively, this could be done with a flag,
 --enable-seq, that prevenst Prop (a -> b) => a -> Prop b and
 extensional equality.
-*** Irrefutable patterns
+**** Irrefutable patterns
 #+BEGIN_SRC haskell
 fst (x,y) = x
 snd (x,y) = y
@@ -465,18 +459,18 @@ uncurry3 f ~(x,y) = f x y
 #+END_SRC
 Here, uncurry1 and uncurry3 are equal, but uncurry2 is too strict.
 
-** DONE Make Prop testable.
+*** DONE Make Prop testable.
 CLOSED: [2011-12-05 Mon 15:45]
 Also put this in some AutoPrelude. Then we can remove prove,
 and just make =:= be the function.
-** DONE Add disproving
+*** DONE Add disproving
 CLOSED: [2011-12-05 Mon 15:45]
 =/= could do for that.
-** DONE Fixpoint induction on all subsets of recursive functions
+*** DONE Fixpoint induction on all subsets of recursive functions
 CLOSED: [2011-12-12 Mon 12:33]
 prove (x + y == y + x)
 
-** TODO Fixpoint induction for terminating programs
+*** SOMEDAY Fixpoint induction for terminating programs
 Koen's conjecture is if f is a termiatring program, then lfp f = gfp f
 and we have the following rule
 
@@ -495,20 +489,20 @@ notation:
 terminates = (+)
 #+END_SRC haskell
 
-** DONE Fixpoint induction on different functions
+*** DONE Fixpoint induction on different functions
 CLOSED: [2011-12-12 Mon 12:33]
 $$P(\bot,\bot) \, \wedge \, P(x,y) \rightarrow P(f x,f y)$$
 $$ \Rightarrow P(fix f,fix g)$$
 Notice that the two $\bot$ can be of different arity
 
-** DONE Induction in several variables, and in more depth
+*** DONE Induction in several variables, and in more depth
 CLOSED: [2011-12-12 Mon 12:33]
 This should also fire the definition of integers (data Z = P Nat | N Nat)
 
-** TODO Examples
-*** TODO Hinze's last papers about coinduction
+*** Examples
+**** SOMEDAY Hinze's last papers about coinduction
 A lot of interesting stuff in his papers
-*** TODO Dixon's PhD thesis
+**** SOMEDAY Dixon's PhD thesis
 Nat and Ordinals with exponentials
 
 A noticeable difference with my work and this is Dixon combines
@@ -516,10 +510,10 @@ finding lemmas (by rippling for instance) and the way to prove
 them. (Or so it seems) The advantage of our approach is that we do not
 need to worry HOW to prove something, the ATP will take care of that,
 only WHAT to prove.
-*** TODO Moa's paper "Conjecture Synthesis for Inductive Theories"
-*** DONE Examples from Critics
+**** SOMEDAY Moa's paper "Conjecture Synthesis for Inductive Theories"
+**** DONE Examples from Critics
 CLOSED: [2011-12-05 Mon 23:26]
-*** TODO Examples with postulated sorting
+**** SOMEDAY Examples with postulated sorting
 Postulate < in terms of == True.
 #+BEGIN_SRC haskell
 postulate : forall x y . x < y == True & y < z == True -> x < y == True
@@ -528,74 +522,82 @@ postulate : forall x y . x < y == True -> y < x == False
 However, Nat has a sorting... I guess we cannot prove that sort sorts
 without having lemmas for < <= etc.
 
-** Informal meeting with Koen and Moa
-*** Papers to read:
+*** DONE Informal meeting with Koen and Moa
+CLOSED: [2012-01-29 Sun 00:34]
+- State "DONE"       from "SOMEDAY"    [2012-01-29 Sun 00:34]
+**** Papers to read:
 *mumble* Monotonicity by Koen, Ann and Nick
 The other paper by Nick and Jasmin
-*** Haskell -> Isabel
+**** Haskell -> Isabel
 There is a program called Haskabel that does this. Can our translation
 output Isabel? Probably!
-*** Finite values
+**** Finite values
 To add finite lemmas there are various ways...
 forall x y . Fin(x) & Fin(y) . suc (x + y) = x + suc y
 Then we need to have another simple induction scheme
 Fin(x) & P(x) => P(suc x)
 And more invocations to the prover.
-*** Try other provers
+**** Try other provers
 Vampire, spass, eprover
-*** Computing cluster
+**** Computing cluster
 I will hopefully get access next week
-*** ML
+**** ML
 Made to implement Isabel by the module system. Implement a small logic
 core in a closed module.
-*** Induction on several variables
-**** DONE Symmetric induction
+**** Induction on several variables
+***** DONE Symmetric induction
 CLOSED: [2011-12-12 Mon 12:33]
 P(0,0)
 P(0,y) => P(0,y+)
 P(x,0) => P(x+,0)
 P(x,y) & P(x+,y) & P(x,y+) => P(x+,y+)
-**** Lexicographic
+***** Lexicographic
 P(0,0)
 P(0,y) => P(0,y+)
 (forall y . P(0,y))
 (forall y . P(x,y)) => (forall y . (P(x+,y))
-* Week 50 (12 Dec - 18 Dec)
-** DONE Meeting with Koen
+** Week 50 (12 Dec - 18 Dec)
+*** DONE Meeting with Koen
 CLOSED: <2011-12-12 Mon 15:00>
-*** Translation of implications with guard function
-*** Fast and loose reasoning
-*** Splitting Haskell's domain in two
-** Report
+**** Translation of implications with guard function
+**** Fast and loose reasoning
+**** Splitting Haskell's domain in two
+*** Report
 Write the techical part, and all desicions made is put in background
 or introduction, and everything not complete put in future work or
 discussion.
-*** Technical Part
-**** Translation to FOL
+**** Technical Part
+***** Translation to FOL
 Describe the core language (a lot design choices there), and
 compilation of case expressions in the core language.  Translation
 from Haskell to the Core language is pretty straightforward.
-**** Describe simple induction and structural induction
-**** Fixed point induction
-**** Approximation lemma
-* Week 51 (19 Dec - 25 Dec)
-** Christmas break
-SCHEDULED: <2011-12-23 Fri>
+***** Describe simple induction and structural induction
+***** Fixed point induction
+***** Approximation lemma
+** Week 51 (19 Dec - 25 Dec)
+*** DONE Christmas break
+CLOSED: [2012-01-29 Sun 00:34] SCHEDULED: <2011-12-23 Fri>
+- State "DONE"       from ""           [2012-01-29 Sun 00:34]
 
-* Week 52 (26 Dec - 1 Jan)
-** New Year's break
-SCHEDULED: <2012-01-01 Sun>
+** Week 52 (26 Dec - 1 Jan)
+*** DONE New Year's break
+CLOSED: [2012-01-29 Sun 00:34] SCHEDULED: <2012-01-01 Sun>
+- State "DONE"       from ""           [2012-01-29 Sun 00:34]
 
-* Week 1 (2 Jan - 8 Jan)
-** Write report
-SCHEDULED: <2012-01-06 Fri>
+** Week 1 (2 Jan - 8 Jan)
+*** DONE Write report
+CLOSED: [2012-01-29 Sun 00:34] SCHEDULED: <2012-01-06 Fri>
+- State "DONE"       from ""           [2012-01-29 Sun 00:34]
 
-** Finite simple induction is not complete
+*** Finite simple induction is not complete
 Some properties, like the one in PAP.hs, is indeed a finite theorem
 but simple induction cannot show this. It is not a theorem when we
 have (+ one). We really need a FIN-predicate, or some other coding.
+Is this really true?
 
-** Alarming bug with complex patterns
+*** DONE Alarming bug with complex patterns
+CLOSED: [2012-01-29 Sun 00:34]
+- State "DONE"       from ""           [2012-01-29 Sun 00:34]
 --   If there exists a match-any pattern, we need to add all branches
 --   with pattern-matched constructors as bottoms. Though, if the
 --   match-any pattern goes to bottom, nothing needs to be done.
@@ -614,7 +616,7 @@ Here we need to add (Branch Bottom _ _), but this is not currently
 done.  This needs a big overhaul and also some new QC properties which
 holds with bottom. Important, important!
 
-*** How to QC this beast
+**** How to QC this beast
 
 Make some generator (possibly Gen) that creates a function with some
 datatype, maybe the standard ones (Nat, Tree, List, Expr), and some
@@ -656,16 +658,14 @@ prop_test_0 = test (A2 B0 A0) (B2 (A1 A0) bottom) bottom =:= E1
 and see that all properties succeed in autospec, which they should
 trivially do by plain/definitional equality.
 
-** Function pointers are really smart.
+*** Function pointers are really smart.
 See the report :) And PAP.hs
 
-* Week 2 (9 Jan - 15 Jan)
-** Write report
-SCHEDULED: <2012-01-13 Fri>
-** Hacking on the lost features
-SCHEDULED: <2012-01-13 Fri>
-
-** Problems with pattern coverage
+** Week 2 (9 Jan - 15 Jan)
+*** DONE Write report
+CLOSED: [2012-01-29 Sun 00:35] SCHEDULED: <2012-01-13 Fri>
+- State "DONE"       from ""           [2012-01-29 Sun 00:35]
+*** Problems with pattern coverage
 What is the difference between these two definitions?
 
 #+BEGIN_SRC
@@ -680,49 +680,245 @@ if'' will have that everything but True and False goes to bottom,
 and if' will have that everything but True and Bottom goes to b.
 
 Is this OK?
-** Equistential quantification in cnf
-** DONE Fixed point induction
+*** DONE Equistential quantification in cnf
+CLOSED: [2012-01-29 Sun 00:38]
+- State "DONE"       from ""           [2012-01-29 Sun 00:38]
+*** DONE Fixed point induction
 CLOSED: [2012-01-16 Mon 12:35]
-*** DONE Good when you don't have anything to do induction on
+**** DONE Good when you don't have anything to do induction on
 CLOSED: [2012-01-13 Fri 13:07]
-*** DONE Examples of examples
+**** DONE Examples of examples
 CLOSED: [2012-01-13 Fri 13:07]
-**** map-iterate
-**** repeat-iterate
-**** append / plus
-**** mirror-treeIterate
-*** DONE On mutual and subset of occuring functions
+***** map-iterate
+***** repeat-iterate
+***** append / plus
+***** mirror-treeIterate
+**** DONE On mutual and subset of occuring functions
 CLOSED: [2012-01-13 Fri 13:06]
-*** DONE How it was implemented
+**** DONE How it was implemented
 CLOSED: [2012-01-13 Fri 13:06]
-*** DONE Future work: depth machines
+**** DONE Future work: depth machines
 CLOSED: [2012-01-16 Mon 12:35]
-** DONE Structural induction
+*** DONE Structural induction
 CLOSED: [2012-01-16 Mon 12:35]
-*** Compare to normal PA induction
-*** Chain complete predicates -> infinite properties
-*** Structural induction on exponential types
-*** Deeper structural induction
-*** Future work: induction machines
-** DONE Related work
+**** Compare to normal PA induction
+**** Chain complete predicates -> infinite properties
+**** Structural induction on exponential types
+**** Deeper structural induction
+**** Future work: induction machines
+*** DONE Related work
 CLOSED: [2012-01-16 Mon 12:34]
-*** DONE Coinduction work in Agda by NAD
+**** DONE Coinduction work in Agda by NAD
 CLOSED: [2012-01-16 Mon 12:35]
-** TODO Future work
-*** Properties of implication
-**** x + y = x + z -> y = x
+* Plan
+#+BEGIN: clocktable :maxlevel 5 :scope subtree
+Clock summary at [2012-01-29 Sun 16:18]
+
+| Headline                                                   | Time   |      |      |      |      |
+|------------------------------------------------------------+--------+------+------+------+------|
+| *Total time*                                               | *1:21* |      |      |      |      |
+|------------------------------------------------------------+--------+------+------+------+------|
+| Plan                                                       | 1:21   |      |      |      |      |
+| Tasks                                                      |        | 1:21 |      |      |      |
+| ONGOING Time planning                                      |        |      | 0:13 |      |      |
+| TODO Results                                               |        |      | 1:07 |      |      |
+| NEXT Patch the program to run all provers                  |        |      |      | 1:07 |      |
+| TODO SPASS                                                 |        |      |      |      | 0:31 |
+| TODO Prover9                                               |        |      |      |      | 0:19 |
+| TODO Make a program that discovers how the provers answers |        |      |      |      | 0:16 |
+#+END:
+** Refile
+** Completed
+*** DONE Good bibtex, bad bibtex
+CLOSED: [2012-01-29 Sun 00:35]
+- State "DONE"       from ""           [2012-01-29 Sun 00:35]
+*** DONE Hasse diagrams
+CLOSED: [2012-01-29 Sun 00:35]
+- State "DONE"       from ""           [2012-01-29 Sun 00:35]
+*** DONE Approximation lemma
+CLOSED: [2012-01-29 Sun 00:39]
+- State "DONE"       from "TODO"       [2012-01-29 Sun 00:39]
+Leave out the details about
+Can we really do finite approximation lemma? Is this really chain
+complete? Find a counterexample or prove its correctness. The total
+predicate is chain complete? Are there any sensible chains? Aaah!
+*** DONE Adimissibility of equality
+CLOSED: [2012-01-29 Sun 00:36]
+- State "DONE"       from ""           [2012-01-29 Sun 00:36]
+*** DONE Induction
+CLOSED: [2012-01-29 Sun 00:38]
+- State "DONE"       from ""           [2012-01-29 Sun 00:38]
+Over the number of constructors.  First start with only finite
+induction and then introduce partial induction.
+*** DONE Related work: talk with Vincent
+CLOSED: [2012-01-29 Sun 00:39]
+- State "DONE"       from ""           [2012-01-29 Sun 00:39]
+*** DONE Examples
+**** DONE Add merge sort
+CLOSED: [2011-11-02 Wed 10:22]
+** Tasks
+CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
+*** ONGOING Time planning
+CLOCK: [2012-01-29 Sun 15:06]--[2012-01-29 Sun 15:07] =>  0:01
+CLOCK: [2012-01-29 Sun 15:00]--[2012-01-29 Sun 15:06] =>  0:06
+CLOCK: [2012-01-29 Sun 14:57]--[2012-01-29 Sun 15:00] =>  0:03
+CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
+:PROPERTIES:
+:END:
+*** Report tasks                                                   :report:
+**** TODO Quantifying functions and app
+On the syntax side it gives us a way to reason about partially applied
+functions, on the model side, app gives a way to interpret functions
+and all quantify over them. If the function is in scope, it just
+constrains app on that pointer to do the same as the function.
+**** TODO Conclusions
+**** TODO Fixed point induction
+Overhaul and introduce the fancy notation earlier?
+**** TODO Write introduction
+Write this: introduce the problem and why it is interesting
+**** TODO Future work
+***** TODO Implications
+Chain complete?
+#+BEGIN_SRC haskell
+x + y = x + z -> y = x
+#+END_SRC
 needs induction on the whole property, you cannot simply the
 antecedent as a lemma
-* Week 3 (16 Jan - 22 Jan)
-** Good bibtex, bad bibtex
-** Hasse diagrams
-** Better name than autospec!
-** How does the min predicate work
-** Adimissibility of equality
-** Ardent time planning
-* Week 4 (23 Jan - 29 Jan)
-** Prepare presentation
-** Final presentation 27th!!!!!
-* Week 5 (30 Jan - 5 Feb)
-** Report done
+***** CANCELLED How does the min predicate work
+CLOSED: [2012-01-29 Sun 00:36]
+- State "CANCELLED"  from ""           [2012-01-29 Sun 00:36] \\
+****** TODO Min predicate:
+Just write in the report that it is possible
+***** TODO Lemmas and translation
+Here we can elaborate on different ways of translating, how to use
+predicates and if we should pattern match on all constructors and make
+the wild pattern always go to []. Say something about how this can be
+problematic with GADTs and other fancy type extensions.
+**** TODO Where to put the domain theory part?
+**** TODO How does Zeno handle typeclasses?
+**** TODO Related work: talk with Moa
+**** TODO Results
+***** TODO Refer to the different theorem provers
+Prover9 has a bibtex
+***** TODO SZS Status ontology paper
+**** Misc
+***** Refutation
+Refutation is a proof that ends in $false
+[[http://www.cs.miami.edu/~tptp/TPTP/TPTPTParty/2007/PositionStatements/GeoffSutcliffe_SZS.html][SZS Output Ontology]]
+*** SOMEDAY Example ideas
+**** Feldspar examples
+**** Case-Analysis from Moa's project
+[[http://dream.inf.ed.ac.uk/projects/lemmadiscovery/case_results.php][Case-Analysis Results]]
+These are exactly those imported from Zeno
+*** TODO Results
+**** TODO Prepare the test suite
+**** TODO Have a lab day to enlargen the test suite
+**** NEXT Patch the program to run all provers
+CLOCK: [2012-01-29 Sun 15:11]--[2012-01-29 Sun 15:12] =>  0:01
+***** Give some information of their relative performance
+***** How to modify the code to accept both modes?
+****** Remove the "finite success" ideas?
+This would lead to much easier collapsing
+****** How to handle proof methods that have more than one invocation?
+Flag
+***** Give a flag to give up on a proof if a certain step failed on all provers
+***** Randomize the order of doing proofs
+Maybe just add some randomization?
+***** Install all binaries
+***** TODO SPASS
+CLOCK: [2012-01-29 Sun 16:13]--[2012-01-29 Sun 16:15] =>  0:02
+CLOCK: [2012-01-29 Sun 15:12]--[2012-01-29 Sun 15:32] =>  0:20
+****** Time limit in seconds
+****** Bash invocation
+SPASS -TPTP -PGiven=0 -PProblem=0 -DocProof=0 -PStatistic=0 -TimeLimit=1
+****** Answer format
+******* CounterSatisfiable and Satisfiable
+SPASS beiseite: Completion found.
+******* Theorem and Unsatisfiable
+SPASS beiseite: Proof found.
+****** WAITING Answer format - mail
+- State "WAITING"    from ""           [2012-01-29 Sun 15:41] \\
+  Sent a mail to the SPASS team
+CLOCK: [2012-01-29 Sun 15:32]--[2012-01-29 Sun 15:41] =>  0:09
+SPASS beiseite: Proof found.
+****** Ubuntu
+Exists in ubuntu repo, but that won't help on ttitania. Needs
+binaries.
+****** stdin
+Just give -Stdin option
+****** auto
+Give -Auto option
+***** TODO Prover9
+CLOCK: [2012-01-29 Sun 16:15]--[2012-01-29 Sun 16:18] =>  0:03
+CLOCK: [2012-01-29 Sun 15:57]--[2012-01-29 Sun 15:57] =>  0:00
+CLOCK: [2012-01-29 Sun 15:41]--[2012-01-29 Sun 15:57] =>  0:16
+Go with tptp_to_ladr first, can fix it later. Must run own script
+tptp_to_ladr < $FILE | runghc Util/FixLADR.hs | timeout 1 prover9 > prover9/$BASE.out 2> err
+****** Answer format
+******* CounterSatisfiable and Satisfiable
+SEARCH FAILED
+******* Theorem and Unsatisfiable
+THEOREM PROVED
+****** Default is lots of proof output, and not with SZS
+***** TODO Equinox
+CLOCK: [2012-01-29 Sun 16:30]--[2012-01-29 Sun 16:32] =>  0:02
+***** TODO Vampire
+CLOCK: [2012-01-29 Sun 16:19]--[2012-01-29 Sun 16:30] =>  0:11
+CLOCK: [2012-01-29 Sun 16:19]--[2012-01-29 Sun 16:19] =>  0:00
+****** Answer format
+Answers with the SZS ontology directly
+% SZS status Unsatisfiable for unknown
+But fails to produce proofs for SAT and CSA
+***** TODO Waldmeister (?)
+CLOCK: [2012-01-29 Sun 16:48]--[2012-01-29 Sun 16:48] =>  0:00
+CLOCK: [2012-01-29 Sun 16:34]--[2012-01-29 Sun 16:48] =>  0:14
+CLOCK: [2012-01-29 Sun 16:32]--[2012-01-29 Sun 16:33] =>  0:01
+Writes careful proof output
+***** DONE Make a test suite that discovers how the provers answers
+CLOSED: [2012-01-29 Sun 16:29]
+- State "DONE"       from "TODO"       [2012-01-29 Sun 16:29]
+CLOCK: [2012-01-29 Sun 15:57]--[2012-01-29 Sun 16:13] =>  0:16
+**** TODO Remove =/=
+And add some oops keyword instead, and handle those separately. If it
+was able to prove something of that kind, alarm!!
+**** NEXT Install GHC on ttitania
+ttitania is 64 bit
 
+Mail from Michal:
+ttitania-1.ce.chalmers.se
+
+#+BEGIN_SRC bash
+L=/home/palka/.local_inst
+export LIBRARY_PATH=$LIBRARY_PATH:$L/lib:$L/usr/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$L/lib:$L/usr/lib
+
+#if [[ -z $1 || $1 == "--help" ]]
+#then
+#  echo "usage: $0 <testing binary> <number of terms> <number of tests>"
+#fi
+
+OLDWD=$PWD
+
+DIR=run_${JOB_ID}_$SGE_TASK_ID
+
+rm -rf $DIR
+mkdir $DIR
+
+cd $DIR
+
+time $OLDWD/$1 $2 $3 $4
+
+--
+
+qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
+10 /home/palka/packages/ghc-7.3.20111022-inst/bin/ghc
+#+END_SRC
+*** TODO Better name than autospec!
+*** TODO Test translation by generating code
+*** TODO Presentation
+**** TODO GTK2Hs frontend for proofs for presentation
+**** Ideas on live examples
+*** TODO Final presentation
+SCHEDULED: <2012-02-10 Fri>
+*** TODO Report complete
+DEADLINE: <2012-02-14 Tue>

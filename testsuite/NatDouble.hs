@@ -40,8 +40,6 @@ prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
 prop_assoc_plus x y z
   = x + (y + z) =:= (x + y) + z
 
-{-
-
 prop_assoc_mul :: Nat -> Nat -> Nat -> Prop Nat
 prop_assoc_mul x y z
   = x * (y * z) =:= (x * y) * z
@@ -139,4 +137,3 @@ main = do
   quickCheck (printTestCase "prop_le_plus_sym" prop_le_plus_sym)
   quickCheck (printTestCase "prop_minus_plus" prop_minus_plus)
   quickCheck (printTestCase "prop_lt_suc" prop_lt_suc)
--}

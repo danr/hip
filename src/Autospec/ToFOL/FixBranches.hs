@@ -128,14 +128,21 @@ instance Specificity Pattern where
 --   match-any pattern goes to bottom, nothing needs to be done.
 --   If there is no match-any pattern, just add a new one which goes to bottom.
 addBottoms :: Expr -> [Branch] -> [Branch]
-addBottoms scrut brs = case matchAnyBranch scrut brs of
-  Nothing -> brsBottomGuards ++ [NoGuard PWild :-> bottom]
+addBottoms scrut brs = concat [ (p :-> e) : [ p' :-> bottom
+                                                     | p' <- addBottom scrut' p
+                                                     ]
+                                       | (p :-> e) <- brs
+                                       ]
+                    ++ [NoGuard PWild :-> bottom]
+          {- case matchAnyBranch scrut brs of
+  Nothing -> brsBottomGuards
   Just (_ :-> l) | l == bottom -> brsBottomGuards
                  | otherwise -> concat [ (p :-> e) : [ p' :-> bottom
                                                      | p' <- addBottom scrut' p
                                                      ]
                                        | (p :-> e) <- brs
                                        ]
+-}
   where matchscrut (Con a as) = PCon a (map matchscrut as)
         matchscrut _          = PWild
 

@@ -1,0 +1,2 @@
+% This gives Satisfiable in SZS
+fof(a,axiom,p).

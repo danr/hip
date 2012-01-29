@@ -24,10 +24,10 @@ or computational induction.  \cite{domains} The least fixed point for
 a function can be found in Haskell with the function \hs{fix}, which
 can simply be defined as:
 
-\begin{verbatim}
+\begin{code}
 fix :: (a -> a) -> a
 fix f = f (fix f)
-\end{verbatim}
+\end{code}
 
 This function solves the equation $x = f \w x$, since substituting $x$
 for $\hs{fix} \w x$: the left side evaluates to $f \w (\hs{fix} \w f)$
@@ -38,10 +38,10 @@ equation.  Any self-recursive function can be rewritten in terms of
 infinite list of the same element \hs{repeat x = x : repeat}. Its
 transformation to \hs{fix}-style is this:
 
-\begin{verbatim}
+\begin{code}
 repeat x = fix r
   where r i = x : i
-\end{verbatim}
+\end{code}
 
 Computing \hs{repeat x}, we get the following unfolds:
 \begin{equation*}
@@ -95,14 +95,12 @@ of \hs{fix}, and its inference rule is this:
 \end{mathpar}
 
 \label{sec:admissible}
-Here it is important that $P$ is \emph{admissible} or
-$\omega$-\emph{inductive}, meaning that for all $\sqsubseteq$-chains
-of length $\omega$, if the property holds for all elements in the
-chain it must necessary hold for its limit.  Since we are currently
-only interested about equalities, we can relax: universally quantified
-equalities of continuous functions are examples of admissible
-predicates. Furthermore all functions we can define in Haskell are
-continuous.
+Here it is important that $P$ is \emph{admissible} , meaning that for
+all $\sqsubseteq$-chains of length $\omega$, if the property holds for
+all elements in the chain it must necessary hold for its limit, futher
+described in Section \ref{sec:admissible}, where a proof is given that
+the properties we are interested in, universally quantified equalities
+of continuous functions, are admissible predicates.
 
 An interesting property of fixed point induction is that it does not
 care about types: indeed, it works in an untyped setting. In addition,
@@ -119,7 +117,7 @@ it is of course important that $P$ is admissible. See proof below:
 
 \begin{align*}
 P(\bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
-\desclra{\mathit{f^0 \w \bot \eq \bot}} \\
+\desclra{$f^0 \w \bot \eq \bot$} \\
 P(f^0 \w \bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
 \descra{quantifying} \\
 P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
@@ -131,9 +129,8 @@ P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
 & P(\hs{fix} \w f) \\
 \end{align*}
 
-One reason to introduce fixed point induction is to avoid
-mentioning natural numbers and use $\fa{n} P(f^n \bot)$ to prove
-$\fa{n} P(\hs{fix} \w f)$.
+One reason to introduce fixed point induction is to avoid the natural
+numbers in $\fa{n} P(f^n \bot)$  to prove $P(\hs{fix} \w f)$.
 
 \subsection{Example: map-iterate}
 \label{sec:mapiter}
@@ -150,23 +147,40 @@ application of a function, i.e \hs{iterate f x} is the list
            \hs{iterate} \w f \w (f \w x)
 \end{equation*}
 
-With their standard definitions
+\noindent
+With their standard definitions given in \ref{code:mapiterate} below.
 
-\begin{verbatim}
-map :: (a -> b) -> [a] -> [b]    iterate :: (a -> a) -> a -> [a]
-map f (x:xs) = f x : map f xs    iterate f x = x : iterate f (f x)
+\begin{figure}[h!]
+\centering
+\begin{minipage}[b]{6cm}
+\begin{code}
+map :: (a -> b) -> [a] -> [b]
+map f (x:xs) = f x : map f xs
 map f [] = []
-\end{verbatim}
+\end{code}
+\end{minipage}
+\hspace{10pt}
+\begin{minipage}[b]{6cm}
+\begin{code}[mathescape]
+iterate :: (a -> a) -> a -> [a]
+iterate f x = x : iterate f (f x)
+$\newline$
+\end{code}
+\end{minipage}
+\caption{Definition of \texttt{map} and \texttt{iterate}
+\label{code:mapiterate}
+}
+\end{figure}
 
 The behavior of \hs{map} is to apply a function to every element of a
 list. We see that we cannot use structural induction here, since both
 $f$ and $x$ are abstract, but this can be proved by fixpoint induction
 on \hs{iterate}. First, we rewrite this function in terms of \hs{fix}:
 
-\begin{verbatim}
+\begin{code}
 iterate = fix iter
 iter i f x = x : i f (f x)
-\end{verbatim}
+\end{code}
 
 The predicate $P$ from fixpoint induction is $P(g) \w \Leftrightarrow
 \w \faa{f}{x} \hs{map} \w f \w (g \w f \w x) \eq g \w f \w (f \w x) $. If we
@@ -181,13 +195,13 @@ hypothesis and work towards the goal as follows:
 
 \begin{align*}
 \w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w x) & \eq \hs{i} \w f \w (f \w x) \\
-\descra{generalizing \w \mathit{x} \w to \w \mathit{f \w x}} \\
+\descra{generalizing $x$ to $f \w x$} \\
 \w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq \hs{i} \w f \w (f \w (f \w x)) \\
 \descra{substitutivity} \\
 \w \faa{f}{x} f \w x \hs{:} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
-\desclra{definition \w of \w \hs{map}} \\
+\desclra{\defof{\texttt{map}}} \\
 \w \faa{f}{x} \hs{map} \w f \w (x \hs{:} \hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
-\desclra{definition \w of \w \hs{iter}} \\
+\desclra{\defof{\texttt{iter}}} \\
 \w \faa{f}{x} \hs{map} \w f \w (\hs{iter} \w \hs{i} \w f \w x) & \eq \hs{iter} \w \hs{i} \w f \w (f \w x) \\
 \end{align*}
 
@@ -202,18 +216,17 @@ consider the predicate P to be “is not infinite”, and then you can
 prove for a lot of functions that they return finite objects. For
 instance, define this function:
 
-\note{CHANGE THIS
+CHANGE THIS
 
   Instead do the finite list predicate, and use $\neq
   \hs{False}$. This then servers for an example why inequality
   predicates are not admissible!
-}
 
-\begin{verbatim}
+\begin{code}
 listrec :: ([a] -> [a]) -> [a] -> [a]
 listrec i [] = []
 listrec i (x:xs) = x : i xs
-\end{verbatim}
+\end{code}
 
 Then define
 $P(f) \Leftrightarrow \fa{x} ``f(x) \w \mathrm{is \w not \w infinite}"$,
@@ -241,16 +254,16 @@ defined in terms of \hs{fix}. The functions \hs{even} and \hs{odd}
 defined below, which determines if a \hs{Nat} is even, and odd,
 respectively, are straightforwardly written by mutual recursion:
 
-\begin{verbatim}
+\begin{code}
 even :: Nat -> Bool           odd :: Nat -> Bool
 even Z     = True             odd Z     = False
 even (S x) = odd x            odd (S x) = even x
-\end{verbatim}
+\end{code}
 
 To write these functions in terms of fix, as an additional argument,
 the take a tuple of ``non-recursive'' copies of themselves.
 
-\begin{verbatim}
+\begin{code}
 evenToFix :: (Nat -> Bool,Nat -> Bool) -> Nat -> Bool
 evenToFix (evenUnFix,oddUnFix) Z     = True
 evenToFix (evenUnFix,oddUnFix) (S x) = oddUnFix x
@@ -258,17 +271,17 @@ evenToFix (evenUnFix,oddUnFix) (S x) = oddUnFix x
 oddToFix :: (Nat -> Bool,Nat -> Bool) -> Nat -> Bool
 oddToFix (evenUnFix,oddUnFix) Z     = True
 oddToFix (evenUnFix,oddUnFix) (S x) = evenUnFix x
-\end{verbatim}
+\end{code}
 
 Here the prefix \hs{ToFix} means that it is a function subject to be
 \hs{fix}-ed, and \hs{UnFix} means that it is the ``non-recursive''
 function. The functions above can now be \hs{fix}-ed by giving the
 tuple as an argument to both of them:
 
-\begin{verbatim}
+\begin{code}
 even',odd' :: Nat -> Bool
 (even',odd') = fix (\t -> (evenToFix t,oddToFix t))
-\end{verbatim}
+\end{code}
 
 This encoding makes \hs{even'} denotationally equal to \hs{even} and
 the same relation hols for \hs{odd'} and \hs{odd}.

@@ -95,8 +95,8 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     in  plainProof ++
         proofByFixpointInduction ++
         proofByApproxLemma ++
-        map (proofByStructInd True 1) (filter ((<3) .  length) powset) ++
-        map (proofByStructInd False 1) (filter ((<3) .  length) powset) ++
+        map (proofByStructInd True 2) (filter ((<3) .  length) powset) ++
+        map (proofByStructInd False 2) (filter ((<3) .  length) powset) ++
         map proofBySimpleInduction indargs
   where
     pstr :: String
