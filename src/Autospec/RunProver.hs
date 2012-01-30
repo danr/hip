@@ -95,7 +95,7 @@ worker :: Int -> Maybe FilePath -> ProbChan -> ResChan -> IO ()
 worker timeout output probChan resChan = do
     (desc@(name,ptype),Part pname str pfail) <- readChan probChan
     resvar <- newEmptyMVar
-    length str `seq` forkIO (runProver str (timeout * 1000) resvar)
+    length str `seq` forkIO (runProver str (timeout * 1000 * 1000) resvar)
     let fname = name ++ "_" ++
                 proofTypeFile ptype ++ "_" ++
                 pname ++ ".tptp"

@@ -43,22 +43,24 @@ data Params = Params { files     :: [FilePath]
                      , dbfh      :: Bool
                      , dbfol     :: Bool
                      , dbproof   :: Bool
+                     , provers   :: String
                      }
   deriving (Show,Data,Typeable)
 
 params :: Params
 params = Params
   { files     = []      &= args &= typFile
-  , processes = 2       &= help "Number of prover processes (default 4)"
+  , processes = 4       &= help "Number of prover processes (default 4)"
   , output    = Nothing &= opt  "proving/" &= typDir
                         &= help "Output all tptp files in a directory (default proving/)"
-  , timeout   = 500     &= help "Timout of provers in milliseconds (default 500)" &= name "t"
+  , timeout   = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
   , latex     = False   &= help "Generate latex output and terminate"
   , tptp      = False   &= help "Generate tptp output and terminate" &= name "f"
   , core      = False   &= help "Translate hs to core and terminate"
   , dbfh      = False   &= help "Print debug output of Haskell -> Core translation"
   , dbfol     = False   &= help "Print debug output of Core -> FOL"
   , dbproof   = False   &= help "Print debug output when making proofs"
+  , provers   = "evpsx" &= help "Specify which provers to use: (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
   }
   &= summary "autospec v0.1 Dan Rosén danr@student.gu.se"
   &= program "autospec"
