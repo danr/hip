@@ -35,10 +35,13 @@ searchOutput ((s,r):xs) output time
 
 
 statusSZS = [("Theorem",Success),("Unsatisfiable",Success)
-            ,("CounterSatisfiable",const Failure)]
+            ,("CounterSatisfiable",const Failure),("Timeout",Failure)]
 
 allProvers :: [Prover]
-allProvers = [eprover,vampire,prover9,spass]
+allProvers = [vampire,prover9,spass,eprover,equinox]
+
+proversFromString :: String -> [Prover]
+proversFromString str = filter ((`elem` str) . proverShort) allProvers
 
 eprover :: Prover
 eprover = Prover
@@ -54,7 +57,7 @@ vampire = Prover
   { proverName          = Vampire
   , proverCmd           = "vampire_lin64"
   , proverArgs          = \t -> words ("--proof tptp --mode casc -t " ++ show t)
-  , proverProcessOutput = searchOutput statusSZS
+  , proverProcessOutput = searchOutput (("Time limit reached!",const Failure):statusSZS)
   , proverShort         = 'v'
   }
 
@@ -72,7 +75,7 @@ spass = Prover
   { proverName          = SPASS
   , proverCmd           = "SPASS"
   , proverArgs          = \t -> words ("-Stdin -Auto -TPTP -PGiven=0 -PProblem=0 -DocProof=0 -PStatistic=0 -TimeLimit=" ++ show t)
-  , proverProcessOutput = searchOutput [("Proof found.",Success),("Completion found.",const Failure)]
+  , proverProcessOutput = searchOutput [("Proof found.",Success),("Completion found.",const Failure),("Ran out of time.",const Failure)]
   , proverShort         = 's'
   }
 

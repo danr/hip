@@ -16,7 +16,6 @@ import System.IO
 import System.Exit
 import System.CPUTime
 
-
 --import Data.List
 --import Data.Maybe
 
@@ -51,7 +50,7 @@ runProver (Prover{..}) inputStr timelimit = do
          putMVar done (Just ex)
 
     kid <- forkIO $ do
-         threadDelay timelimit
+         threadDelay (timelimit * 1000 * 1000)
          killThread tid
          terminateProcess pid
          ex <- waitForProcess pid

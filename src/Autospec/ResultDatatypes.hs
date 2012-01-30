@@ -32,7 +32,7 @@ instance Eq ProverResult where
   (==) = (==) `on` success
 
 instance Show ProverResult where
-  show (Success{..}) = "Success (" ++ show successTime ++ "microsec)"
+  show (Success{..}) = "Success (" ++ show (successTime `div` 1000) ++ " ms)"
   show Failure     = "Failure"
   show (Unknown s) = "Unknown: " ++ show s
 

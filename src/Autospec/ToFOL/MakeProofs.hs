@@ -91,8 +91,8 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
     in  plainProof
      ++ proofByFixpointInduction
      ++ proofByApproxLemma
-     ++ map (proofByStructInd True 2) (filter ((<3) .  length) powset)
-     ++ map (proofByStructInd False 2) (filter ((<3) .  length) powset)
+     ++ map (proofByStructInd True 1) (filter ((<2) .  length) powset)
+     ++ map (proofByStructInd False 1) (filter ((<2) .  length) powset)
 --        map proofBySimpleInduction indargs
   where
     accompanyParts :: ProofMethod -> Coverage -> TM [Particle] -> TM Part

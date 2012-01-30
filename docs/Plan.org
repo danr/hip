@@ -4,7 +4,7 @@
 #+EMAIL:     danr@student.gu.se
 #+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
-#+LATEX_HEADER: \usepackage{fullpage,listings,courier}
+n#+LATEX_HEADER: \usepackage{fullpage,listings,courier}
 
 
 \lstdefinestyle{numbers}{numberstyle=\tiny}

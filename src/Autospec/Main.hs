@@ -12,9 +12,10 @@ import Autospec.ToFOL.Parser
 import Autospec.ToFOL.Core
 import Autospec.ToFOL.Latex hiding (latex)
 import Autospec.Util (groupSortedOn,concatMapM)
-import Autospec.RunProver
+import Autospec.InvokeATPs
 import Autospec.Messages
-import Autospec.Results
+import Autospec.Provers
+import Autospec.ResultDatatypes
 
 import System.Console.CmdArgs
 import System.Exit (exitFailure,exitSuccess)
@@ -43,6 +44,7 @@ data Params = Params { files     :: [FilePath]
                      , dbfh      :: Bool
                      , dbfol     :: Bool
                      , dbproof   :: Bool
+                     , reprove   :: Bool
                      , provers   :: String
                      }
   deriving (Show,Data,Typeable)
@@ -60,7 +62,8 @@ params = Params
   , dbfh      = False   &= help "Print debug output of Haskell -> Core translation"
   , dbfol     = False   &= help "Print debug output of Core -> FOL"
   , dbproof   = False   &= help "Print debug output when making proofs"
-  , provers   = "evpsx" &= help "Specify which provers to use: (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
+  , reprove   = False   &= help "Reprove theorems already known to be true"
+  , provers   = "evps"  &= help "Specify which provers to use: (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
   }
   &= summary "autospec v0.1 Dan Rosén danr@student.gu.se"
   &= program "autospec"
@@ -146,13 +149,15 @@ main = do
           -- Print warnings
           whenNormal $ when (not latex) $ mapM_ print (filter isWarning debug)
           whenLoud $ putStrLn "Done preparing proofs"
-          proveAll latex processes timeout output file proofs
+          proveAll latex processes timeout output reprove (proversFromString provers) file proofs
+{-
   let rgs :: [(Result,ResGroup)]
       (rgs,ns) = first concat $ unzip total
       rgr :: [(Result,ResGroup)]
       rgr = map (fst . head &&& flattenGroups . map snd)
           $ groupSortedOn fst rgs
       n  = sum ns
+
 
   when (length files > 1 && not tptp) $ do
     outputSection latex "Total Summary"
@@ -162,8 +167,14 @@ main = do
 
   when (latex && not tptp) latexFooter'
 
+  -}
+
+  return ()
+
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
+
+{-
 
 data ResGroup = ResGroup (Map ProofType Int) Int
     deriving (Eq,Ord,Show)
@@ -174,15 +185,44 @@ flattenGroups (ResGroup m x:xs) =
    let ResGroup m' t = flattenGroups xs
    in  ResGroup (M.unionWith (+) m m') (x + t)
 
-proveAll :: Bool -> Int -> Int -> Maybe FilePath
-         -> FilePath -> [ProofDecl]
-         -> IO ([(Result,ResGroup)],Int)
-proveAll latex processes timeout output file proofs = do
+-}
+
+proveAll :: Bool -> Int -> Int -> Maybe FilePath -> Bool -> [Prover]
+         -> FilePath -> [Property]
+         -> IO [PropResult]
+proveAll latex processes timeout output reprove provers file properties = do
     whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
                   putStrLn $ "Timeout is " ++ show timeout
                   putStrLn $ "Output directory is " ++ show output
-    hSetBuffering stdout NoBuffering
-    res <- runProvers processes timeout output (map (fmap prettyTPTP) proofs)
+    hSetBuffering stdout LineBuffering
+
+    let env = Env { reproveTheorems = reprove
+                  , timeout         = timeout
+                  , store           = output
+                  , provers         = provers
+                  , processes       = processes
+                  , propStatuses    = error "main env propStatuses"
+                  , propCodes       = error "main env propCodes"
+                  }
+
+    propRes <- invokeATPs properties env
+
+    forM_ propRes $ \(Property propName propCode (status,parts)) -> do
+         putStrLn $ propName ++ ": " ++ show status
+         putStrLn propCode
+         forM_ parts $ \part@(Part partMethod partCoverage particles) -> do
+              putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part)
+              putStr "    "
+              forM_ particles $ \(Particle particleDesc (result,maybeProver)) ->
+                   putStr $ particleDesc ++ ": " ++ show result ++
+                            concat [ "[" ++ show prover ++ "]" | prover <- maybeToList maybeProver ]
+                            ++ "  "
+              putStrLn ""
+         putStrLn ""
+
+    return propRes
+
+{-
     let resgroups :: [[Res]]
         resgroups = groupSortedOn principleName res
     whenNormal $ do
@@ -211,21 +251,25 @@ proveAll latex processes timeout output file proofs = do
                     return [(res,rg)]
     when latex latexCloseTabular
     return (r,n)
+-}
 
 pad :: Int -> String -> String
 pad x s   = replicate (x - length s) ' '
 
+{-
 stats :: [[Res]] -> Result -> Map ProofType Int
 stats ress r = execState (mapM_ statFromProp ress)
                          (M.fromList (zip proofTypes (repeat 0)))
   where
     -- All these come from the same property
     statFromProp :: [Res] -> State (Map ProofType Int) ()
-    statFromProp res = forM_ proofTypes $ \pt -> do
+    statFromProp res = undefined {- forM_ proofTypes $ \pt -> do
         let y = any (\(Principle _ pt' r' _ _) ->
                     pt' `liberalEq` pt && r == r') res
-        when y $ modify (M.adjust succ pt)
+        when y $ modify (M.adjust succ pt) -}
+-}
 
+{-
 outputGroupLatexHeader :: Bool -> IO ()
 outputGroupLatexHeader total = do
     putStrLn $ "\\begin{longtable}{p{" ++
@@ -239,10 +283,12 @@ outputGroupLatexHeader total = do
                                (if total then ("total":) else id)
                                (map latexShow proofTypes))
     putStrLn $ " \\\\"
+-}
 
 latexCloseTabular :: IO ()
 latexCloseTabular = putStrLn "\\end{longtable}"
 
+{-
 outputGroup :: Bool -> Name -> String -> Result -> [Res] -> IO ()
 outputGroup True  name code status grp = do
     putStrLn "\\hline"
@@ -287,3 +333,4 @@ outputResGroup False n res (ResGroup statsMap tot) = do
                  ++ show m ++ "/" ++ show tot
 
 
+-}

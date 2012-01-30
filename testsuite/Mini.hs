@@ -17,9 +17,9 @@ data Nat = Z | S Nat
 --prop_zero_is_one = Z =/= S Z
 
 -- Induction on x. Also holds in the presence of bottoms
-prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
-prop_assoc_plus x y z
-  = x + (y + z) =:= (x + y) + z
+--prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
+--prop_assoc_plus x y z
+--  = x + (y + z) =:= (x + y) + z
 
 {-
 
@@ -60,6 +60,7 @@ prop_left_distrib x y z
   = x * (y + z) =:= (x * y) + (x * z)
 -}
 
+-}
 
 map :: (a -> b) -> [a] -> [b]
 map f []       = []
@@ -87,6 +88,8 @@ id x = x
 
 prop_map_iterate :: (a -> a) -> a -> Prop [a]
 prop_map_iterate f x = map f (iterate f x) =:= iterate f (f x)
+
+{-
 
 prop_repeat_iterate :: a -> Prop [a]
 prop_repeat_iterate x = repeat x =:= iterate id x

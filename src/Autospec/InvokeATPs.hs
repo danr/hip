@@ -68,16 +68,17 @@ type PropName = String
 
 type PropResult = PropertyMatter (Status,[PartResult])
 type PartResult = PartMatter [ParticleResult]
-type ParticleResult = ParticleMatter ProverResult
+type ParticleResult = ParticleMatter (ProverResult,Maybe ProverName)
 
 statusFromPart :: PartResult -> Status
-statusFromPart (Part _ coverage (map particleMatter -> res)) = statusFromResults coverage res
+statusFromPart (Part _ coverage (map (fst . particleMatter) -> res))
+  = statusFromResults coverage res
 
-data Env = Env { timeout         :: Int
-               , store           :: Maybe FilePath
-               , propStatuses    :: MVar (Map PropName Status)
+data Env = Env { propStatuses    :: MVar (Map PropName Status)
                , propCodes       :: Map PropName String
                , reproveTheorems :: Bool
+               , timeout         :: Int
+               , store           :: Maybe FilePath
                , provers         :: [Prover]
                , processes       :: Int
                }
@@ -108,13 +109,18 @@ propStatus propName = do
       then return None
       else do
         statusMap <- liftIO (readMVar propStatuses)
-        return (fromMaybe None (M.lookup propName statusMap))
+        let status = fromMaybe None (M.lookup propName statusMap)
+--        liftIO $ putStrLn $ "status on " ++ propName ++ " is " ++ show status
+        return status
 
 updatePropStatus :: PropName -> Status -> ProveM ()
 updatePropStatus propName status = do
     Env{..} <- ask
     unless reproveTheorems
        (liftIO $ modifyMVar_ propStatuses (return . M.insertWith min propName status))
+--    liftIO $ do putStrLn $ "updated " ++ propName ++ " to " ++ show status
+--                map <- readMVar propStatuses
+--                print map
 
 -- | Listens to all the results, report if a property was proven,
 --   and puts them all in a list of results
@@ -124,7 +130,7 @@ listener parts resChan = do
     fmap (makePropList propCodes) $ forM [1..parts] $ \_ -> do
         res@(propName,part@(Part _ _ resParticles)) <- liftIO (readChan resChan)
         let status = statusFromPart part
-        unless (status /= None) $ updatePropStatus propName status
+        updatePropStatus propName status
         return res
   where
     makePropList :: Map PropName String -> [(PropName,PartResult)] -> [PropResult]
@@ -157,7 +163,7 @@ worker partChan resChan = forever $ do
     let processParticle :: Particle -> StateT Bool ProveM ParticleResult
         processParticle (Particle particleDesc particleAxioms) = do
             stop <- get
-            if stop then return (Particle particleDesc Failure) else do
+            if stop then return (Particle particleDesc (Failure,Nothing)) else do
                 resvar <- liftIO newEmptyMVar
                 let axiomsStr = theoryStr ++ "\n" ++ prettyTPTP particleAxioms
 
@@ -169,11 +175,11 @@ worker partChan resChan = forever $ do
                    Just dir -> let filename = intercalate "_" [dir,propName,proofMethodFile partMethod,particleDesc] ++ ".tptp"
                                in  liftIO (writeFile (filename) theoryStr)
 
-                res <- liftIO (takeMVar resvar)
+                (res,maybeProver) <- liftIO (takeMVar resvar)
                 provedElsewhere <- unnecessary <$> lift (propStatus propName)
 
                 when (not (success res) || provedElsewhere) (put True)
-                return (Particle particleDesc res)
+                return (Particle particleDesc (res,maybeProver))
 
     provedElsewhere <- unnecessary <$> propStatus propName
 
@@ -181,7 +187,7 @@ worker partChan resChan = forever $ do
 
     liftIO (writeChan resChan (propName,Part partMethod partCoverage res))
 
-runProvers :: String -> MVar ProverResult -> ProveM ()
+runProvers :: String -> MVar (ProverResult,Maybe ProverName) -> ProveM ()
 runProvers str res = do
     Env{..} <- ask
     liftIO . putMVar res =<< go provers
@@ -190,7 +196,7 @@ runProvers str res = do
                    r <- liftIO $ runProver p str t
                    case r of
                       Failure   -> go ps
-                      _         -> return r
-    go []     = return Failure
+                      _         -> return (r,Just (proverName p))
+    go []     = return (Failure,Nothing)
 
 
