@@ -1,6 +1,7 @@
-module Autospec.Provers
+module Autospec.Provers where
 
-import Autospec.Results
+import Autospec.ResultDatatypes
+import Data.List
 
 data ProverName = E | Vampire | Prover9 | SPASS | Equinox
   deriving (Eq,Ord)
@@ -18,7 +19,7 @@ data Prover = Prover { proverName          :: ProverName
                      -- ^ system command to createProcess
                      , proverArgs          :: Int -> [String]
                      -- ^ given timeout in secs, args to createProcess
-                     , proverProcessOutput :: String -> Int -> Result
+                     , proverProcessOutput :: String -> Integer -> ProverResult
                      -- ^ processes the output and time and gives a result
                      , proverShort         :: Char
                      -- ^ short char for command line options
@@ -26,18 +27,18 @@ data Prover = Prover { proverName          :: ProverName
 
 
 -- Should really use something more efficient than isInfixOf
-searchOutput :: [(String,time -> Result)] -> String -> time -> Result
+searchOutput :: [(String,time -> ProverResult)] -> String -> time -> ProverResult
 searchOutput []         output time = Unknown output
 searchOutput ((s,r):xs) output time
     | s `isInfixOf` output = r time
-    | otherwise            = searchOutput xs output
+    | otherwise            = searchOutput xs output time
 
 
-statusSZS = [("Theorem",Theorem),("Unsatisfiable",Theorem)
+statusSZS = [("Theorem",Success),("Unsatisfiable",Success)
             ,("CounterSatisfiable",const Failure)]
 
 allProvers :: [Prover]
-allProvers = [eprover,vampire,prover9,spass,equinox]
+allProvers = [eprover,vampire,prover9,spass]
 
 eprover :: Prover
 eprover = Prover
@@ -62,7 +63,7 @@ prover9 = Prover
   { proverName          = Prover9
   , proverCmd           = "prover9script"
   , proverArgs          = \t -> [show t]
-  , proverProcessOutput = searchOutput [("THEOREM PROVED",Theorem),("SEARCH FAILED",const None)]
+  , proverProcessOutput = searchOutput [("THEOREM PROVED",Success),("SEARCH FAILED",const Failure)]
   , proverShort         = 'p'
   }
 
@@ -71,7 +72,7 @@ spass = Prover
   { proverName          = SPASS
   , proverCmd           = "SPASS"
   , proverArgs          = \t -> words ("-Stdin -Auto -TPTP -PGiven=0 -PProblem=0 -DocProof=0 -PStatistic=0 -TimeLimit=" ++ show t)
-  , proverProcessOutput = searchOutput [("Proof found.",Theorem),("Completion found.",Countersat)]
+  , proverProcessOutput = searchOutput [("Proof found.",Success),("Completion found.",const Failure)]
   , proverShort         = 's'
   }
 
@@ -79,7 +80,7 @@ equinox :: Prover
 equinox = Prover
   { proverName          = Equinox
   , proverCmd           = "equinox"
-  , proverArgs          = \t -> words ("-Stdin -Auto -TPTP -PGiven=0 -PProblem=0 -DocProof=0 -PStatistic=0 -TimeLimit=" ++ show t)
-  , proverProcessOutput = searchOutput [("Proof found.",Theorem),("Completion found.",Countersat)]
+  , proverArgs          = \t -> undefined
+  , proverProcessOutput = undefined
   , proverShort         = 'x'
   }

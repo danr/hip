@@ -1,13 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
 module Autospec.ResultDatatypes where
 
+import Autospec.ToFOL.ProofDatatypes
 import Autospec.Util
 import Data.Maybe
 import Data.Function
 
 -- Result from a prover invocation --------------------------------------------
 
-data ProverResult = Success { successTime :: Int }
+data ProverResult = Success { successTime :: Integer }
                   -- ^ Success: Theorem or Countersatisfiable
                   | Failure
                   -- ^ Fialure: Satisfiable etc, and timeouts or skipped
@@ -27,29 +28,31 @@ flattenProverResults xs
     | all success xs = Success (avgList (map successTime xs))
     | otherwise      = fromMaybe Failure (listToMaybe (filter unknown xs))
 
-disjoinProverResults :: [ProverResult] -> ProverResult
-disjoinProverResults = unlist Failure (Success . avgList . map successTime)
-                     . filter success
-
 instance Eq ProverResult where
   (==) = (==) `on` success
 
 instance Show ProverResult where
-  show (Success{..}) = "Success (" ++ show successTime ++ "ms)"
+  show (Success{..}) = "Success (" ++ show successTime ++ "microsec)"
   show Failure     = "Failure"
   show (Unknown s) = "Unknown: " ++ show s
 
--- Result for an entire property or a proof part ------------------------------
+-- Status (result) for an entire property or a proof part ------------------------------
 
-data PropResult = Theorem | FiniteTheorem | None
+data Status = Theorem | FiniteTheorem | None
   deriving (Eq,Ord,Show,Enum,Bounded)
 
-latexResult :: PropResult -> String
-latexResult Theorem       = "$\\checkmark_{\\infty}$"
-latexResult FiniteTheorem = "$\\checkmark_{\\mathrm{fin}}$"
-latexResult None          = ""
+latexStatus :: Status -> String
+latexStatus Theorem       = "$\\checkmark_{\\infty}$"
+latexStatus FiniteTheorem = "$\\checkmark_{\\mathrm{fin}}$"
+latexStatus None          = ""
 
-results :: [PropResult]
-results = [minBound..maxBound]
+statuses :: [Status]
+statuses = [minBound..maxBound]
 
+statusFromResults :: Coverage -> [ProverResult] -> Status
+statusFromResults coverage res
+    | all success res = case coverage of
+                           Infinite -> Theorem
+                           Finite   -> FiniteTheorem
+    | otherwise = None
 

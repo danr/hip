@@ -13,8 +13,8 @@ unlist :: a -> ([b] -> a) -> [b] -> a
 unlist d f [] = d
 unlist d f xs = f xs
 
-avgList :: [Int] -> Int
-avgList xs = sum xs `div` length xs
+avgList :: Integral a => [a] -> a
+avgList xs = sum xs `div` genericLength xs
 
 -- | Pair up a list with its previous and next elements
 --
