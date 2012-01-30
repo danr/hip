@@ -27,3 +27,6 @@ executable          autospec
                  , fclabels                      >= 1.0
                  , containers                    >= 0.3
                  , cmdargs                       >= 0.9
+
+executable          FixLADR
+    main-is: testsuite/Util/FixLADR.hs
