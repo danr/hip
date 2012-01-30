@@ -38,16 +38,16 @@ instance Show ProofMethod where
   show (StructuralInduction vs b d) = concat [ "finite " | not b ] ++ "structural induction on " ++
                                       unwords vs ++ " depth " ++ show d
 
-proofTypeFile :: ProofMethod -> String
-proofTypeFile pt = case pt of
+proofMethodFile :: ProofMethod -> String
+proofMethodFile pt = case pt of
   Plain                      -> "plain"
   SimpleInduction v          -> "simpleind" ++ v
   ApproxLemma                -> "approx"
   FixpointInduction f        -> "fix" ++ concat f
   StructuralInduction vs b d -> concat [ "fin" | not b ] ++ "strind" ++ concat vs ++ show d
 
-proofTypes :: [ProofMethod]
-proofTypes = [Plain,SimpleInduction ""
+proofMethods :: [ProofMethod]
+proofMethods = [Plain,SimpleInduction ""
              ,ApproxLemma
              ,FixpointInduction []
              ,StructuralInduction [] True 0
