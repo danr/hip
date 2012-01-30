@@ -33,7 +33,7 @@ unProp :: Type -> Type
 unProp (TyCon _ [t]) = t
 unProp t             = t
 
-makeProofDecls :: [Decl] -> Set Name -> Type -> Decl -> [TM ProofDecl]
+makeProofDecls :: [Decl] -> Set Name -> Type -> Decl -> [TM Part]
 makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
     let typedArgs = case ty of TyApp ts -> zip args ts
                                _        -> []
@@ -41,7 +41,7 @@ makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
         resTy     = unProp $ case ty of TyApp ts -> last ts
                                         t        -> t
 
-        prove' :: Bool -> Expr -> Expr -> [TM ProofDecl]
+        prove' :: Bool -> Expr -> Expr -> [TM Part]
         prove' b lhs rhs = case resTy of
               -- Prop (a -> b) ~= a -> Prop b
               TyApp ts -> let extraTyArgs =  zip [ "x." ++ show x | x <- [0..] ]
@@ -87,70 +87,62 @@ prove :: [Decl]
       -- ^ LHS
       -> Expr
       -- ^ RHS
-      -> [TM ProofDecl]
+      -> [TM Part]
       -- ^ Resulting instructions how to do proof declarations for this
 prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
         powset = powerset indargs
-    in  plainProof ++
-        proofByFixpointInduction ++
-        proofByApproxLemma ++
-        map (proofByStructInd True 2) (filter ((<3) .  length) powset) ++
-        map (proofByStructInd False 2) (filter ((<3) .  length) powset) ++
-        map proofBySimpleInduction indargs
+    in  plainProof
+     ++ proofByFixpointInduction
+     ++ proofByApproxLemma
+     ++ map (proofByStructInd True 2) (filter ((<3) .  length) powset)
+     ++ map (proofByStructInd False 2) (filter ((<3) .  length) powset)
+--        map proofBySimpleInduction indargs
   where
     pstr :: String
     pstr = prettyCore lhs ++
            (if disprove then " !" else " ") ++
            "= " ++ prettyCore rhs
 
-    equals | disprove  = (!=)
-           | otherwise = (===)
-
-    accompanyParts :: ProofType -> TM [ProofPart] -> TM ProofDecl
-    accompanyParts prooftype partsm = do
+    accompanyParts :: ProofMethod -> Coverage -> TM [Particle] -> TM Part
+    accompanyParts prooftype coverage partsm = do
         let funs = map (declName &&& length . declArgs) fundecls
         addFuns funs
         faxioms <- concatMapM (fmap snd . translate) fundecls
         parts   <- partsm
-        return $ proofDecl fname prooftype faxioms pstr parts
+        return $ Part { partProperty   = fname
+                      , partCode       = pstr
+                      , partMethod     = prooftype
+                      , partTheory     = faxioms
+                      , partParticles  = parts
+                      , partCoverage   = coverage
+                      }
 
-    accompanyPartsWithDecls :: ProofType
-                            -> [([Decl],TM [ProofPart])]
-                            -> TM ProofDecl
-    accompanyPartsWithDecls prooftype tup = proofDecl fname prooftype [] pstr <$>
-        (flip concatMapM tup (\(fundecls',partms) -> do
+
+    accompanyPartsWithDecls :: ProofMethod
+                            -> Coverage
+                            -> [([Decl],TM [Particle])]
+                            -> TM Part
+    accompanyPartsWithDecls prooftype coverage tup = do
+         parts <- flip concatMapM tup $ \(fundecls',partms) -> do
             let funs = map (declName &&& length . declArgs) fundecls'
             addFuns funs
             locally $ do
                 parts   <- partms
                 faxioms <- concatMapM (fmap snd . translate) fundecls'
-                return $ map (extendProofPart faxioms) parts))
+                return $ map (extendParticle faxioms) parts
+         return $ Part { partProperty   = fname
+                       , partCode       = pstr
+                       , partMethod     = prooftype
+                       , partTheory     = []
+                       , partParticles  = parts
+                       , partCoverage   = coverage
+                       }
 
-    decorateArg :: (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
-    decorateArg (n,TyCon t _) = do
-       -- t is for instance Nat or List a
-       -- cs is for instance (Zero :: Nat,Succ :: Nat -> Nat) or
-       --                    (Nil :: [a],Cons :: a -> [a] -> [a])
-       dbproof "Lookup constructors from decorateArg"
-       cs <- (bottomName:) <$> lookupConstructors t
-
-       lr <- forM cs $ \c -> do
-                 mct <- lookupType c
-                 case mct of
-                     Just ct -> do
-                        let h = recursiveArgs ct
-                        return (putEither (or h) (c,h))
-                     Nothing -> error $ "Cannot find type " ++ c
-
-       dbproof $ "decorateArg, " ++ n ++ " : " ++ show lr
-       return (n,lr)
-    decorateArg (n,t) = error $ "decorateArg " ++ n
-                              ++ " on non-concrete type " ++ show t
-
-    proofByStructInd :: Bool -> Int -> [(Name,Type)] -> TM ProofDecl
+    proofByStructInd :: Bool -> Int -> [(Name,Type)] -> TM Part
     proofByStructInd addBottom d ns = accompanyParts
-      (StructuralInduction (map fst ns) addBottom d) $ do
+      (StructuralInduction (map fst ns) addBottom d)
+      (if addBottom then Infinite else Finite) $ do
         env <- getEnv addBottom
         let parts = structuralInduction ns env d
         forM parts $ \(IndPart hyps conj vars) -> locally $ do
@@ -158,10 +150,10 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
             addFuns (zip vars (repeat 0))
             phyps <- mapM instP hyps
             pconj <- instP conj
-            return $ Part (concat vars)
-                          ( Conjecture "conj" pconj :
-                          [ Axiom "hyp" phyp | phyp <- phyps ] )
-                          (if addBottom then Fail else FiniteSuccess)
+            return $ Particle { particleDesc   = unwords vars
+                              , particleAxioms = Conjecture "conj" pconj :
+                                                 [ Axiom "hyp" phyp | phyp <- phyps ]
+                              }
       where
         instP :: [Expr] -> TM T.Formula
         instP es = locally $ do
@@ -169,13 +161,98 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
             instantiateP []
 
 
+    approxSteps :: TM (Formula,Formula,[T.Decl])
+    approxSteps = do
+        let f = "a.f"
+        addFuns [(f,1)]
+        (approx,approxAxioms) <- approximate f resTy
+        hyp <- locally $ do
+                  lhs' <- translateExpr (App f [lhs])
+                  rhs' <- translateExpr (App f [rhs])
+                  forallUnbound (lhs' === rhs')
+        step <- locally $ do
+                  lhs' <- translateExpr (App approx [lhs])
+                  rhs' <- translateExpr (App approx [rhs])
+                  forallUnbound (lhs' === rhs')
+        return (hyp,step,approxAxioms)
 
-    proofBySimpleInduction :: (VarName,Type) -> TM ProofDecl
+    -- Returns in the List monad instead of the Maybe monad
+    proofByApproxLemma :: [TM Part]
+    proofByApproxLemma
+       | concreteType resTy =
+             [accompanyParts ApproxLemma Infinite $ do
+                   (hyp,step,approxAxioms) <- approxSteps
+                   return $ [Particle { particleDesc = "step"
+                                      , particleAxioms = Axiom "approxhyp" hyp
+                                                       : Conjecture "approxstep" step
+                                                       : approxAxioms
+                                      }]
+             ]
+       | otherwise = []
+
+    plainProof :: [TM Part]
+    plainProof
+        | any (concreteType . snd) typedArgs = []
+        | otherwise =
+            return $ accompanyParts Plain Infinite $ do
+                p <- instantiateP []
+                return $ [ Particle "plain" [Conjecture "plain" p] ]
+
+
+    instantiateP :: [(VarName,VarName)] -> TM T.Formula
+    instantiateP binds = locally $ do
+        lhs' <- translateExpr (substVars binds lhs)
+        rhs' <- translateExpr (substVars binds rhs)
+        forallUnbound (lhs' === rhs')
+
+    proofByFixpointInduction :: [TM Part]
+    proofByFixpointInduction = concatMap
+                                   instantiateFixProof
+                                   (proofByFixpoint fundecls recfuns lhs rhs)
+      where
+        instantiateEq :: (Expr,Expr) -> TM T.Formula
+        instantiateEq (l,r) = locally $ do
+            l' <- translateExpr l
+            r' <- translateExpr r
+            forallUnbound (l' === r')
+
+        addFunsFromDecls ds = sequence_
+           [ addFuns [(f,length as)] | Func f as _ <- ds ]
+
+        addUnrecFunsFromDecls ds fixedFuns = sequence_
+           [ addFuns [(f ++ unRec,length as)]
+           | Func f as _ <- ds
+           , f `elem` fixedFuns ]
+
+        instantiateFixProof :: FixProof -> [TM Part]
+        instantiateFixProof fp@(FixProof {..}) =
+            [ accompanyPartsWithDecls (FixpointInduction fixedFuns) Infinite
+                 [(baseDecls ++ fundecls,baseAxioms)
+                 ,(stepDecls ++ fundecls,stepAxioms)]
+            ]
+          where
+             baseAxioms = do
+                 dbproof $ show fp
+                 addFunsFromDecls baseDecls
+                 pbottom <- instantiateEq base
+                 return $ [Particle "base" [Conjecture "fixbase" pbottom]]
+
+             stepAxioms = do
+                 addFunsFromDecls stepDecls
+                 addUnrecFunsFromDecls fundecls fixedFuns
+                 phyp  <- instantiateEq hyp
+                 pstep <- instantiateEq step
+                 return $ [Particle "step"
+                                 [Axiom "fixhyp" phyp
+                                 ,Conjecture "fixstep" pstep]]
+
+{- Old code for simple induction
+    proofBySimpleInduction :: (VarName,Type) -> TM Part
     proofBySimpleInduction (v,t) = accompanyParts (SimpleInduction v) $ do
         (_,cons) <- decorateArg (v,t)
         mapM (uncurry (inductionPart v) . either id id) cons
 
-    inductionPart :: Name -> ConName -> [Rec] -> TM ProofPart
+    inductionPart :: Name -> ConName -> [Rec] -> TM Particle
     inductionPart v c recArgs = do
         skolems <- mapM (const (skolemize v)) recArgs
         ih <- sequence [ Axiom ("indhyp" ++ v ++ s)
@@ -191,103 +268,30 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
             mapM_ (uncurry addIndirection) binds
             lhs' <- translateExpr lhs
             rhs' <- translateExpr rhs
-            return (lhs' `equals` rhs')
+            return (lhs' === rhs')
          forallUnbound (foldr1 (/\) clauses)
 
-    approxSteps :: TM (Formula,Formula,[T.Decl])
-    approxSteps = do
-        let f = "a.f"
-        addFuns [(f,1)]
-        (approx,approxAxioms) <- approximate f resTy
-        hyp <- locally $ do
-                  lhs' <- translateExpr (App f [lhs])
-                  rhs' <- translateExpr (App f [rhs])
-                  forallUnbound (lhs' `equals` rhs')
-        step <- locally $ do
-                  lhs' <- translateExpr (App approx [lhs])
-                  rhs' <- translateExpr (App approx [rhs])
-                  forallUnbound (lhs' `equals` rhs')
---        dbproof $ "Approx lemma hyp:  " ++ prettyTPTP hyp
---        dbproof $ "Approx lemma step: " ++ prettyTPTP step
-        return (hyp,step,approxAxioms)
+    decorateArg :: (VarName,Type) -> TM (VarName,[LR (ConName,[Rec])])
+    decorateArg (n,TyCon t _) = do
+       -- t is for instance Nat or List a
+       -- cs is for instance (Zero :: Nat,Succ :: Nat -> Nat) or
+       --                    (Nil :: [a],Cons :: a -> [a] -> [a])
+       dbproof "Lookup constructors from decorateArg"
+       cs <- (bottomName:) <$> lookupConstructors t
 
-    -- Returns in the List monad instead of the Maybe monad
-    proofByApproxLemma :: [TM ProofDecl]
-    proofByApproxLemma
-       | concreteType resTy =
-             [accompanyParts ApproxLemma $ do
-                   (hyp,step,approxAxioms) <- approxSteps
-                   return $ [proofPart "step"
-                                 (Axiom ("approxhyp") hyp
-                                 :Conjecture ("approxstep") step
-                                 :approxAxioms)]
-             ]
-       | otherwise = []
+       lr <- forM cs $ \c -> do
+                 mct <- lookupType c
+                 case mct of
+                     Just ct -> do
+                        let h = recursiveArgs ct
+                        return (putEither (or h) (c,h))
+                     Nothing -> error $ "Cannot find type " ++
 
-    plainProof :: [TM ProofDecl]
-    plainProof
-        | any (concreteType . snd) typedArgs = []
-        | otherwise =
-            return $ accompanyParts Plain $ do
-            p <- instantiateP []
-            return $ [Part "plain" [Conjecture "plain" p] EpicFail]
-
-    instantiateP :: [(VarName,VarName)] -> TM T.Formula
-    instantiateP binds = locally $ do
-        lhs' <- translateExpr (substVars binds lhs)
-        rhs' <- translateExpr (substVars binds rhs)
-        forallUnbound (lhs' `equals` rhs')
-
-    proofByFixpointInduction :: [TM ProofDecl]
-    proofByFixpointInduction = concatMap
-                                   instantiateFixProof
-                                   (proofByFixpoint fundecls recfuns lhs rhs)
-      where
-        instantiateEq :: (Expr,Expr) -> TM T.Formula
-        instantiateEq (l,r) = locally $ do
-            l' <- translateExpr l
-            r' <- translateExpr r
-            forallUnbound (l' `equals` r')
-
-        addFunsFromDecls ds = sequence_
-           [ addFuns [(f,length as)] | Func f as _ <- ds ]
-
-        addUnrecFunsFromDecls ds fixedFuns = sequence_
-           [ addFuns [(f ++ unRec,length as)]
-           | Func f as _ <- ds
-           , f `elem` fixedFuns ]
-
-        instantiateFixProof :: FixProof -> [TM ProofDecl]
-        instantiateFixProof fp@(FixProof {..}) =
-            [ accompanyPartsWithDecls (FixpointInduction fixedFuns)
-                 [(baseDecls ++ fundecls,baseAxioms)
-                 ,(stepDecls ++ fundecls,stepAxioms)]
-{-            , accompanyPartsWithDecls (FiniteFixpointInduction fixedFuns)
-                 [(fundecls,anyAxioms)
-                 ,(stepDecls ++ fundecls,stepAxioms)] -}
-            ]
-          where
-             baseAxioms = do
-                 dbproof $ show fp
-                 addFunsFromDecls baseDecls
-                 pbottom <- instantiateEq base
-                 return $ [proofPart "base" [Conjecture "fixbase" pbottom]]
-
-             anyAxioms = do
-                 dbproof $ show fp
-                 panyt <- instantiateEq anyt
-                 return $ [Part "anybase"
-                                 [Conjecture "fixanybase" panyt]
-                                 FiniteSuccess]
-
-             stepAxioms = do
-                 addFunsFromDecls stepDecls
-                 addUnrecFunsFromDecls fundecls fixedFuns
-                 phyp  <- instantiateEq hyp
-                 pstep <- instantiateEq step
-                 return $ [proofPart "step"
-                                 [Axiom "fixhyp" phyp
-                                 ,Conjecture "fixstep" pstep]]
+       dbproof $ "decorateArg, " ++ n ++ " : " ++ show lr
+       return (n,lr)
+    decorateArg (n,t) = error $ "decorateArg " ++ n
+                              ++ " on non-concrete type " ++ show t
+-}
 
 
 approximate :: Name -> Type -> TM (Name,[T.Decl])

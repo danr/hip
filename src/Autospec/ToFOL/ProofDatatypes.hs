@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
 module Autospec.ToFOL.ProofDatatypes where
 
 import qualified Language.TPTP as T
@@ -8,98 +7,91 @@ proofDatatypes :: [Name]
 proofDatatypes = ["Prop"]
 
 proveFunctions :: [Name]
-proveFunctions = ["prove","proveBool","given","givenBool","=:=","=/="]
+proveFunctions = ["prove","proveBool","given","givenBool","=:="]
 
 provable :: Expr -> Bool
 provable (App f es) = f `elem` proveFunctions || any provable es
 provable _          = False
 
-data ProofType = Plain
-               | SimpleInduction         { indVar :: Name }
-               | ApproxLemma
-               | FixpointInduction       { fixFuns :: [Name] }
-               | FiniteFixpointInduction { fixFuns :: [Name] }
-               | StructuralInduction     { indVars :: [Name]
-                                         , addBottom :: Bool
-                                         , depth :: Int }
-
+data ProofMethod = Plain
+                 | SimpleInduction         { indVar :: Name }
+                 | ApproxLemma
+                 | FixpointInduction       { fixFuns :: [Name] }
+                 | StructuralInduction     { indVars :: [Name]
+                                           , addBottom :: Bool
+                                           , depth :: Int }
   deriving (Eq,Ord)
 
-data Failure = Fail          -- ^ If this property fails, then the whole proof techinque fails
-             | InfiniteFail  -- ^ If this property fails, it's just the infinite case that fails
-             | EpicFail      -- ^ If this property is Countersatisfiable, then the conjecture fails
-             | FiniteSuccess -- ^ If this property succeeds, it only counts as a finite success
+data Coverage = Infinite
+              -- ^ Infinite and partial values
+              | Finite
+              -- ^ Finite and total values
   deriving (Eq,Ord,Show)
 
-instance Show ProofType where
+instance Show ProofMethod where
   show Plain                       = "plain"
   show (SimpleInduction v)         = "simple induction on " ++ v
   show ApproxLemma                 = "approximation lemma"
   show (FixpointInduction f)       = "fixed point induction on " ++ unwords f
-  show (FiniteFixpointInduction f) = "finite fixed point induction on " ++ unwords f
   show (StructuralInduction vs b d) = concat [ "finite " | not b ] ++ "structural induction on " ++
                                       unwords vs ++ " depth " ++ show d
 
-proofTypeFile :: ProofType -> String
+proofTypeFile :: ProofMethod -> String
 proofTypeFile pt = case pt of
   Plain                      -> "plain"
   SimpleInduction v          -> "simpleind" ++ v
   ApproxLemma                -> "approx"
   FixpointInduction f        -> "fix" ++ concat f
-  FiniteFixpointInduction f  -> "finfix" ++ concat f
   StructuralInduction vs b d -> concat [ "fin" | not b ] ++ "strind" ++ concat vs ++ show d
 
-proofTypes :: [ProofType]
+proofTypes :: [ProofMethod]
 proofTypes = [Plain,SimpleInduction ""
              ,ApproxLemma
              ,FixpointInduction []
-             ,StructuralInduction [] True 0]
---             ,FiniteFixpointInduction []]
+             ,StructuralInduction [] True 0
+             ]
 
-liberalEq :: ProofType -> ProofType -> Bool
+
+liberalEq :: ProofMethod -> ProofMethod -> Bool
 liberalEq Plain Plain                                         = True
 liberalEq SimpleInduction{} SimpleInduction{}                 = True
 liberalEq ApproxLemma ApproxLemma                             = True
 liberalEq FixpointInduction{} FixpointInduction{}             = True
-liberalEq FiniteFixpointInduction{} FiniteFixpointInduction{} = True
 liberalEq StructuralInduction{} StructuralInduction{}         = True
 liberalEq _ _                                                 = False
 
-liberalShow :: ProofType -> String
+liberalShow :: ProofMethod -> String
 liberalShow Plain                     = "plain"
 liberalShow SimpleInduction{}         = "simple induction"
 liberalShow ApproxLemma               = "approximation lemma"
 liberalShow FixpointInduction{}       = "fixed point induction"
-liberalShow FiniteFixpointInduction{} = "finite fixed point induction"
 liberalShow StructuralInduction{}     = "structural induction"
 
-latexShow :: ProofType -> String
+latexShow :: ProofMethod -> String
 latexShow Plain                     = "plain"
 latexShow SimpleInduction{}         = "simple ind"
 latexShow ApproxLemma               = "approx"
 latexShow FixpointInduction{}       = "fixpoint ind"
-latexShow FiniteFixpointInduction{} = "finite fixpoint ind"
 latexShow StructuralInduction{}     = "struct ind"
 
-data Principle k = Principle { principleName  :: Name
-                             , principleType  :: ProofType
-                             , principleDecor :: k
-                             , principleCode  :: String
-                             , principleParts :: [Part k]
-                             }
-  deriving (Eq,Ord,Show,Functor)
+data Part = Part { partProperty  :: Name
+                 , partCode      :: String
+                 , partMethod    :: ProofMethod
+                 , partTheory    :: [T.Decl]
+                 , partParticles :: [Particle]
+                 , partCoverage  :: Coverage
+                 }
+  deriving (Eq,Ord,Show)
 
-type ProofDecl = Principle [T.Decl]
+data Particle = Particle { particleDesc   :: String
+                         , particleAxioms :: [T.Decl]
+                         }
+  deriving (Eq,Ord,Show)
 
-data Part k = Part { partName  :: Name
-                   , partDecor :: k
-                   , partFail  :: Failure
-                   }
-  deriving (Eq,Ord,Show,Functor)
-
+{-
 type ProofPart = Part [T.Decl]
 
-proofDecl :: Name -> ProofType -> [T.Decl] -> String -> [ProofPart] -> ProofDecl
+proofDecl :: Name -> ProofMethod -> [T.Decl] -> String -> [ProofPart] -> ProofDecl
 proofDecl = Principle
 
 proofPart :: Name -> [T.Decl] -> ProofPart
@@ -113,3 +105,7 @@ extendProofPart ts pp = pp { partDecor = partDecor pp ++ ts }
 
 extendPrinciple :: Part k -> Principle k -> Principle k
 extendPrinciple pt pd = pd { principleParts = principleParts pd ++ [pt] }
+-}
+
+extendParticle :: [T.Decl] -> Particle -> Particle
+extendParticle axioms p = p { particleAxioms = particleAxioms p ++ axioms }
