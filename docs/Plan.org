@@ -712,20 +712,23 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 5 :scope subtree
-Clock summary at [2012-01-29 Sun 16:18]
+Clock summary at [2012-01-29 Sun 23:32]
 
-| Headline                                                   | Time   |      |      |      |      |
-|------------------------------------------------------------+--------+------+------+------+------|
-| *Total time*                                               | *1:21* |      |      |      |      |
-|------------------------------------------------------------+--------+------+------+------+------|
-| Plan                                                       | 1:21   |      |      |      |      |
-| Tasks                                                      |        | 1:21 |      |      |      |
-| ONGOING Time planning                                      |        |      | 0:13 |      |      |
-| TODO Results                                               |        |      | 1:07 |      |      |
-| NEXT Patch the program to run all provers                  |        |      |      | 1:07 |      |
-| TODO SPASS                                                 |        |      |      |      | 0:31 |
-| TODO Prover9                                               |        |      |      |      | 0:19 |
-| TODO Make a program that discovers how the provers answers |        |      |      |      | 0:16 |
+| Headline                                                      | Time   |      |      |      |      |
+|---------------------------------------------------------------+--------+------+------+------+------|
+| *Total time*                                                  | *1:49* |      |      |      |      |
+|---------------------------------------------------------------+--------+------+------+------+------|
+| Plan                                                          | 1:49   |      |      |      |      |
+| Tasks                                                         |        | 1:49 |      |      |      |
+| ONGOING Time planning                                         |        |      | 0:13 |      |      |
+| TODO Results                                                  |        |      | 1:35 |      |      |
+| NEXT Patch the program to run all provers                     |        |      |      | 1:35 |      |
+| TODO SPASS                                                    |        |      |      |      | 0:31 |
+| TODO Prover9                                                  |        |      |      |      | 0:19 |
+| TODO Equinox                                                  |        |      |      |      | 0:02 |
+| TODO Vampire                                                  |        |      |      |      | 0:11 |
+| TODO Waldmeister (?)                                          |        |      |      |      | 0:15 |
+| DONE Make a test suite that discovers how the provers answers |        |      |      |      | 0:16 |
 #+END:
 ** Refile
 ** Completed
@@ -918,6 +921,7 @@ qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
 *** TODO Presentation
 **** TODO GTK2Hs frontend for proofs for presentation
 **** Ideas on live examples
+*** TODO Mail about presentation on FP meeting time
 *** TODO Final presentation
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete
