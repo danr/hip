@@ -1,6 +1,8 @@
 -- Sketch of how run provers should be redesigned
 
 
+import System.CPUTime
+
 import Control.Monad
 import Control.Applicative
 --import Control.Monad.
@@ -8,15 +10,59 @@ import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Control.Concurrent
 
-data ProverResult = Theorem        { successTime :: Int }
-                  | Failure
-                  | Unknown String
+import qualified Data.Map as M
+import Data.Map (Map)
 
-data PropResult = FiniteProved | Proved | None
+import qualified Data.Set as S
+import Data.Set (Set)
 
-type PartResult = Bool
+import Autospec.ResultDatatypes
 
-type PartID = Int
+type ParticleID = Int
+
+type PropertyV  = PropertyMatter ()
+type PartV      = PartMatter ()
+type PrincipleV = PrincipleMatter ()
+
+-- Make unique id for each property and part
+work :: [Property] -> IO
+work =
+
+makeIDs :: [Property] -> ..
+makeIDs []     = ...
+makeIDs (p:ps) =
+
+{- Points upwards, example
+
+
+property               +-assoc----
+                        -- --     \-----
+                      -/     \--        \-----
+                    -/          \-            \--
+part             strind           approx       fpi-1         ...
+                  / |  \             |          /  \
+                 /  |   \            |         /    \
+                /   |    \           |        /      |
+principle     _|_   S     Z        step       base step
+
+
+
+-}
+type Tree = Map Unique Unique
+
+data Env = Env { tree            :: True
+               , lookupProperty  :: Map Unique Property
+               , lookupPart      :: Map Unique Part
+               , lookupPrinciple :: Map Unique Principle
+               }
+
+makeUniqueIDs :: [Part] -> ReaderT (Env,Set Name) IO Env
+makeUniqueIDs [] = fst =<< ask
+makeUniqueIDs (Part{..}:ps) = do
+    (e,s) <- ask
+
+
+
 
 -- These environment parameters should be configurable run-time for
 -- the GUI front end
@@ -46,8 +92,8 @@ type PartID = Int
 
 worker :: Chan [Particle] -> Chan (Particle,PartResult) -> IO ()
 worker particleChan resChan = forever $ do
-    particleID      <- readChan particleChan
-    partAbandoned <- queryParticle particleID
+    particleID  <- readChan        particleChan
+    proceed     <- proceedParticle particleID
     unless (partAbandoned && abandonParts) $ do
         resvar <- newEmptyMVar
         tptpTheory <- getTPTPTheory particleID
@@ -94,6 +140,8 @@ runProver (Prover{..}) inputStr = do
     when (not (null input)) $ do hPutStr inh inputStr; hFlush inh
     hClose inh -- done with stdin
 
+    timeStart <- getCPUTime
+
     done <- newEmptyMVar
 
     tid <- forkIO $ do
@@ -114,12 +162,16 @@ runProver (Prover{..}) inputStr = do
 
     ex <- takeMVar done
 
+    timeStop <- getCPUTime
+
+    let time = (timeStop - timeStart) `div` (1000*1000*1000)
+
     killThread tid
     killThread kid
 
     return $ case ex of
-               Nothing              -> Timeout
-               Just ExitSuccess     -> proverProcessOutput output
+               Nothing              -> Failure
+               Just ExitSuccess     -> proverProcessOutput output time
                Just (ExitFailure r) -> Unknown (output ++ "\n(exit " ++ show r ++ ")")
 
 

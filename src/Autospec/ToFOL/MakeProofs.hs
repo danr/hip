@@ -41,24 +41,22 @@ makeProofDecls fundecls recfuns ty (Func fname args (Expr e)) = do
         resTy     = unProp $ case ty of TyApp ts -> last ts
                                         t        -> t
 
-        prove' :: Bool -> Expr -> Expr -> [TM Part]
-        prove' b lhs rhs = case resTy of
+        prove' :: Expr -> Expr -> [TM Part]
+        prove' lhs rhs = case resTy of
               -- Prop (a -> b) ~= a -> Prop b
               TyApp ts -> let extraTyArgs =  zip [ "x." ++ show x | x <- [0..] ]
                                                  (init ts)
                           in  prove fundecls recfuns
                                     (last ts)
                                     fname
-                                    (typedArgs ++ extraTyArgs) b
+                                    (typedArgs ++ extraTyArgs)
                                     (foldl app lhs (map (Var . fst) extraTyArgs))
                                     (foldl app rhs (map (Var . fst) extraTyArgs))
-              _        -> prove fundecls recfuns resTy fname typedArgs b lhs rhs
+              _        -> prove fundecls recfuns resTy fname typedArgs lhs rhs
     case e of
-      App "proveBool" [lhs]             -> prove' False lhs (Con "True" [])
-      App "prove" [App "=:=" [lhs,rhs]] -> prove' False lhs rhs
-      App "=:=" [lhs,rhs]               -> prove' False lhs rhs
-      App "prove" [App "=/=" [lhs,rhs]] -> prove' True  lhs rhs
-      App "=/=" [lhs,rhs]               -> prove' True  lhs rhs
+      App "proveBool" [lhs]             -> prove' lhs (Con "True" [])
+      App "prove" [App "=:=" [lhs,rhs]] -> prove' lhs rhs
+      App "=:=" [lhs,rhs]               -> prove' lhs rhs
       _  -> []
 makeProofDecls _ _ _ _ = []
 
@@ -81,15 +79,13 @@ prove :: [Decl]
       -- ^ Name of the property
       -> [(Name,Type)]
       -- ^ Arguments together with type
-      -> Bool
-      -- ^ Disprove instead of proving
       -> Expr
       -- ^ LHS
       -> Expr
       -- ^ RHS
       -> [TM Part]
       -- ^ Resulting instructions how to do proof declarations for this
-prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
+prove fundecls recfuns resTy fname typedArgs lhs rhs =
     let indargs = filter (concreteType . snd) typedArgs
         powset = powerset indargs
     in  plainProof
@@ -99,23 +95,15 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
      ++ map (proofByStructInd False 2) (filter ((<3) .  length) powset)
 --        map proofBySimpleInduction indargs
   where
-    pstr :: String
-    pstr = prettyCore lhs ++
-           (if disprove then " !" else " ") ++
-           "= " ++ prettyCore rhs
-
     accompanyParts :: ProofMethod -> Coverage -> TM [Particle] -> TM Part
     accompanyParts prooftype coverage partsm = do
         let funs = map (declName &&& length . declArgs) fundecls
         addFuns funs
-        faxioms <- concatMapM (fmap snd . translate) fundecls
+        theory <- concatMapM (fmap snd . translate) fundecls
         parts   <- partsm
-        return $ Part { partProperty   = fname
-                      , partCode       = pstr
-                      , partMethod     = prooftype
-                      , partTheory     = faxioms
-                      , partParticles  = parts
+        return $ Part { partMethod     = prooftype
                       , partCoverage   = coverage
+                      , partMatter     = (theory,parts)
                       }
 
 
@@ -129,14 +117,11 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
             addFuns funs
             locally $ do
                 parts   <- partms
-                faxioms <- concatMapM (fmap snd . translate) fundecls'
-                return $ map (extendParticle faxioms) parts
-         return $ Part { partProperty   = fname
-                       , partCode       = pstr
-                       , partMethod     = prooftype
-                       , partTheory     = []
-                       , partParticles  = parts
+                theory <- concatMapM (fmap snd . translate) fundecls'
+                return $ map (extendParticle theory) parts
+         return $ Part { partMethod     = prooftype
                        , partCoverage   = coverage
+                       , partMatter     = ([],parts)
                        }
 
     proofByStructInd :: Bool -> Int -> [(Name,Type)] -> TM Part
@@ -151,7 +136,7 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
             phyps <- mapM instP hyps
             pconj <- instP conj
             return $ Particle { particleDesc   = unwords vars
-                              , particleAxioms = Conjecture "conj" pconj :
+                              , particleMatter = Conjecture "conj" pconj :
                                                  [ Axiom "hyp" phyp | phyp <- phyps ]
                               }
       where
@@ -165,7 +150,7 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
     approxSteps = do
         let f = "a.f"
         addFuns [(f,1)]
-        (approx,approxAxioms) <- approximate f resTy
+        (approx,approxTheory) <- approximate f resTy
         hyp <- locally $ do
                   lhs' <- translateExpr (App f [lhs])
                   rhs' <- translateExpr (App f [rhs])
@@ -174,7 +159,7 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
                   lhs' <- translateExpr (App approx [lhs])
                   rhs' <- translateExpr (App approx [rhs])
                   forallUnbound (lhs' === rhs')
-        return (hyp,step,approxAxioms)
+        return (hyp,step,approxTheory)
 
     -- Returns in the List monad instead of the Maybe monad
     proofByApproxLemma :: [TM Part]
@@ -182,8 +167,8 @@ prove fundecls recfuns resTy fname typedArgs disprove lhs rhs =
        | concreteType resTy =
              [accompanyParts ApproxLemma Infinite $ do
                    (hyp,step,approxAxioms) <- approxSteps
-                   return $ [Particle { particleDesc = "step"
-                                      , particleAxioms = Axiom "approxhyp" hyp
+                   return $ [Particle { particleDesc   = "step"
+                                      , particleMatter = Axiom "approxhyp" hyp
                                                        : Conjecture "approxstep" step
                                                        : approxAxioms
                                       }]
@@ -313,6 +298,6 @@ approximate f ty = do
     addFuns [(n,1)]
     let decl = funcMatrix n matrix
     dbproof $ prettyCore decl
-    (_,axioms) <- translate decl
-    return (n,axioms)
+    (_,theory) <- translate decl
+    return (n,theory)
 

@@ -18,22 +18,23 @@ data Prover = Prover { proverName          :: ProverName
                      -- ^ system command to createProcess
                      , proverArgs          :: Int -> [String]
                      -- ^ given timeout in secs, args to createProcess
-                     , proverProcessOutput :: String -> Result
-                     -- ^ processes the output and gives a result
+                     , proverProcessOutput :: String -> Int -> Result
+                     -- ^ processes the output and time and gives a result
                      , proverShort         :: Char
                      -- ^ short char for command line options
                      }
 
 
 -- Should really use something more efficient than isInfixOf
-searchOutput ::  [(String,Result)] -> String -> Result
-searchOutput []         output = Unknown output
-searchOutput ((s,r):xs) output | s `isInfixOf` output = r
-                               | otherwise            = searchOutput xs output
+searchOutput :: [(String,time -> Result)] -> String -> time -> Result
+searchOutput []         output time = Unknown output
+searchOutput ((s,r):xs) output time
+    | s `isInfixOf` output = r time
+    | otherwise            = searchOutput xs output
 
 
 statusSZS = [("Theorem",Theorem),("Unsatisfiable",Theorem)
-            ,("CounterSatisfiable",Countersat)]
+            ,("CounterSatisfiable",const Failure)]
 
 allProvers :: [Prover]
 allProvers = [eprover,vampire,prover9,spass,equinox]
@@ -61,7 +62,7 @@ prover9 = Prover
   { proverName          = Prover9
   , proverCmd           = "prover9script"
   , proverArgs          = \t -> [show t]
-  , proverProcessOutput = searchOutput [("THEOREM PROVED",Theorem)] -- ("SEARCH FAILED",None)
+  , proverProcessOutput = searchOutput [("THEOREM PROVED",Theorem),("SEARCH FAILED",const None)]
   , proverShort         = 'p'
   }
 

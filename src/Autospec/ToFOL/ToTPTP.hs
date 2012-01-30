@@ -76,36 +76,40 @@ filterDatas typesFromSig cs =
 filterFuns :: Set Name -> [Decl] -> [Decl]
 filterFuns fs = filter ((`S.member` fs) . declName)
 
-prepareProofs :: [Decl] -> ([ProofDecl],[Msg])
+prepareProofs :: [Decl] -> ([Property],[Msg])
 prepareProofs ds = second ((extraDebug ++) . concat)
                  $ unzip (concatMap processDecl proofDecls)
   where
     extraDebug = [dbproofMsg $ "Recursive functions: " ++ show recursiveFuns]
 
-    processDecl :: Decl -> [(ProofDecl,[Msg])]
+    processDecl :: Decl -> [(Property,[Msg])]
     processDecl d
       | declName d `elem` proveFunctions = []
       | otherwise =
-          let fname = declName d
-              mty = declType <$> find ((fname ==) . declName) typeDecls
+          let propName = declName d
+              mty = declType <$> find ((propName ==) . declName) typeDecls
           in case mty of
               Nothing -> []
-              Just sigty ->
+              Just sigty -> do
                 let (fsd,csd)    = usedFC d
                     typesFromSig = getTypes sigty
                     (fs,cs')  = compIterateFCs (fsd S.\\ S.fromList proveFunctions)
                     cs        = S.insert bottomName $ csd `S.union` cs'
                     datadecls = filterDatas typesFromSig cs dataDecls
                     fundecls  = filterFuns  fs funDecls
-                    pdms      = makeProofDecls fundecls recursiveFuns sigty d
-                in  flip map pdms $ \pdm -> runTM $ do
-                        dbproof $ fname
+                    partsm    = makeProofDecls fundecls recursiveFuns sigty d
+                    (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM $ do
+                        dbproof $ propName
                         addTypes types
                         addCons datadecls
-                        pd    <- pdm
+                        part  <- partm
                         extra <- envStDecls
                         db    <- popDebug
-                        return (extendProofDecls extra pd,db)
+                        return (extendPart extra part,db)
+                return $ (Property { propName  = propName
+                                   , propCode  = prettyCore (funcBody d)
+                                   , propMatter = parts
+                                   },concat dbg)
 
     ProcessedDecls{..} = processDecls ds
     types = map (declName &&& declType) typeDecls

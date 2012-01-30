@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveFunctor #-}
 module Autospec.ToFOL.ProofDatatypes where
 
 import qualified Language.TPTP as T
 import Autospec.ToFOL.Core
+import Data.Function
 
 proofDatatypes :: [Name]
 proofDatatypes = ["Prop"]
@@ -74,38 +76,42 @@ latexShow ApproxLemma               = "approx"
 latexShow FixpointInduction{}       = "fixpoint ind"
 latexShow StructuralInduction{}     = "struct ind"
 
-data Part = Part { partProperty  :: Name
-                 , partCode      :: String
-                 , partMethod    :: ProofMethod
-                 , partTheory    :: [T.Decl]
-                 , partParticles :: [Particle]
-                 , partCoverage  :: Coverage
-                 }
-  deriving (Eq,Ord,Show)
+type Property  = PropertyMatter [Part]
+type Part      = PartMatter     ([T.Decl],[Particle])
+type Particle  = ParticleMatter [T.Decl]
 
-data Particle = Particle { particleDesc   :: String
-                         , particleAxioms :: [T.Decl]
+data PropertyMatter m = Property { propName   :: Name
+                                 , propCode   :: String
+                                 , propMatter :: m
+                                 }
+  deriving (Show,Functor)
+
+instance Eq (PropertyMatter m) where
+  (==) = (==) `on` propName
+
+instance Ord (PropertyMatter m) where
+  compare = compare `on` propName
+
+
+data PartMatter m = Part { partMethod    :: ProofMethod
+                         , partCoverage  :: Coverage
+                         , partMatter    :: m
                          }
-  deriving (Eq,Ord,Show)
+  deriving (Show,Functor)
 
-{-
-type ProofPart = Part [T.Decl]
+instance Eq (PartMatter m) where
+  (==) = (==) `on` partMethod
 
-proofDecl :: Name -> ProofMethod -> [T.Decl] -> String -> [ProofPart] -> ProofDecl
-proofDecl = Principle
+instance Ord (PartMatter m) where
+  compare = compare `on` partMethod
 
-proofPart :: Name -> [T.Decl] -> ProofPart
-proofPart n d = Part n d Fail
-
-extendProofDecls :: [T.Decl] -> ProofDecl -> ProofDecl
-extendProofDecls ts pd = pd { principleDecor = principleDecor pd ++ ts }
-
-extendProofPart :: [T.Decl] -> ProofPart -> ProofPart
-extendProofPart ts pp = pp { partDecor = partDecor pp ++ ts }
-
-extendPrinciple :: Part k -> Principle k -> Principle k
-extendPrinciple pt pd = pd { principleParts = principleParts pd ++ [pt] }
--}
+data ParticleMatter m = Particle { particleDesc   :: String
+                                 , particleMatter :: m
+                                 }
+  deriving (Eq,Ord,Show,Functor)
 
 extendParticle :: [T.Decl] -> Particle -> Particle
-extendParticle axioms p = p { particleAxioms = particleAxioms p ++ axioms }
+extendParticle axioms p = p { particleMatter = particleMatter p ++ axioms }
+
+extendPart :: [T.Decl] -> Part -> Part
+extendPart axioms (Part n c (theory,ps)) = Part n c (axioms ++ theory,ps)
