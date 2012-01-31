@@ -91,12 +91,14 @@ For such simple indexed sum of products data types the translation is
 straightforward: for a data type $T$, with a constructor $K$ you get
 all recursive arguments of $T$ to $K$ as hypotheses.
 
-\subsection{Partial and infinite values}
-\sec{sec:admissible}
+\subsection{Partial and Infinite Values}
+\label{sec:admissible}
 
-Predicates $P$ that preserves $\omega$-chains of $\sqsubseteq$ (see
-section \ref{sec:domaintheory}) are called \emph{admissible} (among
-other names). Such a chain can for instance be this one:
+To use induction to prove properties about infinite and partial
+values, we need to use predicates that preserves $\omega$-chains of
+$\sqsubseteq$. Such chains are described in more detail in
+section \ref{sec:domaintheory}, an example of such a chain can for
+instance be this one:
 
 \begin{equation*}
 \bot \sqsubseteq
@@ -106,21 +108,22 @@ other names). Such a chain can for instance be this one:
 \cdots
 \end{equation*}
 
-This chain has the limit \hs{inf}, defined as \hs{inf = Succ
-  inf}. If $P$ is an admissible predicate, then if $P$
-holds for every element in that chain then $P(\hs{inf})$. In general
-terms, preserving $\omega$-chains means that for every chain $\langle
-x_n \rangle_{n \in \omega}$} this holds:
+This chain has the limit \hs{inf}, defined as \hs{inf = Succ inf}. If
+$P$ is an admissible predicate, then if $P$ holds for every element in
+that chain then $P(\hs{inf})$. In general terms, preserving
+$\omega$-chains means that for every chain $\langle x_n \rangle_{n \in
+  \omega}$} this holds:
 
 \begin{equation*}
 (\fa{n} P(x_n)) \Rightarrow P(\lub{n \in \omega}(x_n))
 \end{equation*}
 
-Equality of continuous functions is admissible: assume two such
-functions $f$ and $g$, and define the predicate as
-$P(x) :\Leftrightarrow f(x) = g(x)$. Take any chain
-$\langle x_n \rangle_{n \in \omega}$, and assume $P$ holds for every
-element in the chain, then:
+The properties that we are concerned about are equality, and equality
+of continuous functions is easily proved to admissible. Assume two
+such functions $f$ and $g$, and define the predicate as $P(x)
+:\Leftrightarrow f(x) = g(x)$. Take any chain $\langle x_n \rangle_{n
+  \in \omega}$, and assume $P$ holds for every element in the chain,
+then:
 
 \begin{align*}
 \desca{assumption}               \\
@@ -242,8 +245,7 @@ data Z = Pos Nat | Neg Nat
 \end{verbatim}
 
 A value of $\hs{Pos} \w x$ denotes the integer $+\, x$ and $\hs{Neg} \w y$
-the integer $-\
-, (y + 1)$, to avoid having two values denote
+the integer $-(1+y)$. This avoids having two values denoting
 $0$. With the above technique, the induction principle for total
 \hs{Z} with two constructors is:
 
@@ -261,7 +263,7 @@ $0$. With the above technique, the induction principle for total
      { \fa{x} P(x) }
 \end{mathpar}
 
-\subsection{Implementation}
+\subsection{Skolemized Hypotheses}
 
 The universally quantified variables are skolemized, a new constant is
 introduced for each and that means that they can be referred to in
@@ -279,19 +281,21 @@ Rather, skolemize each universally quantified variable and prove this:
 T , P(l) , P(r) \vdash P(\hs{Branch} \w l \w x \w r)
 \end{equation*}
 
-This make the implementation of the simple induction technique with
-one argument and one constructor straightforward. For each constructor
-$C$ with $n$ arguments, we make a new call to a theorem prover with $n$
-Skolem variables $x_1 \cdots x_n$ and try to prove $P(x_1,\cdots,x_n)$.
-Additionally, for each argument with assigned variable $x_i$, if the
-type of this variable is the same as the constructor $C$'s, $P(x_i)$
-is added as an axiom to the theory: this an induction hypothesis.
+This prevents long formulas should there be many hypotheses.  It also
+makes the implementation of the simple induction technique with one
+argument and one constructor straightforward. For each constructor $C$
+with $n$ arguments, we make a new call to a theorem prover with $n$
+Skolem variables $x_1 \cdots x_n$ and try to prove
+$P(x_1,\cdots,x_n)$.  Additionally, for each argument with assigned
+variable $x_i$, if the type of this variable is the same as the
+constructor $C$'s, $P(x_i)$ is added as an axiom to the theory: this
+an induction hypothesis.
 
 The predicate is inlined: there is no introduction of $P$ and its
 definition, it is replaced with the property. Suppose we want to prove
 the property
 $\fa{t} \hs{mirror} \w (\hs{mirror} \w t) = t$ where $t : \hs{Tree a}$,
-the Branch case generates this call to the theorem prover:
+the \hs{Branch} case generates this call to the theorem prover:
 
 \begin{align*}
 \mathcal{T} \, & , \, \hs{mirror} \w (\hs{mirror} \w x_1) \eq x_1 \\
@@ -307,29 +311,31 @@ constructor is \hs{Tree a}. For $x_2$, nothing is added since the type
 of this is simply \hs{a}.  For this property, in total three
 invocation of the theorem prover is made, one for each constructor.
 
-\note{I don't elaborate on this too much since the current
-  implementation generates tree of a given depth instead of a given
-  number of constructors. Specifying constructors could potentially
-  give you less granularity: I need to investigate this}
-To generate theories for the approach in \ref{sec:genind} an algorithm
-was written to generate trees with a number of constructors. For the
-commutativity of plus example, you would start with the expression
-\hs{(x :: Nat,y :: Nat)}, and for each occurrence of a typed variable,
-you replace it with its constructors, and combine. Then an other
-algorithm takes a typed expression, like
-\hs{(Succ (x :: Nat),Succ (y :: Nat))} and returns all expressions
-with less constructors you can generate with the correct type with
-the typed variables, here \hs{(Nat,Nat)}. Then you proceed as in the
-simple case: one invocation to the theorem prover for each step,
-variables are skolemized and the predicate inlined.
+\begin{comment}
+    \note{I don't elaborate on this too much since the current
+      implementation generates tree of a given depth instead of a given
+      number of constructors. Specifying constructors could potentially
+      give you less granularity: I need to investigate this}
+    To generate theories for the approach in \ref{sec:genind} an algorithm
+    was written to generate trees with a number of constructors. For the
+    commutativity of plus example, you would start with the expression
+    \hs{(x :: Nat,y :: Nat)}, and for each occurrence of a typed variable,
+    you replace it with its constructors, and combine. Then an other
+    algorithm takes a typed expression, like
+    \hs{(Succ (x :: Nat),Succ (y :: Nat))} and returns all expressions
+    with less constructors you can generate with the correct type with
+    the typed variables, here \hs{(Nat,Nat)}. Then you proceed as in the
+    simple case: one invocation to the theorem prover for each step,
+    variables are skolemized and the predicate inlined.
 
-This leads to a combinatorial explosion for a lot of data types. If
-you need to prove something with length $n$ lists, you get a induction
-conclusion $P(x_1\hs{:}x_2\hs{:}\cdots\hs{:}x_n\hs{:}xs)}$, and as there
-are $n!$ combinations of $x_1 \cdots x_n$, making this approach
-unusable for high $n$. A better way would probably to just give you
-all sub trees instead of all possible trees: again, this of course
-depends on what you need to show.
+    This leads to a combinatorial explosion for a lot of data types. If
+    you need to prove something with length $n$ lists, you get a induction
+    conclusion $P(x_1\hs{:}x_2\hs{:}\cdots\hs{:}x_n\hs{:}xs)}$, and as there
+    are $n!$ combinations of $x_1 \cdots x_n$, making this approach
+    unusable for high $n$. A better way would probably to just give you
+    all sub trees instead of all possible trees: again, this of course
+    depends on what you need to show.
+\end{comment}
 
 \subsection{Future work}
 \label{sec:futind}
@@ -402,7 +408,10 @@ induction is to allow the user to annotate in the source code the
 desired way to do induction: furthermore, it does not blend well that
 this should be a fully automated way of proving Haskell properties.
 
-\paragraph{Automated Depth} Another way to do this is to encode
+
+\paragraph{Automated Depth}
+\sec{sec:depthmachine}
+Another way to do this is to encode
 different induction ways by means of axioms in the theory itself. A
 simple example of this is to prove a property $P$ on one Peano natural
 number, and choose how many base cases in form of $P(0)$, $P(1)$, up

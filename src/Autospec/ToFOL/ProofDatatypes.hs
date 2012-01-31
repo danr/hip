@@ -48,10 +48,10 @@ proofMethodFile pt = case pt of
 
 proofMethods :: [ProofMethod]
 proofMethods = [Plain,SimpleInduction ""
-             ,ApproxLemma
-             ,FixpointInduction []
-             ,StructuralInduction [] True 0
-             ]
+               ,ApproxLemma
+               ,FixpointInduction []
+               ,StructuralInduction [] True 0
+               ]
 
 
 liberalEq :: ProofMethod -> ProofMethod -> Bool

@@ -712,24 +712,30 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 5 :scope subtree
-Clock summary at [2012-01-30 Mon 18:25]
+Clock summary at [2012-01-31 Tue 11:56]
 
-| Headline                                                      | Time   |      |      |      |      |
-|---------------------------------------------------------------+--------+------+------+------+------|
-| *Total time*                                                  | *7:13* |      |      |      |      |
-|---------------------------------------------------------------+--------+------+------+------+------|
-| Plan                                                          | 7:13   |      |      |      |      |
-| Tasks                                                         |        | 7:13 |      |      |      |
-| ONGOING Time planning                                         |        |      | 0:17 |      |      |
-| TODO Results                                                  |        |      | 6:55 |      |      |
-| NEXT Patch the program to run all provers                     |        |      |      | 6:55 |      |
-| NEXT Modify the code to accept both modes                     |        |      |      |      | 4:34 |
-| DONE SPASS                                                    |        |      |      |      | 0:32 |
-| DONE Prover9                                                  |        |      |      |      | 0:29 |
-| TODO Equinox                                                  |        |      |      |      | 0:27 |
-| DONE Vampire                                                  |        |      |      |      | 0:11 |
-| TODO Waldmeister (?)                                          |        |      |      |      | 0:15 |
-| DONE Make a test suite that discovers how the provers answers |        |      |      |      | 0:16 |
+| Headline                                                      | Time    |       |      |      |      |
+|---------------------------------------------------------------+---------+-------+------+------+------|
+| *Total time*                                                  | *11:04* |       |      |      |      |
+|---------------------------------------------------------------+---------+-------+------+------+------|
+| Plan                                                          | 11:04   |       |      |      |      |
+| Completed                                                     |         |  0:21 |      |      |      |
+| Report                                                        |         |       | 0:21 |      |      |
+| DONE Quantifying functions and app                            |         |       |      | 0:21 |      |
+| Tasks                                                         |         | 10:43 |      |      |      |
+| ONGOING Time planning                                         |         |       | 0:17 |      |      |
+| Report tasks                                                  |         |       | 1:14 |      |      |
+| NEXT Fixed point induction                                    |         |       |      | 0:55 |      |
+| TODO Structural induction rewrite                             |         |       |      | 0:19 |      |
+| TODO Results                                                  |         |       | 9:11 |      |      |
+| NEXT Patch the program to run all provers                     |         |       |      | 9:08 |      |
+| NEXT Modify the code to accept both modes                     |         |       |      |      | 6:43 |
+| DONE SPASS                                                    |         |       |      |      | 0:32 |
+| DONE Prover9                                                  |         |       |      |      | 0:29 |
+| TODO Equinox                                                  |         |       |      |      | 0:27 |
+| DONE Vampire                                                  |         |       |      |      | 0:11 |
+| TODO Waldmeister (?)                                          |         |       |      |      | 0:15 |
+| DONE Make a test suite that discovers how the provers answers |         |       |      |      | 0:16 |
 #+END:
 ** Refile
 ** Completed
@@ -760,9 +766,19 @@ CLOSED: [2012-01-29 Sun 00:39]
 *** DONE Examples
 **** DONE Add merge sort
 CLOSED: [2011-11-02 Wed 10:22]
+*** DONE Mail about presentation on FP meeting time
+CLOSED: [2012-01-30 Mon 17:29]
+- State "DONE"       from "NEXT"       [2012-01-30 Mon 17:29]
+*** Report                                                         :report:
+**** DONE Quantifying functions and app
+CLOSED: [2012-01-31 Tue 11:54]
+- State "DONE"       from "NEXT"       [2012-01-31 Tue 11:54]
+CLOCK: [2012-01-31 Tue 11:36]--[2012-01-31 Tue 11:47] =>  0:11
+CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
 ** Tasks
 CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
 *** ONGOING Time planning
+CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:12] =>  0:00
 CLOCK: [2012-01-30 Mon 17:29]--[2012-01-30 Mon 17:31] =>  0:02
 CLOCK: [2012-01-30 Mon 08:48]--[2012-01-30 Mon 08:50] =>  0:02
 CLOCK: [2012-01-29 Sun 15:06]--[2012-01-29 Sun 15:07] =>  0:01
@@ -773,19 +789,17 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 :ORDERED: t
 :END:
 *** Report tasks                                                   :report:
-**** NEXT Quantifying functions and app
-Didn't I already add this?
-
-On the syntax side it gives us a way to reason about partially applied
-functions, on the model side, app gives a way to interpret functions
-and all quantify over them. If the function is in scope, it just
-constrains app on that pointer to do the same as the function.
 **** TODO Conclusions
 This may need some thinking :)
 **** NEXT Fixed point induction
+CLOCK: [2012-01-31 Tue 10:24]--[2012-01-31 Tue 11:19] =>  0:55
 Overhaul and introduce the fancy notation earlier?
 **** NEXT Write introduction
 Write this: introduce the problem and why it is interesting
+**** TODO Structural induction rewrite
+CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
+CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
+
 **** TODO Future work
 ***** TODO Implications
 Chain complete?
@@ -821,10 +835,12 @@ Refutation is a proof that ends in $false
 [[http://dream.inf.ed.ac.uk/projects/lemmadiscovery/case_results.php][Case-Analysis Results]]
 These are exactly those imported from Zeno
 *** TODO Results
+CLOCK: [2012-01-31 Tue 11:33]--[2012-01-31 Tue 11:36] =>  0:03
 CLOCK: [2012-01-30 Mon 10:48]--[2012-01-30 Mon 10:48] =>  0:00
 **** TODO Prepare the test suite
 **** TODO Have a lab day to enlargen the test suite
 **** NEXT Patch the program to run all provers
+CLOCK: [2012-01-31 Tue 11:19]--[2012-01-31 Tue 11:23] =>  0:04
 CLOCK: [2012-01-30 Mon 10:48]--[2012-01-30 Mon 10:49] =>  0:01
 CLOCK: [2012-01-30 Mon 10:03]--[2012-01-30 Mon 10:12] =>  0:09
 CLOCK: [2012-01-29 Sun 15:11]--[2012-01-29 Sun 15:12] =>  0:01
@@ -833,6 +849,7 @@ CLOCK: [2012-01-29 Sun 15:11]--[2012-01-29 Sun 15:12] =>  0:01
 :END:
 ***** Give some information of their relative performance
 ***** NEXT Modify the code to accept both modes
+CLOCK: [2012-01-30 Mon 22:16]--[2012-01-31 Tue 00:25] =>  2:09
 CLOCK: [2012-01-30 Mon 17:31]--[2012-01-30 Mon 18:24] =>  0:53
 CLOCK: [2012-01-30 Mon 16:39]--[2012-01-30 Mon 17:29] =>  0:50
 CLOCK: [2012-01-30 Mon 13:47]--[2012-01-30 Mon 15:30] =>  1:43
@@ -963,9 +980,6 @@ qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
 DEADLINE: <2012-02-03 Fri>
 *** MEETING With Koen
 SCHEDULED: <2012-01-30 Mon 13:00>
-*** DONE Mail about presentation on FP meeting time
-CLOSED: [2012-01-30 Mon 17:29]
-- State "DONE"       from "NEXT"       [2012-01-30 Mon 17:29]
 *** TODO Final presentation
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete

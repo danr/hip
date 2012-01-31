@@ -38,7 +38,7 @@ runProver (Prover{..}) inputStr timelimit = do
 
     timeStart <- getCPUTime
 
-    done <- newEmptyMVar
+    exitCodeMVar <- newEmptyMVar
 
     tid <- forkIO $ do
          -- read output
@@ -47,16 +47,16 @@ runProver (Prover{..}) inputStr timelimit = do
          return output
          -- wait on the process
          ex <- waitForProcess pid
-         putMVar done (Just ex)
+         putMVar exitCodeMVar (Just ex)
 
     kid <- forkIO $ do
          threadDelay (timelimit * 1000 * 1000)
          killThread tid
          terminateProcess pid
          ex <- waitForProcess pid
-         putMVar done Nothing
+         putMVar exitCodeMVar Nothing
 
-    ex <- takeMVar done
+    maybeExitCode <- takeMVar exitCodeMVar
 
     timeStop <- getCPUTime
 
@@ -65,8 +65,6 @@ runProver (Prover{..}) inputStr timelimit = do
     killThread tid
     killThread kid
 
-    return $ case ex of
-               Nothing              -> Failure
-               Just ExitSuccess     -> proverProcessOutput output time
-               Just (ExitFailure r) -> Unknown (output ++ "\n(exit " ++ show r ++ ")")
+    return $ maybe Failure (const $ proverProcessOutput output time) maybeExitCode
+
 

@@ -147,8 +147,7 @@ listener parts resChan = do
 
 -- | A worker. Reads the channel of parts to process, and writes to
 -- the result channel. Skips doing the rest of the particles if one
--- fails.  Not implemented: skipping a Part if another Part has
--- already proved this Property.
+-- fails, or if the property is proved elsewhere.
 worker :: Chan (PropName,Part) -> Chan (PropName,PartResult) -> ProveM ()
 worker partChan resChan = forever $ do
     (propName,Part partMethod partCoverage (partTheory,particles))  <- liftIO (readChan partChan)

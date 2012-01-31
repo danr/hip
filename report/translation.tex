@@ -455,6 +455,15 @@ $\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
 the axiom of $\fn{map.ptr}$ then equals this to
 $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
+\paragraph{Doing the impossible}
+While it is not possible to quantify over functions in first order
+logic, translating Haskell this way allows universal quantification of
+functions.  It provides a way to reason syntactically about partially
+applied functions. On the model side, $\appfn$ gives a way to
+interpret functions and universally quantify over them. If the
+function has a pointer defined, it just constrains app on that pointer
+to do the same as the function.
+
 \section{Guards}
 
 Guards are treated much like pattern matching. If a

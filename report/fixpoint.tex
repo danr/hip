@@ -1,9 +1,10 @@
 \section{Fixed point induction}
 \label{sec:fixpoint}
 
-Induction is well when you have arguments that are of a concrete type
-like lists, natural numbers, and so on, but there are also porperties
-with abstract types. The canonical example is the map-iterate property:
+Induction is applicable when arguments are of a concrete type, such as
+lists or natural numbers. There are also properties where all
+arguments are of abstract types. The canonical example is the
+map-iterate property:
 
 \begin{equation*}
 \faa{(f : a \rightarrow a)}{(x : a)} \hs{map} \w f \w (\hs{iterate} \w f \w x) \eq
@@ -11,18 +12,29 @@ with abstract types. The canonical example is the map-iterate property:
 \end{equation*}
 
 Here $f$ is an abstract function $a \rightarrow a$, and $x$ is
-something of type $a$. This example is further investigated in
-\ref{sec:mapiter}, but it is already clear that we cannot proceed to
-prove this with structural induction.  Enter fixed point induction. It
+something of type $a$. This example is further investigated in Section
+\ref{sec:mapiter} below, but it is already clear that we cannot proceed to
+prove this with structural induction.
+
+Enter fixed point induction. It allows a way of performing induction
+on the recursive structure of the program. In short, if the property
+regards a function $f$, the hypothesis is that the property holds for all
+the recursive calls in the definiton of $f$, and the goal is to prove
+that it holds for $f$.
+
+\begin{comment}
+It
 is an early example of a technique from domain theory, attributed to
 Scott and de Bakker,
 \note{Citation needed: there is a book called
   Mathematical Theory of Program Correctness by Jaco de Bakker that
   could be appropriate if found}
 and sometimes called Scott induction
-or computational induction.  \cite{domains} The least fixed point for
-a function can be found in Haskell with the function \hs{fix}, which
-can simply be defined as:
+or computational induction.  \cite{domains}
+\end{comment}
+
+The least fixed point for a function can be found in Haskell with the
+function \hs{fix}, which can simply be defined as:
 
 \begin{code}
 fix :: (a -> a) -> a
@@ -209,9 +221,10 @@ As discussed earlier, the $P$ used is admissible since it is an
 universally quantified equality. Hence, fixpoint induction gives us the
 \hs{map}-\hs{iterate} property.
 
-\subsection{Erroneous use of fixed point induction}
 
+\begin{comment}
 To illustrate why it is important that the property $P$ is admissible,
+we shall consider an example
 consider the predicate P to be “is not infinite”, and then you can
 prove for a lot of functions that they return finite objects. For
 instance, define this function:
@@ -247,7 +260,10 @@ The error is as promised that $P$ is not admissible: for the sequence
 \end{equation*}
 $P$ holds for all elements but $P$ does not hold for its limit \hs{[0..]}.
 
-\subsection{Mutually recursive functions}
+\end{comment}
+
+\begin{comment}
+\subsection{Mutually Recursive Functions}
 
 You can also mechanically transform mutually recursive functions to be
 defined in terms of \hs{fix}. The functions \hs{even} and \hs{odd}
@@ -285,6 +301,7 @@ even',odd' :: Nat -> Bool
 
 This encoding makes \hs{even'} denotationally equal to \hs{even} and
 the same relation hols for \hs{odd'} and \hs{odd}.
+\end{comment}
 
 \subsection{Implementation}
 
@@ -351,6 +368,54 @@ $\tofix{f}$), and the second case should use the original $f$. The
 transitive clousure of the call graph is calculated, and every
 appropriate calls of $f$ are replaced.
 
+\subsection{Erroneous use of fixed point induction}
+
+The importance that the predicate $P$ is admissible is illustrated in
+this example. The function \hs{finite} below returns \hs{True} on
+finite lists and $\bot$ on partial lists.
+
+\begin{code}
+finite :: [a] -> Bool
+finite []     = True
+finite (x:xs) = finite xs
+\end{code}
+
+Is it possible to use \hs{finite} to prove that \emph{all} lists in
+Haskell are either finite or partial? Let the predicate be
+$P(f) \Leftrightarrow \fa{xs} f \w xs \neq \hs{False}$, and proceed by fixed
+point induction. This is the proof plan with the predicate inlined:
+
+\begin{mathpar}
+  \inferrule*
+     {
+       \fa{xs} \bot \w xs \neq \hs{False}
+       \\
+       \fa{xs}             \unfix{\hs{finite}} \w xs \neq \hs{False}
+               \rightarrow \tofix{\hs{finite}} \w xs \neq \hs{False}
+     }
+     { \fa{xs} \hs{finite} \w xs \neq \hs{False} }
+\end{mathpar}
+
+\noindent
+The base case is trivial, as anything applied to bottom is $\bot$ and
+$\bot \neq \hs{False}$. The step case also succeeds; trivially if $xs$
+is the empty list, by the hypothesis if $xs$ is non-empty, and if $xs$
+is bottom for similar reasons as in the base case.
+
+The error is as promised that $P$ is not admissible. See the
+$\sqsubseteq$-chain below:
+\begin{equation*}
+\bot \sqsubseteq
+\hs{0:}\bot \sqsubseteq
+\hs{0:1:}\bot \sqsubseteq
+\hs{0:1:2:}\bot \sqsubseteq
+\cdots
+\end{equation*}
+$P$ holds for all elements in the chain, but $P$ does not hold for its
+limit \hs{[0..]}. This example also serves as a proof that inequality
+in general is not admissible.
+
+
 \subsection{Candidate Selection}
 
 Faced with the following property saying that if you drop $n$ elements
@@ -364,8 +429,9 @@ prop_length_drop xs n = length (drop n xs) =:= length xs - n
 \end{verbatim}
 
 The answer here is to do fixed point induction on \hs{drop}, and on
-\hs{-}. The implementetation tries fixed point induction on all
-subsets of recursive functions mentioned in the property.
+\hs{-}. So far no better way to tackle this is used than to try fixed
+point induction on all subsets of recursive functions mentioned in the
+property.
 
 \subsection{Future work}
 
@@ -380,17 +446,18 @@ rule:
        \\
        P(f \w \bot)
        \\
-       \inferrule*{P(x) \and P(f \w x)}{P(f \w (f \w x))}
+       P(x) \wedge P(f \w x) \rightarrow P(f \w (f \w x))
        \\
        P \w \mathrm{admissible}
      }
      { P(\fn{fix} f) }
 \end{mathpar}
 
-It is also possible to use the ``machine'' from Section
-\ref{sec:futind} to let the theorem prover determine the depth. An
-example that makes map-iterate impossible to show with ordinary depth
-one fixed point induction, is to redefine map to this:
+It is also possible to use such an encoding as in ``Automated depth''
+in Section \ref{sec:futind} to let the theorem prover determine the
+depth. As an example, the map-iterate property impossible to show with
+\hs{map} redefined to \hs{doublemap}, defined below, with ordinary one
+depth fixed point induction.
 
 \begin{verbatim}
 doublemap :: (a -> b) -> [a] -> [b]
@@ -399,5 +466,7 @@ doublemap f [x]      = [f x]
 doublemap f (x:y:zs) = f x : f y : doublemap f zs
 \end{verbatim}
 
-It is behaviorally equivalent to \hs{map}, but it makes the induction
-hypothesis in fixed point induction too weak.
+\noindent
+While \hs{doublemap} is behaviorally equivalent to \hs{map} on total
+lists, it makes the induction hypothesis in fixed point induction too
+weak.

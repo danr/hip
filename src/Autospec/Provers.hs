@@ -35,7 +35,7 @@ searchOutput ((s,r):xs) output time
 
 
 statusSZS = [("Theorem",Success),("Unsatisfiable",Success)
-            ,("CounterSatisfiable",const Failure),("Timeout",Failure)]
+            ,("CounterSatisfiable",const Failure),("Timeout",const Failure)]
 
 allProvers :: [Prover]
 allProvers = [vampire,prover9,spass,eprover,equinox]
@@ -57,7 +57,7 @@ vampire = Prover
   { proverName          = Vampire
   , proverCmd           = "vampire_lin64"
   , proverArgs          = \t -> words ("--proof tptp --mode casc -t " ++ show t)
-  , proverProcessOutput = searchOutput (("Time limit reached!",const Failure):statusSZS)
+  , proverProcessOutput = searchOutput statusSZS
   , proverShort         = 'v'
   }
 
