@@ -13,7 +13,7 @@ in the future sections that rely on concepts from domain theory.
 The values of every data type are ordered on how much ``information''
 they contain. The least element bottom, denoted $\bot$, contains least
 information. It corresponds to all kinds of crashes in Haskell; use of
-\hs{undefined}, non-termination or irrefutable pattern matches.
+\hs{undefined}, non-termination or non exhausite pattern matches.
 Different constructors hold different information, so they are not
 related by the ordering; this is a partial order, a relation that is
 reflexive, transitive and antisymmetric. The ordering is usually
@@ -202,8 +202,8 @@ evaluated. It does not and indeed cannot cover all non terminating
 functions because of the undecidability of the Halting problem.
 
 The domain theoretic results remain; one can see $\bot$ as another,
-albeit inconveniently inspected, constructor to every data type. There
-are no irrefutable patterns, every function has an implicit match any
+albeit inconveniently inspected, constructor to every data type. All
+patterns are exhaustive: every function has an implicit match any
 pattern to $\bot$.  Then we add a \emph{true} bottom to the domain
 denotes the uncatchable bottoms; undeterminable non termination. With
 this setting all Haskell functions are continuous with respect to the
