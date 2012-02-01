@@ -100,7 +100,7 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
         let funs = map (declName &&& length . declArgs) fundecls
         addFuns funs
         theory <- concatMapM (fmap snd . translate) fundecls
-        parts   <- partsm
+        parts  <- partsm
         return $ Part { partMethod     = prooftype
                       , partCoverage   = coverage
                       , partMatter     = (theory,parts)

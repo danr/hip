@@ -87,8 +87,9 @@ removeFromScope n = do
 inScope :: Name -> FH Bool
 inScope n = S.member n <$> gets scope
 
-namesInScope :: FH [Name]
-namesInScope = liftM2 (++) (M.keys <$> gets binds) (S.toList <$> gets scope)
+namesInScope :: FH [Either Name Name]
+namesInScope = liftM2 (++) (map Left . M.keys <$> gets binds)
+                           (map Right . S.toList <$> gets scope)
 
 addBind :: Name -> Name -> [Name] -> FH ()
 addBind fname scopedfname args

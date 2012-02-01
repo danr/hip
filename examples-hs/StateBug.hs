@@ -18,5 +18,3 @@ bind3 :: State s a -> (a -> State s b) -> State s b
 tup x y = (x,y)
 
 test x = tup x
-
-k x = \y -> let z = x in z

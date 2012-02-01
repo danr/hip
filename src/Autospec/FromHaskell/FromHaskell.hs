@@ -20,6 +20,7 @@ import Control.Monad
 import Data.List (groupBy,(\\),intercalate)
 import Data.Function (on)
 import Data.Maybe (fromMaybe)
+import Data.Either
 
 fixs = infix_ 0 ["=:=","=/="]
 
@@ -145,12 +146,15 @@ addMatchesIndirection :: [Match] -> FH ()
 addMatchesIndirection [] = fatal "Empty funmatches"
 addMatchesIndirection ms@(m:_) = do
     let n = fromName (matchName m)
-    fvs <- (\\) <$> freeVarss ms <*> namesInScope
+    fvms <- freeVarss ms
+    fvs <- (fvms \\) <$> (map (either id id) <$> namesInScope)
     scopedname <- scopePrefix n
 
     scope <- namesInScope
     debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
-            ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
+            ++ unwords fvs
+            ++ "\n\t(in scope: " ++ unwords (map show scope) ++ ")"
+            ++ "\n\t(without scope: " ++ unwords fvms ++ ")"
 
     addBind n scopedname fvs
 
@@ -164,11 +168,12 @@ fromMatches ms@(m:_) = do
 
     scope <- namesInScope
     debug $ "fromMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
-            ++ " (in scope: " ++ unwords scope ++ ")"
+            ++ " (in scope: " ++ unwords (map show scope) ++ ")"
 
     localBindScope $ do
       -- All free variables are arguments to this function
-      mapM_ addToScope fvs
+      -- Critical point for not having lets in lambdas....
+--      mapM_ addToScope fvs
       matrix <- localScopeName n
                   (map (addToPats fvs) <$> concatMapM matchToRow ms)
       if null matrix
@@ -298,6 +303,7 @@ fromPat pat = case pat of
   H.PVar pn     -> do let n = fromName pn
                       b <- inScope n
                       debug $ "In scope: " ++ show pn ++ " : " ++ show b
+                      -- This is if you pattern match on a variable already in scope
                       if b then do n' <- scopePrefix n
                                    addBind n n' []
                                    return (C.PVar n')
