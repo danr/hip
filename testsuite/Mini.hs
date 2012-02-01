@@ -17,35 +17,31 @@ data Nat = Z | S Nat
 --prop_zero_is_one = Z =/= S Z
 
 -- Induction on x. Also holds in the presence of bottoms
---prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
---prop_assoc_plus x y z
---  = x + (y + z) =:= (x + y) + z
-
-{-
-
--- True by definition
-prop_right_identity_plus :: Nat -> Prop Nat
-prop_right_identity_plus x
-  = x + Z =:= x
+prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
+prop_assoc_plus x y z
+  = x + (y + z) =:= (x + y) + z
 
 -- Induction on x
 prop_left_identity_plus :: Nat -> Prop Nat
 prop_left_identity_plus x
   = Z + x =:= x
 
+
+-- True by definition
+prop_right_identity_plus :: Nat -> Prop Nat
+prop_right_identity_plus x
+  = x + Z =:= x
+
+
 -- Lemma for commutativity of addition
 prop_movesuc :: Nat -> Nat -> Prop Nat
 prop_movesuc x y = S x + y =:= x + S y
 
 
-{-
-
 -- Needs assoc plus as lemma
 prop_assoc_mul :: Nat -> Nat -> Nat -> Prop Nat
 prop_assoc_mul x y z
   = x * (y * z) =:= (x * y) * z
-
--}
 
 -- Provable for total elements by induction on both variables,
 -- symmetrically, or with movesuc lemma
@@ -53,14 +49,9 @@ prop_add_comm :: Nat -> Nat -> Prop Nat
 prop_add_comm x y
   = x + y =:= y + x
 
-
-{-
 prop_left_distrib :: Nat -> Nat -> Nat -> Prop Nat
 prop_left_distrib x y z
   = x * (y + z) =:= (x * y) + (x * z)
--}
-
--}
 
 map :: (a -> b) -> [a] -> [b]
 map f []       = []
@@ -89,8 +80,6 @@ id x = x
 prop_map_iterate :: (a -> a) -> a -> Prop [a]
 prop_map_iterate f x = map f (iterate f x) =:= iterate f (f x)
 
-{-
-
 prop_repeat_iterate :: a -> Prop [a]
 prop_repeat_iterate x = repeat x =:= iterate id x
 
@@ -99,5 +88,3 @@ prop_repeat_cycle_singleton x = repeat x =:= cycle [x]
 
 prop_tail_repeat :: a -> Prop [a]
 prop_tail_repeat x = repeat x =:= tail (repeat x)
-
--}

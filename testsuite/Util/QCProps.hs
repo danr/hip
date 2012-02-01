@@ -13,11 +13,12 @@ main = do
                          ++ show prop ++ " (" ++ prop ++ " " ++ inst ty ++ "))"
         where (prop,ty) = break (== ' ') x
               inst = unwords . map replace . words
-              replace s = let (l,wr) = break isAlpha s
-                              (w,r)  = span isAlpha wr
-                              w' | null w || any isUpper w = w
-                                 | otherwise               = "Int"
-                          in l ++ w' ++ r
+              replace "" = ""
+              replace s  = let (l,wr) = break isAlpha s
+                               (w,r)  = span isAlpha wr
+                               w' | null w || any isUpper w = w
+                                  | otherwise               = "Int"
+                           in l ++ w' ++ replace r
   mapM_ out $ filter ("::" `isInfixOf`)
             $ filter ((== "prop_") . take 5)
             $ lines c

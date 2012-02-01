@@ -29,11 +29,11 @@ prop_mikaels_identity f = id f =:= f
 prop_dans_identity :: a -> a -> Prop a
 prop_dans_identity x y = const x y =:= id x
 
-prop_dans_nonidentity :: a -> a -> Prop a
-prop_dans_nonidentity x y = const y x =/= id x
+--prop_dans_nonidentity :: a -> a -> Prop a
+--prop_dans_nonidentity x y = const y x =/= id x
 
-prop_nonidentity :: a -> Prop (a -> a)
-prop_nonidentity x = const x =/= id
+--prop_nonidentity :: a -> Prop (a -> a)
+--prop_nonidentity x = const x =/= id
 
 uncurry :: (a -> b -> c) -> (a,b) -> c
 uncurry f (a,b) = f a b

@@ -1,42 +1,43 @@
+{-# LANGUAGE OverlappingInstances, FlexibleInstances,FlexibleContexts #-}
 -- Does not yet check put/get properties!
 module StateMonad where
 
 import AutoPrelude
-import Prelude ()
+import Prelude (Int,and,Eq(..))
 
+-- Poor man's equality
+instance Eq b => Eq (Int -> b) where
+  f == g = and [ f x == g x | x <- [0..100] ]
 
 type State s a = s -> (a,s)
 
 uncurry f (a,b) = f a b
 uncurry' f t = f (fst t) (snd t)
 
-
 fst (a,b) = a
 snd (a,b) = b
 
+bind_strict :: State s a -> (a -> State s b) -> State s b
+(m `bind_strict` f) s = uncurry f (m s)
 
-bind1 :: State s a -> (a -> State s b) -> State s b
-(m `bind1` f) s = uncurry f (m s)
+bind_lazy :: State s a -> (a -> State s b) -> State s b
+(m `bind_lazy` f) s = uncurry' f (m s)
 
-bind2 :: State s a -> (a -> State s b) -> State s b
-(m `bind2` f) s = uncurry' f (m s)
-
-bind3 :: State s a -> (a -> State s b) -> State s b
-(m `bind3` f) s = let a  = fst (m s)
-                      s' = snd (m s)
-                  in  f a s'
-
-bind1l :: State s a -> (a -> State s b) -> State s b
-m `bind1l` f = \s -> uncurry f (m s)
-
-bind2l :: State s a -> (a -> State s b) -> State s b
-m `bind2l` f = \s -> uncurry' f (m s)
-
-bind3l :: State s a -> (a -> State s b) -> State s b
-m `bind3l` f = \s -> let a  = fst (m s)
+bind_let :: State s a -> (a -> State s b) -> State s b
+(m `bind_let` f) s = let a  = fst (m s)
                          s' = snd (m s)
                      in  f a s'
 
+bind_strict_lambda :: State s a -> (a -> State s b) -> State s b
+m `bind_strict_lambda` f = \s -> uncurry f (m s)
+
+bind_lazy_lambda :: State s a -> (a -> State s b) -> State s b
+m `bind_lazy_lambda` f = \s -> uncurry' f (m s)
+
+bind_let_lambda :: State s a -> (a -> State s b) -> State s b
+m `bind_let_lambda` f = \s -> let a  = fst (m s)
+                                  s' = snd (m s)
+                              in  f a s'
 
 return :: a -> State s a
 return x s = (x,s)
@@ -47,160 +48,234 @@ returnl x = \s -> (x,s)
 
 -- Bind without lambda --------------------------------------------------------
 
-prop_return_left1 :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_return_left1 f = (f `bind1` return) =:= f
+prop_return_left_strict :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_left_strict f = (f `bind_strict` return) =:= f
 
-prop_return_right1 :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_return_right1 f a = (return a `bind1` f) =:= f a
+prop_return_left_lazy :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_left_lazy f = (f `bind_lazy` return) =:= f
 
-prop_assoc1 :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
-prop_assoc1 m f g = ((m `bind1` f) `bind1` g) =:= (m `bind1` (\x -> f x `bind1` g))
+prop_return_left_let :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_left_let f = (f `bind_let` return) =:= f
 
-prop_return_left2 :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_return_left2 f = (f `bind2` return) =:= f
+prop_return_right_lazy :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_right_lazy f a = (return a `bind_lazy` f) =:= f a
 
-prop_return_right2 :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_return_right2 f a = (return a `bind2` f) =:= f a
+prop_return_right_strict :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_right_strict f a = (return a `bind_strict` f) =:= f a
 
-prop_assoc2 :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
-prop_assoc2 m f g = ((m `bind2` f) `bind2` g) =:= (m `bind2` (\x -> f x `bind2` g))
+prop_return_right_let :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_right_let f a = (return a `bind_let` f) =:= f a
 
-prop_return_left3 :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_return_left3 f = (f `bind3` return) =:= f
+prop_assoc_strict :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
+prop_assoc_strict m f g = ((m `bind_strict` f) `bind_strict` g) =:= (m `bind_strict` (\x -> f x `bind_strict` g))
 
-prop_return_right3 :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_return_right3 f a = (return a `bind3` f) =:= f a
+prop_assoc_lazy :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
+prop_assoc_lazy m f g = ((m `bind_lazy` f) `bind_lazy` g) =:= (m `bind_lazy` (\x -> f x `bind_lazy` g))
 
-prop_assoc3 :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
-prop_assoc3 m f g = ((m `bind3` f) `bind3` g) =:= (m `bind3` (\x -> f x `bind3` g))
+prop_assoc_let :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
+prop_assoc_let m f g = ((m `bind_let` f) `bind_let` g) =:= (m `bind_let` (\x -> f x `bind_let` g))
 
 -- Lambda definition ----------------------------------------------------------
 
-prop_return_left1l :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_return_left1l f = (f `bind1l` return) =:= f
+prop_return_left_strict_lambda :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_left_strict_lambda f = (f `bind_strict_lambda` return) =:= f
 
-prop_return_right1l :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_return_right1l f a = (return a `bind1l` f) =:= f a
+prop_return_left_lazy_lambda :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_left_lazy_lambda f = (f `bind_lazy_lambda` return) =:= f
 
-prop_assoc1l :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
-prop_assoc1l m f g = ((m `bind1l` f) `bind1l` g) =:= (m `bind1l` (\x -> f x `bind1l` g))
+prop_return_left_let_lambda :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_left_let_lambda f = (f `bind_let_lambda` return) =:= f
 
-prop_return_left2l :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_return_left2l f = (f `bind2l` return) =:= f
+prop_return_right_strict_lambda :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_right_strict_lambda f a = (return a `bind_strict_lambda` f) =:= f a
 
-prop_return_right2l :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_return_right2l f a = (return a `bind2l` f) =:= f a
+prop_return_right_lazy_lambda :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_right_lazy_lambda f a = (return a `bind_lazy_lambda` f) =:= f a
 
-prop_assoc2l :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
-prop_assoc2l m f g = ((m `bind2l` f) `bind2l` g) =:= (m `bind2l` (\x -> f x `bind2l` g))
+prop_return_right_let_lambda :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_right_let_lambda f a = (return a `bind_let_lambda` f) =:= f a
 
-prop_return_left3l :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_return_left3l f = (f `bind3l` return) =:= f
+prop_assoc_strict_lambda :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
+prop_assoc_strict_lambda m f g = ((m `bind_strict_lambda` f) `bind_strict_lambda` g) =:= (m `bind_strict_lambda` (\x -> f x `bind_strict_lambda` g))
 
-prop_return_right3l :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_return_right3l f a = (return a `bind3l` f) =:= f a
+prop_assoc_lazy_lambda :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
+prop_assoc_lazy_lambda m f g = ((m `bind_lazy_lambda` f) `bind_lazy_lambda` g) =:= (m `bind_lazy_lambda` (\x -> f x `bind_lazy_lambda` g))
 
-prop_assoc3l :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
-prop_assoc3l m f g = ((m `bind3l` f) `bind3l` g) =:= (m `bind3l` (\x -> f x `bind3l` g))
+prop_assoc_let_lambda :: (s -> (a,s)) -> (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> Prop (s -> (c,s))
+prop_assoc_let_lambda m f g = ((m `bind_let_lambda` f) `bind_let_lambda` g) =:= (m `bind_let_lambda` (\x -> f x `bind_let_lambda` g))
 
 -- And the same with return as lambda -----------------------------------------
 
-prop_returnl_left1 :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_returnl_left1 f = (f `bind1` returnl) =:= f
 
-prop_returnl_right1 :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_returnl_right1 f a = (returnl a `bind1` f) =:= f a
 
-prop_returnl_left2 :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_returnl_left2 f = (f `bind2` returnl) =:= f
+prop_return_lambda_left_strict :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_lambda_left_strict f = (f `bind_strict` returnl) =:= f
 
-prop_returnl_right2 :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_returnl_right2 f a = (returnl a `bind2` f) =:= f a
+prop_return_lambda_left_lazy :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_lambda_left_lazy f = (f `bind_lazy` returnl) =:= f
 
-prop_returnl_left3 :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_returnl_left3 f = (f `bind3` returnl) =:= f
+prop_return_lambda_right_lazy :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_lambda_right_lazy f a = (returnl a `bind_lazy` f) =:= f a
 
-prop_returnl_right3 :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_returnl_right3 f a = (returnl a `bind3` f) =:= f a
+prop_return_lambda_right_strict :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_lambda_right_strict f a = (returnl a `bind_strict` f) =:= f a
 
-prop_returnl_left1l :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_returnl_left1l f = (f `bind1l` returnl) =:= f
+prop_return_lambda_left_let :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_lambda_left_let f = (f `bind_let` returnl) =:= f
 
-prop_returnl_right1l :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_returnl_right1l f a = (returnl a `bind1l` f) =:= f a
+prop_return_lambda_right_let :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_lambda_right_let f a = (returnl a `bind_let` f) =:= f a
 
-prop_returnl_left2l :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_returnl_left2l f = (f `bind2l` returnl) =:= f
+prop_return_lambda_left_strict_lambda :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_lambda_left_strict_lambda f = (f `bind_strict_lambda` returnl) =:= f
 
-prop_returnl_right2l :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_returnl_right2l f a = (returnl a `bind2l` f) =:= f a
+prop_return_lambda_left_lazy_lambda :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_lambda_left_lazy_lambda f = (f `bind_lazy_lambda` returnl) =:= f
 
-prop_returnl_left3l :: (s -> (a,s)) -> Prop (s -> (a,s))
-prop_returnl_left3l f = (f `bind3l` returnl) =:= f
+prop_return_lambda_left_let_lambda :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_lambda_left_let_lambda f = (f `bind_let_lambda` returnl) =:= f
 
-prop_returnl_right3l :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
-prop_returnl_right3l f a = (returnl a `bind3l` f) =:= f a
+prop_return_lambda_right_strict_lambda :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_lambda_right_strict_lambda f a = (returnl a `bind_strict_lambda` f) =:= f a
+
+prop_return_lambda_right_lazy_lambda :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_lambda_right_lazy_lambda f a = (returnl a `bind_lazy_lambda` f) =:= f a
+
+prop_return_lambda_right_let_lambda :: (a -> s -> (a,s)) -> a -> Prop (s -> (a,s))
+prop_return_lambda_right_let_lambda f a = (returnl a `bind_let_lambda` f) =:= f a
 
 -- Let's also try something with kliesli-composition
+
 (>=>) :: (a -> State s b) -> (b -> State s c) -> a -> State s c
 m >=> n = \a s -> uncurry n (m a s)
 
-prop_right_kliesli :: (a -> b -> (s,b)) -> Prop (a -> d -> (s,d))
+prop_right_kliesli :: (a -> s -> (a,s)) -> Prop (a -> s -> (a,s))
 prop_right_kliesli f = (f >=> return) =:= f
 
-prop_left_kliesli :: (a -> b -> (s,b)) -> Prop (a -> d -> (s,d))
+prop_left_kliesli :: (a -> s -> (a,s)) -> Prop (a -> s -> (a,s))
 prop_left_kliesli f = (return >=> f) =:= f
 
-prop_assoc_kliesli :: (a -> b -> (s,b)) -> (b -> c -> (s,c)) -> (c -> d -> (s,d)) -> Prop (a -> d -> (s,d))
+prop_assoc_kliesli :: (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> (c -> s -> (d,s)) -> Prop (a -> s -> (d,s))
 prop_assoc_kliesli f g h = ((f >=> g) >=> h) =:= (f >=> (g >=> h))
+
+(>==>) :: (a -> State s b) -> (b -> State s c) -> a -> State s c
+m >==> n = \a s -> uncurry' n (m a s)
+
+prop_right_kliesli_strict :: (a -> s -> (a,s)) -> Prop (a -> s -> (a,s))
+prop_right_kliesli_strict f = (f >==> return) =:= f
+
+prop_left_kliesli_strict :: (a -> s -> (a,s)) -> Prop (a -> s -> (a,s))
+prop_left_kliesli_strict f = (return >==> f) =:= f
+
+prop_assoc_kliesli_strict :: (a -> s -> (b,s)) -> (b -> s -> (c,s)) -> (c -> s -> (d,s)) -> Prop (a -> s -> (d,s))
+prop_assoc_kliesli_strict f g h = ((f >==> g) >==> h) =:= (f >==> (g >==> h))
+
 
 -- Let's join and fmap these beasts -------------------------------------------
 
 id x = x
 
-fmap1l f m = m `bind1l` (\x -> return (f x))
-join1l n = n `bind1l` id
-fmap2l f m = m `bind2l` (\x -> return (f x))
-join2l n = n `bind2l` id
-fmap3l f m = m `bind3l` (\x -> return (f x))
-join3l n = n `bind3l` id
-fmap1 f m = m `bind1` (\x -> return (f x))
-join1 n = n `bind1` id
-fmap2 f m = m `bind2` (\x -> return (f x))
-join2 n = n `bind2` id
-fmap3 f m = m `bind3` (\x -> return (f x))
-join3 n = n `bind3` id
+fmap_strict_lambda f m = m `bind_strict_lambda` (\x -> return (f x))
+join_strict_lambda n = n `bind_strict_lambda` id
+fmap_lazy_lambda f m = m `bind_lazy_lambda` (\x -> return (f x))
+join_lazy_lambda n = n `bind_lazy_lambda` id
+fmap_let_lambda f m = m `bind_let_lambda` (\x -> return (f x))
+join_let_lambda n = n `bind_let_lambda` id
+fmap_strict f m = m `bind_strict` (\x -> return (f x))
+join_strict n = n `bind_strict` id
+fmap_lazy f m = m `bind_lazy` (\x -> return (f x))
+join_lazy n = n `bind_lazy` id
+fmap_let f m = m `bind_let` (\x -> return (f x))
+join_let n = n `bind_let` id
 
-prop_fmap_id1l :: Prop (a -> (a,s))
-prop_fmap_id1l = fmap1l id =:= id
-prop_fmap_id2l :: Prop (a -> (a,s))
-prop_fmap_id2l = fmap2l id =:= id
-prop_fmap_id3l :: Prop (a -> (a,s))
-prop_fmap_id3l = fmap3l id =:= id
-prop_fmap_id1 :: Prop (a -> (a,s))
-prop_fmap_id1 = fmap1 id =:= id
-prop_fmap_id2 :: Prop (a -> (a,s))
-prop_fmap_id2 = fmap2 id =:= id
-prop_fmap_id3 :: Prop (a -> (a,s))
-prop_fmap_id3 = fmap3 id =:= id
+prop_fmap_id_strict :: Prop ((s -> (a,s)) -> (s -> (a,s)))
+prop_fmap_id_strict = fmap_strict id =:= id
+
+prop_fmap_id_lazy :: Prop ((s -> (a,s)) -> (s -> (a,s)))
+prop_fmap_id_lazy = fmap_lazy id =:= id
+
+prop_fmap_id_let :: Prop ((s -> (a,s)) -> (s -> (a,s)))
+prop_fmap_id_let = fmap_let id =:= id
+
+prop_fmap_id_strict_lambda :: Prop ((s -> (a,s)) -> (s -> (a,s)))
+prop_fmap_id_strict_lambda = fmap_strict_lambda id =:= id
+
+prop_fmap_id_lazy_lambda :: Prop ((s -> (a,s)) -> (s -> (a,s)))
+prop_fmap_id_lazy_lambda = fmap_lazy_lambda id =:= id
+
+prop_fmap_id_let_lambda :: Prop ((s -> (a,s)) -> (s -> (a,s)))
+prop_fmap_id_let_lambda = fmap_let_lambda id =:= id
+
 
 -- Let's just go with the non-lambda definition
 (f . g) x = f (g x)
 
-prop_fmap_comp1l :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
-prop_fmap_comp1l f g = fmap1l (f . g) =:= fmap1l f . fmap1l g
-prop_fmap_comp2l :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
-prop_fmap_comp2l f g = fmap2l (f . g) =:= fmap2l f . fmap2l g
-prop_fmap_comp3l :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
-prop_fmap_comp3l f g = fmap3l (f . g) =:= fmap3l f . fmap3l g
-prop_fmap_comp1 :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
-prop_fmap_comp1 f g = fmap1 (f . g) =:= fmap1 f . fmap1 g
-prop_fmap_comp2 :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
-prop_fmap_comp2 f g = fmap2 (f . g) =:= fmap2 f . fmap2 g
-prop_fmap_comp3 :: (b -> c) -> (a -> b) -> Prop (a -> (c,s))
-prop_fmap_comp3 f g = fmap3 (f . g) =:= fmap3 f . fmap3 g
+prop_fmap_comp_strict  :: (b -> c) -> (a -> b) -> Prop ((s -> (a,s)) -> s -> (c,s))
+prop_fmap_comp_strict f g  = fmap_strict (f . g) =:= fmap_strict f . fmap_strict g
+
+prop_fmap_comp_lazy  :: (b -> c) -> (a -> b) -> Prop ((s -> (a,s)) -> s -> (c,s))
+prop_fmap_comp_lazy f g  = fmap_lazy (f . g) =:= fmap_lazy f . fmap_lazy g
+
+prop_fmap_comp_let  :: (b -> c) -> (a -> b) -> Prop ((s -> (a,s)) -> s -> (c,s))
+prop_fmap_comp_let f g  = fmap_let (f . g) =:= fmap_let f . fmap_let g
+
+prop_fmap_comp_strict_lambda :: (b -> c) -> (a -> b) -> Prop ((s -> (a,s)) -> s -> (c,s))
+prop_fmap_comp_strict_lambda f g = fmap_strict_lambda (f . g) =:= fmap_strict_lambda f . fmap_strict_lambda g
+
+prop_fmap_comp_lazy_lambda :: (b -> c) -> (a -> b) -> Prop ((s -> (a,s)) -> s -> (c,s))
+prop_fmap_comp_lazy_lambda f g = fmap_lazy_lambda (f . g) =:= fmap_lazy_lambda f . fmap_lazy_lambda g
+
+prop_fmap_comp_let_lambda :: (b -> c) -> (a -> b) -> Prop ((s -> (a,s)) -> s -> (c,s))
+prop_fmap_comp_let_lambda f g = fmap_let_lambda (f . g) =:= fmap_let_lambda f . fmap_let_lambda g
 
 
+
+main = do
+  quickCheck (printTestCase "prop_return_left_strict" (prop_return_left_strict :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_right_strict" (prop_return_right_strict :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_strict" (prop_assoc_strict :: (Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_left_lazy" (prop_return_left_lazy :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_right_lazy" (prop_return_right_lazy :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_lazy" (prop_assoc_lazy :: (Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_left_let" (prop_return_left_let :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_right_let" (prop_return_right_let :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_let" (prop_assoc_let :: (Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_left_strict_lambda" (prop_return_left_strict_lambda :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_right_strict_lambda" (prop_return_right_strict_lambda :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_strict_lambda" (prop_assoc_strict_lambda :: (Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_left_lazy_lambda" (prop_return_left_lazy_lambda :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_right_lazy_lambda" (prop_return_right_lazy_lambda :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_lazy_lambda" (prop_assoc_lazy_lambda :: (Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_left_let_lambda" (prop_return_left_let_lambda :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_right_let_lambda" (prop_return_right_let_lambda :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_let_lambda" (prop_assoc_let_lambda :: (Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_left_strict" (prop_return_lambda_left_strict :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_right_strict" (prop_return_lambda_right_strict :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_left_lazy" (prop_return_lambda_left_lazy :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_right_lazy" (prop_return_lambda_right_lazy :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_left_let" (prop_return_lambda_left_let :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_right_let" (prop_return_lambda_right_let :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_left_strict_lambda" (prop_return_lambda_left_strict_lambda :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_right_strict_lambda" (prop_return_lambda_right_strict_lambda :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_left_lazy_lambda" (prop_return_lambda_left_lazy_lambda :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_right_lazy_lambda" (prop_return_lambda_right_lazy_lambda :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_left_let_lambda" (prop_return_lambda_left_let_lambda :: (Int -> (Int,Int)) -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_return_lambda_right_let_lambda" (prop_return_lambda_right_let_lambda :: (Int -> Int -> (Int,Int)) -> Int -> Prop (Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_right_kliesli" (prop_right_kliesli :: (Int -> Int -> (Int,Int)) -> Prop (Int -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_left_kliesli" (prop_left_kliesli :: (Int -> Int -> (Int,Int)) -> Prop (Int -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_assoc_kliesli" (prop_assoc_kliesli :: (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> (Int -> Int -> (Int,Int)) -> Prop (Int -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_fmap_id_strict_lambda" (prop_fmap_id_strict_lambda :: Prop ((Int -> (Int,Int)) -> (Int -> (Int,Int)))))
+  quickCheck (printTestCase "prop_fmap_id_lazy_lambda" (prop_fmap_id_lazy_lambda :: Prop ((Int -> (Int,Int)) -> (Int -> (Int,Int)))))
+  quickCheck (printTestCase "prop_fmap_id_let_lambda" (prop_fmap_id_let_lambda :: Prop ((Int -> (Int,Int)) -> (Int -> (Int,Int)))))
+  quickCheck (printTestCase "prop_fmap_id_strict" (prop_fmap_id_strict :: Prop ((Int -> (Int,Int)) -> (Int -> (Int,Int)))))
+  quickCheck (printTestCase "prop_fmap_id_lazy" (prop_fmap_id_lazy :: Prop ((Int -> (Int,Int)) -> (Int -> (Int,Int)))))
+  quickCheck (printTestCase "prop_fmap_id_let" (prop_fmap_id_let :: Prop ((Int -> (Int,Int)) -> (Int -> (Int,Int)))))
+  quickCheck (printTestCase "prop_fmap_comp_strict_lambda" (prop_fmap_comp_strict_lambda :: (Int -> Int) -> (Int -> Int) -> Prop ((Int -> (Int,Int)) -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_fmap_comp_lazy_lambda" (prop_fmap_comp_lazy_lambda :: (Int -> Int) -> (Int -> Int) -> Prop ((Int -> (Int,Int)) -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_fmap_comp_let_lambda" (prop_fmap_comp_let_lambda :: (Int -> Int) -> (Int -> Int) -> Prop ((Int -> (Int,Int)) -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_fmap_comp_strict" (prop_fmap_comp_strict :: (Int -> Int) -> (Int -> Int) -> Prop ((Int -> (Int,Int)) -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_fmap_comp_lazy" (prop_fmap_comp_lazy :: (Int -> Int) -> (Int -> Int) -> Prop ((Int -> (Int,Int)) -> Int -> (Int,Int))))
+  quickCheck (printTestCase "prop_fmap_comp_let" (prop_fmap_comp_let :: (Int -> Int) -> (Int -> Int) -> Prop ((Int -> (Int,Int)) -> Int -> (Int,Int))))
 
 {- more properties for later :)
 
