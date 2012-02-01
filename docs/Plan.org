@@ -712,30 +712,35 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 5 :scope subtree
-Clock summary at [2012-01-31 Tue 11:56]
+Clock summary at [2012-02-01 Wed 23:44]
 
-| Headline                                                      | Time    |       |      |      |      |
-|---------------------------------------------------------------+---------+-------+------+------+------|
-| *Total time*                                                  | *11:04* |       |      |      |      |
-|---------------------------------------------------------------+---------+-------+------+------+------|
-| Plan                                                          | 11:04   |       |      |      |      |
-| Completed                                                     |         |  0:21 |      |      |      |
-| Report                                                        |         |       | 0:21 |      |      |
-| DONE Quantifying functions and app                            |         |       |      | 0:21 |      |
-| Tasks                                                         |         | 10:43 |      |      |      |
-| ONGOING Time planning                                         |         |       | 0:17 |      |      |
-| Report tasks                                                  |         |       | 1:14 |      |      |
-| NEXT Fixed point induction                                    |         |       |      | 0:55 |      |
-| TODO Structural induction rewrite                             |         |       |      | 0:19 |      |
-| TODO Results                                                  |         |       | 9:11 |      |      |
-| NEXT Patch the program to run all provers                     |         |       |      | 9:08 |      |
-| NEXT Modify the code to accept both modes                     |         |       |      |      | 6:43 |
-| DONE SPASS                                                    |         |       |      |      | 0:32 |
-| DONE Prover9                                                  |         |       |      |      | 0:29 |
-| TODO Equinox                                                  |         |       |      |      | 0:27 |
-| DONE Vampire                                                  |         |       |      |      | 0:11 |
-| TODO Waldmeister (?)                                          |         |       |      |      | 0:15 |
-| DONE Make a test suite that discovers how the provers answers |         |       |      |      | 0:16 |
+| Headline                                                      | Time    |       |       |      |      |
+|---------------------------------------------------------------+---------+-------+-------+------+------|
+| *Total time*                                                  | *20:06* |       |       |      |      |
+|---------------------------------------------------------------+---------+-------+-------+------+------|
+| Plan                                                          | 20:06   |       |       |      |      |
+| Completed                                                     |         |  0:21 |       |      |      |
+| Report                                                        |         |       |  0:21 |      |      |
+| DONE Quantifying functions and app                            |         |       |       | 0:21 |      |
+| Tasks                                                         |         | 19:45 |       |      |      |
+| ONGOING Time planning                                         |         |       |  0:19 |      |      |
+| TODO Fix the lambda bug                                       |         |       |  0:42 |      |      |
+| DONE Fill results incrementally                               |         |       |  1:22 |      |      |
+| TODO Report tasks                                             |         |       |  3:48 |      |      |
+| TODO Fixed point induction                                    |         |       |       | 0:55 |      |
+| NEXT Write introduction                                       |         |       |       | 2:33 |      |
+| TODO Structural induction rewrite                             |         |       |       | 0:19 |      |
+| TODO Results                                                  |         |       | 12:29 |      |      |
+| TODO Prepare the test suite                                   |         |       |       | 3:18 |      |
+| NEXT Patch the program to run all provers                     |         |       |       | 9:08 |      |
+| NEXT Modify the code to accept both modes                     |         |       |       |      | 6:43 |
+| DONE SPASS                                                    |         |       |       |      | 0:32 |
+| DONE Prover9                                                  |         |       |       |      | 0:29 |
+| TODO Equinox                                                  |         |       |       |      | 0:27 |
+| DONE Vampire                                                  |         |       |       |      | 0:11 |
+| TODO Waldmeister (?)                                          |         |       |       |      | 0:15 |
+| DONE Make a test suite that discovers how the provers answers |         |       |       |      | 0:16 |
+| DONE Meeting with Koen notes                                  |         |       |  1:04 |      |      |
 #+END:
 ** Refile
 ** Completed
@@ -778,6 +783,11 @@ CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
 ** Tasks
 CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
 *** ONGOING Time planning
+CLOCK: [2012-02-01 Wed 09:59]--[2012-02-01 Wed 10:00] =>  0:01
+CLOCK: [2012-02-01 Wed 09:59]--[2012-02-01 Wed 09:59] =>  0:00
+CLOCK: [2012-02-01 Wed 09:58]--[2012-02-01 Wed 09:58] =>  0:00
+CLOCK: [2012-02-01 Wed 09:57]--[2012-02-01 Wed 09:57] =>  0:00
+CLOCK: [2012-01-31 Tue 12:01]--[2012-01-31 Tue 12:02] =>  0:01
 CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:12] =>  0:00
 CLOCK: [2012-01-30 Mon 17:29]--[2012-01-30 Mon 17:31] =>  0:02
 CLOCK: [2012-01-30 Mon 08:48]--[2012-01-30 Mon 08:50] =>  0:02
@@ -788,14 +798,38 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 :PROPERTIES:
 :ORDERED: t
 :END:
-*** Report tasks                                                   :report:
+*** TODO Fix the lambda bug
+Ok, removed one line from the translation, seems to work, but should
+look into this in more detail. :)
+CLOCK: [2012-02-01 Wed 16:50]--[2012-02-01 Wed 17:32] =>  0:42
+*** DONE Fill results incrementally
+CLOSED: [2012-02-01 Wed 16:23]
+- State "DONE"       from "TODO"       [2012-02-01 Wed 16:23]
+CLOCK: [2012-02-01 Wed 15:01]--[2012-02-01 Wed 16:23] =>  1:22
+*** TODO Report tasks                                              :report:
+CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
 **** TODO Conclusions
 This may need some thinking :)
-**** NEXT Fixed point induction
+**** TODO Fixed point induction
+- State "TODO"       from "DONE"       [2012-01-31 Tue 18:50]
+- State "DONE"       from "NEXT"       [2012-01-31 Tue 18:50]
 CLOCK: [2012-01-31 Tue 10:24]--[2012-01-31 Tue 11:19] =>  0:55
 Overhaul and introduce the fancy notation earlier?
+Redo the section called Implementation. How can we minimize the
+explanation of fix? Probably, a lot of proofs can be removed too, that
+are not too interesting and just state them as properties easily
+proved by induction (or something)
 **** NEXT Write introduction
+CLOCK: [2012-02-01 Wed 10:31]--[2012-02-01 Wed 10:58] =>  0:27
+CLOCK: [2012-02-01 Wed 10:00]--[2012-02-01 Wed 10:26] =>  0:26
+Shit this is hard
+CLOCK: [2012-01-31 Tue 18:08]--[2012-01-31 Tue 19:22] =>  1:14
+CLOCK: [2012-01-31 Tue 17:46]--[2012-01-31 Tue 18:02] =>  0:16
+CLOCK: [2012-01-31 Tue 17:39]--[2012-01-31 Tue 17:41] =>  0:02
+CLOCK: [2012-01-31 Tue 14:35]--[2012-01-31 Tue 14:43] =>  0:08
+CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
 Write this: introduce the problem and why it is interesting
+Get to the point! Don't be hand-wavy
 **** TODO Structural induction rewrite
 CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
 CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
@@ -825,6 +859,7 @@ problematic with GADTs and other fancy type extensions.
 ***** TODO Refer to the different theorem provers
 Prover9 has a bibtex
 ***** TODO SZS Status ontology paper
+**** TODO Put "propositional equality" somewhere, not Eq-equality
 **** Misc
 ***** Refutation
 Refutation is a proof that ends in $false
@@ -835,9 +870,45 @@ Refutation is a proof that ends in $false
 [[http://dream.inf.ed.ac.uk/projects/lemmadiscovery/case_results.php][Case-Analysis Results]]
 These are exactly those imported from Zeno
 *** TODO Results
+CLOCK: [2012-02-01 Wed 23:45]--[2012-02-01 Wed 23:48] =>  0:03
 CLOCK: [2012-01-31 Tue 11:33]--[2012-01-31 Tue 11:36] =>  0:03
 CLOCK: [2012-01-30 Mon 10:48]--[2012-01-30 Mon 10:48] =>  0:00
 **** TODO Prepare the test suite
+CLOCK: [2012-02-01 Wed 23:00]--[2012-02-01 Wed 23:39] =>  0:39
+CLOCK: [2012-02-01 Wed 13:10]--[2012-02-01 Wed 14:46] =>  1:36
+CLOCK: [2012-02-01 Wed 12:37]--[2012-02-01 Wed 12:39] =>  0:02
+CLOCK: [2012-02-01 Wed 11:36]--[2012-02-01 Wed 12:37] =>  1:01
+Rename and describe everything. Remove duplicate properties (for
+example, list concatenation associativity is in a myriad of files).
+
+We can express how to interpret equality with something like
+#+BEGIN_SRC haskell
+{-# OPTIONS_EQUALITY Queue toList #-}
+#+END_SRC
+
+for
+
+#+BEGIN_SRC haskell
+instance Eq a => Eq (Queue a) where
+  q == q' = toList q == toList q'
+#+END_SRC
+
+but it seems really tricky to enforce the variant that front is never
+empty if back isn't. (i.e. if the back is nonempty, then the front is
+too)
+
+***** Zeno mistake?
+There was one (or two?) example in the Zeno testsuite that was not a
+theorem. Maybe this is why they could not prove some in their
+paper. Mail authors?
+**** TODO What to track?
+***** Number of solved properties for each solver
+***** Number of solved properties for each proof method
+****** Strutural induction: Try different depths, and the number of variables
+***** Store all success times and try plot
+****** Cactus plot
+****** Histogram
+****** Scatter plot comparisons?
 **** TODO Have a lab day to enlargen the test suite
 **** NEXT Patch the program to run all provers
 CLOCK: [2012-01-31 Tue 11:19]--[2012-01-31 Tue 11:23] =>  0:04
@@ -971,6 +1042,7 @@ time $OLDWD/$1 $2 $3 $4
 qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
 10 /home/palka/packages/ghc-7.3.20111022-inst/bin/ghc
 #+END_SRC
+**** TODO Disable combinatorial explosions from fpi and str ind
 *** TODO Better name than autospec!
 *** TODO Test translation by generating code
 *** TODO Presentation
@@ -978,8 +1050,30 @@ qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
 **** Ideas on live examples
 *** TODO Mail Abstract to Meng
 DEADLINE: <2012-02-03 Fri>
-*** MEETING With Koen
-SCHEDULED: <2012-01-30 Mon 13:00>
+*** DONE Meeting with Koen notes
+CLOSED: [2012-01-31 Tue 13:58] SCHEDULED: <2012-01-30 Mon 13:00>
+CLOCK: [2012-01-31 Tue 17:41]--[2012-01-31 Tue 17:46] =>  0:05
+- State "DONE"       from "MEETING"    [2012-01-31 Tue 13:58]
+CLOCK: [2012-01-31 Tue 12:59]--[2012-01-31 Tue 13:58] =>  0:59
+**** Teaser on Tuesday
+Just present the problem and demo what we can do. Briefly describe
+some of the technical details, but more will come on the real presentation
+
+**** Submit some problems to System on TPTP
+Of different kinds, some easy, some hard, some that only a few theorem
+provers are good on, some non-theorems, and so on, to the software
+verification section. This could be fun!
+
+**** Got equinox to compile and can now read from standand input
+
+**** Mail report tonight
+SCHEDULED: <2012-01-31 Tue>
+
+**** Cactus diagrams, scatter plots
+Put different provers and proving methods against each other.
+Provers in cactus diagram, fixpoint induction vs approx lemma in
+scatter plots?
+
 *** TODO Final presentation
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete

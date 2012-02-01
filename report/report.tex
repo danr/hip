@@ -66,6 +66,8 @@
 \newcommand\tofix[1]{#1^{\bullet}}
 \newcommand\unfix[1]{#1^{\circ}}
 
+\newcommand\append[0]{\texttt{\small{++}}}
+
 \newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
 \newcommand{\desca}[1]{  & \hspace{44.5mm}                            \{ \text{#1} \}}
 \newcommand{\descra}[1]{ & \hspace{35mm} \Rightarrow     \hspace{4mm} \{ \text{#1} \}}
@@ -85,11 +87,17 @@
 
 \newcommand{\nsqsubseteq}{\,\,\, /\!\!\!\!\!\!\sqsubseteq}
 
-%\begin{document}
+\begin{document}
+
+%\chapter{Introduction}
 %
-%\noindent
-%\chapter{Proof Techniques}
-%\input{fixpoint}
+%\input{intro}
+%
+%%
+%%\noindent
+%%\chapter{Proof Techniques}
+%%\input{fixpoint}
+%%
 %
 %\bibliographystyle{apalikeurl}
 %\bibliography{masterbib}
@@ -108,13 +116,15 @@
 
 %% Abstract -------------------------------------------------------------------
 
-\newpage
-\abstract{
+\chapter*{\centering \begin{normalsize}Abstract\end{normalsize}}
+\begin{quotation}
+\noindent
 In this work we prove a lot of nice equational Haskell properties by
 a first order logic translation and using automated theorem provers.
 The results are astounding, writing correct Haskell is nowadays a
 breeze.
-}
+\end{quotation}
+
 
 %% Acknowledgements -----------------------------------------------------------
 
@@ -137,11 +147,6 @@ breeze.
 \chapter{Introduction}
 
 \input{intro}
-
-It is assumed that the reader knows a little Haskell, a good book to
-read is learn you a Haskell, some first order logic on both models and
-syntactically, and can imagine what an automated theroem prover is and
-how to run one on a first order theory.
 
 % Related work
 \input{related}

@@ -1,8 +1,84 @@
 
-Infinite values in Haskell are commonplace, but why care about partial
-values? They are still present because of non-terminating programs,
-calls to the error function and pattern-match
-failures \cite{chasingbot}.
+\begin{comment}
+INTRODUCTION - State your thesis and the purpose of your research
+paper clearly. What is the chief reason you are writing the paper?
+State also how you plan to approach your topic. Is this a factual
+report, a book review, a comparison, or an analysis of a problem?
+Explain briefly the major points you plan to cover in your paper and
+why readers should be interested in your topic.
+\end{comment}
+
+%% Shit the same, just write something
+
+%In this thesis we introduce a new way to automatically prove
+%properties of Haskell programs with the aid of automated theorem
+%provers (ATPs).
+
+Haskell is celebrated for being a language easy to reason about.
+Referential transparency makes equational reasoning easy and
+sound. The testing tool QuickCheck \citep{quickcheck} has influenced
+programmers to state properties about their program's functions. This
+thesis introduces an automated way to prove properties with the aid of
+automated theorem provers, by means of a translation from Haskell to
+First Order Logic. This compilation can handle the important concepts
+of higher order functions and lambda abstraction, and can deal with
+infinite values as well as partial values from pattern match failures
+or partial functions.
+
+We currently handle universally quantified equational properties. From
+the programmers perspective, they can be entered in the source code
+like this:
+
+\begin{code}
+prop_filter_append :: (a -> Bool) -> [a] -> [a] -> Prop [a]
+prop_filter_append p xs ys = filter p (xs ++ ys) =:= filter p xs ++ filter p ys
+\end{code}
+
+\noindent
+Every function and data definition needs to be translated into a
+theory in first order logic which we can call $\mathcal{T}$. The
+property above then corresponds to this proving this:
+
+\begin{equation*}
+\mathcal{T} \vdash \faaa{p}{xs}{ys} \fn{filter}(p,xs \,\append\, ys) = \fn{filter}(p,xs) \,\append\, \fn{filter}(p,ys)
+\end{equation*}
+
+\noindent
+By writing $\fn{filter}$ and $\append$, it is emphasised that these
+are the translations of \hs{filter} and \hs{++} axiomatised in
+$\mathcal{T}$. To proceed to prove a property like this different
+proving techniques for functional programs are automatically
+tested. These can deal with reasoning about programs with both finite
+arguments and infinite.
+
+There are many examples of equality properties.  Verifying that an
+efficient and a naive implementation solution coincide. Proving
+fundamental laws that your functions should hold, be it the axioms of
+a ring, or more specifically, idempotency of sorting or involution of
+reversing, or relating different functions in terms of homomorphisms
+or more complicated relations. The rich plethora of type classes in
+Haskell have many stipulated equational laws.
+
+Equality is between Haskell values, and not the different equalities
+defined by the \hs{Eq} type class. It is however possible to express
+such properties as well. One example is the relation between
+\hs{lookup} and \hs{adjust} from \hs{Data.Map} in the containers
+package:
+
+\begin{code}
+prop_lookup_alter :: (Maybe a -> Maybe a) -> k -> Map k a -> Map k a
+prop_lookup_alter f k m = lookup k (alter f k m) == f (lookup k m) =:= True
+\end{code}
+
+
+To read this thesis, it is assumed that the reader knows a little
+Haskell, a good book is written by \cite{lyah}. Some knowledge
+first order logic on both models and syntactically is beneficial, as
+well as some insight in proofs by induction.  One should also be able
+to imagine what an automated theroem prover is and how to run one on a
+first order theory.
+
+\begin{comment}
 
 Why is equality important? There are many reasons why you would want
 to know why two Haskell expressions are equal. You might have a naive
@@ -38,3 +114,5 @@ detail. The reason for this simplification is that it will coincide
 exactly with the equality in first order logic and allows us to use its
 substitution.
 \note{Congruence relations!}
+
+\end{comment}
