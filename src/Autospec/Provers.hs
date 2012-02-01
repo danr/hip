@@ -83,7 +83,7 @@ equinox :: Prover
 equinox = Prover
   { proverName          = Equinox
   , proverCmd           = "equinox"
-  , proverArgs          = \t -> undefined
-  , proverProcessOutput = undefined
+  , proverArgs          = \t -> words ("--tstp --split -")
+  , proverProcessOutput = searchOutput statusSZS
   , proverShort         = 'x'
   }

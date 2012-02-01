@@ -2,6 +2,7 @@
 module Autospec.FromHaskell.Monad where
 
 import Autospec.ToFOL.Core as C
+import Autospec.ToFOL.Constructors (bottomName)
 import Autospec.Messages
 
 import Language.Haskell.Exts as H hiding (Name,Decl,binds)
@@ -34,7 +35,7 @@ $(mkLabels [''Env])
 
 initSt :: St
 initSt = St { _namesupply = [0..]
-            , _binds      = M.empty
+            , _binds      = M.fromList [("undefined",(bottomName,[]))]
             , _scope      = S.fromList ["prove","proveBool","=:=","=/="]
             , _datatypes  = S.empty
             }

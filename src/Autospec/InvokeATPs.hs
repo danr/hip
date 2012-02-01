@@ -40,15 +40,20 @@ module Autospec.InvokeATPs where
 
 import System.CPUTime
 
+import Control.Concurrent
+import Control.Concurrent.Chan
+import Control.Concurrent.MVar
+import Control.Concurrent.STM.TChan
+import Control.Concurrent.STM.TVar
+import Control.Monad.STM
 import Control.Monad
 import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.State
-import Control.Monad.Trans
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
-import Control.Concurrent
 
+import Control.Arrow ((***),first,second)
+
+import Data.Function
 import Data.List
 import Data.Maybe
 
@@ -62,7 +67,10 @@ import Autospec.ToFOL.ProofDatatypes
 import Autospec.ResultDatatypes
 import Autospec.Provers
 import Autospec.RunProver
+import Autospec.Util
 import Language.TPTP.Pretty
+
+import System.IO.Unsafe (unsafeInterleaveIO)
 
 type PropName = String
 
@@ -91,16 +99,35 @@ runProveM = flip runReaderT
 invokeATPs :: [Property] -> Env -> IO [PropResult]
 invokeATPs properties env@(Env{..}) = do
     statusMVar <- newMVar M.empty
+    doneMVar   <- newTVarIO False
+
     let codes = M.fromList [ (probName,probCode) | Property probName probCode _ <- properties ]
         env' = env { propStatuses = statusMVar, propCodes = codes }
-    probChan <- newChan
-    resChan <- newChan
-    let allParts = [ (probName,part) | Property probName _ parts <- properties , part <- parts ]
+        allParts  = [ (propName,part) | Property propName _ parts <- properties , part <- parts ]
+        propParts = M.fromList [ (propName,length parts) | Property propName _ parts <- properties ]
+
+    probChan         <- newChan
+    intermediateChan <- newChan
+    resChan          <- newTChanIO
+
     mapM_ (writeChan probChan) allParts
-    workers <- replicateM processes $ forkIO (runProveM env' (worker probChan resChan))
-    res <- runProveM env' (listener (length allParts) resChan)
-    mapM_ killThread workers
-    return res
+
+    workers <- replicateM processes $ forkIO (runProveM env' (worker probChan intermediateChan))
+
+    res <- forkIO $ runProveM env' (listener intermediateChan resChan propParts workers doneMVar)
+
+    consume resChan doneMVar
+  where
+    consume :: TChan PropResult -> TVar Bool -> IO [PropResult]
+    consume resChan doneTVar = unsafeInterleaveIO $ do
+--        putStrLn "consuming..."
+        element <- atomically $ do empty <- isEmptyTChan resChan
+                                   done  <- readTVar doneTVar
+                                   if empty then (if done then return Nothing else retry)
+                                            else Just <$> readTChan resChan
+        case element of
+                Nothing -> return []
+                Just e  -> (e:) <$> consume resChan doneTVar
 
 propStatus :: PropName -> ProveM Status
 propStatus propName = do
@@ -117,33 +144,63 @@ updatePropStatus :: PropName -> Status -> ProveM ()
 updatePropStatus propName status = do
     Env{..} <- ask
     unless reproveTheorems
-       (liftIO $ modifyMVar_ propStatuses (return . M.insertWith min propName status))
+       (liftIO $ modifyMVar_ propStatuses (return . M.insertWith max propName status))
 --    liftIO $ do putStrLn $ "updated " ++ propName ++ " to " ++ show status
 --                map <- readMVar propStatuses
 --                print map
 
+type ListenerSt = (Map PropName Int,Map PropName PropResult)
+
 -- | Listens to all the results, report if a property was proven,
 --   and puts them all in a list of results
-listener :: Int -> Chan (PropName,PartResult) -> ProveM [PropResult]
-listener parts resChan = do
+listener :: Chan (PropName,PartResult) -> TChan PropResult
+         -> Map PropName Int -> [ThreadId] -> TVar Bool -> ProveM ()
+listener intermediateChan resChan propParts workers doneTVar = do
     Env{..} <- ask
-    fmap (makePropList propCodes) $ forM [1..parts] $ \_ -> do
-        res@(propName,part@(Part _ _ resParticles)) <- liftIO (readChan resChan)
-        let status = statusFromPart part
-        updatePropStatus propName status
-        return res
+
+    let initState :: ListenerSt
+        initState = (propParts,M.empty)
+
+        process :: StateT ListenerSt ProveM ()
+        process = fix $ \loop -> do
+            res@(propName,part@(Part _ _ resParticles)) <- liftIO (readChan intermediateChan)
+            let status = statusFromPart part
+            lift $ updatePropStatus propName status
+
+            -- update map
+            modify (second (uncurry updateResults res propCodes))
+
+            -- decrement propName parts
+            modify (first (M.adjust pred propName))
+
+            left <- gets ((M.! propName) . fst)
+
+--            liftIO $ putStrLn $ propName ++ " parts left: " ++ show left
+
+            -- all parts are done, write on res chan and remove from the state
+            when (left == 0) $ do
+                liftIO . atomically . writeTChan resChan =<< gets ((M.! propName) . snd)
+                modify (M.delete propName *** M.delete propName)
+
+            -- are we finished?
+            done <- gets (M.null . fst)
+            unless done loop
+
+    evalStateT process initState
+
+    liftIO $ do -- putStrLn "All parts are done"
+                mapM_ killThread workers
+                atomically (writeTVar doneTVar True)
   where
-    makePropList :: Map PropName String -> [(PropName,PartResult)] -> [PropResult]
-    makePropList propCodeMap = M.elems . foldr (uncurry folder) M.empty
+    updateResults :: PropName -> PartResult -> Map PropName String
+                  -> Map PropName PropResult -> Map PropName PropResult
+    updateResults name partRes propCodeMap= M.alter (Just . alterer) name
       where
-        folder :: PropName -> PartResult -> Map PropName PropResult -> Map PropName PropResult
-        folder name part = M.alter (Just . alterer) name
-          where
-            alterer :: Maybe PropResult -> PropResult
-            alterer m = case m of
-              Nothing -> Property name (propCodeMap M.! name) (statusFromPart part,[part])
-              Just (Property name code (status,parts)) ->
-                   Property name code (statusFromPart part `min` status,part:parts)
+        alterer :: Maybe PropResult -> PropResult
+        alterer m = case m of
+           Nothing -> Property name (propCodeMap M.! name) (statusFromPart partRes,[partRes])
+           Just (Property name code (status,parts)) ->
+                      Property name code (statusFromPart partRes `max` status,partRes:parts)
 
 -- | A worker. Reads the channel of parts to process, and writes to
 -- the result channel. Skips doing the rest of the particles if one
@@ -172,7 +229,7 @@ worker partChan resChan = forever $ do
                 case store of
                    Nothing  -> return ()
                    Just dir -> let filename = intercalate "_" [dir,propName,proofMethodFile partMethod,particleDesc] ++ ".tptp"
-                               in  liftIO (writeFile (filename) theoryStr)
+                               in  liftIO (writeFile (filename) axiomsStr)
 
                 (res,maybeProver) <- liftIO (takeMVar resvar)
                 provedElsewhere <- unnecessary <$> lift (propStatus propName)

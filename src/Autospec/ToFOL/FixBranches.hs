@@ -133,7 +133,7 @@ addBottoms scrut brs = concat [ (p :-> e) : [ p' :-> bottom
                                                      ]
                                        | (p :-> e) <- brs
                                        ]
-                    ++ [NoGuard PWild :-> bottom]
+                    ++ [NoGuard (matchscrut scrut) :-> bottom]
           {- case matchAnyBranch scrut brs of
   Nothing -> brsBottomGuards
   Just (_ :-> l) | l == bottom -> brsBottomGuards

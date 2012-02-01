@@ -112,13 +112,13 @@ prove fundecls recfuns resTy fname typedArgs lhs rhs =
                             -> [([Decl],TM [Particle])]
                             -> TM Part
     accompanyPartsWithDecls prooftype coverage tup = do
-         parts <- flip concatMapM tup $ \(fundecls',partms) -> do
+         parts <- flip concatMapM tup $ \(fundecls',partm) -> do
             let funs = map (declName &&& length . declArgs) fundecls'
             addFuns funs
             locally $ do
-                parts   <- partms
+                part   <- partm
                 theory <- concatMapM (fmap snd . translate) fundecls'
-                return $ map (extendParticle theory) parts
+                return $ map (extendParticle theory) part
          return $ Part { partMethod     = prooftype
                        , partCoverage   = coverage
                        , partMatter     = ([],parts)

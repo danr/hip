@@ -138,7 +138,7 @@ addMatchesScope [] = fatal "Empty funmatches"
 addMatchesScope ms@(m:_) = do
     let n = fromName (matchName m)
     addToScope n
---    debug $ "addMatchesScope: " ++ n ++ " added to scope."
+    debug $ "addMatchesScope: " ++ n ++ " added to scope."
 
 -- Add indirections (second pass)
 addMatchesIndirection :: [Match] -> FH ()
@@ -149,8 +149,8 @@ addMatchesIndirection ms@(m:_) = do
     scopedname <- scopePrefix n
 
     scope <- namesInScope
---    debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
---            ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
+    debug $ "addMatchesIndirection: " ++ scopedname ++ " free vars: "
+            ++ unwords fvs ++ " (in scope: " ++ unwords scope ++ ")"
 
     addBind n scopedname fvs
 
@@ -163,8 +163,8 @@ fromMatches ms@(m:_) = do
                                   <$> lookupBind n
 
     scope <- namesInScope
---    debug $ "fromMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
---            ++ " (in scope: " ++ unwords scope ++ ")"
+    debug $ "fromMatches: " ++ scopedname ++ " free vars: " ++ unwords fvs
+            ++ " (in scope: " ++ unwords scope ++ ")"
 
     localBindScope $ do
       -- All free variables are arguments to this function
@@ -295,9 +295,9 @@ fromQOp (QConOp qname) = con0  <$> fromQName qname
 
 fromPat :: Pat -> FH Pattern
 fromPat pat = case pat of
-  H.PVar pn     -> do -- debug $ "Check if in scope: " ++ show pn
-                      let n = fromName pn
+  H.PVar pn     -> do let n = fromName pn
                       b <- inScope n
+                      debug $ "In scope: " ++ show pn ++ " : " ++ show b
                       if b then do n' <- scopePrefix n
                                    addBind n n' []
                                    return (C.PVar n')

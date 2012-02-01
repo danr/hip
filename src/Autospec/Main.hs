@@ -63,7 +63,7 @@ params = Params
   , dbfol     = False   &= help "Print debug output of Core -> FOL"
   , dbproof   = False   &= help "Print debug output when making proofs"
   , reprove   = False   &= help "Reprove theorems already known to be true"
-  , provers   = "evps"  &= help "Specify which provers to use: (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
+  , provers   = "evpsx" &= help "Specify which provers to use: (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
   }
   &= summary "autospec v0.1 Dan Rosén danr@student.gu.se"
   &= program "autospec"
@@ -212,12 +212,13 @@ proveAll latex processes timeout output reprove provers file properties = do
          putStrLn propCode
          forM_ parts $ \part@(Part partMethod partCoverage particles) -> do
               putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part)
-              putStr "    "
-              forM_ particles $ \(Particle particleDesc (result,maybeProver)) ->
-                   putStr $ particleDesc ++ ": " ++ show result ++
-                            concat [ "[" ++ show prover ++ "]" | prover <- maybeToList maybeProver ]
-                            ++ "  "
-              putStrLn ""
+              when (statusFromPart part > None) $ do
+                  putStr "    "
+                  forM_ particles $ \(Particle particleDesc (result,maybeProver)) ->
+                       putStr $ particleDesc ++ ": " ++ show result ++
+                                concat [ "[" ++ show prover ++ "]" | prover <- maybeToList maybeProver ]
+                                ++ "  "
+                  putStrLn ""
          putStrLn ""
 
     return propRes

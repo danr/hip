@@ -38,7 +38,7 @@ instance Show ProverResult where
 
 -- Status (result) for an entire property or a proof part ------------------------------
 
-data Status = Theorem | FiniteTheorem | None
+data Status = None | FiniteTheorem | Theorem
   deriving (Eq,Ord,Show,Enum,Bounded)
 
 latexStatus :: Status -> String
