@@ -67,7 +67,8 @@ main = do
   when (null files) $ do
       putStrLn "No input files. Run with --help to see possible flags"
       exitFailure
-  whenLoud $ putStrLn "Verbose output"
+  whenLoud $ do putStrLn $ "Verbose output, files: " ++ unwords files
+                putStrLn $ "Param: " ++ showParams params
   when (latex && not tptp) $ latexHeader'
 
   totalRes <- forM files $ \file -> (,) file <$> do
@@ -150,9 +151,6 @@ proveAll :: Bool -> Int -> Int -> Maybe FilePath -> Bool -> [Prover]
          -> FilePath -> [Property]
          -> IO [PropResult]
 proveAll latex processes timeout output reprove provers file properties = do
-    whenLoud $ do putStrLn $ "Using " ++ show processes ++ " threads."
-                  putStrLn $ "Timeout is " ++ show timeout
-                  putStrLn $ "Output directory is " ++ show output
     hSetBuffering stdout LineBuffering
 
     let env = Env { reproveTheorems = reprove
@@ -169,9 +167,9 @@ proveAll latex processes timeout output reprove provers file properties = do
     forM_ propRes $ \(Property propName propCode (status,parts)) -> do
          putStrLn $ propName ++ ": " ++ show status
          putStrLn propCode
-         forM_ parts $ \part@(Part partMethod partCoverage particles) -> do
-              putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part)
+         forM_ parts $ \part@(Part partMethod partCoverage particles) ->
               when (statusFromPart part > None) $ do
+                  putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part)
                   putStr "    "
                   forM_ particles $ \(Particle particleDesc (result,maybeProver)) ->
                        putStr $ particleDesc ++ ": " ++ show result ++

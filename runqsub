@@ -29,4 +29,6 @@ mkdir $DIR
 
 cd $DIR
 
-time autospec "$OLDWD/$1*hs" --processes=7 -r -t=5 --provers=$PROVERS --statistics --inddepth=2 --indvars=2 --indhyps=500 --indsteps=20 --fpimax=100 +RTS -K100M > output
+time autospec $OLDWD/$1*hs --processes=7 -r -t=5 --provers=$PROVERS --statistics --inddepth=2 --indvars=2 --indhyps=500 --indsteps=20 --fpimax=100 -v +RTS -K100M > output
+
+#time autospec $OLDWD/$1*hs --processes=7 -r -t=0 --provers=$PROVERS --statistics --inddepth=2 --indvars=2 --indhyps=500 --indsteps=20 --fpimax=100 -v +RTS -K100M > output
