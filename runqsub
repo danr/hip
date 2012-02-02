@@ -1,0 +1,33 @@
+#!/bin/sh
+
+L=/home/danr/
+export LIBRARY_PATH=$LIBRARY_PATH:$L/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$L/lib
+export PATH=$L/bin:$L/.cabal/bin:$PATH
+
+#if [[ -z $1 || $1 == "--help" ]]
+#then
+#  echo "usage: $0 <testing binary> <number of terms> <number of tests>"
+#fi
+
+case "$SGE_TASK_ID" in
+    1) PROVERS=evpsx ;;
+    2) PROVERS=e ;;
+    3) PROVERS=v ;;
+    4) PROVERS=p ;;
+    5) PROVERS=s ;;
+    6) PROVERS=x ;;
+    *) echo "Too high task id $SGE_TASK_ID"
+esac
+
+OLDWD=$PWD
+
+DIR=run_$PROVERS_${JOB_ID}
+
+rm -rf $DIR
+mkdir $DIR
+
+cd $DIR
+
+
+time autospec $OLDWD/$1 --processes=7 -r -t=5 --provers=$PROVERS --statistics --inddepth=2 --indvars=2 --indhyps=500 --indsteps=20 --fpimax=100 +RTS 100M > output
