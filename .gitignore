@@ -10,6 +10,7 @@ tags
 *\.html
 *\.aux
 *\.log
+*\.data
 *Main
 *Translate
 docs/*pdf

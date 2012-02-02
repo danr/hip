@@ -126,14 +126,21 @@ main = do
             whenLoud $ putStrLn "Done preparing proofs"
             proveAll latex processes timeout output reprove (proversFromString provers) file proofs
 
-  putStrLn "-- Total summary --------------------------------------------------"
-  putStrLn $ stringSummary (concatMap snd totalRes)
+  let propRes :: [PropResult]
+      propRes = concatMap snd totalRes
 
-  when statistics $ writeFile "statistics" $ unlines $
-       ["% " ++ showParams params] ++
-       [tableHeader] ++
-       map (uncurry tableSummary) totalRes ++
-       [tableSummary "Total" (concatMap snd totalRes) | length files > 1 ]
+  putStrLn "-- Total summary --------------------------------------------------"
+  putStrLn $ stringSummary propRes
+
+  when statistics $ do
+       let header = "% " ++ showParams params
+       writeFile "statistics.data" $ unlines $
+            [header,tableHeader] ++
+            map (uncurry tableSummary) totalRes ++
+            [tableSummary "Total" propRes | length files > 1 ]
+       forM_ (times propRes) $ \(st,mm,ts) -> do
+            let fname = show st ++ "_" ++ maybe "" liberalShow mm ++ "Times.data"
+            writeFile fname (header ++ "\n" ++ unwords (map show ts) ++ "\n")
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
@@ -236,6 +243,27 @@ tableSummary file res = intercalate " & " (file:process Theorem ++ process Finit
          methSummary i methsums m = case find ((m `liberalEq`) . method) methsums of
                                       Just (MethSum{..}) -> show quantity ++ "/" ++ show i
                                       Nothing            -> ""
+
+times :: [PropResult] -> [(Status,Maybe ProofMethod,[Integer])]
+times res = filter (not . null . trd) (process Theorem ++ process FiniteTheorem)
+  where
+    trd (_,_,c) = c
+
+    process status = (status,Nothing,criteria status (const True)):
+                     map (\m -> (status,Just m,criteria status (liberalEq m)))
+                         (fromMaybe (error "times") (lookup status tableMethods))
+
+    criteria :: Status -> (ProofMethod -> Bool) -> [Integer]
+    criteria status p = concatMap handlePart
+                      $ concatMap (snd . propMatter)             -- get these parts
+                      $ filter ((status ==) . fst . propMatter)  -- only with this status
+                      $ res
+      where
+        handlePart :: PartResult -> [Integer]
+        handlePart part = case p (partMethod part) && statusFromPart part == status of
+           True  -> map (successTime . fst . particleMatter) (partMatter part)
+           False -> []
+
 
 summary :: [PropResult] -> [(Status,Int,[MethSum])]
 summary = map (\xs@((status,_):_) ->
