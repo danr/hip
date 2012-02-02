@@ -18,7 +18,7 @@ import Autospec.Provers
 import Autospec.Params
 import Autospec.ResultDatatypes
 
-import System.Console.CmdArgs
+import System.Console.CmdArgs hiding (summary)
 import System.Exit (exitFailure,exitSuccess)
 import System.IO
 
@@ -63,64 +63,77 @@ outputSubSection False s = return ()
 main :: IO ()
 main = do
   params@Params{..} <- cmdArgs defParams
+
   when (null files) $ do
       putStrLn "No input files. Run with --help to see possible flags"
       exitFailure
   whenLoud $ putStrLn "Verbose output"
   when (latex && not tptp) $ latexHeader'
-  total <- forM files $ \file -> do
+
+  totalRes <- forM files $ \file -> (,) file <$> do
       when (file /= head files) $ putStrLn ""
       when (length files > 1) $ outputSection latex file
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
                                 then parseHaskell <$> readFile file
                                 else flip (,) []  <$> parseFile file
-      ds <- either (\estr -> putStrLn estr >> exitFailure) return eitherds
-      -- Output debug of translation
-      when dbfh $ do
-        putStrLn "Translating from Haskell..."
-        mapM_ print (filter (sourceIs FromHaskell) hsdebug)
-        putStrLn "Translation from Haskell translation complete."
-      -- Output warnings of translation
-      when (warnings && not latex) $ mapM_ print (filter isWarning hsdebug)
-      -- Output Core and terminate
-      when core $ do mapM_ (putStrLn . prettyCore) ds
-                     exitSuccess
-      -- Don't prove anything, just dump translations
-      if tptp || consistency then do
-          -- Translation to FOL
-          let (funcAxiomsWithDef,extraAxioms,debug) = dumpTPTP params ds
-              axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
-          -- Verbose output
-          when dbfol $ mapM_ print (filter (sourceIs ToFOL) debug)
-          -- Warnings
-          when (warnings && not latex) $ mapM_ print (filter isWarning debug)
-          -- TPTP output
-          if consistency
-            then proveAll latex processes timeout output reprove (proversFromString provers) file
-                          [Property "consistency" "" [Part Plain Infinite
-                                                           (axioms,[Particle "consistency" []])]]
-            else if latex
-                then do
-                  putStrLn (latexHeader file extraAxioms)
-                  mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
-                  putStrLn latexFooter
-                  exitSuccess
-                else do
-                  putStrLn (prettyTPTP axioms)
-                  exitSuccess
-        else do
-          -- Prove everything
-          whenLoud $ putStrLn "Preparing proofs..."
-          let (proofs,debug) = prepareProofs params ds
-          -- Verbose output
-          when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
-          when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
-          -- Print warnings
-          when (warnings && not latex) $ mapM_ print (filter isWarning debug)
-          whenLoud $ putStrLn "Done preparing proofs"
-          proveAll latex processes timeout output reprove (proversFromString provers) file proofs
-  return ()
+      (err,ds) <- case eitherds of
+                        Left  estr -> putStrLn estr >> return (True,error estr)
+                        Right ds'   -> return (False,ds')
+      if err then return [] else do
+        -- Output debug of translation
+        when dbfh $ do
+          putStrLn "Translating from Haskell..."
+          mapM_ print (filter (sourceIs FromHaskell) hsdebug)
+          putStrLn "Translation from Haskell translation complete."
+        -- Output warnings of translation
+        when (warnings && not latex) $ mapM_ print (filter isWarning hsdebug)
+        -- Output Core and terminate
+        when core $ do mapM_ (putStrLn . prettyCore) ds
+                       exitSuccess
+        -- Don't prove anything, just dump translations
+        if tptp || consistency then do
+            -- Translation to FOL
+            let (funcAxiomsWithDef,extraAxioms,debug) = dumpTPTP params ds
+                axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
+            -- Verbose output
+            when dbfol $ mapM_ print (filter (sourceIs ToFOL) debug)
+            -- Warnings
+            when (warnings && not latex) $ mapM_ print (filter isWarning debug)
+            -- TPTP output
+            if consistency
+              then proveAll latex processes timeout output reprove (proversFromString provers) file
+                            [Property "consistency" "" [Part Plain Infinite
+                                                             (axioms,[Particle "consistency" []])]]
+              else if latex
+                  then do
+                    putStrLn (latexHeader file extraAxioms)
+                    mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
+                    putStrLn latexFooter
+                    exitSuccess
+                  else do
+                    putStrLn (prettyTPTP axioms)
+                    exitSuccess
+          else do
+            -- Prove everything
+            whenLoud $ putStrLn "Preparing proofs..."
+            let (proofs,debug) = prepareProofs params ds
+            -- Verbose output
+            when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
+            when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
+            -- Print warnings
+            when (warnings && not latex) $ mapM_ print (filter isWarning debug)
+            whenLoud $ putStrLn "Done preparing proofs"
+            proveAll latex processes timeout output reprove (proversFromString provers) file proofs
+
+  putStrLn "-- Total summary --------------------------------------------------"
+  putStrLn $ stringSummary (concatMap snd totalRes)
+
+  when statistics $ writeFile "statistics" $ unlines $
+       ["% " ++ showParams params] ++
+       [tableHeader] ++
+       map (uncurry tableSummary) totalRes ++
+       [tableSummary "Total" (concatMap snd totalRes) | length files > 1 ]
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
@@ -160,10 +173,107 @@ proveAll latex processes timeout output reprove provers file properties = do
                   putStrLn ""
          putStrLn ""
 
+    putStrLn $ stringSummary propRes
+
     return propRes
 
 pad :: Int -> String -> String
-pad x s   = replicate (x - length s) ' '
+pad x s   = s ++ replicate (x - length s) ' '
 
 latexCloseTabular :: IO ()
 latexCloseTabular = putStrLn "\\end{longtable}"
+
+data MethSum = MethSum { method    :: ProofMethod
+                       , quantity  :: Int          -- of theorems proved with this
+                       , average   :: Double       -- of all ways proved with this
+                       , maxima    :: Integer      -- dito
+                       }
+
+stringSummary :: [PropResult] -> {- [(Status,[MethSum])] -> -} String
+stringSummary res = unlines
+                  $ concatMap (\(st,i,ms) -> [show st ++ " " ++ show i ++ "/" ++ show n ++ ":"] ++
+                                             map (("    "++) . methSummary i) ms)
+                  $ summary res
+  where
+    n = length res
+    methSummary :: Int -> MethSum -> String
+    methSummary i (MethSum{..}) = pad 23 (liberalShow method ++ ":") ++ " " ++ pad 7 (show quantity ++ "/" ++ show i ++ ",") ++
+                                  "avg:" ++ pad 8 (takeWhile (/= '.') (show average) ++ "ms,") ++
+                                  "max:" ++ show maxima ++ "ms"
+
+tableMethods :: [(Status,[ProofMethod])]
+tableMethods = [(Theorem,[Plain
+                          ,StructuralInduction [] True 0
+                          ,ApproxLemma
+                          ,FixpointInduction []
+                          ])
+               ,(FiniteTheorem,[StructuralInduction [] False 0])
+               ]
+
+tableHeader :: String
+tableHeader = intercalate " & " ("" : concatMap flat tableMethods)
+  where flat (st,ms) = show st:map liberalShow ms
+
+tableSummary :: FilePath -> [PropResult] -> String
+tableSummary file res = intercalate " & " (file:process Theorem ++ process FiniteTheorem)
+   where
+     sum :: [(Status,Int,[MethSum])]
+     sum = summary res
+
+     n = length res
+
+     fst3 (a,_,_) = a
+
+     process :: Status -> [String]
+     process status = case find ((status ==) . fst3) sum of
+                        Just (_,i,methsums) -> (show i ++ "/" ++ show n):map (methSummary i methsums) meths
+                        Nothing             -> "":map (const "") meths
+       where
+         meths :: [ProofMethod]
+         meths = fromMaybe (error "tableSummary: meths") (lookup status tableMethods)
+
+         methSummary :: Int -> [MethSum] -> ProofMethod -> String
+         methSummary i methsums m = case find ((m `liberalEq`) . method) methsums of
+                                      Just (MethSum{..}) -> show quantity ++ "/" ++ show i
+                                      Nothing            -> ""
+
+summary :: [PropResult] -> [(Status,Int,[MethSum])]
+summary = map (\xs@((status,_):_) ->
+                  (status
+                  ,length (filter ((status ==) . fst) xs)
+                  ,sumParts  status (map snd xs)))
+        . reverse                           -- thm,fin
+        . groupSortedOn fst                 -- [[(Status,[PartResult])]]
+        . filter ((None /=) . fst)          -- remove none
+        . map propMatter                    -- [(Status,[PartResult])]
+
+
+sumParts :: Status -> [[PartResult]] -> [MethSum]
+sumParts status pparts = mapMaybe handleMethod proofMethods
+  where
+    handleMethod :: ProofMethod -> Maybe MethSum
+    handleMethod method = res
+      where
+         partProvedByMethod :: PartResult -> Bool
+         partProvedByMethod part = method `liberalEq` partMethod part
+                                && statusFromPart part == status
+
+         qty = length (filter (any partProvedByMethod) pparts)
+
+         fi = fromIntegral
+         itod = fi . toInteger
+
+         makeMethSum :: [ProverResult] -> MethSum
+         makeMethSum ss = MethSum { method   = method
+                                  , quantity = qty
+                                  , average  = fi (sum (map successTime ss)) / itod qty / 1000
+                                  , maxima   = maximum (map successTime ss) `div` 1000
+                                  }
+
+         res | qty == 0  = Nothing
+             | otherwise = Just
+                         $ makeMethSum
+                         $ concatMap (map (fst . particleMatter) . partMatter)
+                         $ filter partProvedByMethod
+                         $ concat pparts
+

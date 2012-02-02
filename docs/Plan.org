@@ -712,13 +712,13 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-02 Thu 12:49]
+Clock summary at [2012-02-02 Thu 17:33]
 
 | Headline                                                      | Time    |       |      |      |
 |---------------------------------------------------------------+---------+-------+------+------|
-| *Total time*                                                  | *21:49* |       |      |      |
+| *Total time*                                                  | *24:56* |       |      |      |
 |---------------------------------------------------------------+---------+-------+------+------|
-| Plan                                                          | 21:49   |       |      |      |
+| Plan                                                          | 24:56   |       |      |      |
 | Completed                                                     |         | 13:40 |      |      |
 | DONE Fix the lambda bug                                       |         |       | 0:42 |      |
 | DONE Fill results incrementally                               |         |       | 1:22 |      |
@@ -734,15 +734,16 @@ Clock summary at [2012-02-02 Thu 12:49]
 | DONE Install GHC on ttitania                                  |         |       | 1:03 |      |
 | Report                                                        |         |       | 0:21 |      |
 | DONE Quantifying functions and app                            |         |       |      | 0:21 |
-| Tasks                                                         |         |  8:09 |      |      |
+| Tasks                                                         |         | 11:16 |      |      |
 | ONGOING Time planning                                         |         |       | 0:31 |      |
 | TODO Report tasks                                             |         |       | 3:48 |      |
 | NEXT Write introduction                                       |         |       |      | 2:33 |
 | TODO Fixed point induction                                    |         |       |      | 0:55 |
 | TODO Structural induction rewrite                             |         |       |      | 0:19 |
-| TODO Results                                                  |         |       | 3:49 |      |
-| NEXT Prepare the test suite                                   |         |       |      | 3:18 |
+| TODO Results                                                  |         |       | 6:56 |      |
+| NEXT Prepare the test suite                                   |         |       |      | 4:32 |
 | NEXT Use qsub script                                          |         |       |      | 0:23 |
+| DONE Disable combinatorial explosions from fpi and str ind    |         |       |      | 1:53 |
 #+END:
 ** Refile
 *** SOMEDAY Example ideas
@@ -1054,8 +1055,8 @@ CLOCK: [2012-02-01 Wed 23:45]--[2012-02-01 Wed 23:48] =>  0:03
 CLOCK: [2012-01-31 Tue 11:33]--[2012-01-31 Tue 11:36] =>  0:03
 CLOCK: [2012-01-30 Mon 10:48]--[2012-01-30 Mon 10:48] =>  0:00
 **** NEXT Prepare the test suite
-CLOCK: [2012-02-02 Thu 17:00]
-CLOCK: [2012-02-02 Thu 14:17]--[2012-02-02 Thu 16:10] =>  1:53
+CLOCK: [2012-02-02 Thu 18:29]--[2012-02-02 Thu 18:29] =>  0:00
+CLOCK: [2012-02-02 Thu 17:00]--[2012-02-02 Thu 18:00] =>  1:00
 CLOCK: [2012-02-02 Thu 13:11]--[2012-02-02 Thu 14:07] =>  0:56
 CLOCK: [2012-02-02 Thu 12:32]--[2012-02-02 Thu 12:50] =>  0:18
 CLOCK: [2012-02-01 Wed 23:00]--[2012-02-01 Wed 23:39] =>  0:39
@@ -1108,7 +1109,10 @@ qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
 -t n-m  : set $SGE_TASK_ID . this will be useful to do different kinds
           of tests
 
-**** NEXT Disable combinatorial explosions from fpi and str ind
+**** DONE Disable combinatorial explosions from fpi and str ind
+CLOCK: [2012-02-02 Thu 14:17]--[2012-02-02 Thu 16:10] =>  1:53
+CLOSED: [2012-02-02 Thu 17:32]
+- State "DONE"       from "NEXT"       [2012-02-02 Thu 17:32]
 
 
 *** TODO Better name than autospec!

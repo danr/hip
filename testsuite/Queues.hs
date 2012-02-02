@@ -1,4 +1,3 @@
-{-# OPTIONS_EQUALITY Queue toList #-}
 module Queues where
 
 import AutoPrelude
@@ -9,8 +8,7 @@ import Prelude (Eq((==)),Ord,Show,iterate,(!!),fmap,Bool(..),Int,return)
 data Queue a = Queue [a] [a] -- front, then back
   deriving Show
 
--- Equality and Ordering is by lists
-{-# OPTIONS_EQUALITY Queue toList #-}
+-- Equality and Ordering is by lists: {-# OPTIONS_EQUALITY Queue toList #-}
 instance Eq a => Eq (Queue a) where
   q == q' = toList q == toList q'
 

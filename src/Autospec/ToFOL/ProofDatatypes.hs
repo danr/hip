@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFunctor,NamedFieldPuns #-}
 module Autospec.ToFOL.ProofDatatypes where
 
 import qualified Language.TPTP as T
@@ -46,21 +46,23 @@ proofMethodFile pt = case pt of
   FixpointInduction f        -> "fix" ++ concat f
   StructuralInduction vs b d -> concat [ "fin" | not b ] ++ "strind" ++ concat vs ++ show d
 
+
 proofMethods :: [ProofMethod]
-proofMethods = [Plain,SimpleInduction ""
+proofMethods = [Plain
+               ,StructuralInduction [] True 0
                ,ApproxLemma
                ,FixpointInduction []
-               ,StructuralInduction [] True 0
+               ,StructuralInduction [] False 0
                ]
 
 
 liberalEq :: ProofMethod -> ProofMethod -> Bool
-liberalEq Plain Plain                                         = True
-liberalEq SimpleInduction{} SimpleInduction{}                 = True
-liberalEq ApproxLemma ApproxLemma                             = True
-liberalEq FixpointInduction{} FixpointInduction{}             = True
-liberalEq StructuralInduction{} StructuralInduction{}         = True
-liberalEq _ _                                                 = False
+liberalEq Plain                        Plain                       = True
+liberalEq SimpleInduction{}            SimpleInduction{}           = True
+liberalEq ApproxLemma                  ApproxLemma                 = True
+liberalEq FixpointInduction{}          FixpointInduction{}         = True
+liberalEq (StructuralInduction _ b' _) (StructuralInduction _ b _) = b == b'
+liberalEq _ _                                                      = False
 
 liberalShow :: ProofMethod -> String
 liberalShow Plain                     = "plain"
