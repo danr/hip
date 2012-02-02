@@ -4,7 +4,7 @@
 #+EMAIL:     danr@student.gu.se
 #+OPTIONS:   H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
-n#+LATEX_HEADER: \usepackage{fullpage,listings,courier}
+#+LATEX_HEADER: \usepackage{fullpage,listings,courier}
 
 
 \lstdefinestyle{numbers}{numberstyle=\tiny}
@@ -712,35 +712,37 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-02 Thu 09:19]
+Clock summary at [2012-02-02 Thu 12:49]
 
 | Headline                                                      | Time    |       |      |      |
 |---------------------------------------------------------------+---------+-------+------+------|
-| *Total time*                                                  | *20:13* |       |      |      |
+| *Total time*                                                  | *21:49* |       |      |      |
 |---------------------------------------------------------------+---------+-------+------+------|
-| Plan                                                          | 20:13   |       |      |      |
-| Completed                                                     |         | 12:37 |      |      |
+| Plan                                                          | 21:49   |       |      |      |
+| Completed                                                     |         | 13:40 |      |      |
 | DONE Fix the lambda bug                                       |         |       | 0:42 |      |
 | DONE Fill results incrementally                               |         |       | 1:22 |      |
 | DONE Patch the program to run all provers                     |         |       | 9:08 |      |
-| NEXT Modify the code to accept both modes                     |         |       |      | 6:43 |
+| DONE Modify the code to accept both modes                     |         |       |      | 6:43 |
 | DONE SPASS                                                    |         |       |      | 0:32 |
 | DONE Prover9                                                  |         |       |      | 0:29 |
 | DONE Equinox                                                  |         |       |      | 0:27 |
 | DONE Vampire                                                  |         |       |      | 0:11 |
-| TODO Waldmeister (?)                                          |         |       |      | 0:15 |
+| SOMEDAY Waldmeister (?)                                       |         |       |      | 0:15 |
 | DONE Make a test suite that discovers how the provers answers |         |       |      | 0:16 |
 | DONE Meeting with Koen 31 january                             |         |       | 1:04 |      |
+| DONE Install GHC on ttitania                                  |         |       | 1:03 |      |
 | Report                                                        |         |       | 0:21 |      |
 | DONE Quantifying functions and app                            |         |       |      | 0:21 |
-| Tasks                                                         |         |  7:36 |      |      |
-| ONGOING Time planning                                         |         |       | 0:23 |      |
+| Tasks                                                         |         |  8:09 |      |      |
+| ONGOING Time planning                                         |         |       | 0:31 |      |
 | TODO Report tasks                                             |         |       | 3:48 |      |
 | NEXT Write introduction                                       |         |       |      | 2:33 |
 | TODO Fixed point induction                                    |         |       |      | 0:55 |
 | TODO Structural induction rewrite                             |         |       |      | 0:19 |
-| TODO Results                                                  |         |       | 3:24 |      |
-| TODO Prepare the test suite                                   |         |       |      | 3:18 |
+| TODO Results                                                  |         |       | 3:49 |      |
+| NEXT Prepare the test suite                                   |         |       |      | 3:18 |
+| NEXT Use qsub script                                          |         |       |      | 0:23 |
 #+END:
 ** Refile
 *** SOMEDAY Example ideas
@@ -951,6 +953,13 @@ Put different provers and proving methods against each other.
 Provers in cactus diagram, fixpoint induction vs approx lemma in
 scatter plots?
 
+*** DONE Install GHC on ttitania
+CLOSED: [2012-02-02 Thu 10:28]
+- State "DONE"       from "NEXT"       [2012-02-02 Thu 10:28]
+CLOCK: [2012-02-02 Thu 09:25]--[2012-02-02 Thu 10:28] =>  1:03
+ttitania is 64 bit
+ttitania-1.ce.chalmers.se
+All provers installed!
 *** Report                                                         :report:
 **** DONE Quantifying functions and app
 CLOSED: [2012-01-31 Tue 11:54]
@@ -1045,6 +1054,8 @@ CLOCK: [2012-02-01 Wed 23:45]--[2012-02-01 Wed 23:48] =>  0:03
 CLOCK: [2012-01-31 Tue 11:33]--[2012-01-31 Tue 11:36] =>  0:03
 CLOCK: [2012-01-30 Mon 10:48]--[2012-01-30 Mon 10:48] =>  0:00
 **** NEXT Prepare the test suite
+CLOCK: [2012-02-02 Thu 13:11]
+CLOCK: [2012-02-02 Thu 12:32]--[2012-02-02 Thu 12:50] =>  0:18
 CLOCK: [2012-02-01 Wed 23:00]--[2012-02-01 Wed 23:39] =>  0:39
 CLOCK: [2012-02-01 Wed 13:10]--[2012-02-01 Wed 14:46] =>  1:36
 CLOCK: [2012-02-01 Wed 12:37]--[2012-02-01 Wed 12:39] =>  0:02
@@ -1060,16 +1071,12 @@ example, list concatenation associativity is in a myriad of files).
 ****** Cactus plot
 ****** Histogram
 ****** Scatter plot comparisons?
-**** NEXT Install GHC on ttitania
-CLOCK: [2012-02-02 Thu 09:25]
-ttitania is 64 bit
 
-Mail from Michal:
-ttitania-1.ce.chalmers.se
-
+**** NEXT Use qsub script
+CLOCK: [2012-02-02 Thu 10:28]--[2012-02-02 Thu 10:51] =>  0:23
 #+BEGIN_SRC bash
 L=/home/palka/.local_inst
-nnexport LIBRARY_PATH=$LIBRARY_PATH:$L/lib:$L/usr/lib
+export LIBRARY_PATH=$LIBRARY_PATH:$L/lib:$L/usr/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$L/lib:$L/usr/lib
 
 #if [[ -z $1 || $1 == "--help" ]]
@@ -1093,7 +1100,14 @@ time $OLDWD/$1 $2 $3 $4
 qsub -cwd -q fp -t 1-100 ../runTest.sh ./testStrictness 1000
 10 /home/palka/packages/ghc-7.3.20111022-inst/bin/ghc
 #+END_SRC
+
+-cwd    : current working directory
+-q fp   : use the FP queue
+-t n-m  : set $SGE_TASK_ID . this will be useful to do different kinds
+          of tests
+
 **** NEXT Disable combinatorial explosions from fpi and str ind
+
 
 *** TODO Better name than autospec!
 

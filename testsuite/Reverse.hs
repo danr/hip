@@ -2,7 +2,7 @@
 module Lists where
 
 import AutoPrelude
-import Prelude ()
+import Prelude (Int)
 
 (++) :: [a] -> [a] -> [a]
 (x:xs) ++ ys = x:(xs ++ ys)
@@ -72,3 +72,22 @@ prop_15 x xs ys = revAcc (x:xs) ys =:= revAcc xs (x:ys)
 
 prop_16 :: [a] -> [a] -> [a] -> Prop [a]
 prop_16 xs ys zs = revAcc (revAcc xs ys) zs =:= revAcc xs (ys ++ zs)
+
+main = do
+  quickCheck (printTestCase "prop_00" (prop_00 :: Int -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_01" (prop_01 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_02" (prop_02 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_03" (prop_03 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_04" (prop_04 :: [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_05" (prop_05 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_06" (prop_06 :: Int -> Prop [Int]))
+  quickCheck (printTestCase "prop_07" (prop_07 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_08" (prop_08 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_09" (prop_09 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_10" (prop_10 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_11" (prop_11 :: [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_12" (prop_12 :: Int -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_13" (prop_13 :: [Int] -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_14" (prop_14 :: [Int] -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_15" (prop_15 :: Int -> [Int] -> [Int] -> Prop [Int]))
+  quickCheck (printTestCase "prop_16" (prop_16 :: [Int] -> [Int] -> [Int] -> Prop [Int]))

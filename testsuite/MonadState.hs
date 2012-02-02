@@ -1,13 +1,13 @@
 {-# LANGUAGE OverlappingInstances, FlexibleInstances,FlexibleContexts #-}
 -- Does not yet check put/get properties!
-module StateMonad where
+module MonadState where
 
 import AutoPrelude
-import Prelude (Int,and,Eq(..))
+import Prelude (Int,Eq)
 
 -- Poor man's equality
-instance Eq b => Eq (Int -> b) where
-  f == g = and [ f x == g x | x <- [0..100] ]
+instance Eq b => Eq (Int -> b)
+
 
 type State s a = s -> (a,s)
 

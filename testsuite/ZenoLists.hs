@@ -1,5 +1,5 @@
 -- Lists and functions, many properties come from QuickSpec
-module ListFunctions where
+module ZenoLists where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..),Int)
@@ -226,9 +226,9 @@ prop_19 :: Nat -> [Nat] -> Prop Nat
 prop_19 n xs
   = len (drop n xs) =:= len xs - n
 
-prop_20 :: [Nat] -> Prop Nat
-prop_20 xs
-  = len (sort xs) =:= len xs
+--prop_20 :: [Nat] -> Prop Nat
+--prop_20 xs
+--  = len (sort xs) =:= len xs
 
 {-
 prop_26 x xs ys
@@ -322,9 +322,9 @@ prop_52 :: Nat -> [Nat] -> Prop Nat
 prop_52 n xs
   = count n xs =:= count n (rev xs)
 
-prop_53 :: Nat -> [Nat] -> Prop Nat
-prop_53 n xs
-  = count n xs =:= count n (sort xs)
+--prop_53 :: Nat -> [Nat] -> Prop Nat
+--prop_53 n xs
+--  = count n xs =:= count n (sort xs)
 
 prop_55 :: Nat -> [a] -> [a] -> Prop [a]
 prop_55 n xs ys
@@ -417,9 +417,9 @@ prop_77 x xs
   $ proveBool (sorted (insort x xs))
 -}
 
-prop_78 :: [Nat] -> Prop Bool
-prop_78 xs
-  = proveBool (sorted (sort xs))
+--prop_78 :: [Nat] -> Prop Bool
+--prop_78 xs
+--  = proveBool (sorted (sort xs))
 
 prop_80 :: Nat -> [a] -> [a] -> Prop [a]
 prop_80 n xs ys
@@ -465,7 +465,7 @@ prop_len_plus_list_homomorphism xs ys =
   len (xs ++ ys) =:= len xs + len ys
 
 main = do
-  quickCheck (printTestCase "prop_nats" (prop_nats :: Nat -> Prop Nat))
+  quickCheck (printTestCase "prop_nats" (prop_nats :: Nat -> Prop [Nat]))
   quickCheck (printTestCase "prop_00" (prop_00 :: (Int -> Int) -> [Int] -> Nat -> Prop [Int]))
   quickCheck (printTestCase "prop_01" (prop_01 :: Nat -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_02" (prop_02 :: Nat -> [Nat] -> [Nat] -> Prop Nat))
@@ -477,7 +477,6 @@ main = do
   quickCheck (printTestCase "prop_14" (prop_14 :: (Int -> Bool) -> [Int] -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_15" (prop_15 :: Nat -> [Nat] -> Prop Nat))
   quickCheck (printTestCase "prop_19" (prop_19 :: Nat -> [Nat] -> Prop Nat))
-  quickCheck (printTestCase "prop_20" (prop_20 :: [Nat] -> Prop Nat))
   quickCheck (printTestCase "prop_28" (prop_28 :: Nat -> [Nat] -> Prop Bool))
   quickCheck (printTestCase "prop_29" (prop_29 :: Nat -> [Nat] -> Prop Bool))
   quickCheck (printTestCase "prop_30" (prop_30 :: Nat -> [Nat] -> Prop Bool))
@@ -497,7 +496,6 @@ main = do
   quickCheck (printTestCase "prop_50" (prop_50 :: [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_51" (prop_51 :: [Int] -> Int -> Prop [Int]))
   quickCheck (printTestCase "prop_52" (prop_52 :: Nat -> [Nat] -> Prop Nat))
-  quickCheck (printTestCase "prop_53" (prop_53 :: Nat -> [Nat] -> Prop Nat))
   quickCheck (printTestCase "prop_55" (prop_55 :: Nat -> [Int] -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_56" (prop_56 :: Nat -> Nat -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_57" (prop_57 :: Nat -> Nat -> [Int] -> Prop [Int]))
@@ -511,7 +509,6 @@ main = do
   quickCheck (printTestCase "prop_73" (prop_73 :: (Int -> Bool) -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_74" (prop_74 :: Nat -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_75" (prop_75 :: Nat -> Nat -> [Nat] -> Prop Nat))
-  quickCheck (printTestCase "prop_78" (prop_78 :: [Nat] -> Prop Bool))
   quickCheck (printTestCase "prop_80" (prop_80 :: Nat -> [Int] -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_81" (prop_81 :: Nat -> Nat -> [Int] -> Prop [Int]))
   quickCheck (printTestCase "prop_82" (prop_82 :: Nat -> [Int] -> [Int] -> Prop [(Int,Int)]))
