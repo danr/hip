@@ -119,7 +119,7 @@ invokeATPs properties env@(Env{..}) = do
     consume resChan doneMVar
   where
     consume :: TChan PropResult -> TVar Bool -> IO [PropResult]
-    consume resChan doneTVar = unsafeInterleaveIO $ do
+    consume resChan doneTVar = fix $ \loop -> unsafeInterleaveIO $ do
 --        putStrLn "consuming..."
         element <- atomically $ do empty <- isEmptyTChan resChan
                                    done  <- readTVar doneTVar
@@ -127,7 +127,7 @@ invokeATPs properties env@(Env{..}) = do
                                             else Just <$> readTChan resChan
         case element of
                 Nothing -> return []
-                Just e  -> (e:) <$> consume resChan doneTVar
+                Just e  -> (e:) <$> loop
 
 propStatus :: PropName -> ProveM Status
 propStatus propName = do
