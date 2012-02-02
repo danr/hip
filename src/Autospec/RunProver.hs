@@ -21,25 +21,25 @@ import System.CPUTime
 
 runProver :: Prover -> String -> Int -> IO ProverResult
 runProver (Prover{..}) inputStr timelimit = do
-    putStrLn $ "Running prover " ++ show proverName
+--    putStrLn $ "Running prover " ++ show proverName
     (Just inh, Just outh, _, pid) <-
        createProcess (proc proverCmd (proverArgs timelimit))
                      { std_in  = CreatePipe
                      , std_out = CreatePipe
                      , std_err = Inherit }
 
-    putStrLn "Reading output..."
+--    putStrLn "Reading output..."
     -- fork off a thread to start consuming the output
     output  <- hGetContents outh
     outMVar <- newEmptyMVar
     _ <- forkIO $ evaluate (length output) >> putMVar outMVar ()
 
-    putStrLn "Write and flush input"
+--    putStrLn "Write and flush input"
     -- now write and flush any input
     when (not (null inputStr)) $ do hPutStr inh inputStr; hFlush inh
     hClose inh -- done with stdin
 
-    putStrLn "Waiting for result..."
+--    putStrLn "Waiting for result..."
     timeStart <- getCPUTime
 
     exitCodeMVar <- newEmptyMVar
