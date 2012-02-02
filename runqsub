@@ -17,17 +17,14 @@ case "$SGE_TASK_ID" in
     4) PROVERS=p ;;
     5) PROVERS=s ;;
     6) PROVERS=x ;;
-    *) echo "Too high task id $SGE_TASK_ID"
+    *) echo "Too high task id $SGE_TASK_ID";;
 esac
 
 OLDWD=$PWD
 
-DIR=run_$PROVERS_${JOB_ID}
+DIR=run_${PROVERS}_${JOB_ID}
 
 rm -rf $DIR
 mkdir $DIR
 
-cd $DIR
-
-
-time autospec $OLDWD/$1 --processes=7 -r -t=5 --provers=$PROVERS --statistics --inddepth=2 --indvars=2 --indhyps=500 --indsteps=20 --fpimax=100 +RTS 100M > output
+time autospec "$@" --processes=7 -r -t=5 --provers=$PROVERS --statistics --inddepth=2 --indvars=2 --indhyps=500 --indsteps=20 --fpimax=100 +RTS -K100M > $DIR/output
