@@ -269,8 +269,9 @@ fromExp ex = case ex of
   Tuple es           -> do regData (tupleName (length es))
                            C.Con (tupleName (length es)) <$> mapM fromExp es
   List es            -> regData listTypeName >> listExp es
-  If e1 e2 e3        -> do warn $ "Assumes if :: Bool -> a -> a -> a in scope"
-                           (app .) . app . app (C.Var "if")
+  If e1 e2 e3        -> do b <- inScope "iff"
+                           unless b $ fatal $ "if stmt requires iff :: Bool -> a -> a -> a defined"
+                           (app .) . app . app (C.Var "iff")
                              <$> fromExp e1 <*> fromExp e2 <*> fromExp e3
   RightSection op e  -> do x <- Ident <$> scopePrefix "x"
                            fromExp (Lambda (error "lambda location on rsection")

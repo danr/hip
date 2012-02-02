@@ -16,9 +16,6 @@ import System.IO
 import System.Exit
 import System.CPUTime
 
---import Data.List
---import Data.Maybe
-
 runProver :: Prover -> String -> Int -> IO ProverResult
 runProver (Prover{..}) inputStr timelimit = do
 --    putStrLn $ "Running prover " ++ show proverName

@@ -82,29 +82,33 @@ main = do
         mapM_ print (filter (sourceIs FromHaskell) hsdebug)
         putStrLn "Translation from Haskell translation complete."
       -- Output warnings of translation
-      whenNormal $ when (not latex) $ mapM_ print (filter isWarning hsdebug)
+      when (warnings && not latex) $ mapM_ print (filter isWarning hsdebug)
       -- Output Core and terminate
       when core $ do mapM_ (putStrLn . prettyCore) ds
                      exitSuccess
       -- Don't prove anything, just dump translations
-      if tptp then do
+      if tptp || consistency then do
           -- Translation to FOL
           let (funcAxiomsWithDef,extraAxioms,debug) = dumpTPTP params ds
               axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
           -- Verbose output
           when dbfol $ mapM_ print (filter (sourceIs ToFOL) debug)
           -- Warnings
-          whenNormal $ mapM_ print (filter isWarning debug)
+          when (warnings && not latex) $ mapM_ print (filter isWarning debug)
           -- TPTP output
-          if latex
-            then do
-              putStrLn (latexHeader file extraAxioms)
-              mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
-              putStrLn latexFooter
-              exitSuccess
-            else do
-              putStrLn (prettyTPTP axioms)
-              exitSuccess
+          if consistency
+            then proveAll latex processes timeout output reprove (proversFromString provers) file
+                          [Property "consistency" "" [Part Plain Infinite
+                                                           (axioms,[Particle "consistency" []])]]
+            else if latex
+                then do
+                  putStrLn (latexHeader file extraAxioms)
+                  mapM_ (putStr . uncurry latexDecl) funcAxiomsWithDef
+                  putStrLn latexFooter
+                  exitSuccess
+                else do
+                  putStrLn (prettyTPTP axioms)
+                  exitSuccess
         else do
           -- Prove everything
           whenLoud $ putStrLn "Preparing proofs..."
@@ -113,7 +117,7 @@ main = do
           when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
           when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
           -- Print warnings
-          whenNormal $ when (not latex) $ mapM_ print (filter isWarning debug)
+          when (warnings && not latex) $ mapM_ print (filter isWarning debug)
           whenLoud $ putStrLn "Done preparing proofs"
           proveAll latex processes timeout output reprove (proversFromString provers) file proofs
   return ()

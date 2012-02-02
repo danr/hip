@@ -1,4 +1,9 @@
+
+
 data  Bool  =  False | True     deriving (Eq, Ord, Enum, Read, Show, Bounded)
+
+iff True  a b = a
+iff False a b = b
 
 -- Boolean functions
 
