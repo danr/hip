@@ -289,16 +289,17 @@ sumParts status pparts = mapMaybe handleMethod proofMethods
          fi = fromIntegral
          itod = fi . toInteger
 
-         makeMethSum :: [ProverResult] -> MethSum
-         makeMethSum ss = MethSum { method   = method
+         makeMethSum :: [ProverResult] -> Int -> MethSum
+         makeMethSum ss nums = MethSum
+                                  { method   = method
                                   , quantity = qty
-                                  , average  = fi (sum (map successTime ss)) / itod qty / 1000
+                                  , average  = fi (sum (map successTime ss)) / itod nums / 1000
                                   , maxima   = maximum (map successTime ss) `div` 1000
                                   }
 
          res | qty == 0  = Nothing
              | otherwise = Just
-                         $ makeMethSum
+                         $ (makeMethSum <*> length)
                          $ concatMap (map (fst . particleMatter) . partMatter)
                          $ filter partProvedByMethod
                          $ concat pparts
