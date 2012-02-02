@@ -203,7 +203,7 @@ structuralInduction vts env depth = map mkPart ess
      ess = unroll (map (uncurry ((:::) . Var)) vts) env depth
 
      mkPart :: [Expr] -> IndPart
-     mkPart es = IndPart (nubSorted (partitionListTo env vs ts ps))
+     mkPart es = IndPart (nub {- sorted -} (partitionListTo env vs ts ps)) -- shit this is so ineffective
                          (map stripTypes es)
                          (concatMap (map fst) vs)
        where

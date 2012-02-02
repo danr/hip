@@ -8,7 +8,7 @@ module Autospec.ToFOL.Monad
        ,runTM
        ,write
        ,warn
-       ,dbproof
+       ,wdproof
        ,writeDelimiter
        ,indented
        ,getEnv
@@ -46,6 +46,7 @@ import Autospec.ToFOL.Constructors
 import Autospec.ToFOL.ProofDatatypes
 import Autospec.Messages
 import Autospec.Util (isOp,putEither)
+import Autospec.Params
 
 import qualified Language.TPTP as T
 import Language.TPTP hiding (Decl,Var)
@@ -75,8 +76,8 @@ newtype TM a = TM { unTM :: State St a }
 
 -- | Runs a computation in an empty environment, with an empty state.
 --   The computation's result is returned with the updated state.
-runTM :: TM a -> a
-runTM (TM m) = evalState m initSt
+runTM :: Params -> TM a -> a
+runTM params (TM m) = evalState m (initSt params)
 
 data Bound = QuantVar    { quantVar  :: VarName }
            | FunVar      { boundName :: FunName }
@@ -90,19 +91,20 @@ boundCon (ConVar _) = True
 boundCon _          = False
 
 -- | The empty state
-initSt :: St
-initSt = St { _arities     = M.empty
-            , _conProj     = M.empty
-            , _conFam      = M.empty
-            , _datatypes   = []
-            , _usedFunPtrs = S.empty
-            , _boundNames  = M.empty
-            , _quantified  = S.empty
-            , _debug       = []
-            , _debugIndent = 0
-            , _namesupply  = [ show x | x <- [(0 :: Integer)..] ]
-            , _types       = M.empty
-            }
+initSt :: Params -> St
+initSt p = St { _arities     = M.empty
+              , _conProj     = M.empty
+              , _conFam      = M.empty
+              , _datatypes   = []
+              , _usedFunPtrs = S.empty
+              , _boundNames  = M.empty
+              , _quantified  = S.empty
+              , _debug       = []
+              , _debugIndent = 0
+              , _namesupply  = [ show x | x <- [(0 :: Integer)..] ]
+              , _types       = M.empty
+              , _params      = p
+              }
 
 data St = St { _arities     :: Map Name Int
                -- ^ Arity of functions and constructors
@@ -129,8 +131,13 @@ data St = St { _arities     :: Map Name Int
                -- ^ Namesupply, currently only used to rename infix operators
              , _types       :: Map Name Type
                -- ^ Types of functions and constructors
+             , _params      :: Params
+               -- ^ Parameters to the program
              } deriving (Show)
 $(mkLabels [''St])
+
+getParams :: TM Params
+getParams = TM $ gets params
 
 -- | Write a debug delimiter (a newline)
 writeDelimiter :: TM ()
@@ -148,8 +155,8 @@ write' s = do
 warn :: String -> TM ()
 warn s = TM $ modify debug (warnMsg s:)
 
-dbproof :: String -> TM ()
-dbproof s = TM $ modify debug (dbproofMsg s:)
+wdproof :: String -> TM ()
+wdproof s = TM $ modify debug (dbproofMsg s:)
 
 -- | Do an action with indented debug messages
 indented :: TM a -> TM a

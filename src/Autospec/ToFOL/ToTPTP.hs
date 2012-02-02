@@ -11,10 +11,11 @@ import Autospec.ToFOL.NecessaryDefinitions
 import Autospec.ToFOL.Pretty
 import Autospec.Messages
 import Autospec.Util
+import Autospec.Params
 
 import qualified Language.TPTP as T
 
-import Control.Arrow ((&&&),(***),second)
+import Control.Arrow ((&&&),(***),second,first)
 import Control.Applicative
 
 import Data.List (partition,nub,find)
@@ -41,8 +42,8 @@ processDecls ds = ProcessedDecls{..}
               : Data "Bool"   [] [Cons trueName [],Cons falseName []]
               : filter (\d -> declName d `notElem` proofDatatypes) dataDecls'
 
-dumpTPTP :: [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[Msg])
-dumpTPTP ds = runTM $ do
+dumpTPTP :: Params -> [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[Msg])
+dumpTPTP params ds = runTM params $ do
     addFuns funs
     addCons dataDecls
     addTypes types
@@ -76,9 +77,21 @@ filterDatas typesFromSig cs =
 filterFuns :: Set Name -> [Decl] -> [Decl]
 filterFuns fs = filter ((`S.member` fs) . declName)
 
-prepareProofs :: [Decl] -> ([Property],[Msg])
-prepareProofs ds = second ((extraDebug ++) . concat)
-                 $ unzip (concatMap processDecl proofDecls)
+-- These were added since StructuralInduction sometimes returns empty
+-- parts because it overflowed the number allowed hyps or steps, and
+-- this was inside the monad so this was the easiest fix, but yes
+-- it's an ugly hack and I sorry I do not have more time for this
+removeEmptyProperties :: [Property] -> [Property]
+removeEmptyProperties = filter (not . null . propMatter)
+
+removeEmptyParts :: Property -> Property
+removeEmptyParts (Property n c parts)
+  = Property n c (filter (not . null . snd . partMatter) parts)
+
+prepareProofs :: Params -> [Decl] -> ([Property],[Msg])
+prepareProofs params ds = first (removeEmptyProperties . map removeEmptyParts)
+                        $ second ((extraDebug ++) . concat)
+                        $ unzip (concatMap processDecl proofDecls)
   where
     extraDebug = [dbproofMsg $ "Recursive functions: " ++ show recursiveFuns]
 
@@ -97,17 +110,17 @@ prepareProofs ds = second ((extraDebug ++) . concat)
                     cs        = S.insert bottomName $ csd `S.union` cs'
                     datadecls = filterDatas typesFromSig cs dataDecls
                     fundecls  = filterFuns  fs funDecls
-                    partsm    = makeProofDecls fundecls recursiveFuns sigty d
-                    (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM $ do
-                        dbproof $ propName
+                    partsm    = makeProofDecls params fundecls recursiveFuns sigty d
+                    (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM params $ do
+                        wdproof $ propName
                         addTypes types
                         addCons datadecls
                         part  <- partm
                         extra <- envStDecls
                         db    <- popDebug
                         return (extendPart extra part,db)
-                return $ (Property { propName  = propName
-                                   , propCode  = prettyCore (funcBody d)
+                return $ (Property { propName   = propName
+                                   , propCode   = prettyCore (funcBody d)
                                    , propMatter = parts
                                    },concat dbg)
 

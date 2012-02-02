@@ -39,9 +39,9 @@ exampleCode2 = parseDecls $ unlines
  , "                  } ;"
  ]
 
-unRec = ".unRec"
+unRec = "oi"
 
-fixMe = ".fixMe"
+fixMe = "*I"
 
 -- Lifts the functions up for suitable fixpoint induction Assumes all
 -- decls are fundecls, and that the functions are recursive.
@@ -109,15 +109,19 @@ instance Show FixProof where
      ]
      where showTup (l,r) = show l ++ " = " ++ show r
 
+(+-+) :: [a] -> [a] -> [a]
+(x:xs) +-+ ys = x:(ys +-+ xs)
+[]     +-+ ys = ys
+
 powSubst :: [(Name,Name)] -> Expr -> [Expr]
 powSubst m = transformM f
-  where f e@(Var x)    = [e] ++ [Var x'    | Just x' <- [lookup x m]]
-        f e@(App x as) = [e] ++ [App x' as | Just x' <- [lookup x m]]
+  where f e@(Var x)    = [e] +-+ [Var x'    | Just x' <- [lookup x m]]
+        f e@(App x as) = [e] +-+ [App x' as | Just x' <- [lookup x m]]
         f e = [e]
 
 testPowSubst = mapM_ print
-             $ powSubst [("f","h"),("g","k")]
-                        (parseExpr "f (g (f x (f y)))")
+             $ powSubst [("x","X"),("g","G")]
+                        (parseExpr "eq (x x) (x x)")
 
 proofByFixpoint :: [Decl] -> Set Name -> Expr -> Expr -> [FixProof]
 proofByFixpoint ds recset lhs rhs =
@@ -168,3 +172,5 @@ proofByFixpoint ds recset lhs rhs =
                             "on non-existent function" ++ f)
        $ lookup f
        $ map (declName &&& length . declArgs) ds
+
+testFPI = mapM_ print $ map step $ proofByFixpoint (parseDecls "f = f;") (S.fromList ["f"]) (parseExpr "f (f x)") (parseExpr "f (f x)")

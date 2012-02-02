@@ -186,7 +186,7 @@ listener intermediateChan resChan propParts workers doneTVar = do
             done <- gets (M.null . fst)
             unless done loop
 
-    evalStateT process initState
+    unless (M.null propParts) (evalStateT process initState)
 
     liftIO $ do -- putStrLn "All parts are done"
                 mapM_ killThread workers
