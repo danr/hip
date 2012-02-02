@@ -712,38 +712,39 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-02 Thu 17:33]
+Clock summary at [2012-02-02 Thu 21:11]
 
-| Headline                                                      | Time    |       |      |      |
-|---------------------------------------------------------------+---------+-------+------+------|
-| *Total time*                                                  | *24:56* |       |      |      |
-|---------------------------------------------------------------+---------+-------+------+------|
-| Plan                                                          | 24:56   |       |      |      |
-| Completed                                                     |         | 13:40 |      |      |
-| DONE Fix the lambda bug                                       |         |       | 0:42 |      |
-| DONE Fill results incrementally                               |         |       | 1:22 |      |
-| DONE Patch the program to run all provers                     |         |       | 9:08 |      |
-| DONE Modify the code to accept both modes                     |         |       |      | 6:43 |
-| DONE SPASS                                                    |         |       |      | 0:32 |
-| DONE Prover9                                                  |         |       |      | 0:29 |
-| DONE Equinox                                                  |         |       |      | 0:27 |
-| DONE Vampire                                                  |         |       |      | 0:11 |
-| SOMEDAY Waldmeister (?)                                       |         |       |      | 0:15 |
-| DONE Make a test suite that discovers how the provers answers |         |       |      | 0:16 |
-| DONE Meeting with Koen 31 january                             |         |       | 1:04 |      |
-| DONE Install GHC on ttitania                                  |         |       | 1:03 |      |
-| Report                                                        |         |       | 0:21 |      |
-| DONE Quantifying functions and app                            |         |       |      | 0:21 |
-| Tasks                                                         |         | 11:16 |      |      |
-| ONGOING Time planning                                         |         |       | 0:31 |      |
-| TODO Report tasks                                             |         |       | 3:48 |      |
-| NEXT Write introduction                                       |         |       |      | 2:33 |
-| TODO Fixed point induction                                    |         |       |      | 0:55 |
-| TODO Structural induction rewrite                             |         |       |      | 0:19 |
-| TODO Results                                                  |         |       | 6:56 |      |
-| NEXT Prepare the test suite                                   |         |       |      | 4:32 |
-| NEXT Use qsub script                                          |         |       |      | 0:23 |
-| DONE Disable combinatorial explosions from fpi and str ind    |         |       |      | 1:53 |
+| Headline                                                      | Time    |       |       |      |
+|---------------------------------------------------------------+---------+-------+-------+------|
+| *Total time*                                                  | *28:33* |       |       |      |
+|---------------------------------------------------------------+---------+-------+-------+------|
+| Plan                                                          | 28:33   |       |       |      |
+| Completed                                                     |         | 13:40 |       |      |
+| DONE Fix the lambda bug                                       |         |       |  0:42 |      |
+| DONE Fill results incrementally                               |         |       |  1:22 |      |
+| DONE Patch the program to run all provers                     |         |       |  9:08 |      |
+| DONE Modify the code to accept both modes                     |         |       |       | 6:43 |
+| DONE SPASS                                                    |         |       |       | 0:32 |
+| DONE Prover9                                                  |         |       |       | 0:29 |
+| DONE Equinox                                                  |         |       |       | 0:27 |
+| DONE Vampire                                                  |         |       |       | 0:11 |
+| SOMEDAY Waldmeister (?)                                       |         |       |       | 0:15 |
+| DONE Make a test suite that discovers how the provers answers |         |       |       | 0:16 |
+| DONE Meeting with Koen 31 january                             |         |       |  1:04 |      |
+| DONE Install GHC on ttitania                                  |         |       |  1:03 |      |
+| Report                                                        |         |       |  0:21 |      |
+| DONE Quantifying functions and app                            |         |       |       | 0:21 |
+| Tasks                                                         |         | 14:53 |       |      |
+| ONGOING Time planning                                         |         |       |  0:31 |      |
+| TODO Report tasks                                             |         |       |  3:48 |      |
+| NEXT Write introduction                                       |         |       |       | 2:33 |
+| TODO Fixed point induction                                    |         |       |       | 0:55 |
+| TODO Structural induction rewrite                             |         |       |       | 0:19 |
+| TODO Results                                                  |         |       | 10:33 |      |
+| NEXT Prepare the test suite                                   |         |       |       | 5:32 |
+| DONE What to track?                                           |         |       |       | 1:56 |
+| NEXT Use qsub script                                          |         |       |       | 1:04 |
+| DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 #+END:
 ** Refile
 *** SOMEDAY Example ideas
@@ -1066,7 +1067,10 @@ CLOCK: [2012-02-01 Wed 11:36]--[2012-02-01 Wed 12:37] =>  1:01
 Rename and describe everything. Remove duplicate properties (for
 example, list concatenation associativity is in a myriad of files).
 
-**** NEXT What to track?
+**** DONE What to track?
+CLOSED: [2012-02-02 Thu 20:29]
+- State "DONE"       from "NEXT"       [2012-02-02 Thu 20:29]
+CLOCK: [2012-02-02 Thu 18:33]--[2012-02-02 Thu 20:29] =>  1:56
 ***** Number of solved properties for each solver
 ***** Number of solved properties for each proof method
 ****** Strutural induction: Try different depths, and the number of variables
@@ -1076,6 +1080,7 @@ example, list concatenation associativity is in a myriad of files).
 ****** Scatter plot comparisons?
 
 **** NEXT Use qsub script
+CLOCK: [2012-02-02 Thu 20:29]--[2012-02-02 Thu 21:10] =>  0:41
 CLOCK: [2012-02-02 Thu 10:28]--[2012-02-02 Thu 10:51] =>  0:23
 #+BEGIN_SRC bash
 L=/home/palka/.local_inst

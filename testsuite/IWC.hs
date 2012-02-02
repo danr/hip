@@ -33,10 +33,6 @@ rotate (S n) (x:xs) = rotate n (xs `app` [x])
 prop_rotateLength :: [a] -> Prop [a]
 prop_rotateLength xs = rotate (len xs) xs =:= xs
 
-prop_appAssoc :: [a] -> [a] -> [a] -> Prop [a]
-prop_appAssoc xs ys zs = ((xs `app` ys) `app` zs =:=
-                                (xs `app` (ys `app` zs)))
-
 prop_rotateLength2 :: [a] -> [a] -> Prop [a]
 prop_rotateLength2 xs ys = rotate (len xs) (xs `app` ys
                                               =:= (ys `app` xs))

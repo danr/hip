@@ -61,8 +61,8 @@ prop_add_ident_left x = x =:= zero +! x
 prop_add_ident_right :: Integ -> Prop Integ
 prop_add_ident_right x = x =:= x +! zero
 
---prop_add_assoc :: Integ -> Integ -> Integ -> Prop Integ
---prop_add_assoc x y z = (x +! (y +! z)) =:= ((x +! y) +! z)
+prop_add_assoc :: Integ -> Integ -> Integ -> Prop Integ
+prop_add_assoc x y z = (x +! (y +! z)) =:= ((x +! y) +! z)
 
 prop_add_comm :: Integ -> Integ -> Prop Integ
 prop_add_comm x y = (x +! y) =:= (y +! x)
@@ -126,17 +126,17 @@ prop_mul_ident_left x = x =:= one *! x
 prop_mul_ident_right :: Integ -> Prop Integ
 prop_mul_ident_right x = x =:= x *! one
 
---prop_mul_assoc :: Integ -> Integ -> Integ -> Prop Integ
---prop_mul_assoc x y z = (x *! (y *! z)) =:= ((x *! y) *! z)
+prop_mul_assoc :: Integ -> Integ -> Integ -> Prop Integ
+prop_mul_assoc x y z = (x *! (y *! z)) =:= ((x *! y) *! z)
 
 prop_mul_comm :: Integ -> Integ -> Prop Integ
 prop_mul_comm x y = (x *! y) =:= (y *! x)
 
---prop_left_distrib :: Integ -> Integ -> Integ -> Prop Integ
---prop_left_distrib x y z = x *! (y +! z) =:= (x *! y) +! (x *! z)
+prop_left_distrib :: Integ -> Integ -> Integ -> Prop Integ
+prop_left_distrib x y z = x *! (y +! z) =:= (x *! y) +! (x *! z)
 
---prop_right_distrib :: Integ -> Integ -> Integ -> Prop Integ
---prop_right_distrib x y z = (x +! y) *! z =:= (x *! z) +! (y *! z)
+prop_right_distrib :: Integ -> Integ -> Integ -> Prop Integ
+prop_right_distrib x y z = (x +! y) *! z =:= (x *! z) +! (y *! z)
 
 main = do
   quickCheck (printTestCase "prop_neg_involutive" prop_neg_involutive)
