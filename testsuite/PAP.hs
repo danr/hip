@@ -19,7 +19,7 @@ one = S Z
 -- induction finds the finite theorem, but the simple induction fails
 -- to find this as it is not a theorem with : if the natural number is
 -- not total.
-incr = map (+ one)
+incr = map (one +)
 
 incrrec (x:xs) = S x : incrrec xs
 incrrec []     = []
