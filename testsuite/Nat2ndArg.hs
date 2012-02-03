@@ -1,6 +1,6 @@
 -- Properties of Natural numbers, with definitions recursive on the
 -- second argument
-module Nat where
+module Nat2ndArg where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))

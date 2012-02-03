@@ -1,6 +1,6 @@
 -- Properties of Natural numbers, with accumulating definition of plus,
 -- and accumulator-based multiplication
-module Nat where
+module NatAcc where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))

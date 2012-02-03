@@ -1,5 +1,5 @@
 -- Properties of Natural numbers, with recursion at "double speed"
-module Nat where
+module NatDouble where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))

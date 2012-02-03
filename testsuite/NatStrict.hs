@@ -1,6 +1,6 @@
 -- Properties of Natural numbers, with functions strict in both
 -- arguments.
-module Nat where
+module NatStrict where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))

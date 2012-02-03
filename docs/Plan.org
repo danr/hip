@@ -712,13 +712,13 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-02 Thu 21:57]
+Clock summary at [2012-02-03 Fri 10:19]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *29:00* |       |       |      |
+| *Total time*                                                  | *30:21* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 29:00   |       |       |      |
+| Plan                                                          | 30:21   |       |       |      |
 | Completed                                                     |         | 13:40 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -734,16 +734,16 @@ Clock summary at [2012-02-02 Thu 21:57]
 | DONE Install GHC on ttitania                                  |         |       |  1:03 |      |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         | 15:20 |       |      |
+| Tasks                                                         |         | 16:41 |       |      |
 | ONGOING Time planning                                         |         |       |  0:31 |      |
 | TODO Report tasks                                             |         |       |  3:48 |      |
 | NEXT Write introduction                                       |         |       |       | 2:33 |
 | TODO Fixed point induction                                    |         |       |       | 0:55 |
 | TODO Structural induction rewrite                             |         |       |       | 0:19 |
-| TODO Results                                                  |         |       | 11:00 |      |
-| NEXT Prepare the test suite                                   |         |       |       | 5:59 |
+| TODO Results                                                  |         |       | 12:21 |      |
+| NEXT Prepare the test suite                                   |         |       |       | 7:20 |
 | DONE What to track?                                           |         |       |       | 1:56 |
-| NEXT Use qsub script                                          |         |       |       | 1:04 |
+| DONE Use qsub scriptd                                         |         |       |       | 1:04 |
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 #+END:
 ** Refile
@@ -1055,7 +1055,9 @@ CLOCK: [2012-02-02 Thu 09:23]--[2012-02-02 Thu 09:25] =>  0:02
 CLOCK: [2012-02-01 Wed 23:45]--[2012-02-01 Wed 23:48] =>  0:03
 CLOCK: [2012-01-31 Tue 11:33]--[2012-01-31 Tue 11:36] =>  0:03
 CLOCK: [2012-01-30 Mon 10:48]--[2012-01-30 Mon 10:48] =>  0:00
+
 **** NEXT Prepare the test suite
+CLOCK: [2012-02-02 Thu 23:19]--[2012-02-03 Fri 00:40] =>  1:21
 CLOCK: [2012-02-02 Thu 21:30]--[2012-02-02 Thu 21:57] =>  0:27
 CLOCK: [2012-02-02 Thu 18:29]--[2012-02-02 Thu 18:29] =>  0:00
 CLOCK: [2012-02-02 Thu 17:00]--[2012-02-02 Thu 18:00] =>  1:00
@@ -1068,7 +1070,13 @@ CLOCK: [2012-02-01 Wed 11:36]--[2012-02-01 Wed 12:37] =>  1:01
 Rename and describe everything. Remove duplicate properties (for
 example, list concatenation associativity is in a myriad of files).
 
-**** Enable plotting two proving methods (fpi/approx) against each other
+**** NEXT Histogram statistics
+CLOCK: [2012-02-03 Fri 11:07]
+**** NEXT Table statistics
+CLOCK: [2012-02-03 Fri 10:19]--[2012-02-03 Fri 11:07] =>  0:48
+Make a latex table of statistics from the different files
+
+**** TODO Enable plotting two proving methods (fpi/approx) against each other
 As a scatter plot. Need the (sum) success time for them. If several
 fpi worked, take the best. This could be an interesting plot.
 

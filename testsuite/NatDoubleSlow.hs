@@ -1,6 +1,6 @@
 -- Properties of Natural numbers, with recursion at "double speed",
 -- but production in normal speed
-module Nat where
+module NatDoubleSlow where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))

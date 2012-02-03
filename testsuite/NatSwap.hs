@@ -1,6 +1,6 @@
 -- Properties of Natural numbers, with swap-definition of plus and
 -- multiplication
-module Nat where
+module NatSwap where
 
 import AutoPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
