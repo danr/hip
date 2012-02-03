@@ -19,7 +19,7 @@
 \usepackage{longtable}
 \usepackage{tikz}
 \usepackage{array}
-\usetikzlibrary{\trees,positioning,arrows}
+\usepackage[pdftex]{graphicx}
 
 \let\cleardoublepage\clearpage
 
@@ -70,6 +70,8 @@
 \newcommand\faaa[3]{\forall \, #1 , #2 , #3 . \,}
 \newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 \, #4 , #5 , #6 . \,}
 
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}\usetikzlibrary{\trees,positioning,arrows}
+
 \newcommand\tofix[1]{#1^{\bullet}}
 \newcommand\unfix[1]{#1^{\circ}}
 
@@ -116,10 +118,11 @@
 \begin{document}
 
 %% Title ----------------------------------------------------------------------
-\title{Proving Equational Haskell Properties Using Automated Theorem Provers}
-\author{Dan Rosén}
-\date{\today}
-\maketitle
+%\title{Proving Equational Haskell Properties Using Automated Theorem Provers}
+%\author{Dan Rosén}
+%\date{\today}
+%\maketitle
+\input{titlepage}
 
 %% Abstract -------------------------------------------------------------------
 

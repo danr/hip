@@ -712,13 +712,13 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-03 Fri 10:19]
+Clock summary at [2012-02-03 Fri 18:27]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *30:21* |       |       |      |
+| *Total time*                                                  | *36:10* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 30:21   |       |       |      |
+| Plan                                                          | 36:10   |       |       |      |
 | Completed                                                     |         | 13:40 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -734,14 +734,17 @@ Clock summary at [2012-02-03 Fri 10:19]
 | DONE Install GHC on ttitania                                  |         |       |  1:03 |      |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         | 16:41 |       |      |
+| Tasks                                                         |         | 22:30 |       |      |
 | ONGOING Time planning                                         |         |       |  0:31 |      |
-| TODO Report tasks                                             |         |       |  3:48 |      |
+| TODO Report tasks                                             |         |       |  6:48 |      |
 | NEXT Write introduction                                       |         |       |       | 2:33 |
+| TODO Results                                                  |         |       |       | 3:00 |
 | TODO Fixed point induction                                    |         |       |       | 0:55 |
 | TODO Structural induction rewrite                             |         |       |       | 0:19 |
-| TODO Results                                                  |         |       | 12:21 |      |
+| TODO Results                                                  |         |       | 15:10 |      |
 | NEXT Prepare the test suite                                   |         |       |       | 7:20 |
+| NEXT Histogram statistics                                     |         |       |       | 2:01 |
+| NEXT Table statistics                                         |         |       |       | 0:48 |
 | DONE What to track?                                           |         |       |       | 1:56 |
 | DONE Use qsub scriptd                                         |         |       |       | 1:04 |
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
@@ -991,6 +994,7 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 :END:
 
 *** TODO Report tasks                                              :report:
+CLOCK: [2012-02-03 Fri 16:44]
 CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
 **** NEXT Write introduction
 CLOCK: [2012-02-01 Wed 10:31]--[2012-02-01 Wed 10:58] =>  0:27
@@ -1004,6 +1008,8 @@ CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
 Write this: introduce the problem and why it is interesting
 Get to the point! Don't be hand-wavy
 **** TODO Results
+CLOCK: [2012-02-03 Fri 15:55]--[2012-02-03 Fri 16:44] =>  0:49
+CLOCK: [2012-02-03 Fri 13:47]--[2012-02-03 Fri 15:55] =>  2:08
 CLOCK: [2012-02-03 Fri 11:39]--[2012-02-03 Fri 11:42] =>  0:03
 ***** TODO Refer to the different theorem provers
 Prover9 has a bibtex
@@ -1086,7 +1092,9 @@ CLOSED: [2012-02-03 Fri 11:37]
 CLOSED: [2012-02-03 Fri 11:37]
 - State "DONE"       from "TODO"       [2012-02-03 Fri 11:37]
 
-
+***** Overlap
+Reverse and insertion sort are (probably) defined in productive use of
+failure already
 **** NEXT Histogram statistics
 CLOCK: [2012-02-03 Fri 13:10]--[2012-02-03 Fri 13:11] =>  0:01
 CLOCK: [2012-02-03 Fri 11:42]--[2012-02-03 Fri 13:10] =>  1:28
