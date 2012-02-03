@@ -303,32 +303,37 @@ This encoding makes \hs{even'} denotationally equal to \hs{even} and
 the same relation hols for \hs{odd'} and \hs{odd}.
 \end{comment}
 
-\subsection{Implementation}
+\subsection{Simplification}
 
 The mechanical translations introduced above for self-recursive
 functions and mutually recursive functions makes a new function with
 an additional argument, the ``non-recursive'' version of itself. By
 the translation to FOL that is used, this would introduce a new
-argument as a ``function pointer'' and introduce uses of $\app$, which
-seems to confuse at least both eprover and SPASS. Another approach
-which avoids introducing these function pointers, and an additional
-argument to every function is to replace a function $f$ defined
-abstractly with arguments $\overline{x}$ and body $e(\overline{x},f)$
-as
+argument as a ``function pointer'' and introduce uses of $\appfn$,
+which gives unnecessary overhead to the automated theorem
+provers.
+
+This is another approach. It avoids introducing these function
+pointers and the additional argument to every function. Given a
+function $f$ with arguments $\overline{x}$ defined as this:
 
 \begin{equation*}
 f \, \overline{x} = e(\overline{x},f)
 \end{equation*}
 
-We introduce two new constants, $\tofix{f}$ and $\unfix{f}$ as this:
+Two new constants are introduced, $\tofix{f}$ and $\unfix{f}$
+and this definition:
 
 \begin{equation*}
 \tofix{f} \, \overline{x} = e(\overline{x},\unfix{f})
 \end{equation*}
 
-\note{Maybe some side-by side reasoning how it looks with these definitions
-  and the normal definitions of fixpoint induction}
-The fixpoint schema now becomes:
+\noindent
+The empty circle $\unfix{}$ describes that this function is empty
+(lacks implementation,) and the filled circle $\tofix{}$ means that
+this function has an implementation.
+
+Now we can get a simplified fixpoint schema:
 
 \begin{mathpar}
   \inferrule*
@@ -342,6 +347,14 @@ The fixpoint schema now becomes:
      { P(f) }
 \end{mathpar}
 
+\noindent
+The empty $\unfix{f}$ does not have any implementation. But it has
+something much better, namely the induction hypothesis. The induction
+conclusion is to prove the property for $\tofix{f}$, where the
+recursive call to $f$ is replaced with $\unfix{f}$. We do this
+translation since it is better suited for the theorem provers.
+
+\newpage
 This also works for several functions at the same time, possibly
 mutually recursive:
 
@@ -368,7 +381,7 @@ $\tofix{f}$), and the second case should use the original $f$. The
 transitive clousure of the call graph is calculated, and every
 appropriate calls of $f$ are replaced.
 
-\subsection{Erroneous use of fixed point induction}
+\subsection{Erroneous Use of Fixed Point Induction}
 
 The importance that the predicate $P$ is admissible is illustrated in
 this example. The function \hs{finite} below returns \hs{True} on
@@ -433,7 +446,7 @@ The answer here is to do fixed point induction on \hs{drop}, and on
 point induction on all subsets of recursive functions mentioned in the
 property.
 
-\subsection{Future work}
+\subsection{Future Work}
 
 Just as with structural induction, it is also possible to use fixed
 point in more than one ``depth'', giving for instance this inference
@@ -470,3 +483,8 @@ doublemap f (x:y:zs) = f x : f y : doublemap f zs
 While \hs{doublemap} is behaviorally equivalent to \hs{map} on total
 lists, it makes the induction hypothesis in fixed point induction too
 weak.
+
+
+An issue with the candidate selection is that is some selections are
+quite stupid, for instance doing fixating functions on only one side
+of the equality. A heuristic to find good candidates would be beneficial.
