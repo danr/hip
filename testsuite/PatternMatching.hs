@@ -1,4 +1,4 @@
-module PatternMatchingDifferences where
+module PatternMatching where
 
 import AutoPrelude
 

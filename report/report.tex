@@ -9,13 +9,16 @@
 \usepackage{subfig}
 \usepackage{wrapfig}
 \usepackage{float}
+\usepackage{pgfplots}
 \usepackage{bold-extra}
 \usepackage{tikz}
 \usepackage{palatino}
 \usepackage[T1]{fontenc}
 \usepackage{inconsolata}
 \usepackage{natbib}
+\usepackage{longtable}
 \usepackage{tikz}
+\usepackage{array}
 \usetikzlibrary{\trees,positioning,arrows}
 
 \usepackage{fancyheadings}
@@ -89,22 +92,22 @@
 
 \begin{document}
 
-%\chapter{Introduction}
+\chapter{Discussion}
+
+\input{results}
+
 %
-%\input{intro}
+%\noindent
+%\chapter{Proof Techniques}
+%\input{fixpoint}
 %
-%%
-%%\noindent
-%%\chapter{Proof Techniques}
-%%\input{fixpoint}
-%%
-%
-%\bibliographystyle{apalikeurl}
-%\bibliography{masterbib}
-%
-%\end{document}
-%
-%\begin{comment}
+
+\bibliographystyle{apalikeurl}
+\bibliography{masterbib}
+
+\end{document}
+
+\begin{comment}
 
 \begin{document}
 
@@ -171,12 +174,13 @@ chapter includes results, futher work and conclusion.
 
 %% End of Technical Part ------------------------------------------------------
 
-
 \chapter{Discussion}
 
-\section{Results}
+This chapter is divided into the sections Results, Future Work and Conclusion.
 
-Test suite
+% Results
+
+\input{results}
 
 % Future work
 

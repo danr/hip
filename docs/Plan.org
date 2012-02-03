@@ -1004,6 +1004,7 @@ CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
 Write this: introduce the problem and why it is interesting
 Get to the point! Don't be hand-wavy
 **** TODO Results
+CLOCK: [2012-02-03 Fri 11:39]--[2012-02-03 Fri 11:42] =>  0:03
 ***** TODO Refer to the different theorem provers
 Prover9 has a bibtex
 ***** TODO SZS Status ontology paper
@@ -1069,9 +1070,35 @@ CLOCK: [2012-02-01 Wed 12:37]--[2012-02-01 Wed 12:39] =>  0:02
 CLOCK: [2012-02-01 Wed 11:36]--[2012-02-01 Wed 12:37] =>  1:01
 Rename and describe everything. Remove duplicate properties (for
 example, list concatenation associativity is in a myriad of files).
+***** DONE Fixes
+CLOSED: [2012-02-03 Fri 11:37]
+- State "DONE"       from "TODO"       [2012-02-03 Fri 11:37]
+****** DONE merge Expr and BoolExpr
+CLOSED: [2012-02-02 Thu 13:31]
+- State "DONE"       from ""           [2012-02-02 Thu 13:31]
+****** DONE rename NobodyExpectsTheScottInduction
+CLOSED: [2012-02-03 Fri 11:37]
+- State "DONE"       from ""           [2012-02-03 Fri 11:37]
+****** DONE maybe try some other sorting (selection sort, merge sort)
+CLOSED: [2012-02-03 Fri 11:37]
+- State "DONE"       from ""           [2012-02-03 Fri 11:37]
+****** DONE Cannot do structural induction on Expressions. Need to fix this
+CLOSED: [2012-02-03 Fri 11:37]
+- State "DONE"       from "TODO"       [2012-02-03 Fri 11:37]
+
 
 **** NEXT Histogram statistics
-CLOCK: [2012-02-03 Fri 11:07]
+CLOCK: [2012-02-03 Fri 13:10]--[2012-02-03 Fri 13:11] =>  0:01
+CLOCK: [2012-02-03 Fri 11:42]--[2012-02-03 Fri 13:10] =>  1:28
+CLOCK: [2012-02-03 Fri 11:07]--[2012-02-03 Fri 11:39] =>  0:32
+Exteremly hard to get something readable or interesting from this
+log log plots look okay, but the problem is that they cannot handle 0,
+and futhermore wide blocks don't add much
+
+The best so far is just to have cumulative and it just shows that
+after 300ms or so, almost no theorems where proved, and that arond
+around 1000 were proved in less than 10ms.
+
 **** NEXT Table statistics
 CLOCK: [2012-02-03 Fri 10:19]--[2012-02-03 Fri 11:07] =>  0:48
 Make a latex table of statistics from the different files

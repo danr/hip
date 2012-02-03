@@ -1,0 +1,27 @@
+%\documentclass{article}
+%\usepackage{fullpage}
+%\usepackage{courier}
+
+%\usepackage{amssymb}
+%\usepackage{longtable}
+%
+%\begin{document}
+%
+%\title{Results}
+%\maketitle
+
+%\section*{Total}
+\begin{tabular}{l || r@{/}l | r@{/}l | r@{/}l | r@{/}l | r@{/}l || r@{/}l | r@{/}l}
+Prover & \multicolumn{2}{l|}{Theorem} & \multicolumn{2}{l|}{plain} & \multicolumn{2}{l|}{induction} & \multicolumn{2}{l|}{approx} & \multicolumn{2}{l||}{fixpoint} & \multicolumn{2}{l|}{Finite Thm.} & \multicolumn{2}{l|}{induction} \\
+\hline
+E           & 203&540 & 68&203 & 120&203 & 136&203 & 23&203 &  99&540 &  99&99\\
+prover9     & 194&540 & 69&194 & 114&194 &  92&194 &  8&194 &  93&540 &  93&93\\
+SPASS       & 198&540 & 65&198 & 122&198 & 111&198 & 21&198 &  94&540 &  94&94\\
+Vampire     & 208&540 & 71&208 & 122&208 & 133&208 & 25&208 & 104&540 & 104&104\\
+equinox     &  78&540 & 15&78  &  57&78  &  56&78  &  3&78  &  39&540 &  39&39\\
+\hline
+all provers & 214&540 & 74&214 & 124&214 & 145&214 & 26&214 & 111&540 & 111&111\\
+\hline
+\end{tabular}
+
+%\end{document}

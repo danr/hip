@@ -1,88 +1,83 @@
 
-* TODO Fixes
-** DONE merge Expr and BoolExpr
-CLOSED: [2012-02-02 Thu 13:31]
-- State "DONE"       from ""           [2012-02-02 Thu 13:31]
-** rename NobodyExpectsTheScottInduction
-** maybe try some other sorting (selection sort, merge sort)
-** TODO Cannot do structural induction on Expressions. Need to fix this
-
-* Natural numbers
-** Nat
+* Testsuite
+** Natural numbers
+*** Nat
 Properties about natural numbers from the Zeno test suite
-** Nat2ndArg
+*** Nat2ndArg
 Induction on the second argument instead
-** NatAcc
+*** NatAcc
 Nat but with plus and multiplication expressed with an accumulator
-** NatBot
-Plus and multiplication strict in both arguments
-** NatDouble
+*** NatDouble
 Pattern matching in two depth for plus and multiplication
-** NatDoubleStupid
+*** NatDoubleSlow
 Pattern matching in two depth, but only recusing into one depth
-** NatSwap
-Addition and multiplication with arguments swapped in the recursive call
+*** NatStrict
+Plus and multiplication strict in both arguments
+*** NatSwap
+Addition and multiplication with arguments swapped in the recursive
+call
 
-* Datatypes
-** Bool
+** Datatypes
+*** Bool
 Various simple properties about &&, || and not from quickspec
 
-** Expr
-Nat and bool expressions with properties about mirror, size and eval
+*** Expr
+Nat and bool expressions with properties about mirror, size and eval,
+also some functions about reasoning about free variables in lambda
+expressions
 
-** Reverse
+*** Reverse
 Properties about reverse with and without accumulator
-** Queues
+*** Queues
 Queues with O(1) pop and enqueue. Has a problematic invariant and
 equality and hence a lot of properties are not currently provable.
-* From other work
-** IWC
+** From other work
+*** IWC
 Some hard properties from a
 http://www.csc.liv.ac.uk/~lad/research/challenges
 inductive challenges
-** ProductiveUseOfFailure
+*** ProductiveUseOfFailure
 From the paper with the same name. These properties need lemmas or
 generalizations and most are currently not provable.
-** ZenoLists
+*** ZenoLists
 The list part of Zeno's test suite
-** Ordinals
+*** Ordinals
 Brouwer ordinals as defined in Dixon's thesis
-* Monads
-** MonadEnv
+** Monads
+*** MonadEnv
 Properties for the environment monad. Good for testing app and lambda lifting
-** MonadMaybe
+*** MonadMaybe
 Properties of the maybe monad
-** MonadState
+*** MonadState
 Properties for the state monad
 
-* Tests
-** Functions
+** Tests
+*** Functions
 Properties only related to functions such as function composition, currying
 
-** PAP
-Properties with partially applied functions
-** PatternMatchingDifferences
+*** PAP
+*** PatternMatchingDifferences
 Or and mirror defined in different ways and properties that state
 their equality
-* Fixpoint induction
-** Fix
+** Fixpoint induction
+*** Fix
 Even and odd defined in different ways using fix
-** Tricky
+*** Tricky
 Some properties interesting for fixed point induction, as well as
 properties that hold for total infinite lists
-* Infinite values
-** Infinite
+Properties with partially applied functions
+** Infinite values
+*** Infinite
 Propertes that hold for infinite lists and trees
-** Sequences
+*** Sequences
 Some properties about infinite sequences
 
 
-
-** Streams
+*** Streams
 Some properties about stream from Hinze's paper Concrete Stream Calculus
-* Sorting
-** InsertionSort
+** Sorting
+*** InsertionSort
 Insertion sort on nat and bool lists
-** MergeSort
+*** MergeSort
 Merge sort on bool lists
 
