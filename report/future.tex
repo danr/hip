@@ -1,8 +1,9 @@
-\section{Future work}
+\chapter{Future work}
 
-The current work has some irritating limitations that we would like to address.
+The chapter describes the limitations of our approach and describes
+how to get around them.
 
-\subsection{Lemmas}
+\section{Lemmas}
 
 For many proofs, it is essential to use some lemma to reach the
 goal. For commutativity of plus, we already touched on this aspect, it
@@ -54,17 +55,17 @@ point. This could probably be optimized: if a lemma only concerns
 functions that are not relevant for a given property, it is
 unnecessary to add it to the theory.
 
-\subsection{Material implication}
+\section{Material implication}
 
 Implications
 
-\subsection{Proving non termination}
+\section{Proving non termination}
 
 Since we will need to prove termination for functions, how would one
 prove non-termination (for some inputs)? Then we could get more
 completeness: this function with these inputs would be $\bot$.
 
-\subsection{Extending techniques}
+\section{Extending techniques}
 
 Each of the proof methods have their own future work chapter, but it
 would be nice to have some finite fixed point induction on terminating
@@ -82,7 +83,7 @@ fulfills the same equations as the other.
 \note{elaborate}
 
 
-\subsection{Faster proof searches via predicates}
+\section{Faster proof searches via predicates}
 
 \note{Ask Koen how this really works!}
 It is possible to add annotations in the equations generated for

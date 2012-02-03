@@ -1,4 +1,4 @@
-\documentclass{book}
+\documentclass[oneside]{book}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -55,6 +55,7 @@
 \newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
 \newcommand\PA{\mathcal{P\!A}}
 \newcommand\hs[1]{\verb~#1~}
+\newcommand\ts[1]{\verb~#1~}
 \newcommand\fn[1]{\mathrm{#1}}
 \newcommand\ptr[1]{\fn{#1.ptr}}
 \newcommand\appfn{@}
@@ -90,24 +91,24 @@
 
 \newcommand{\nsqsubseteq}{\,\,\, /\!\!\!\!\!\!\sqsubseteq}
 
-\begin{document}
-
-\chapter{Discussion}
-
-\input{results}
-
+%\begin{document}
 %
-%\noindent
-%\chapter{Proof Techniques}
-%\input{fixpoint}
+%\input{results}
 %
-
-\bibliographystyle{apalikeurl}
-\bibliography{masterbib}
-
-\end{document}
-
-\begin{comment}
+%\input{future}
+%
+%%
+%%\noindent
+%%\chapter{Proof Techniques}
+%%\input{fixpoint}
+%%
+%
+%\bibliographystyle{apalikeurl}
+%\bibliography{masterbib}
+%
+%\end{document}
+%
+%\begin{comment}
 
 \begin{document}
 
@@ -119,7 +120,8 @@
 
 %% Abstract -------------------------------------------------------------------
 
-\chapter*{\centering \begin{normalsize}Abstract\end{normalsize}}
+\pagestyle{empty}
+\section*{\centering \begin{normalsize}Abstract\end{normalsize}}
 \begin{quotation}
 \noindent
 In this work we prove a lot of nice equational Haskell properties by
@@ -174,11 +176,7 @@ chapter includes results, futher work and conclusion.
 
 %% End of Technical Part ------------------------------------------------------
 
-\chapter{Discussion}
-
-This chapter is divided into the sections Results, Future Work and Conclusion.
-
-% Results
+%% Results --------------------------------------------------------------------
 
 \input{results}
 
@@ -186,7 +184,9 @@ This chapter is divided into the sections Results, Future Work and Conclusion.
 
 \input{future}
 
-\section{Conclusion}
+% Conclusion
+
+\input{conclusion}
 
 %% References -----------------------------------------------------------------
 
