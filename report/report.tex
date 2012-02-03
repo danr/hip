@@ -1,4 +1,4 @@
-\documentclass[oneside]{book}
+\documentclass{book}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -20,6 +20,8 @@
 \usepackage{tikz}
 \usepackage{array}
 \usetikzlibrary{\trees,positioning,arrows}
+
+\let\cleardoublepage\clearpage
 
 \usepackage{fancyheadings}
 \pagestyle{fancy}
@@ -52,7 +54,8 @@
 \newcommand*{\romnodot}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@}}
 \makeatother
 
-\newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
+%\newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
+\newcommand\note[1]{}
 \newcommand\PA{\mathcal{P\!A}}
 \newcommand\hs[1]{\verb~#1~}
 \newcommand\ts[1]{\verb~#1~}
@@ -113,22 +116,14 @@
 \begin{document}
 
 %% Title ----------------------------------------------------------------------
-\title{Proving Equational Haskell Properties Using ATPs}
+\title{Proving Equational Haskell Properties Using Automated Theorem Provers}
 \author{Dan Rosén}
 \date{\today}
 \maketitle
 
 %% Abstract -------------------------------------------------------------------
 
-\pagestyle{empty}
-\section*{\centering \begin{normalsize}Abstract\end{normalsize}}
-\begin{quotation}
-\noindent
-In this work we prove a lot of nice equational Haskell properties by
-a first order logic translation and using automated theorem provers.
-The results are astounding, writing correct Haskell is nowadays a
-breeze.
-\end{quotation}
+\input{abstract}
 
 
 %% Acknowledgements -----------------------------------------------------------
@@ -148,7 +143,6 @@ breeze.
 \newpage
 \setcounter{page}{1}
 
-
 \chapter{Introduction}
 
 \input{intro}
@@ -156,25 +150,14 @@ breeze.
 % Related work
 \input{related}
 
-\section{Outline}
-
-Explain the outline of the report.  The necessarily background of FOL
-and ATPs are already given in the introduction (?) and other
-necessary background is given when needed.
-Chapter 2 explains the translation from Haskell to FOL and also
-introduces some domain theoretic concepts. Chapter 3 explains the
-three main proof techniques used in this project: structural
-induction, fixed point induction and the approximation lemma. The last
-chapter includes results, futher work and conclusion.
+% Outline
+\input{outline}
 
 %% Technical Part --------------------------------------------------------------
 
 \input{translation}
 
 \input{proofs}
-
-
-%% End of Technical Part ------------------------------------------------------
 
 %% Results --------------------------------------------------------------------
 

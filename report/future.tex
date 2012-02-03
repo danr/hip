@@ -1,7 +1,8 @@
 \chapter{Future work}
+\label{ch:future}
 
-The chapter describes the limitations of our approach and describes
-how to get around them.
+The chapter describes the limitations of our approach and ideas how to
+get around them.
 
 \section{Lemmas}
 
@@ -55,37 +56,33 @@ point. This could probably be optimized: if a lemma only concerns
 functions that are not relevant for a given property, it is
 unnecessary to add it to the theory.
 
-\section{Material implication}
+%\section{Material Implication}
+%
+%Zeno has support for properties with implications,
 
-Implications
+%\section{Proving non termination}
+%
+%Since we will need to prove termination for functions, how would one
+%prove non-termination (for some inputs)? Then we could get more
+%completeness: this function with these inputs would be $\bot$.
 
-\section{Proving non termination}
-
-Since we will need to prove termination for functions, how would one
-prove non-termination (for some inputs)? Then we could get more
-completeness: this function with these inputs would be $\bot$.
-
-\section{Extending techniques}
+\section{Other Techniques}
 
 Each of the proof methods have their own future work chapter, but it
 would be nice to have some finite fixed point induction on terminating
-functions and a finite approximation lemma.
-
-You can also do as with the approximation lemma which became just a
-fixpoint induction over a structural identity function, but instead of
-putting one of each side of the equality, you can do it on the
-individual variables or sub trees of an expression: this would be like
-structural induction encoded as approximation lemma/fixed point induction.
+functions and a finite approximation lemma. You can also do as with
+the approximation lemma which became just a fixpoint induction over a
+structural identity function, but instead of putting one of each side
+of the equality, you can do it on the individual variables or sub
+trees of an expression: this would be like structural induction
+encoded as approximation lemma.
 
 Another technique is recursion induction \cite{recind}, where you
 prove that two functions are equal by asserting that one of them
 fulfills the same equations as the other.
-\note{elaborate}
 
+\section{Faster Proof Searches via Predicates}
 
-\section{Faster proof searches via predicates}
-
-\note{Ask Koen how this really works!}
 It is possible to add annotations in the equations generated for
 functions to make the theorem prover not unroll unnecessary
 definitions and regard these equalities more like definitions, so they

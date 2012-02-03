@@ -68,10 +68,10 @@ anything applied to $\bot$ is $\bot$:
 
 However, \hs{seq} is the only function that can tell such functions
 apart, so we will ignore its presence in Haskell.  In the future,
-there could be added as a switch \hs{--enable-seq}, which removes
-extensional equality.
+there could be added as a switch \hs{--enable-seq}, which weakens
+extensional equality appropriately.
 
-Furthermore, if we assume we have extensional equality we also have
+Furthermore, if extensional equality is assumed we also have
 the property that \hs{Prop (a -> b)} is equivalent to
 \hs{a -> Prop b}, by letting the property have an extra argument that
 is applied to the left and right hand side of the equality. This has

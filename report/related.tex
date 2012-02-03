@@ -1,26 +1,23 @@
 \section{Related Work}
 
-\note{Related work in background or in discussion? Would be nice to
-  have it after the technical part to be able to compare different
-  approaches.}
-
 Zeno \citep{zeno} is the most similar work to this, proving equational
 properties for Haskell programs. While Zeno supports type classes, and
 implications with equational antecedents, and can generalize goals, it
 makes no attempt to tackle infinite and partial values. Indeed, the
 authors even ask themselves if it is not really a ML theorem prover.
 
-\note{Discuss this with Moa and get references} Zeno translates its
-proofs to Isabel, which could maybe be described as a framework for
+%\note{Discuss this with Moa and get references}
+Zeno translates its
+proofs to Isabelle, which could maybe be described as a framework for
 different logics: its most prominent use is as a theorem prover for
-Higher Order Logic, commonly abbreviated Isabel/HOL
+Higher Order Logic, commonly abbreviated Isabelle/HOL
 \citep{isabelbook}. Different automated proving techniques has been
 implemented, most notably the heuristic Rippling \citep{dixonphd},
 found in IsaPlanner \citep{isaplanner}, which also relies on critics
 \citep{productiveuse}. You can also call first order logic theorem
-provers from Isabel/HOL with Sledgehammer.
+provers from Isabelle/HOL with Sledgehammer.
 
-The proof assistant and programming language Coq resembles Isabel in
+The proof assistant and programming language Coq resembles Isabelle in
 the sense that each data type declaration generates an induction
 principle and the user can write own induction procedures should it be
 too weak. Coq has is quite automated in its use of tactics to resolve
@@ -39,9 +36,8 @@ Effort has been put into automating the proof generation in Agda,
 notably by \cite{agdaatp}, which is quite alike this work in its
 translation from Agda to first order logic. One must however give
 quite much information to the theorem prover, like how to instantiate
-the induction hypotheses. \note{Peter Dybjer maybe said that it could
-  be seen as a very nice way to interact with a theorem prover, thanks
-  to Agda.} A more constructive approach by \cite{dtatp}, where they
+the induction hypotheses. %\note{Peter Dybjer maybe said that it could be seen as a very nice way to interact with a theorem prover, thanks to Agda.}
+A more constructive approach by \cite{dtatp}, where they
 do not only make calls to the Waldmeister theorem prover to assert
 proof's truth, but they also translate the prover's output back to
 functional code for their dependently language Mella, not much unlike

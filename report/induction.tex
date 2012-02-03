@@ -194,25 +194,27 @@ with a conclusion with $i$ constructors, the induction hypothesis is
 the conjunction of all combinations with strictly less than $i$
 constructors.
 
+\newpage
+
 Say you want to prove a property that has a list of natural numbers as
 property, with up to two constructors, these are the required
 induction steps:
 
 \begin{align*}
-                                                               & P(\hs{[]}) \\
-                                                               & P(\hs{Zero}\hs{:}\hs{[]}) \\
-\fa{x} P(x\hs{:}\hs{[]}) \rightarrow                        \, & P(\hs{Succ} \w x\hs{:}\hs{[]}) \\
-\faaa{x}{y}{zs} P(x\hs{:}zs) \wedge P(y\hs{:}zs)\rightarrow \, & P(x\hs{:}y\hs{:}zs) \\
+\rom{1} &&                                                                & P(\hs{[]}) \\
+\rom{2} &&                                                                & P(\hs{Zero}\hs{:}\hs{[]}) \\
+\rom{3} && \fa{x} P(x\hs{:}\hs{[]}) \rightarrow                        \, & P(\hs{Succ} \w x\hs{:}\hs{[]}) \\
+\rom{4} && \faaa{x}{y}{zs} P(x\hs{:}zs) \wedge P(y\hs{:}zs)\rightarrow \, & P(x\hs{:}y\hs{:}zs) \\
 \end{align*}
 
 Similarly, this is used to use induction on more than one arguments,
 by using the tuple constructor. Induction on two natural numbers is this:
 
 \begin{align*}
-                                                                                       & P(\hs{Zero}     ,\hs{Zero}     ) \\
-\fa{x} P(x,\hs{Zero})                                                   \rightarrow \, & P(\hs{Succ} \w x,\hs{Zero}     ) \\
-\fa{y} P(\hs{Zero},y)                                                   \rightarrow \, & P(\hs{Zero}     ,\hs{Succ} \w y) \\
-\faa{x}{y} P(x,y) \wedge P(\hs{Succ} \w x,y) \wedge P(x,\hs{Succ} \w y) \rightarrow \, & P(\hs{Succ} \w x,\hs{Succ} \w y) \\
+\rom{1} &&                                                                                        & P(\hs{Zero}     ,\hs{Zero}     ) \\
+\rom{2} && \fa{x} P(x,\hs{Zero})                                                   \rightarrow \, & P(\hs{Succ} \w x,\hs{Zero}     ) \\
+\rom{3} && \fa{y} P(\hs{Zero},y)                                                   \rightarrow \, & P(\hs{Zero}     ,\hs{Succ} \w y) \\
+\rom{4} && \faa{x}{y} P(x,y) \wedge P(\hs{Succ} \w x,y) \wedge P(x,\hs{Succ} \w y) \rightarrow \, & P(\hs{Succ} \w x,\hs{Succ} \w y) \\
 \end{align*}
 
 This can be used to show the commutativity of plus for natural numbers
@@ -456,7 +458,8 @@ come from $n=0$:
     {\fa{x} P(x)}
 \end{mathpar}
 
-A little bit of expanding is necessary when $n=2$. It looks like this
+\newpage
+A little bit of expanding is necessary for $n=2$. It looks like this
 
 \begin{mathpar}
     \inferrule*
