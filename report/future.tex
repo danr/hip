@@ -1,16 +1,151 @@
 \chapter{Future work}
 \label{ch:future}
 
-The chapter describes the limitations of our approach and ideas how to
-get around them.
+The chapter addresses some limitations of our approach and ideas how
+to get around them.
+
+\section{Pattern Matching Re-Revisited}
+
+The current translation of pattern matching is described in Section
+\ref{sec:patternsrevisited}. One of the strengths of it is the
+translation of wild patterns. Consider this function for equality of a
+data type with three elements:
+
+\begin{code}
+data Tri = A | B | C
+
+equal :: Tri -> Tri -> Bool
+equal A A = True
+equal B B = True
+equal C C = True
+equal _ _ = False
+\end{code}
+
+\noindent
+The translation adds two more cases that go to bottom, one where the
+first argument is bottom, and one where the second one is bottom. All
+other values that are not the same \hs{Tri} and not bottom go to
+\hs{False}.
+
+If there for models of this function which includes
+another value $\star$, other values than those of this data type and
+bottom, must have $\fn{equal}(\star,x) = \fn{false}$, for all non
+bottom $x$, including $\star$. This is not a problem per se, since the
+Haskell source is well typed, and \hs{equal} will not be applied to
+anything but \hs{Tri}s and bottoms.
+
+One weakness of that approach is that two functions that are
+extensionally equivalent in Haskell are not in the generated theory,
+when applied to non sense arguments. An example of this behaviour is
+these two implementations of the boolean or function in Figure
+\ref{code:or}.
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}[b]{6cm}
+\begin{code}
+or :: Bool -> Bool -> Bool
+or False b = b
+or True  _ = True
+\end{code}
+\end{minipage}
+\hspace{10pt}
+\begin{minipage}[b]{6cm}
+\begin{code}
+or' :: Bool -> Bool -> Bool
+or' False b = b
+or' _     _ = True
+\end{code}
+\end{minipage}
+\caption{Two definitions of boolean or, \texttt{or} and \texttt{or'}
+\label{code:or}
+}
+\end{figure}
+
+Let us analyse the models of this program in Figure \ref{code:or} with
+an additional value $\star$ in the domain. The translation makes
+$\fn{or}(\star,\fn{true}) = \bot$, since there is a wild pattern that
+goes to $\bot$. For the other function we have
+$\fn{or'}(\star,\fn{true}) = \fn{false}$, as the wild pattern already
+goes to \fn{false}. Because of this differences, the approximation
+lemma cannot prove this property. While this is a simple example, it
+is easy to imagine more complex cases where different pattern matching
+techniques makes no difference to the Haskell program, but to this
+translation.
+
+This suggests that wild patterns should be expanded to pattern for all
+their constructors, and add a match any pattern that goes to
+bottom. This make the the meta theorem
+$\faa{x}{y} \fn{or}(x,y) = \fn{or'}(x,y)$ consistent with rest of the
+theory.  Further, it would be provable by the approximation lemma, and
+in more complex cases with recursive functions, by fixed point
+induction. This translation is also assumed to be a little easier to
+implement. The down side is that the \hs{equal} function above would
+unroll to 3 * 3 patterns, and one bottom pattern.
 
 \section{Lemmas}
 
-For many proofs, it is essential to use some lemma to reach the
-goal. For commutativity of plus, we already touched on this aspect, it
-needs the left identity as well as the $s(n) + m \eq n + s(m)$
-lemma. Furthermore, to prove associativity of multiplication you need
-at least associativity of addition.
+For many properties, especially more advanced ones, it is crucial to
+be able to use lemmas to obtain a proof. The introduced proof
+techniques in this theses are just not strong enough. For structural
+induction, it is possible to do induction in more than one depth. This
+sometimes make the hypotheses equally strong as the required lemmas,
+as in the example of plus commutativity of natural numbers in Section
+\ref{sec:genind}. But this approach fails for properties about
+multiplication: it is essential to use lemmas about addition.
+
+The concept of adding lemmas is of course quite simple. Assume your
+program has two properties \hs{prop\_a} and \hs{prop\_b}, and the
+second needs the first as a lemma. If \hs{prop\_a} succeeds, then the
+should program just add that property to the theory generated for
+\hs{prop\_b}, and try it again. Unfortunately, adding a property to a
+theory needs to be carried out with care. For properties that hold for
+infinite and partial values it is actually a bit simpler than for
+those that are only true for finite values. These settings are
+addressed one by one below.
+
+\subsection{Lemmas from Theorems}
+
+One example of a Theorem, a property that holds for partial and
+infinite values, is the right identity of \hs{||}, boolean or:
+
+$$\fa{x} x \w \hs{||} \w \fn{false} = x$$
+
+\noindent
+Adding this meta theorem to the theory would make it
+inconsistent. Again, in a model with an extra value $\star$, we have
+that $\star \w \hs{||} \w \fn{false} = \bot$. However, we can create a
+function that forces a value to be a \hs{Bool} or $\bot$ as this:
+
+\begin{align*}
+\rom{1} \qquad &&        & \fn{force}(\fn{true})  && = \fn{true} \\
+\rom{2} \qquad &&        & \fn{force}(\fn{false}) && = \fn{false} \\
+\rom{3} \qquad && \fa{x} & \fn{force}(x)          && = \bot \vee x = \fn{false} \vee x = \fn{true}
+\end{align*}
+
+The theory would be consistent with this reformulation of the meta theorem:
+
+$$\fa{x} \fn{force}(x) \w \hs{||} \w \fn{false} = \fn{force}(x)$$
+
+It is easy to generalise $\fn{force}$ beyond booleans. Make it a
+binary function with first argument a description of the type. Each
+simply kinded type would be given a constant, and higher-kinded types
+functions, an example would be $\fn{list}(\alpha)$ for lists of $\alpha$:
+
+\begin{align*}
+\rom{1} \qquad && \fa{\alpha}          & \fn{force}(\fn{list}(\alpha),\fn{nil})        && = \fn{nil} \\
+\rom{2} \qquad && \faaa{\alpha}{x}{xs} & \fn{force}(\fn{list}(\alpha),\fn{cons}(x,xs)) && = \fn{cons}(\fn{force}(\alpha,x),\fn{force}(\fn{list}(\alpha),xs) \\
+\rom{3} \qquad && \faa{\alpha}{xs}     & \fn{force}(\fn{list}(\alpha),xs)              && = \bot  \\
+               &&                      & \multicolumn{3}{l}{\vee xs = \fn{nil} \vee xs = \fn{cons}(\fn{cons_0}(xs),\fn{cons_1}(xs)}
+\end{align*}
+
+Using functions and predicates to witness type information has been
+studied by \cite{sortMonotonicity} and by \cite{polyMonotonicity},
+with ideas how to encode type tags efficiently. Proofs by definitional
+equality would also benefit from such tags, see the current
+limitations in section \ref{sec:concreteconcerns}.
+
+\subsection{Lemmas from Finite Theorems}
 
 Implementing addition of lemmas for properties that always hold, i.e,
 for also partial and infinite values is straightforward; you can just
@@ -28,33 +163,35 @@ first list is total, since that might be the infinite one. So, to
 prove properties that does not always hold you will need to prove a
 lot more properties about your functions.
 
+\subsection{Speculating Lemmas}
+
+The previous sections assumed that the necessary lemmas are present as
+properties in the source file. Sadly, it is not always clear which
+lemmas are required to prove a given property. This section discusses
+some ideas to generate candidate lemmas.
+
+\note{Discuss this with Moa and get references}
+
+In the Isabelle induction and rippling community, there are concepts
+such as critics, which makes lemmas and generalizations when the term
+rewriting heuristic rippling fails, and lemma calculation, which tries
+to syntactically analyze the problem before proving in order to figure
+out suitable lemmas.
+
+Another approach is to do property speculation, implemented for
+Isabell \cite{isacosy} and Haskell \cite{quickspec}, where you simply
+tell the QuickSpec program all functions in your program, and it tries
+to find equality properties by creating small syntax trees of the
+functions. It would be very interesting to see how useful such
+properties are as lemmas.
+
+\subsection{Loose Reasoning}
+
 Another way to reason about this is to assume that the undefined value
 does not exist, and this could be deemed as morally correct
 \cite{fastandloose}. Then you cannot use fixed point induction but you
 can still use structural induction.
 
-\note{Discuss this with Moa and get references}
-Another aspect of this is where to get the lemmas from. In the Isabel
-induction and rippling community, there are concepts such as critics,
-which makes lemmas and generalizations when the term rewriting
-heuristic rippling fails, and lemma calculation, which tries to
-syntactically analyze the problem before proving in order to figure
-out suitable lemmas. Another approach is to do property speculation,
-implemented for Isabell \cite{isacosy} and Haskell \cite{quickspec},
-where you simply tell the QuickSpec program all functions in your
-program, and it tries to find equality properties by creating small syntax
-trees of the functions. It would be very interesting to see how useful
-such properties are as lemmas.
-
-The third aspect is how should the user inform the program which
-lemmas are needed? One solution is to allow the user to annotate the
-source code where the properties are entered which lemmas might be
-appropriate to use. Another is to first try to prove all properties,
-and for those which did not turn out to be a theorem, add all the
-succeeded properties as a lemma and iterate until you reach a fixed
-point. This could probably be optimized: if a lemma only concerns
-functions that are not relevant for a given property, it is
-unnecessary to add it to the theory.
 
 %\section{Material Implication}
 %
@@ -65,6 +202,31 @@ unnecessary to add it to the theory.
 %Since we will need to prove termination for functions, how would one
 %prove non-termination (for some inputs)? Then we could get more
 %completeness: this function with these inputs would be $\bot$.
+
+\section{Type classes}
+\label{sec:typeclasses}
+
+There are some obstacles to support type classes. One is introduced by
+the technicalities of type inference to decide instances in the
+program. Another is how to express type classes in logic. An approach
+would be to use dictionary passing, inlined for concrete types.
+
+A third obstacle is to decide which axioms to use for the functions
+from a type class. Let us take Monoids as an example. Its signature
+consists of a binary operator and an element from the type. The
+required laws are associativity of the operator and that the element
+is the identity element for this operator. Lists are an instance of
+Monoid, and the associativity law holds for finite and partial lists,
+but the right identity does not hold: \hs{$\bot$ ++ []} is not equal
+to \hs{[]}, as it is equal to $\bot$. This example suggests that it
+could be appropriate to assume the laws only for total values, and
+that it would be sensible to automatically check these laws for all
+instances.
+
+We know something else about the functions from a type class: they are
+all continuous. This is also true for functions which are quantified
+over. This is currently not enforced in the generated theories, and an
+open question is how this effects the results.
 
 \section{Other Techniques}
 

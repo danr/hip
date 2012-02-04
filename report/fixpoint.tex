@@ -106,7 +106,7 @@ of \hs{fix}, and its inference rule is this:
      { P(\fn{fix} f) }
 \end{mathpar}
 
-\label{sec:admissible}
+
 Here it is important that $P$ is \emph{admissible} , meaning that for
 all $\sqsubseteq$-chains of length $\omega$, if the property holds for
 all elements in the chain it must necessary hold for its limit, futher
@@ -135,7 +135,7 @@ P(f^0 \w \bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
 P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
 \desclra{induction} \\
 \fa{n} & P(f^n \w \bot) \\
-\desclra{\mathit{P} \w admissible} \\
+\desclra{\textit{P} \w admissible} \\
 & P(\lub{n}(f^n \w \bot)) \\
 \desclra{definition \w of \w \hs{fix}} \\
 & P(\hs{fix} \w f) \\
@@ -352,7 +352,7 @@ The empty $\unfix{f}$ does not have any implementation. But it has
 something much better, namely the induction hypothesis. The induction
 conclusion is to prove the property for $\tofix{f}$, where the
 recursive call to $f$ is replaced with $\unfix{f}$. We do this
-translation since it is better suited for the theorem provers.
+simplification since it is better suited for the theorem provers.
 
 \newpage
 This also works for several functions at the same time, possibly

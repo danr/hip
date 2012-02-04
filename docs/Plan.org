@@ -712,14 +712,14 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-03 Fri 18:27]
+Clock summary at [2012-02-04 Sat 14:51]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *36:10* |       |       |      |
+| *Total time*                                                  | *38:08* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 36:10   |       |       |      |
-| Completed                                                     |         | 13:40 |       |      |
+| Plan                                                          | 38:08   |       |       |      |
+| Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
 | DONE Patch the program to run all provers                     |         |       |  9:08 |      |
@@ -732,22 +732,22 @@ Clock summary at [2012-02-03 Fri 18:27]
 | DONE Make a test suite that discovers how the provers answers |         |       |       | 0:16 |
 | DONE Meeting with Koen 31 january                             |         |       |  1:04 |      |
 | DONE Install GHC on ttitania                                  |         |       |  1:03 |      |
-| Report                                                        |         |       |  0:21 |      |
-| DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         | 22:30 |       |      |
-| ONGOING Time planning                                         |         |       |  0:31 |      |
-| TODO Report tasks                                             |         |       |  6:48 |      |
-| NEXT Write introduction                                       |         |       |       | 2:33 |
-| TODO Results                                                  |         |       |       | 3:00 |
-| TODO Fixed point induction                                    |         |       |       | 0:55 |
-| TODO Structural induction rewrite                             |         |       |       | 0:19 |
-| TODO Results                                                  |         |       | 15:10 |      |
+| DONE Results                                                  |         |       | 15:10 |      |
 | NEXT Prepare the test suite                                   |         |       |       | 7:20 |
 | NEXT Histogram statistics                                     |         |       |       | 2:01 |
 | NEXT Table statistics                                         |         |       |       | 0:48 |
 | DONE What to track?                                           |         |       |       | 1:56 |
 | DONE Use qsub scriptd                                         |         |       |       | 1:04 |
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
+| Report                                                        |         |       |  0:21 |      |
+| DONE Quantifying functions and app                            |         |       |       | 0:21 |
+| Tasks                                                         |         |  0:35 |       |      |
+| ONGOING Time planning                                         |         |       |  0:34 |      |
+| TODO Report tasks                                             |         |  8:43 |       |      |
+| NEXT Write introduction                                       |         |       |  2:33 |      |
+| TODO Proof methods                                            |         |       |  1:14 |      |
+| TODO Fixed point induction                                    |         |       |       | 0:55 |
+| TODO Results                                                  |         |       |  3:00 |      |
 #+END:
 ** Refile
 *** SOMEDAY Example ideas
@@ -965,99 +965,9 @@ CLOCK: [2012-02-02 Thu 09:25]--[2012-02-02 Thu 10:28] =>  1:03
 ttitania is 64 bit
 ttitania-1.ce.chalmers.se
 All provers installed!
-*** Report                                                         :report:
-**** DONE Quantifying functions and app
-CLOSED: [2012-01-31 Tue 11:54]
-- State "DONE"       from "NEXT"       [2012-01-31 Tue 11:54]
-CLOCK: [2012-01-31 Tue 11:36]--[2012-01-31 Tue 11:47] =>  0:11
-CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
-** Tasks
-CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
-*** ONGOING Time planning
-CLOCK: [2012-02-02 Thu 09:15]--[2012-02-02 Thu 09:23] =>  0:08
-CLOCK: [2012-02-02 Thu 09:14]--[2012-02-02 Thu 09:14] =>  0:00
-CLOCK: [2012-02-02 Thu 09:01]--[2012-02-02 Thu 09:05] =>  0:04
-CLOCK: [2012-02-01 Wed 09:59]--[2012-02-01 Wed 10:00] =>  0:01
-CLOCK: [2012-02-01 Wed 09:59]--[2012-02-01 Wed 09:59] =>  0:00
-CLOCK: [2012-02-01 Wed 09:58]--[2012-02-01 Wed 09:58] =>  0:00
-CLOCK: [2012-02-01 Wed 09:57]--[2012-02-01 Wed 09:57] =>  0:00
-CLOCK: [2012-01-31 Tue 12:01]--[2012-01-31 Tue 12:02] =>  0:01
-CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:12] =>  0:00
-CLOCK: [2012-01-30 Mon 17:29]--[2012-01-30 Mon 17:31] =>  0:02
-CLOCK: [2012-01-30 Mon 08:48]--[2012-01-30 Mon 08:50] =>  0:02
-CLOCK: [2012-01-29 Sun 15:06]--[2012-01-29 Sun 15:07] =>  0:01
-CLOCK: [2012-01-29 Sun 15:00]--[2012-01-29 Sun 15:06] =>  0:06
-CLOCK: [2012-01-29 Sun 14:57]--[2012-01-29 Sun 15:00] =>  0:03
-CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
-:PROPERTIES:
-:ORDERED: t
-:END:
-
-*** TODO Report tasks                                              :report:
-CLOCK: [2012-02-03 Fri 16:44]
-CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
-**** NEXT Write introduction
-CLOCK: [2012-02-01 Wed 10:31]--[2012-02-01 Wed 10:58] =>  0:27
-CLOCK: [2012-02-01 Wed 10:00]--[2012-02-01 Wed 10:26] =>  0:26
-Shit this is hard
-CLOCK: [2012-01-31 Tue 18:08]--[2012-01-31 Tue 19:22] =>  1:14
-CLOCK: [2012-01-31 Tue 17:46]--[2012-01-31 Tue 18:02] =>  0:16
-CLOCK: [2012-01-31 Tue 17:39]--[2012-01-31 Tue 17:41] =>  0:02
-CLOCK: [2012-01-31 Tue 14:35]--[2012-01-31 Tue 14:43] =>  0:08
-CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
-Write this: introduce the problem and why it is interesting
-Get to the point! Don't be hand-wavy
-**** TODO Results
-CLOCK: [2012-02-03 Fri 15:55]--[2012-02-03 Fri 16:44] =>  0:49
-CLOCK: [2012-02-03 Fri 13:47]--[2012-02-03 Fri 15:55] =>  2:08
-CLOCK: [2012-02-03 Fri 11:39]--[2012-02-03 Fri 11:42] =>  0:03
-***** TODO Refer to the different theorem provers
-Prover9 has a bibtex
-***** TODO SZS Status ontology paper
-**** TODO Conclusions
-This may need some thinking :)
-**** TODO Fixed point induction
-- State "TODO"       from "DONE"       [2012-01-31 Tue 18:50]
-- State "DONE"       from "NEXT"       [2012-01-31 Tue 18:50]
-CLOCK: [2012-01-31 Tue 10:24]--[2012-01-31 Tue 11:19] =>  0:55
-Overhaul and introduce the fancy notation earlier?
-Redo the section called Implementation. How can we minimize the
-explanation of fix? Probably, a lot of proofs can be removed too, that
-are not too interesting and just state them as properties easily
-proved by induction (or something)
-**** TODO Structural induction rewrite
-CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
-CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
-
-**** TODO Future work
-***** TODO Implications
-Chain complete?
-#+BEGIN_SRC haskell
-x + y = x + z -> y = x
-#+END_SRC
-needs induction on the whole property, you cannot simply the
-antecedent as a lemma
-***** CANCELLED How does the min predicate work
-CLOSED: [2012-01-29 Sun 00:36]
-- State "CANCELLED"  from ""           [2012-01-29 Sun 00:36] \\
-****** TODO Min predicate:
-Just write in the report that it is possible
-***** NEXT Lemmas and translation
-Here we can elaborate on different ways of translating, how to use
-predicates and if we should pattern match on all constructors and make
-the wild pattern always go to []. Say something about how this can be
-problematic with GADTs and other fancy type extensions.
-**** TODO Where to put the domain theory part?
-**** TODO How does Zeno handle typeclasses?
-**** TODO Related work: talk with Moa
-**** TODO Put "propositional equality" somewhere, not Eq-equality
-**** Misc
-***** Refutation
-Refutation is a proof that ends in $false
-[[http://www.cs.miami.edu/~tptp/TPTP/TPTPTParty/2007/PositionStatements/GeoffSutcliffe_SZS.html][SZS Output Ontology]]
-
-
-*** TODO Results
+*** DONE Results
+CLOSED: [2012-02-04 Sat 14:38]
+- State "DONE"       from "TODO"       [2012-02-04 Sat 14:38]
 CLOCK: [2012-02-02 Thu 09:23]--[2012-02-02 Thu 09:25] =>  0:02
 CLOCK: [2012-02-01 Wed 23:45]--[2012-02-01 Wed 23:48] =>  0:03
 CLOCK: [2012-01-31 Tue 11:33]--[2012-01-31 Tue 11:36] =>  0:03
@@ -1111,7 +1021,7 @@ around 1000 were proved in less than 10ms.
 CLOCK: [2012-02-03 Fri 10:19]--[2012-02-03 Fri 11:07] =>  0:48
 Make a latex table of statistics from the different files
 
-**** TODO Enable plotting two proving methods (fpi/approx) against each other
+**** SOMEDAY Enable plotting two proving methods (fpi/approx) against each other
 As a scatter plot. Need the (sum) success time for them. If several
 fpi worked, take the best. This could be an interesting plot.
 
@@ -1169,12 +1079,41 @@ CLOCK: [2012-02-02 Thu 14:17]--[2012-02-02 Thu 16:10] =>  1:53
 CLOSED: [2012-02-02 Thu 17:32]
 - State "DONE"       from "NEXT"       [2012-02-02 Thu 17:32]
 
+*** Report                                                         :report:
+**** DONE Quantifying functions and app
+CLOSED: [2012-01-31 Tue 11:54]
+- State "DONE"       from "NEXT"       [2012-01-31 Tue 11:54]
+CLOCK: [2012-01-31 Tue 11:36]--[2012-01-31 Tue 11:47] =>  0:11
+CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
+** Tasks
+CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
+*** ONGOING Time planning
+CLOCK: [2012-02-04 Sat 14:40]--[2012-02-04 Sat 14:51] =>  0:11
+CLOCK: [2012-02-02 Thu 09:14]--[2012-02-02 Thu 09:14] =>  0:00
+CLOCK: [2012-02-02 Thu 09:01]--[2012-02-02 Thu 09:05] =>  0:04
+CLOCK: [2012-02-01 Wed 09:59]--[2012-02-01 Wed 10:00] =>  0:01
+CLOCK: [2012-02-01 Wed 09:59]--[2012-02-01 Wed 09:59] =>  0:00
+CLOCK: [2012-02-01 Wed 09:58]--[2012-02-01 Wed 09:58] =>  0:00
+CLOCK: [2012-02-01 Wed 09:57]--[2012-02-01 Wed 09:57] =>  0:00
+CLOCK: [2012-01-31 Tue 12:01]--[2012-01-31 Tue 12:02] =>  0:01
+CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:12] =>  0:00
+CLOCK: [2012-01-30 Mon 17:29]--[2012-01-30 Mon 17:31] =>  0:02
+CLOCK: [2012-01-30 Mon 08:48]--[2012-01-30 Mon 08:50] =>  0:02
+CLOCK: [2012-01-29 Sun 15:06]--[2012-01-29 Sun 15:07] =>  0:01
+CLOCK: [2012-01-29 Sun 15:00]--[2012-01-29 Sun 15:06] =>  0:06
+CLOCK: [2012-01-29 Sun 14:57]--[2012-01-29 Sun 15:00] =>  0:03
+CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
+:PROPERTIES:
+:ORDERED: t
+:END:
 
 *** TODO Better name than autospec!
 
 *** TODO Presentation
-**** SOMEDAY GTK2Hs frontend for proofs for presentation
+**** CANCELLED GTK2Hs frontend for proofs for presentation
+CLOSED: [2012-02-04 Sat 14:39]1
 **** TODO Ideas on live examples
+**** NEXT
 
 *** TODO Mail Abstract to Meng
 DEADLINE: <2012-02-03 Fri>
@@ -1183,3 +1122,83 @@ DEADLINE: <2012-02-03 Fri>
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete
 DEADLINE: <2012-02-14 Tue>
+** TODO Report tasks                                                :report:
+CLOCK: [2012-02-04 Sat 14:51]
+CLOCK: [2012-02-03 Fri 16:44]--[2012-02-03 Fri 18:39] =>  1:55
+CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
+*** NEXT Write introduction
+CLOCK: [2012-02-01 Wed 10:31]--[2012-02-01 Wed 10:58] =>  0:27
+CLOCK: [2012-02-01 Wed 10:00]--[2012-02-01 Wed 10:26] =>  0:26
+Shit this is hard
+CLOCK: [2012-01-31 Tue 18:08]--[2012-01-31 Tue 19:22] =>  1:14
+CLOCK: [2012-01-31 Tue 17:46]--[2012-01-31 Tue 18:02] =>  0:16
+CLOCK: [2012-01-31 Tue 17:39]--[2012-01-31 Tue 17:41] =>  0:02
+CLOCK: [2012-01-31 Tue 14:35]--[2012-01-31 Tue 14:43] =>  0:08
+CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
+Write this: introduce the problem and why it is interesting
+Get to the point! Don't be hand-wavy
+*** TODO Abstract
+*** TODO Introduction
+*** TODO Related work
+**** TODO Talk with Moa on winter meeting
+*** TODO Translation
+**** TODO Where to put the domain theory part?
+*** TODO Proof methods
+CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
+CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
+**** TODO Fixed point induction
+- State "TODO"       from "DONE"       [2012-01-31 Tue 18:50]
+- State "DONE"       from "NEXT"       [2012-01-31 Tue 18:50]
+CLOCK: [2012-01-31 Tue 10:24]--[2012-01-31 Tue 11:19] =>  0:55
+Overhaul and introduce the fancy notation earlier?
+Redo the section called Implementation. How can we minimize the
+explanation of fix? Probably, a lot of proofs can be removed too, that
+are not too interesting and just state them as properties easily
+proved by induction (or something)
+
+*** TODO Abstract
+*** TODO Introduction
+**** TODO Schematic view of this work
+Haskell -> Logic -> ATP invocations -> Results
+*** TODO Related work
+**** TODO Talk to Moa on the winter meeting
+*** TODO Translation
+**** Where to put the domain theory part?
+*** TODO Proof methods
+*** TODO Future work
+**** TODO Implications
+Chain complete?
+#+BEGIN_SRC haskell
+x + y = x + z -> y = x
+#+END_SRC
+needs induction on the whole property, you cannot simply the
+antecedent as a lemma
+**** CANCELLED How does the min predicate work
+CLOSED: [2012-01-29 Sun 00:36]
+- State "CANCELLED"  from ""           [2012-01-29 Sun 00:36] \\
+***** TODO Min predicate:
+Just write in the report that it is possible
+**** NEXT Lemmas and translation
+Here we can elaborate on different ways of translating, how to use
+predicates and if we should pattern match on all constructors and make
+the wild pattern always go to []. Say something about how this can be
+problematic with GADTs and other fancy type extensions.
+***** Schematic view of lemmas with/without QuickSpec
+**** Refutation
+Refutation is a proof that ends in $false
+[[http://www.cs.miami.edu/~tptp/TPTP/TPTPTParty/2007/PositionStatements/GeoffSutcliffe_SZS.html][SZS Output Ontology]]
+*** TODO Results
+CLOCK: [2012-02-03 Fri 15:55]--[2012-02-03 Fri 16:44] =>  0:49
+CLOCK: [2012-02-03 Fri 13:47]--[2012-02-03 Fri 15:55] =>  2:08
+CLOCK: [2012-02-03 Fri 11:39]--[2012-02-03 Fri 11:42] =>  0:03
+**** TODO Refer to the different theorem provers
+Prover9 has a bibtex
+**** TODO SZS Status ontology paper
+*** TODO Conclusions
+This may need some thinking :)
+*** Misc
+**** TODO How does Zeno handle typebclasses?
+**** TODO Put "propositional equality" somewhere, not Eq-equaliy
+**** TODO Quantify over functions: restrict them to be monotone?
+Is this really important?
+

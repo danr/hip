@@ -19,7 +19,7 @@
 \usepackage{longtable}
 \usepackage{tikz}
 \usepackage{array}
-\usepackage[pdftex]{graphicx}
+\usepackage{graphicx}
 
 \let\cleardoublepage\clearpage
 
@@ -70,7 +70,7 @@
 \newcommand\faaa[3]{\forall \, #1 , #2 , #3 . \,}
 \newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 \, #4 , #5 , #6 . \,}
 
-\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}\usetikzlibrary{\trees,positioning,arrows}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}%\usetikzlibrary {\trees,positioning,arrows}
 
 \newcommand\tofix[1]{#1^{\bullet}}
 \newcommand\unfix[1]{#1^{\circ}}
@@ -96,24 +96,24 @@
 
 \newcommand{\nsqsubseteq}{\,\,\, /\!\!\!\!\!\!\sqsubseteq}
 
-%\begin{document}
-%
+\begin{document}
+
 %\input{results}
+
+\input{future}
+
 %
-%\input{future}
+%\noindent
+%\chapter{Proof Techniques}
+%\input{fixpoint}
 %
-%%
-%%\noindent
-%%\chapter{Proof Techniques}
-%%\input{fixpoint}
-%%
-%
-%\bibliographystyle{apalikeurl}
-%\bibliography{masterbib}
-%
-%\end{document}
-%
-%\begin{comment}
+
+\bibliographystyle{apalikeurl}
+\bibliography{masterbib}
+
+\end{document}
+
+\begin{comment}
 
 \begin{document}
 

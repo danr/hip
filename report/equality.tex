@@ -43,7 +43,7 @@ following behavior:
 \begin{code}[mathescape]
 seq :: a -> b -> b
 seq $\bot$ y = $\bot$
-seq x y = y$, \qquad x \neq
+seq x y = y$, \qquad x \neq \bot$
 \end{code}
 
 It forces the first argument to weak head normal form and returns the
@@ -71,17 +71,18 @@ apart, so we will ignore its presence in Haskell.  In the future,
 there could be added as a switch \hs{--enable-seq}, which weakens
 extensional equality appropriately.
 
-Furthermore, if extensional equality is assumed we also have
-the property that \hs{Prop (a -> b)} is equivalent to
-\hs{a -> Prop b}, by letting the property have an extra argument that
-is applied to the left and right hand side of the equality. This has
-two benefits. Firstly, it can trigger other proof methods should \hs{a}
-or \hs{b} be concrete types (the former for induction and the latter
-for approximation lemma). Secondly, it does not need to use the
+Furthermore, if extensional equality is assumed we also have the
+property that \hs{Prop (a -> b)} is equivalent to \hs{a -> Prop b}, by
+letting the property have an extra argument that is applied to the
+left and right hand side of the equality. This has two
+benefits. Firstly, it can trigger other proof methods should \hs{a} or
+\hs{b} be concrete types (the former for induction and the latter for
+approximation lemma). Secondly, it does not need to use the
 extensionality axiom introduced above which introduces extra steps in
 the proof search.
 
 \subsection{Future Work: Concrete Concerns}
+\label{sec:concreteconcerns}
 
 This only works on non-concrete types because of the way bottoms are
 added. One example when this is a problem with is this plausible
@@ -112,7 +113,8 @@ $$\star \, \fn{||} \, \fn{false} = \bot$$
 The consequence of this is that the proof principle of definitional
 equality is only used on abstract types, rather than polymorphic, as
 they cannot be strict. Do not fear: the property above is trivially
-proved by induction. For the \hs{Bool} type and other non recursive
-data types, induction degenerate into mere case enumeration.
+proved by induction, as induction for \hs{Bool} and other non
+recursive data types degenerate into mere case enumeration. Structural
+induction is described in detail in the next section.
 
 
