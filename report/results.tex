@@ -1,0 +1,180 @@
+\chapter{Results and Discussion}
+\label{ch:results}
+
+This chapter describes the test suite used in this project. A large
+test with five theorem provers was carried out on this test suite, and
+this section describes the setup and results.
+
+\section{Test Suite}
+
+To carry out a throughout testing of the system a large test suite was
+developed and collected from other sources.  It consists of over 25
+Haskell source files, and all together includes over 500 equality
+properties.  The files of can be divided into groups with different
+aims of complexity, suitable proving methods and different aspects of
+Haskell. All files of the test suite are briefly described in Table
+\ref{tbl:testsuite}.
+
+\begin{table}[h]
+\centering
+\input{testsuite}
+\caption{Description of the files in the test suite, by group.}
+\label{tbl:testsuite}
+}
+\end{table}
+
+\section{Setup}
+
+This section describes the setup for the exhaustive run of the test
+suite.  Five theorem provers were used: Vampire 0.6, E 1.0-004 Temi,
+prover9 2009-02A \citep{prover9}, SPASS 3.5 and equinox
+6.0.1alpha. Each prover invocation had an own thread on a 2.40GHz
+Intel Xeon CPU. All properties were tested for each theorem prover,
+and also one run which tried every invocation with all provers. The
+time limit for each invocation was 5 seconds.
+
+To make this tractable, some restrictions were needed. The maximum depth
+and induction variables for structural induction was 2, and to prevent
+combinatorial explosion the number of induction steps was limited to
+20, and a maximum of 500 hypotheses were generated. For fixed point
+induction there is a similar problem since there are many possible
+candidate functions, so the maximum number of fixed functions were 100
+for each property.
+
+\section{Results for Provers and Proof Techniques}
+
+In this section we present how well the different provers succeeded on
+the big run of the test suite. It is important to distinguish between
+the value domains the different techniques work for. Successes for
+methods which handle all values are called Theorems, and for methods
+that only work on finite and total values are called Finite Theorems.
+
+To compare the provers and the different proof methods on this test
+suite, the number of proved properties for each prover and proof
+method is illustrated in Table \ref{tbl:proved}. The entries in the
+row captioned Theorem shows how many theorems were proved out of the
+total. The following four columns for definitional equality,
+structural induction, approximation lemma and fixpoint induction tells
+how many properties out of those could be proved with this method. The
+following two columns are similar, though for finite theorems where the
+only applicable method is structural induction.
+
+\begin{table}[h]
+\centering
+\input{resultdata/total-summary}
+\caption{Number of proved properties per prover and proof method.
+         Only the Theorem is counted for properties proved as both
+         Theorems and Finite Theorems.
+\label{tbl:proved}
+}
+\end{table}
+
+\paragraph{Discussion}
+
+In general, all provers tested in this experiment but equinox
+performed almost equally well on this problem set. For those four in
+the top the differences are small, but the most successful is
+Vampire. It is closely followed by E, which performs slighly better on
+the approximation lemma. One of the few notable differences is that
+prover9 performs worse proofs by the approximation lemma and fixed
+point induction.
+
+A striking observation is that the approximation lemma is the most
+successful of proving techniques for Theorems. It is also the easiest
+to formulate and implement. These good results for approximation
+lemma motivates the search for a reformulation of that holds for
+finite or total infinite values.
+
+Structural induction could become even stronger if the combinatorial
+explosion when generating induction hypotheses could be
+restricted. Currently, it creates all smaller trees than the induction
+conclusion, but another alternative is to use all subtrees.
+
+Definitional equality, written as plain in the table, is only
+applicable for properties with only abstract arguments. There are some
+notable files in the test suite with these, \ts{Functions}, \ts{MonadEnv} and
+\ts{MonadState}, and most successes come from there. Should the translation
+be changed so that it also applicable on concrete arguments, it would
+also be able to prove properties from for example \ts{Bool}.
+
+
+\section{Results per File}
+
+To compare the different kinds of properties from the files of the
+test suite the results per file can be viewed in Table
+\ref{tbl:allstats}.
+
+\begin{table}[h]
+%\centering
+\input{resultdata/allstats}
+\caption{Number of proved properties per file and proof method, using
+  all provers. An empty cell means nothing proved.
+\label{tbl:allstats}
+}
+\end{table}
+
+\paragraph{Discussion}
+
+These results shreds some light over the success of approximation
+lemma: it is applicable for non recursive structures. That enables it
+to prove properties from \ts{Bool} and \ts{MonadMaybe}, as well as on
+the tuple result in \ts{MonadState}. On the other hand, fixed point
+induction is only for recursive functions. It performs well on the
+tests suited for it, notably the Infinite file, but also surprisingly
+on the Theorems from \ts{ProductiveUseOfFailure} which are only
+contains properties about lists and natural numbers.
+
+The two files \ts{Nat} and \ts{ZenoLists} are taken from the Zeno test
+suite \citep{zeno}. Zeno accomplishes to prove all but two properties,
+and the situation is a bit different here. If the theorems and finite
+theorems are summed, the result is 26/33 for \ts{Nat} and 36/54 for
+\ts{ZenoLists}. The explanation is simple, our tool neither use nor
+discover lemmas, whereas Zeno can. A similar result can be found in
+the test suite file \ts{ProductiveUseOfFailure} from the paper with
+the same name \citep{productiveuse}. The tests from that paper
+includes the lemmas discovered by their tool, and most of the theorems
+we can prove are those lemmas. Lemmas are crucial in many files,
+examples are \ts{InsertionSort} and \ts{Reverse}. It is also needed to
+prove more sophisticated properties not widely included in this test
+suite.
+
+\section{Proving Time}
+
+Most invocations to the theorem provers are solved in a few
+milliseconds, and few can take up to 500 ms. SPASS had the largest
+success time of all invocation: about 1500ms, but that was the only success
+over one second. The cumulative amount of success times can be viewed
+in Figure \ref{fig:provingtime}. Each method can give rise to
+several different ways of proving a property, an example is fixed
+point induction on different functions. These are called parts. A part
+can consist of one or many invocations to a theorem prover, an example
+is the base and the different step cases in a proof by structural
+induction. These invocations are called particles. All particles from
+a part that ended in success are counted in the figure.
+
+\paragraph{Discussion}
+
+The theorem provers are well suited for these kinds of problems, with
+some variance already discussed. This motivates using automated
+theorem provers to prove properties about Haskell programs. For the
+specific setup, 5 seconds were used as timeout, but one secound should
+be sufficient, possibly less.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={time (ms)},ylabel=quantity,
+             enlargelimits=false,ymax=3000,ymin=0,
+             width=10cm,
+             xmin=0,xmax=500]
+\addplot [draw=black] table[x=time,y=qty]  {resultdata/theoremTimes.data} ;
+\end{axis}
+\end{tikzpicture}
+\caption{Cumulative amount of successes over time, using all provers
+  and methods. Only successes from a method resulting in a theorem are counted.
+\label{fig:provingtime}
+}
+\end{figure}
+
+
+
