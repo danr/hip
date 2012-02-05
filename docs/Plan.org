@@ -712,13 +712,13 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-04 Sat 14:51]
+Clock summary at [2012-02-05 Sun 00:37]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *38:08* |       |       |      |
+| *Total time*                                                  | *41:27* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 38:08   |       |       |      |
+| Plan                                                          | 41:27   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -743,10 +743,15 @@ Clock summary at [2012-02-04 Sat 14:51]
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
 | Tasks                                                         |         |  0:35 |       |      |
 | ONGOING Time planning                                         |         |       |  0:34 |      |
-| TODO Report tasks                                             |         |  8:43 |       |      |
+| TODO Report tasks                                             |         | 12:02 |       |      |
 | NEXT Write introduction                                       |         |       |  2:33 |      |
+| TODO Translation                                              |         |       |  0:14 |      |
+| DONE Revert to the old translation technique                  |         |       |       | 0:14 |
 | TODO Proof methods                                            |         |       |  1:14 |      |
 | TODO Fixed point induction                                    |         |       |       | 0:55 |
+| TODO Future work                                              |         |       |  2:51 |      |
+| DONE Pattern matching rerevisited                             |         |       |       | 0:29 |
+| NEXT Lemmas and translation                                   |         |       |       | 2:22 |
 | TODO Results                                                  |         |       |  3:00 |      |
 #+END:
 ** Refile
@@ -1117,13 +1122,12 @@ CLOSED: [2012-02-04 Sat 14:39]1
 
 *** TODO Mail Abstract to Meng
 DEADLINE: <2012-02-03 Fri>
-
 *** TODO Final presentation
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete
 DEADLINE: <2012-02-14 Tue>
 ** TODO Report tasks                                                :report:
-CLOCK: [2012-02-04 Sat 14:51]
+CLOCK: [2012-02-04 Sat 14:51]--[2012-02-04 Sat 15:05] =>  0:14
 CLOCK: [2012-02-03 Fri 16:44]--[2012-02-03 Fri 18:39] =>  1:55
 CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
 *** NEXT Write introduction
@@ -1142,7 +1146,13 @@ Get to the point! Don't be hand-wavy
 *** TODO Related work
 **** TODO Talk with Moa on winter meeting
 *** TODO Translation
+CLOCK: [2012-02-04 Sat 22:15]--[2012-02-04 Sat 22:15] =>  0:00
 **** TODO Where to put the domain theory part?
+**** DONE Revert to the old translation technique
+CLOSED: [2012-02-04 Sat 22:29]
+- State "DONE"       from "NEXT"       [2012-02-04 Sat 22:29]
+CLOCK: [2012-02-04 Sat 22:15]--[2012-02-04 Sat 22:29] =>  0:14
+This needs to introduce the fancy techinque later on
 *** TODO Proof methods
 CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
 CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
@@ -1156,6 +1166,7 @@ explanation of fix? Probably, a lot of proofs can be removed too, that
 are not too interesting and just state them as properties easily
 proved by induction (or something)
 
+**** NEXT Concrete concerns
 *** TODO Abstract
 *** TODO Introduction
 **** TODO Schematic view of this work
@@ -1178,7 +1189,20 @@ CLOSED: [2012-01-29 Sun 00:36]
 - State "CANCELLED"  from ""           [2012-01-29 Sun 00:36] \\
 ***** TODO Min predicate:
 Just write in the report that it is possible
+**** DONE Pattern matching rerevisited
+CLOSED: [2012-02-04 Sat 23:26]
+- State "DONE"       from "NEXT"       [2012-02-04 Sat 23:26]
+CLOCK: [2012-02-04 Sat 22:57]--[2012-02-04 Sat 23:26] =>  0:29
 **** NEXT Lemmas and translation
+CLOCK: [2012-02-05 Sun 00:43]
+CLOCK: [2012-02-04 Sat 23:26]--[2012-02-05 Sun 00:37] =>  1:11
+CLOCK: [2012-02-04 Sat 22:29]--[2012-02-04 Sat 22:57] =>  0:28
+CLOCK: [2012-02-04 Sat 21:54]--[2012-02-04 Sat 22:15] =>  0:21
+CLOCK: [2012-02-04 Sat 16:57]--[2012-02-04 Sat 17:10] =>  0:13
+CLOCK: [2012-02-04 Sat 15:05]--[2012-02-04 Sat 15:14] =>  0:09
+:PROPERTIES:
+:ORDERED: t
+:END:
 Here we can elaborate on different ways of translating, how to use
 predicates and if we should pattern match on all constructors and make
 the wild pattern always go to []. Say something about how this can be
@@ -1197,8 +1221,11 @@ Prover9 has a bibtex
 *** TODO Conclusions
 This may need some thinking :)
 *** Misc
-**** TODO How does Zeno handle typebclasses?
+**** TODO How does Zeno handle typeclasses?
 **** TODO Put "propositional equality" somewhere, not Eq-equaliy
 **** TODO Quantify over functions: restrict them to be monotone?
 Is this really important?
+Maybe blend this with type classes? Abstract implementations of
+functions from typeclasses are at least monotone, and could respect
+the typeclass equalities.
 

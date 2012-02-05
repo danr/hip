@@ -5,6 +5,7 @@ The chapter addresses some limitations of our approach and ideas how
 to get around them.
 
 \section{Pattern Matching Re-Revisited}
+\label{sec:rerevisited}
 
 The current translation of pattern matching is described in Section
 \ref{sec:patternsrevisited}. One of the strengths of it is the
@@ -80,8 +81,9 @@ $\faa{x}{y} \fn{or}(x,y) = \fn{or'}(x,y)$ consistent with rest of the
 theory.  Further, it would be provable by the approximation lemma, and
 in more complex cases with recursive functions, by fixed point
 induction. This translation is also assumed to be a little easier to
-implement. The down side is that the \hs{equal} function above would
-unroll to 3 * 3 patterns, and one bottom pattern.
+implement. The down side is that functions such as \hs{equal} above
+would generate $O(n^2)$ axioms, where $n$ is the number of constructors for
+the data type.
 
 \section{Lemmas}
 
@@ -141,11 +143,27 @@ functions, an example would be $\fn{list}(\alpha)$ for lists of $\alpha$:
 
 Using functions and predicates to witness type information has been
 studied by \cite{sortMonotonicity} and by \cite{polyMonotonicity},
-with ideas how to encode type tags efficiently. Proofs by definitional
-equality would also benefit from such tags, see the current
-limitations in section \ref{sec:concreteconcerns}.
+with ideas how to encode type tags efficiently.
+
+Proofs by definitional equality would also benefit from such tags, see
+the current limitations in section
+\ref{sec:concreteconcerns}. Furthermore, the extensional equality of
+the different implementations of the or function in Figure
+\ref{code:or} is not provable with approximation lemma with the
+current translation, as described in Section
+\ref{sec:rerevisited}. However, stated with $\fn{force}$-tags it
+should be possible. This could give us the best of two worlds: minimal
+translation of pattern matching and universal applicability of the
+approximation lemma and fixed point induction.
 
 \subsection{Lemmas from Finite Theorems}
+
+\begin{comment}
+
+REWRITE - Fin predicate...
+
+Fin(take n xs) <=> Fin(n) \/ Fin(xs)
+Fin(xs ++ ys) <=> Fin(xs) /\ Fin(ys)p
 
 Implementing addition of lemmas for properties that always hold, i.e,
 for also partial and infinite values is straightforward; you can just
@@ -163,12 +181,16 @@ first list is total, since that might be the infinite one. So, to
 prove properties that does not always hold you will need to prove a
 lot more properties about your functions.
 
+\end{comment}
+
 \subsection{Speculating Lemmas}
 
 The previous sections assumed that the necessary lemmas are present as
-properties in the source file. Sadly, it is not always clear which
-lemmas are required to prove a given property. This section discusses
-some ideas to generate candidate lemmas.
+properties in the source file. This puts a lot of burden on the
+programmer to both figure out required lemmas and to state them, it is
+not always clear which lemmas are required to prove a given
+property. This section discusses some ideas to generate candidate
+lemmas.
 
 \note{Discuss this with Moa and get references}
 
@@ -185,12 +207,6 @@ to find equality properties by creating small syntax trees of the
 functions. It would be very interesting to see how useful such
 properties are as lemmas.
 
-\subsection{Loose Reasoning}
-
-Another way to reason about this is to assume that the undefined value
-does not exist, and this could be deemed as morally correct
-\cite{fastandloose}. Then you cannot use fixed point induction but you
-can still use structural induction.
 
 
 %\section{Material Implication}
