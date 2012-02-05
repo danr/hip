@@ -1,7 +1,8 @@
 
 Imagine you find the following data type for binary trees
-\citep{grafting} and the implementation of the \hs{Monad} type class
-\citep{mtl}:
+\citep{grafting} and an implementation of the \hs{Monad} type class
+\citep{mtl} for it:
+
 
 \begin{code}
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
@@ -15,7 +16,7 @@ Leaf x   >>= f = f x
 \end{code}
 
 \noindent
-You wonder if the elegant simplicity of bind 2possibly could obey the
+You wonder if the elegant simplicity of bind possibly could obey the
 three monad laws as stated by \cite{essenceoffp}. Haskell is
 celebrated for being a language easy to reason about, and referential
 transparency makes equational reasoning easy and sound, but proving
@@ -38,30 +39,37 @@ Theorems (3/3):
     by structural induction on t and by fixed point induction on (>>=)
 \end{code}
 
+\noindent
 What is going on behind the scenes to prove this?  There are three
 main parts:
-
 \begin{enumerate}
 \item translation from Haskell to first order logic,
-\item instantiation of different induction techniques on the
-  properties, and
+\item instantiating the properties with different induction
+  techniques, and
 \item running automated theorem provers on the generated theories.
 \end{enumerate}
+The rest of this thesis describes these different parts.
 
 \section{Aim}
 
-The aim of this thesis is to allow automated proving of properties by
-means of automated theorem provers for Haskell, with support for lazy
-data structures and partial values.
+The aim of this thesis is to develop a tool able to do automated
+proving of Haskell properties. This should be realized by means of
+different induction techniques, a translation to first order logic and
+invocations to automated theorem provers. The tool should be able to
+reason and prove properties about lazy data structures, higher order
+functions and infinite and partial values. The project is restricted
+to equational properties to keep it tractable, and equality should
+coincide with equality in first order logic. This means that mean that
+two values are equal if they are created by the same constructor, and
+the arguments to the constructors are all equal.
 
-\section{Required Background}
+\section{Prerequisites}
 
-To read this thesis, it is assumed that the reader knows a little
-Haskell, a good book is written by \cite{lyah}. Some knowledge
-first order logic on both models and syntactically is beneficial, as
-well as some insight in proofs by induction.  One should also be able
-to imagine what an automated theroem prover is and how to run one on a
-first order theory.
+To read this thesis, the reader should have at least brief knowledge
+of Haskell. An introduction is given by \cite{lyah}. Some familiarity
+of model theory and proof deduction in first order logic is
+beneficial, as well as a grasp of proofs by induction. At least a
+shallow apprehension of using automated theorem provers is assumed.
 
 
 

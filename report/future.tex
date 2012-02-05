@@ -180,32 +180,37 @@ commutativity of plus could be expressed with this meta theorem:
 
 We would also like to express finiteness. Our canonical example of a
 an infinite value is the natural number
-\hs{inf = Succ inf}. Identification of such cyclic values can be axiomatised:
+\hs{inf = Succ inf}. Identification of such cyclic values leads to
+infinite values, and can be axiomatised:
 
 \begin{equation*}
-\fa{x} Cyclic(x) \leftrightarrow (x = \fn{succ}(x) \vee (\ex{y} x = \fn{succ}(y) \wedge Cyclic(y))) \\
+\fa{x} Infinite(x) \leftrightarrow (x = \fn{succ}(x) \vee (\ex{y} x = \fn{succ}(y) \wedge Infinite(y))) \\
 \end{equation*}
 
-Because Haskell functions are continuous and finite, every infinite
-value is produced from finite information (\hs{repeat}, \hs{iterate},
-\hs{enumFrom}), so a predicate $Cyclic$ should be enough for our
-purposes. Further, it is clear that $Cyclic(x) \rightarrow Total(x)$.
+While defining $Infinite$ is straightforward for natural numbers,
+further complexities are added for other data types and introduction
+schemas are needed. But since Haskell functions are continuous and
+finite, every infinite value is produced from finite information
+(\hs{repeat}, \hs{iterate}, \hs{enumFrom}), so a predicate $Infinite$
+should be enough for our purposes, and $Infinite$ should be defined so
+that $Infinite(x)\ rightarrow Total(x)$, that is excluding partial
+infinite values.
 
 \pagebreak
 
 We can now define finiteness of a value $x$ as
-$Finite(x) \leftrightarrow Total(x) \wedge \neg Cyclic(x)$.  The results
+$Finite(x) \leftrightarrow Total(x) \wedge \neg Infinite(x)$.  The results
 from a function would be necessary to axiomatise to make such axioms
 useable. To exemplify why this is not trivial, consider the
 complexities of the plus function:
 
 \begin{align*}
 \rom{1} && \faa{x}{y} & Finite(x) \wedge Finite(y)                  & \leftrightarrow &&& Finite(x + y) \\
-\rom{2} && \faa{x}{y} & Cyclic(x) \vee (Finite(x) \wedge Cyclic(y)) & \leftrightarrow &&& Cyclic(x + y)
+\rom{2} && \faa{x}{y} & Infinite(x) \vee (Finite(x) \wedge Infinite(y)) & \leftrightarrow &&& Infinite(x + y)
 \end{align*}
 
 How to prove the status for the return value of a function in terms of
-$Finite$, $Total$ and $Cyclic$ for different statuses of the arguments is
+$Finite$, $Total$ and $Infinite$ for different statuses of the arguments is
 an open problem. Possible sources for inspiration is the work by
 \cite{exhaustiblesets}, where topological compactness for
 data types play a significant r\^{o}le.
