@@ -1172,6 +1172,7 @@ proved by induction (or something)
 **** TODO Schematic view of this work
 Haskell -> Logic -> ATP invocations -> Results
 *** TODO Related work
+CLOCK: [2012-02-05 Sun 01:15]--[2012-02-05 Sun 01:29] =>  0:14
 **** TODO Talk to Moa on the winter meeting
 *** TODO Translation
 **** Where to put the domain theory part?
@@ -1194,7 +1195,7 @@ CLOSED: [2012-02-04 Sat 23:26]
 - State "DONE"       from "NEXT"       [2012-02-04 Sat 23:26]
 CLOCK: [2012-02-04 Sat 22:57]--[2012-02-04 Sat 23:26] =>  0:29
 **** NEXT Lemmas and translation
-CLOCK: [2012-02-05 Sun 00:43]
+CLOCK: [2012-02-05 Sun 00:43]--[2012-02-05 Sun 01:13] =>  0:30
 CLOCK: [2012-02-04 Sat 23:26]--[2012-02-05 Sun 00:37] =>  1:11
 CLOCK: [2012-02-04 Sat 22:29]--[2012-02-04 Sat 22:57] =>  0:28
 CLOCK: [2012-02-04 Sat 21:54]--[2012-02-04 Sat 22:15] =>  0:21
