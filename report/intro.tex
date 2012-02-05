@@ -1,4 +1,111 @@
 
+Imagine you find the following data type for binary trees
+\citep{grafting} and the implementation of the \hs{Monad} type class
+\citep{mtl}:
+
+\begin{code}
+data Tree a = Fork (Tree a) (Tree a) | Leaf a
+
+return :: a -> Tree a
+return = Leaf
+
+(>>=) :: Tree a -> (a -> Tree b) -> Tree b
+Fork u v >>= f = Fork (u >>= f) (v >>= f)
+Leaf x   >>= f = f x
+\end{code}
+
+\noindent
+You wonder if the elegant simplicity of bind 2possibly could obey the
+three monad laws as stated by \cite{essenceoffp}. Haskell is
+celebrated for being a language easy to reason about, and referential
+transparency makes equational reasoning easy and sound, but proving
+the monad laws by hand can be tiresome. This is a situation where our
+tool can help: write down the equations in a similar style as
+properties in QuickCheck \citep{quickcheck}. Run the tool on the
+source file and after a few seconds you get this result\footnote{The
+  presentation format is slightly rewritten for your viewing
+  pleasure.}:
+
+\begin{code}
+Theorems (3/3):
+  prop_return_right: t >>= return == t
+    by structural induction on t and by approximation lemma
+
+  prop_return_left: return x >>= f == f x
+    by definitional equality and by approximation lemma
+
+  prop_assoc: (t >>= f) >>= g == t >>= (\x -> f x >>= g)
+    by structural induction on t and by fixed point induction on (>>=)
+\end{code}
+
+What is going on behind the scenes to prove this?  There are three
+main parts:
+
+\begin{enumerate}
+\item translation from Haskell to first order logic,
+\item instantiation of different induction techniques on the
+  properties, and
+\item running automated theorem provers on the generated theories.
+\end{enumerate}
+
+\section{Aim}
+
+The aim of this thesis is to allow automated proving of properties by
+means of automated theorem provers for Haskell, with support for lazy
+data structures and partial values.
+
+\section{Required Background}
+
+To read this thesis, it is assumed that the reader knows a little
+Haskell, a good book is written by \cite{lyah}. Some knowledge
+first order logic on both models and syntactically is beneficial, as
+well as some insight in proofs by induction.  One should also be able
+to imagine what an automated theroem prover is and how to run one on a
+first order theory.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \begin{comment}
 INTRODUCTION - State your thesis and the purpose of your research
 paper clearly. What is the chief reason you are writing the paper?
@@ -7,6 +114,10 @@ report, a book review, a comparison, or an analysis of a problem?
 Explain briefly the major points you plan to cover in your paper and
 why readers should be interested in your topic.
 \end{comment}
+
+
+
+\begin{comment}
 
 %% Shit the same, just write something
 
@@ -71,12 +182,7 @@ prop_lookup_alter f k m = lookup k (alter f k m) == f (lookup k m) =:= True
 \end{code}
 
 
-To read this thesis, it is assumed that the reader knows a little
-Haskell, a good book is written by \cite{lyah}. Some knowledge
-first order logic on both models and syntactically is beneficial, as
-well as some insight in proofs by induction.  One should also be able
-to imagine what an automated theroem prover is and how to run one on a
-first order theory.
+\end{comment}
 
 \begin{comment}
 

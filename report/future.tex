@@ -29,9 +29,9 @@ other values that are not the same \hs{Tri} and not bottom go to
 \hs{False}.
 
 If there for models of this function which includes
-another value $\star$, other values than those of this data type and
-bottom, must have $\fn{equal}(\star,x) = \fn{false}$, for all non
-bottom $x$, including $\star$. This is not a problem per se, since the
+another value $\diamond$, other values than those of this data type and
+bottom, must have $\fn{equal}(\diamond,x) = \fn{false}$, for all non
+bottom $x$, including $\diamond$. This is not a problem per se, since the
 Haskell source is well typed, and \hs{equal} will not be applied to
 anything but \hs{Tri}s and bottoms.
 
@@ -58,17 +58,17 @@ or' False b = b
 or' _     _ = True
 \end{code}
 \end{minipage}
-\caption{Two definitions of boolean or, \texttt{or} and \texttt{or'}
+\caption{Two definitions of boolean and, \texttt{and} and \texttt{and'}
 \label{code:or}
 }
 \end{figure}
 
 Let us analyse the models of this program in Figure \ref{code:or} with
-an additional value $\star$ in the domain. The translation makes
-$\fn{or}(\star,\fn{true}) = \bot$, since there is a wild pattern that
+an additional value $\diamond$ in the domain. The translation makes
+$\fn{or}(\diamond,\fn{true}) = \bot$, since there is a wild pattern that
 goes to $\bot$. For the other function we have
-$\fn{or'}(\star,\fn{true}) = \fn{false}$, as the wild pattern already
-goes to \fn{false}. Because of this differences, the approximation
+$\fn{or'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern already
+goes to $\fn{false}$. Because of this differences, the approximation
 lemma cannot prove this property. While this is a simple example, it
 is easy to imagine more complex cases where different pattern matching
 techniques makes no difference to the Haskell program, but to this
@@ -83,7 +83,8 @@ in more complex cases with recursive functions, by fixed point
 induction. This translation is also assumed to be a little easier to
 implement. The down side is that functions such as \hs{equal} above
 would generate $O(n^2)$ axioms, where $n$ is the number of constructors for
-the data type.
+the data type. The presence of GADTs and other type extensions such as
+type families would requite type information and add a lot of complexity.
 
 \section{Lemmas}
 
@@ -115,8 +116,8 @@ $$\fa{x} x \w \hs{||} \w \fn{false} = x$$
 
 \noindent
 Adding this meta theorem to the theory would make it
-inconsistent. Again, in a model with an extra value $\star$, we have
-that $\star \w \hs{||} \w \fn{false} = \bot$. However, we can create a
+inconsistent. Again, in a model with an extra value $\diamond$, we have
+that $\diamond \w \hs{||} \w \fn{false} = \bot$. However, we can create a
 function that forces a value to be a \hs{Bool} or $\bot$ as this:
 
 \begin{align*}
@@ -138,50 +139,76 @@ functions, an example would be $\fn{list}(\alpha)$ for lists of $\alpha$:
 \rom{1} \qquad && \fa{\alpha}          & \fn{force}(\fn{list}(\alpha),\fn{nil})        && = \fn{nil} \\
 \rom{2} \qquad && \faaa{\alpha}{x}{xs} & \fn{force}(\fn{list}(\alpha),\fn{cons}(x,xs)) && = \fn{cons}(\fn{force}(\alpha,x),\fn{force}(\fn{list}(\alpha),xs) \\
 \rom{3} \qquad && \faa{\alpha}{xs}     & \fn{force}(\fn{list}(\alpha),xs)              && = \bot  \\
-               &&                      & \multicolumn{3}{l}{\vee xs = \fn{nil} \vee xs = \fn{cons}(\fn{cons_0}(xs),\fn{cons_1}(xs)}
+               &&                      & \multicolumn{3}{l}{\vee xs = \fn{nil} \vee xs = \fn{cons}(\fn{cons_0}(xs),\fn{cons_1}(xs))}
 \end{align*}
 
-Using functions and predicates to witness type information has been
-studied by \cite{sortMonotonicity} and by \cite{polyMonotonicity},
-with ideas how to encode type tags efficiently.
+Using functions and predicates effectively to witness type information
+has been studied by \cite{sortMonotonicity} and by
+\cite{polyMonotonicity}.
 
-Proofs by definitional equality would also benefit from such tags, see
-the current limitations in section
+Proofs by definitional equality would also benefit from type tags. The
+the current limitations are discussed section
 \ref{sec:concreteconcerns}. Furthermore, the extensional equality of
 the different implementations of the or function in Figure
 \ref{code:or} is not provable with approximation lemma with the
-current translation, as described in Section
-\ref{sec:rerevisited}. However, stated with $\fn{force}$-tags it
-should be possible. This could give us the best of two worlds: minimal
-translation of pattern matching and universal applicability of the
-approximation lemma and fixed point induction.
+current translation. However, stated with $\fn{force}$-tags it should
+be possible. This could give us the best of two worlds: minimal
+translation of pattern matching and wider applicability of untyped
+proof methods.
 
 \subsection{Lemmas from Finite Theorems}
 
-\begin{comment}
+The $\fn{force}$ function from the previous section is not easily
+generatised to remove partiality from a value. Another way to do this
+is to introduce a predicate $Total$, indicating totality. This is a
+way to axiomatise $Total$ for natural numbers:
 
-REWRITE - Fin predicate...
+\begin{align*}
+\rom{1} &&        & \neg \, Total(\bot) \\
+\rom{2} &&        & Total(\fn{zero}) \\
+\rom{3} && \fa{x} & Total(x) \rightarrow Total(\fn{succ}(x))
+\end{align*}
 
-Fin(take n xs) <=> Fin(n) \/ Fin(xs)
-Fin(xs ++ ys) <=> Fin(xs) /\ Fin(ys)p
+As with the $\fn{force}$ function, it could be wise to add an argument
+to $Total$ indicating the type, but for the rest of this section we
+will only consider the (Haskell) natural numbers. A property such as the
+commutativity of plus could be expressed with this meta theorem:
 
-Implementing addition of lemmas for properties that always hold, i.e,
-for also partial and infinite values is straightforward; you can just
-add the universally quantified property to the theory. The problem is
-when it only holds for finite or total values: you will need FOL
-predicates or functions to describe exactly when the property
-holds. Research has been made how to use such predicates
-\cite{sortMonotonicity}, \cite{polyMonotonicity}, but it is not
-decided yet on which way to encode types. Furthermore, you will need
-to prove that functions return finite or total values on such
-input. For instance, append for lists gives a total list if both input
-lists are total, but on the other hand, if the result list is total
-but potentially infinite, we can only draw the conclusion that the
-first list is total, since that might be the infinite one. So, to
-prove properties that does not always hold you will need to prove a
-lot more properties about your functions.
+\begin{equation*}
+\faa{x}{y} Total(x) \wedge Total(y) \rightarrow x + y = y + x
+\end{equation*}
 
-\end{comment}
+We would also like to express finiteness. Our canonical example of a
+an infinite value is the natural number
+\hs{inf = Succ inf}. Identification of such cyclic values can be axiomatised:
+
+\begin{equation*}
+\fa{x} Cyclic(x) \leftrightarrow (x = \fn{succ}(x) \vee (\ex{y} x = \fn{succ}(y) \wedge Cyclic(y))) \\
+\end{equation*}
+
+Because Haskell functions are continuous and finite, every infinite
+value is produced from finite information (\hs{repeat}, \hs{iterate},
+\hs{enumFrom}), so a predicate $Cyclic$ should be enough for our
+purposes. Further, it is clear that $Cyclic(x) \rightarrow Total(x)$.
+
+\pagebreak
+
+We can now define finiteness of a value $x$ as
+$Finite(x) \leftrightarrow Total(x) \wedge \neg Cyclic(x)$.  The results
+from a function would be necessary to axiomatise to make such axioms
+useable. To exemplify why this is not trivial, consider the
+complexities of the plus function:
+
+\begin{align*}
+\rom{1} && \faa{x}{y} & Finite(x) \wedge Finite(y)                  & \leftrightarrow &&& Finite(x + y) \\
+\rom{2} && \faa{x}{y} & Cyclic(x) \vee (Finite(x) \wedge Cyclic(y)) & \leftrightarrow &&& Cyclic(x + y)
+\end{align*}
+
+How to prove the status for the return value of a function in terms of
+$Finite$, $Total$ and $Cyclic$ for different statuses of the arguments is
+an open problem. Possible sources for inspiration is the work by
+\cite{exhaustiblesets}, where topological compactness for
+data types play a significant r\^{o}le.
 
 \subsection{Speculating Lemmas}
 
@@ -192,32 +219,19 @@ not always clear which lemmas are required to prove a given
 property. This section discusses some ideas to generate candidate
 lemmas.
 
-\note{Discuss this with Moa and get references}
-
-In the Isabelle induction and rippling community, there are concepts
-such as critics, which makes lemmas and generalizations when the term
-rewriting heuristic rippling fails, and lemma calculation, which tries
-to syntactically analyze the problem before proving in order to figure
-out suitable lemmas.
+Inductive proofs by rippling enables techinques such as cricics
+\citep{productiveuse}, which makes lemmas and generalizations when
+rippling fails. As our approach relies on theorem provers, it is very
+hard to extract some information from a timeout of a proof by induction.
 
 Another approach is to do property speculation, implemented for
-Isabell \cite{isacosy} and Haskell \cite{quickspec}, where you simply
-tell the QuickSpec program all functions in your program, and it tries
-to find equality properties by creating small syntax trees of the
-functions. It would be very interesting to see how useful such
-properties are as lemmas.
+Isabell \cite{isacosy} and Haskell \cite{quickspec}. The idea is to
+use the signatures from the functions in the source file and it try to
+find equality properties by creating small syntax trees of the
+functions by testing. Such equalities are well suited as lemmas for
+more complex properties, and it would be very interesting to extend
+our approach with a lemma synthesis.
 
-
-
-%\section{Material Implication}
-%
-%Zeno has support for properties with implications,
-
-%\section{Proving non termination}
-%
-%Since we will need to prove termination for functions, how would one
-%prove non-termination (for some inputs)? Then we could get more
-%completeness: this function with these inputs would be $\bot$.
 
 \section{Type classes}
 \label{sec:typeclasses}
@@ -244,27 +258,38 @@ all continuous. This is also true for functions which are quantified
 over. This is currently not enforced in the generated theories, and an
 open question is how this effects the results.
 
-\section{Other Techniques}
+\section{Material Implication and Existential Quantifiers}
 
-Each of the proof methods have their own future work chapter, but it
-would be nice to have some finite fixed point induction on terminating
-functions and a finite approximation lemma. You can also do as with
-the approximation lemma which became just a fixpoint induction over a
-structural identity function, but instead of putting one of each side
-of the equality, you can do it on the individual variables or sub
-trees of an expression: this would be like structural induction
-encoded as approximation lemma.
+To be able to prove more complex properties we would like to be able
+to prove properties with implications and existential quantification.
+This example about soundness for a prefix predicate is given by
+\cite{smallcheck}:
 
-Another technique is recursion induction \cite{recind}, where you
-prove that two functions are equal by asserting that one of them
-fulfills the same equations as the other.
+\begin{code}
+prop_isPrefixSound :: Eq a => [a] -> [a] -> Prop (Bool :=> Exists [a] [a])
+prop_isPrefixSound xs ys = isPrefix xs ys ==> exists (\xs' -> xs ++ xs' == ys)
+\end{code}
+
+Finite structural induction could be extended to prove such a
+property. However, implication is not an admissible property which
+means that other coinductive proof techniques are not
+applicable. Existential quantification over functions would require a
+set of function combinators in the theory to construct a witness.
+
+\section{Other Proof Techniques}
+
+Each of the proof methods have their own future work chapter, but
+there are of other techniques not implemented. One is recursion
+induction \cite{recind}, where you prove that two functions are equal
+by asserting that one of them fulfills the same equations as the
+other. Another is bisimulation \cite{bisimulationCapretta}, which
+could possibly be extended to prove properties about total but
+infinite values.
 
 \section{Faster Proof Searches via Predicates}
 
 It is possible to add annotations in the equations generated for
 functions to make the theorem prover not unroll unnecessary
-definitions and regard these equalities more like definitions, so they
-do not rewrite from the wrong direction. One way is to add a
-min-predicate (named so for historical reasons), that can also
-sometimes lead to finite models.
-
+definitions and regard these equalities more like definitions. This
+would avoid the theorem provers to get ``lost'' in the search space,
+and in some cases also allow finite models.
