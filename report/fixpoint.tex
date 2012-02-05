@@ -403,8 +403,8 @@ point induction. This is the proof plan with the predicate inlined:
      {
        \fa{xs} \bot \w xs \neq \hs{False}
        \\
-       \fa{xs}             \unfix{\hs{finite}} \w xs \neq \hs{False}
-               \rightarrow \tofix{\hs{finite}} \w xs \neq \hs{False}
+                     (\fa{xs} \unfix{\hs{finite}} \w xs \neq \hs{False})
+         \rightarrow (\fa{xs} \tofix{\hs{finite}} \w xs \neq \hs{False})
      }
      { \fa{xs} \hs{finite} \w xs \neq \hs{False} }
 \end{mathpar}

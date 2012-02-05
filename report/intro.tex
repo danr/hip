@@ -16,16 +16,14 @@ Leaf x   >>= f = f x
 \end{code}
 
 \noindent
-You wonder if the elegant simplicity of bind possibly could obey the
-three monad laws as stated by \cite{essenceoffp}. Haskell is
-celebrated for being a language easy to reason about, and referential
-transparency makes equational reasoning easy and sound, but proving
-the monad laws by hand can be tiresome. This is a situation where our
-tool can help: write down the equations in a similar style as
-properties in QuickCheck \citep{quickcheck}. Run the tool on the
-source file and after a few seconds you get this result\footnote{The
-  presentation format is slightly rewritten for your viewing
-  pleasure.}:
+Could the elegant simplicity of bind possibly could obey the three
+monad laws as stated by \cite{essenceoffp}? Referential transparency
+in Haskell allows equational reasoning, but proving the monad laws by
+hand can be tiresome. This is a situation where our tool can help:
+write down the equations in a similar style as properties in
+QuickCheck \citep{quickcheck}. Run the tool on the source file which
+reports this after a few seconds\footnote{The presentation
+  format is slightly rewritten for your viewing pleasure.}:
 
 \begin{code}
 Theorems (3/3):
@@ -40,15 +38,20 @@ Theorems (3/3):
 \end{code}
 
 \noindent
-What is going on behind the scenes to prove this?  There are three
-main parts:
+The output \hs{Theorem} means that the properties hold for infinite
+trees, in contrast to the possible result \hs{Finite Theorem}.
+
+What is going on behind the scenes to prove this? The key components
+of this tool are:
+
 \begin{enumerate}
-\item translation from Haskell to first order logic,
-\item instantiating the properties with different induction
-  techniques, and
-\item running automated theorem provers on the generated theories.
+\item a translation from Haskell to \emph{first order logic},
+\item instantiating the properties with different \emph{induction techniques}, and
+\item running \emph{automated theorem provers} on the generated theories.
 \end{enumerate}
-The rest of this thesis describes these different parts.
+The technology described and discussed in this thesis allows an
+automated way to prove \emph{equational properties}. Moreover, it can
+reason about \emph{infinite values} as the \hs{Tree}s above.
 
 \section{Aim}
 
