@@ -712,13 +712,13 @@ CLOSED: [2012-01-16 Mon 12:34]
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-05 Sun 00:37]
+Clock summary at [2012-02-05 Sun 10:38]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *41:27* |       |       |      |
+| *Total time*                                                  | *42:41* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 41:27   |       |       |      |
+| Plan                                                          | 42:41   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -743,15 +743,17 @@ Clock summary at [2012-02-05 Sun 00:37]
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
 | Tasks                                                         |         |  0:35 |       |      |
 | ONGOING Time planning                                         |         |       |  0:34 |      |
-| TODO Report tasks                                             |         | 12:02 |       |      |
-| NEXT Write introduction                                       |         |       |  2:33 |      |
+| Report tasks                                                  |         | 13:16 |       |      |
+| NEXT Introduction                                             |         |       |  3:03 |      |
+| NEXT Fancy pants Tree monad example                           |         |       |       | 0:30 |
+| TODO Related work                                             |         |       |  0:14 |      |
 | TODO Translation                                              |         |       |  0:14 |      |
 | DONE Revert to the old translation technique                  |         |       |       | 0:14 |
 | TODO Proof methods                                            |         |       |  1:14 |      |
 | TODO Fixed point induction                                    |         |       |       | 0:55 |
-| TODO Future work                                              |         |       |  2:51 |      |
+| TODO Future work                                              |         |       |  3:21 |      |
 | DONE Pattern matching rerevisited                             |         |       |       | 0:29 |
-| NEXT Lemmas and translation                                   |         |       |       | 2:22 |
+| NEXT Lemmas and translation                                   |         |       |       | 2:52 |
 | TODO Results                                                  |         |       |  3:00 |      |
 #+END:
 ** Refile
@@ -1126,11 +1128,11 @@ DEADLINE: <2012-02-03 Fri>
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete
 DEADLINE: <2012-02-14 Tue>
-** TODO Report tasks                                                :report:
+** Report tasks                                                     :report:
 CLOCK: [2012-02-04 Sat 14:51]--[2012-02-04 Sat 15:05] =>  0:14
 CLOCK: [2012-02-03 Fri 16:44]--[2012-02-03 Fri 18:39] =>  1:55
 CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
-*** NEXT Write introduction
+*** NEXT Introduction
 CLOCK: [2012-02-01 Wed 10:31]--[2012-02-01 Wed 10:58] =>  0:27
 CLOCK: [2012-02-01 Wed 10:00]--[2012-02-01 Wed 10:26] =>  0:26
 Shit this is hard
@@ -1141,9 +1143,16 @@ CLOCK: [2012-01-31 Tue 14:35]--[2012-01-31 Tue 14:43] =>  0:08
 CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
 Write this: introduce the problem and why it is interesting
 Get to the point! Don't be hand-wavy
+**** TODO Schematic view of this work
+Haskell -> Logic -> ATP invocations -> Results
+**** NEXT Fancy pants Tree monad example
+CLOCK: [2012-02-05 Sun 10:05]--[2012-02-05 Sun 10:35] =>  0:30
+Properties provable with all techniques in this thesis!! Excellent!
+
 *** TODO Abstract
 *** TODO Introduction
 *** TODO Related work
+CLOCK: [2012-02-05 Sun 01:15]--[2012-02-05 Sun 01:29] =>  0:14
 **** TODO Talk with Moa on winter meeting
 *** TODO Translation
 CLOCK: [2012-02-04 Sat 22:15]--[2012-02-04 Sat 22:15] =>  0:00
@@ -1165,18 +1174,7 @@ Redo the section called Implementation. How can we minimize the
 explanation of fix? Probably, a lot of proofs can be removed too, that
 are not too interesting and just state them as properties easily
 proved by induction (or something)
-
 **** NEXT Concrete concerns
-*** TODO Abstract
-*** TODO Introduction
-**** TODO Schematic view of this work
-Haskell -> Logic -> ATP invocations -> Results
-*** TODO Related work
-CLOCK: [2012-02-05 Sun 01:15]--[2012-02-05 Sun 01:29] =>  0:14
-**** TODO Talk to Moa on the winter meeting
-*** TODO Translation
-**** Where to put the domain theory part?
-*** TODO Proof methods
 *** TODO Future work
 **** TODO Implications
 Chain complete?
