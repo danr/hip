@@ -16,14 +16,14 @@ Leaf x   >>= f = f x
 \end{code}
 
 \noindent
-Could the elegant simplicity of bind possibly could obey the three
-monad laws as stated by \cite{essenceoffp}? Referential transparency
-in Haskell allows equational reasoning, but proving the monad laws by
+Could the elegant simplicity of bind possibly obey the three monad
+laws as stated by \cite{essenceoffp}? Referential transparency in
+Haskell allows equational reasoning, but proving the monad laws by
 hand can be tiresome. This is a situation where our tool can help:
 write down the equations in a similar style as properties in
 QuickCheck \citep{quickcheck}. Run the tool on the source file which
-reports this after a few seconds\footnote{The presentation
-  format is slightly rewritten for your viewing pleasure.}:
+reports this after a few seconds\footnote{The presentation format is
+  slightly rewritten for your viewing pleasure.}:
 
 \begin{code}
 Theorems (3/3):
@@ -45,9 +45,9 @@ What is going on behind the scenes to prove this? The key components
 of this tool are:
 
 \begin{enumerate}
-\item a translation from Haskell to \emph{first order logic},
-\item instantiating the properties with different \emph{induction techniques}, and
-\item running \emph{automated theorem provers} on the generated theories.
+{\setlength\itemindent{18pt} \item a translation from Haskell to \emph{first order logic},}
+{\setlength\itemindent{18pt} \item instantiating the properties with different \emph{induction techniques}, and}
+{\setlength\itemindent{18pt} \item running \emph{automated theorem provers} on the generated theories.}
 \end{enumerate}
 The technology described and discussed in this thesis allows an
 automated way to prove \emph{equational properties}. Moreover, it can
@@ -56,7 +56,7 @@ reason about \emph{infinite values} as the \hs{Tree}s above.
 \section{Aim}
 
 The aim of this thesis is to develop a tool able to do automated
-proving of Haskell properties. This should be realized by means of
+proving of Haskell properties. This should be realised by means of
 different induction techniques, a translation to first order logic and
 invocations to automated theorem provers. The tool should be able to
 reason and prove properties about lazy data structures, higher order
@@ -66,14 +66,14 @@ coincide with equality in first order logic. This means that mean that
 two values are equal if they are created by the same constructor, and
 the arguments to the constructors are all equal.
 
-\section{Prerequisites}
+\section{Background}
 
 To read this thesis, the reader should have at least brief knowledge
 of Haskell. An introduction is given by \cite{lyah}. Some familiarity
 of model theory and proof deduction in first order logic is
 beneficial, as well as a grasp of proofs by induction. At least a
 shallow apprehension of using automated theorem provers is assumed.
-
+The rest of this thesis should be self contained.
 
 
 

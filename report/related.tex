@@ -1,56 +1,58 @@
 \section{Related Work}
 
-Zeno \citep{zeno} is the most similar work to this, proving equational
-properties for Haskell programs. While Zeno supports type classes, and
-implications with equational antecedents, and can generalize goals, it
-makes no attempt to tackle infinite and partial values. Indeed, the
-authors even ask themselves if it is not really a ML theorem prover.
+Zeno \citep{zeno} is probably the most similar work to this and
+proving equational properties for Haskell programs. Zeno supports type
+classes, and implications with equational antecedents, and can
+generalise properties, it makes no attempt to tackle infinite and
+partial values, a goal of our work.
+
+%Indeed, the authors even ask themselves if it is not really a ML theorem prover.
 
 %\note{Discuss this with Moa and get references}
-Zeno translates its
-proofs to Isabelle, which could maybe be described as a framework for
-different logics: its most prominent use is as a theorem prover for
-Higher Order Logic, commonly abbreviated Isabelle/HOL
-\citep{isabelbook}. Different automated proving techniques has been
-implemented, most notably the heuristic Rippling \citep{dixonphd},
-found in IsaPlanner \citep{isaplanner}, which also relies on critics
-\citep{productiveuse}. You can also call first order logic theorem
-provers from Isabelle/HOL with Sledgehammer.
+Zeno translates its proofs to Isabelle a framework for different
+logics. Its most prominent use is as a theorem prover for Higher Order
+Logic, commonly abbreviated Isabelle/HOL \citep{isabelbook}. Different
+automated proving techniques has been implemented, most notably the
+heuristic Rippling \citep{dixonphd}, found in IsaPlanner
+\citep{isaplanner}, which also relies on critics
+\citep{productiveuse}. Isabelle/HOL can also call theorem provers with
+Sledgehammer \citep{hammering}, and a comparison of different theorem
+provers in Sledgehammer has been done by \cite{judgement}.
 
-The proof assistant and programming language Coq resembles Isabelle in
-the sense that each data type declaration generates an induction
-principle and the user can write own induction procedures should it be
-too weak. Coq has is quite automated in its use of tactics to resolve
-goals, and has an own language Ltac to write such tactics, and a
-rippling tactic has been implemented \citep{automateddtfp},
-\citep{inductioncoq}.
+The proof assistant and programming language Coq resembles the
+function package in Isabelle in the sense that each data type
+declaration generates an induction principle and the user can write
+own induction procedures should it be too weak. Proofs can be asissted
+by tactics to automatically resolve some goals, and has an own
+language Ltac to write such tactics. A rippling tactic has been
+implemented for Coq \citep{inductioncoq}.
 
 Coq has some support for corecursion, and so has the dependently
-language Agda \citep{norell:thesis}, whose strong type system based on
-Martin-Löf type theory \citep{mltt} with inductive families, makes it a proof
-assistant thanks to the Curry-Howard-Lambek correspondence. Its
-support for corecursion has been investigated \citep{productivity},
-although all of it is manual.
+language Agda \citep{norell:thesis}. Its strong type system based on
+Martin-Löf type theory \citep{mltt} with inductive families makes it a
+proof assistant thanks to the Curry-Howard-Lambek correspondence. Agda's
+support for corecursion has been investigated by \cite{productivity}.
 
-Effort has been put into automating the proof generation in Agda,
-notably by \cite{agdaatp}, which is quite alike this work in its
-translation from Agda to first order logic. One must however give
-quite much information to the theorem prover, like how to instantiate
-the induction hypotheses. %\note{Peter Dybjer maybe said that it could be seen as a very nice way to interact with a theorem prover, thanks to Agda.}
+In the work by \cite{agdaatp} Agda is used as a fronted to ATPs
+enabling classical reasoing about functional programs.  Reconstruction
+of proofs from the ATP Waldmeister to dependently typed code is
+investigated by \cite{dtatp}. The source language is Mella,
+syntactically similar to Agda but based on the Calculus of
+Constructions. A similar approach was taken by \cite{agsy} does a
+search akin to Prolog, and can also handle induction. A contemporary
+implementation of this is the Agsy proof search assistant for Agda.
 
-A more constructive approach by \cite{dtatp}. As in this work, they
-make use of a theorem prover, Waldmeister. The output is translated
-back to functional code for their dependently language Mella, not much
-unlike Agda. It is still in early stages and has no support for data
-types. A similar approach was taken by \cite{agsy} does a search akin
-to Prolog, and can also handle induction. A living incarnation of this
-is the Agsy proof search assistant in Agda.
+% Effort has been put into automating the proof generation in Agda,
+%notably by \cite{agdaatp}, which is quite alike this work in its
+%translation from Agda to first order logic. One must however give
+%quite much information to the theorem prover, like how to instantiate
+%the induction hypotheses. %\note{Peter Dybjer maybe said that it could be seen as a very nice way to interact with a theorem prover, thanks to Agda.}
 
 These automated approaches to Agda do not handle infinite
-values. Techniques used in this thesis about corecursive Haskell
-programs are given in \citep{corecursive}, and for Isabelle
-\citep{mechanizingcoinduction}, and in general by
-\citep{coindtutorial}. New approaches to stream processing can be
+values. Techniques used in this thesis about corecursive functional
+programs are given for Haskell in \cite{corecursive}, and for Isabelle
+\cite{mechanizingcoinduction}, and in general by
+\cite{coindtutorial}. New approaches to stream processing can be
 found in the work by \cite{streams}.
 
 A radically different way to reason about Haskell programs than this
@@ -59,5 +61,5 @@ reasoning in a language assumed to only be total, and under many
 circumstances the proofs also holds for partial values. Another
 approach based on operational semantics is given by
 \cite{totalcorrectness}. The proofs from this technique resembles
-those from fixed point induction, and further can the techniques also
-be used to derive locally improved functions.
+those from fixed point induction, and the same techniques can also be
+used to derive locally improved functions.
