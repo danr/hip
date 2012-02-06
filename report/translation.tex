@@ -41,29 +41,29 @@ is this axiom:
 \end{equation*}
 
 \noindent
-So far so good, but what if someone wants to prove that \hs{singleton x}
-is a \hs{Leaf}? With only this axiom in the theory, it would be
-possible: there are models with only one element where \hs{Leaf} is
-equal to \hs{Fork}. Indeed, we will need to add axioms that values
-created from the different constructors are unequal. We will call
-those disjoint constructor axioms, and for the \hs{Tree} data type, we
-get this axiom:
+So far so good, but what if someone wants to prove that \hs{singleton
+  x} is a \hs{Leaf}? With a theory with only this axiom there are
+models with only one element where \hs{Leaf} is equal to
+\hs{Fork}. Axioms needs to be added expressing that values created
+from different constructors are unequal. We will call those
+\emph{disjoint constructor axioms}. The sole axiom for \hs{Tree} is:
 \begin{equation*}
 \faaa{l}{x}{r} \fn{leaf} \neq \fn{fork}(l,x,r)
 \end{equation*}
 
 Constructors should also be injective to get regular models, and
-adding such axioms are straightforward. Since only \hs{Fork} has
-arguments, this injectivity axiom is needed:
+expressing such axioms is straightforward. For \hs{Tree} only \hs{Fork} has
+arguments and this injectivity axiom is needed:
 \begin{equation*}
 \faaaaaa{l_0}{l_1}{x_0}{x_1}{r_0}{r_1} \fn{fork}(l_0,x_0,r_0) \eq
 \fn{fork}(l_1,x_1,r_1) \rightarrow l_0 \eq l_1 \wedge x_0 \eq x_1 \wedge r_0 \eq r_1
 \end{equation*}
 
-For the \hs{mirror} function, which recursively mirrors the left sub
-tree with the right and vice-versa, we follow our intuition to
-translate the pattern matching and get these two axioms\footnote
-{Axioms are enumerated by Roman numerals to tell them apart.}:
+To describe pattern matching, we consider a \hs{mirror} function,
+which recursively swaps the left sub tree with the right and
+vice-versa, we follow our intuition to translate the pattern matching
+and to these two axioms\footnote {Axioms are enumerated by Roman
+  numerals to tell them apart.}:
 
 \begin{code}
 mirror :: Tree a -> Tree a
@@ -79,9 +79,9 @@ mirror Leaf         = Leaf
 A problem with this translation is that there are no axioms for other
 arguments of $\fn{mirror}$ than leafs and forks, and we have models that
 include other values than leafs and forks. Another problem is
-encountered for \hs{singleton}'s left inverse, \hs{top}, code below,
+encountered for \hs{singleton}'s left inverse \hs{top} defined below,
 which returns the top element of a \hs{Tree}. This is a partial
-function since it has no pattern for the \hs{Leaf} constructor.
+function since the \hs{Leaf} pattern is omitted:
 
 \begin{code}
 top :: Tree a -> a
@@ -89,16 +89,16 @@ top (Fork l x r) = x
 \end{code}
 
 The translation must capture the pattern match failure that results
-from trying to evaluate top applied to a leaf. We conclude that
-this na\"{\i}ve translation does not take us further, but we shall see
-in the next section how to fix this.
+from trying to evaluate \hs{top} applied to a \hs{Leaf}. We conclude
+that this na\"{\i}ve translation does not take us further, but we
+shall see in the next section how to fix this.
 
 \section{Bottom and Pattern Matching}
 
-In domain theory there is a concept of bottom, denoted $\bot$. It is
-used for the least defined value: pattern match failures, use of
-\hs{error} and \hs{undefined} in the source code, but also for
-non-terminating programs. For \hs{top} the idea is to add an axiom so
+We borrow the concepted bottom from domain theory. It is denoted
+$\bot$ and is the least defined value: pattern match failures, use of
+\hs{error} and \hs{undefined} in the source code, and also
+non-terminating functions. For \hs{top} the idea is to add an axiom so
 that $\fn{top}$ of anything that is not a \hs{Fork} is bottom. This is
 an example of such an axiomatization:
 
@@ -110,10 +110,10 @@ an example of such an axiomatization:
 Most theorem provers would as a preprocessing step \note{\qquad \qquad citation
   needed}skolemize the existential quantification in the second
 axiom. A new unary function would be introduced for $l$, $x$ and $r$,
-depending on $t$, an arbitrary choice of names are $\fn{top}$ appended
+depending on $t$, an arbitrary choice of names are $\fn{top}$ prependend
 to the original variable. The axiom then looks like
-this\footnote{Lambda functions bind as far to the right as possible,
-  and this thesis uses the same convention for quantifiers.}:
+this\footnote{This thesis uses the same convention for quantifiers as
+  for lambda functions: they bind as far as possible.}:
 \begin{align*}
 \rom{2}' \qquad & \fa{t} \fn{fork}(\fn{topl}(t),\fn{topx}(t),\fn{topr}(t))) \neq t \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
@@ -121,11 +121,11 @@ this\footnote{Lambda functions bind as far to the right as possible,
 For another function, like \hs{mirror} above, one of the skolemized
 functions could be called $\fn{mirrorl}$. Since axioms of injective
 constructors are also added, a theorem prover could, in some steps,
-conclude that $\faaa{l}{x}{r} \fn{mirrorl}(\fn{fork}(l,x,r)) \eq
-\fn{topl}(\fn{fork}(l,x,r)) \eq l$. But what happens if we introduce
-such skolemized ``selector'' functions for every constructor manually?
-For the \hs{Fork} constructor call them $\fn{fork_0}$, $\fn{fork_1}$
-and $\fn{fork_2}$, and their axioms are:
+conclude that $\fn{mirrorl}(\fn{fork}(l,x,r)) \eq
+\fn{topl}(\fn{fork}(l,x,r)) \eq l$. Instead such skolemized
+\emph{selection functions} are introduced manually.  For the \hs{Fork}
+constructor let us call them $\fn{fork_0}$, $\fn{fork_1}$ and
+$\fn{fork_2}$, and their axioms are:
 \begin{align*}
 \rom{1} \qquad \faaa{l}{x}{r} \fn{fork_{0}}(\fn{fork}(l,x,r)) & \eq l \\
 \rom{2} \qquad \faaa{l}{x}{r} \fn{fork_{1}}(\fn{fork}(l,x,r)) & \eq x \\
@@ -143,10 +143,9 @@ The translation of \hs{top} with these selector functions is:
 Another nice side effect of writing in this skolemized selector style
 is that implies injective constructors. Assume we have
 $\fn{fork}(l_0,x_0,r_0)=\fn{fork}(l_1,x_1,r_1)$ then the first
-projection, $\fn{fork_0}$, gives us that $l_0=l_1$. Analogously, and
-the second and the third give $x_0=x_1$ and $r_0=r_1$,
-respectively. Thus selector axioms are added in place of of
-injectivity axioms.
+selector, $\fn{fork_0}$, gives $l_0=l_1$. Analogously the second and
+the third give $x_0=x_1$ and $r_0=r_1$, respectively. Thus selector
+axioms are added in place of of injectivity axioms.
 
 With the bottom constant in the theory, the axioms disjointedness are
 effected by this. It can be seen as an implicit constructor for every
@@ -173,7 +172,7 @@ scanr f q0 (x:xs) =  f x q : qs
 \end{code}
 
 \noindent
-There is both pattern matching on the direct arguments, but also
+There is both pattern matching directly on the arguments, but also
 pattern matching in a case statements in the where function
 \hs{q}. There can also be pattern matching in lambdas. To help with
 these difficulties, we define an intermediate language in the next
@@ -181,15 +180,15 @@ section.
 
 \section{The Intermediate Language}
 
-To address the difficulties of pattern matching elsewhere than the
+To address the difficulties of pattern matching elsewhere than in the
 arguments of a function, a small intermediate language was designed
 that can only do pattern matching at a very controlled location: in a
 case statement that is the entire body of a function, and all arms are
-just simple expressions consisting of function and constructor
-applications and variables. Haskell is translated to this, and pattern
-matching at other locations is translated to this in a new top level
-definition. Functions definined in let and where are raised to the top
-level, with the necessary variables in scope as additional
+simple expressions consisting of function and constructor applications
+and variables. We translate Haskell is translated to language. Pattern
+matching matching at other locations are moved to new top level
+definitions. Functions definined in let and where are raised to the
+top level, with the necessary variables in scope as additional
 arguments. The same is done for sections and lambda functions. The BNF
 for the language is this:
 
@@ -221,13 +220,13 @@ for the language is this:
 
 This language is a strict subset of Haskell. Repeated entities are
 notated with an $\overline{\text{overline}}$.  Data declarations are
-added for disjointedness and selector axioms, and type signatures are
-just skipped in the translation, but the proof techniques introduced
-later use this information.
+needed to generate axioms of disjointedness and selectors. Type
+signatures are ignored in the translation, but the proof techniques
+introduced later use this information.
 
 A function is just a function name with a number of variables, and
 then a function body, which is either an expression of variables,
-functions and constructors, or a case statements with an expression
+functions and constructors, or a case statement with an expression
 scrutinee. Branches consists of a pattern, possibly with nested uses
 of constructors, and an optional guard, and in the arm is an
 expression.
@@ -238,7 +237,10 @@ translation from this language to first order logic.
 
 \section{The Intermediate Translation}
 
-After this section, we will only concentrate on the logic translation.
+This section describes the transformation from Haskell to the
+intermediate language. The main transformations are top level lifting
+of lambdas, local definitions and restricting pattern matching only in
+case statements.
 
 \paragraph{Argument pattern matching} A function that does pattern matching will be translated to one that
 takes in unmatched arguments and with a case in the body. The
@@ -280,7 +282,7 @@ x * y = go Zero x y
 \end{code}
 
 \noindent
-Finally \hs{go} is translated using a case expression:
+Finally the pattern matching in \hs{go} is translated to use a case expression:
 
 \begin{code}
 go acc x y = case x of
@@ -295,8 +297,8 @@ definitions. Take this example of defining \hs{fmap} in terms of the
 functions from the \hs{Monad} type class:
 
 \begin{code}
-fmap' :: Monad m => (a -> b) -> m a -> m b
-fmap' f m = m >>= \x -> return (f x)
+liftM :: Monad m => (a -> b) -> m a -> m b
+liftM f m = m >>= \x -> return (f x)
 \end{code}
 
 \noindent
@@ -306,17 +308,20 @@ the new top level function called \hs{lambda} below:
 \begin{code}
 lambda f x = return (f x)
 
-fmap' :: Monad m => (a -> b) -> m a -> m b
-fmap' f m = m >>= lambda f
+liftM :: Monad m => (a -> b) -> m a -> m b
+liftM f m = m >>= lambda f
 \end{code}
 
 A similar translation is done for sections.
 
+In the rest of this thesis we shall write code with pattern matching
+on arguments directly.
+
 \section{Pattern Matching Revisited}
 \label{sec:patternsrevisited}
 
-\paragraph{Overlapping patterns} First of all, overlapping patterns need to be removed, otherwise we
-easily get an inconsistent theory, consider
+\paragraph{Overlapping patterns} These needs to be removed to prevent
+generation of inconsistent theories. Example:
 
 \begin{code}
 overlap :: Bool -> Bool
@@ -332,16 +337,16 @@ Certainly, this cannot be translated to:
 \rom{3} \qquad & \fa{b} b \neq \fn{true} \rightarrow \fn{overlap}(b) = \bot
 \end{align*}
 
-Starting from the immediate truth $\fn{overlap}(\fn{true}) =
-\fn{overlap}(\fn{true})$, transitivity of the equalities in the axioms
-$\romnodot{1}$ and $\romnodot{2}$ gives the equality $\fn{true} =
-\fn{false}$. This together with the axiom from disjoint constructors,
-$\fn{true} \neq \fn{false}$, gives a contradiction.
+Reflexivity gives $\fn{overlap}(\fn{true}) = \fn{overlap}(\fn{true})$,
+transitivity of the equalities in the axioms $\romnodot{1}$ and
+$\romnodot{2}$ gives that $\fn{true} = \fn{false}$. Together with the
+axiom from disjoint constructors, $\fn{true} \neq \fn{false}$, we have
+a contradiction.
 
 In Haskell, pattern matching is done from top to bottom of the
 definition, making the second match of \hs{True} to never occur. Thus,
-the translation to FOL also removes all subsequent patterns that are
-instances of any pattern above.
+the translation removes all patterns that are instances of a pattern
+above.
 
 
 
@@ -362,7 +367,7 @@ even Nil                  = True
 For the sake of readability it is not presented with a case
 expression, though this is what the intermediate translation would
 transform it to. Furthermore the constructors \hs{Cons} and \hs{Nil}
-are used since the projections $\fn{:_0}$ and $\fn{:_1}$ for the
+are used since the selectors $\fn{:_0}$ and $\fn{:_1}$ for the
 normal cons are hard to read.
 
 Here, \hs{even} should return $\bot$ when it is evaluated with an
@@ -370,10 +375,10 @@ argument constructed with neither \hs{Cons} nor \hs{Nil} (recall that
 the logic is untyped.) This undefined value should also be returned if
 applied to $\hs{Cons x\w}\bot$ for some \hs{x}, since the \hs{Cons}
 constructor is matched again on depth two. So there are two different
-situations, at every depth, if there is a match any pattern (for
+situations at each depth. One is if there is a match any pattern (for
 \hs{even}, it is the variable \hs{xs} in the second pattern), new
-patterns are added that matches $\bot$. If there is no wild pattern, a
-new one is added that goes to $\bot$.
+patterns are added that matches $\bot$. The other is if there is no
+wild pattern, a new one is added that goes to $\bot$.
 
 \begin{comment}
 First, it needs to be determined if there is a match-anything branch or not.
@@ -431,9 +436,9 @@ patterns.
 
 In Haskell, functions readily take other functions as arguments, and
 functions can also be partially applied. To get the same behavior in
-logic, each function gets a \emph{function pointer}, and a new binary
-function is added to the language, written infix with $\appfn$.  For
-instance if there is a binary function \hs{plus} then a constant
+logic, each function is assigned a \emph{function pointer}, and a new
+binary function is added to the language, written infix as $\appfn$.
+For instance if there is a binary function \hs{plus} then a constant
 called $\fn{plus.ptr}$ is added to the theory and this axiom:
 
 \begin{equation*}
@@ -480,19 +485,19 @@ $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
 \paragraph{Doing the impossible}
 While it is not possible to quantify over functions in first order
-logic, translating Haskell this way allows universal quantification of
-functions.  It provides a way to reason syntactically about partially
-applied functions. On the model side, $\appfn$ gives a way to
-interpret functions and universally quantify over them. If the
-function has a pointer definedi, it just constrains app on that pointer
-to do the same as the function.
+logic, this translation allows universal quantification of functions,
+allowing a way to reason syntactically about partially applied
+functions. On the model side, $\appfn$ gives a way to interpret
+functions and universally quantify over them. If the function has a
+pointer defined, it just constrains $\appfn$ on that pointer to do the
+same as the function.
 
 \section{Guards}
 
-Guards are treated much like pattern matching. If a
-guard expression evaluates to \hs{True}, that branch is picked. The
-expression could also evaluate to $\bot$, and then the result should
-be $\bot$. Let us consider the \hs{filter} function:
+Guards are treated similar to pattern matching. If a guard expression
+evaluates to \hs{True}, that branch is picked. The expression could
+also evaluate to $\bot$, and then the result should be $\bot$. Let us
+consider the \hs{filter} function:
 
 \begin{code}
 filter :: (a -> Bool) -> List a -> List a
@@ -560,23 +565,21 @@ daunting task. Therefore, some restrictions were settled to be able to
 focus on proving rather than translating.  The goal was to add enough
 of the Haskell language to enable to prove interesting properties, but
 much of the widely available sugar in Haskell was omitted since it
-does not add extra expressibility.
-
-Some parts of Haskell that are not supported are list
-comprehensions and do-notation can be added by its rewriting rules.
-\hs{Type} definitions should be unrolled, so they could be used in
-the signature for properties. Type classes is probably the most
-interesting thing to add, and is discussed in Section
+does not add extra expressibility. This means that list comprehensions
+and are not supported but can be added by their respective rewriting
+rules. \hs{Type} definitions should be unrolled, so they could be
+used in the signature for properties. Type classes is probably the
+most interesting thing to add, and is discussed in Section
 \ref{sec:typeclasses} in future work.
 
-Another interesting but omitted feature are the built-in types like
+Another interesting but omitted feature are the built-in types
 \hs{Int}, \hs{Integer}, \hs{Double}, \hs{Char}, etc. For \hs{Integer}
 appropriate axioms could be added that hold for $\mathbb{Z}$, the
-canonical infinite discretely ordered commutative ring. For the other
-data types it is as simple because of different bit sizes and overflow
-and precision errors.
+canonical infinite discretely ordered commutative ring.  The other
+data types do not enjoy such well behaved properties because of
+different bit sizes and overflow and precision errors.
 
-Syntactic features for controlling lazy and strict evaluation like
+Syntactic features for controlling lazy and strict evaluation namely
 irrefutable patterns, \hs{seq} and bang patterns, and richer pattern
 matching in form of pattern bindings are discussed below.
 
@@ -589,15 +592,15 @@ Haskell projects which usually use a richer part of the language.
 
 \subsection{Irrefutable Patterns and Pattern Bindings}
 
-Irrefutable patterns can be defined in terms of strict projections,
-like those that already exist (\hs{fst}, \hs{snd}, \hs{head},
-\hs{fromJust}, and so on.) Each irrefutable pattern is translated to a
+Irrefutable patterns can be defined in terms of projections, examples
+are \hs{fst}, \hs{snd}, \hs{head}, \hs{fromJust} defined in the
+standard library. Each irrefutable pattern is translated to a
 constant, and when you use the variables in the pattern, you translate
-it to appropriate use of strict projections. One example is the
-translation of the \hs{uncurry} function:
+it to appropriate use of projections. One example is the translation
+of the \hs{uncurry} function:
 
 \begin{code}[mathescape]
-uncurry f ~(x,y) = f x y        $\Leftrightarrow$      uncurry f t = f (fst t) (snd t)
+uncurry f ~(x,y) = f x y        $\Rightarrow$      uncurry f t = f (fst t) (snd t)
 \end{code}
 
 \noindent
@@ -605,14 +608,14 @@ The irrefutable pattern \verb:~(x,y): is replaced with the new constant
 \hs{t}, and in the body of the function, \hs{x} is replaced with the
 strict projection \hs{fst t}, and similarly for \hs{y}.
 
-Top level patterns, more specifically called pattern bindings, can
-also be written in terms of such strict projections. The whole pattern
+Top level patterns, also called pattern bindings, can
+also be written in terms of such projections. The whole pattern
 is replaced with a constant, and when the variables from the pattern
-are used, you again replace it with strict projections. This is how it
+are used, you again replace it with projections. This is how it
 could look for a simple \hs{fromJust . lookup} implementation:
 
 \begin{code}[mathescape]
-unsafeLookup x xs = v           $\Leftrightarrow$      unsafeLookup x xs = fromJust t
+unsafeLookup x xs = v           $\Rightarrow$      unsafeLookup x xs = fromJust t
   where Just v = lookup x xs            where t = lookup x xs
 \end{code}
 
@@ -622,16 +625,17 @@ inspection of the data type definition.
 
 \subsection{Bang Patterns and seq}
 
-The encoding for bang patterns and \hs{seq} is also straightforward,
-say you want to define seq with bang patterns, you would have
+The translations for bang patterns and \hs{seq} are also
+straightforward. \hs{seq} defined by bang patterns is:
 
 \begin{code}
 seq :: a -> b -> b
 seq !x y = y
 \end{code}
 
-The axioms needs to ensure that if \hs{x} evaluates to $\bot$, then
-\hs{seq x} also evaluates to $\bot$. The two axioms for this functions are:
+The axioms for a translation of \hs{seq} needs to ensure that if
+\hs{x} evaluates to $\bot$, then \hs{seq x} also evaluates to
+$\bot$. The two axioms for this functions are:
 \begin{align*}
 \rom{1} \qquad & \fa{y}    seq(\bot,y) \eq \bot \\
 \rom{2} \qquad & \faa{x}{y} x \neq \bot \rightarrow seq(x,y) \eq y
@@ -641,15 +645,15 @@ Either you implement bang patterns in this fashion, or you do the same
 translation as GHC for bang patterns: for each strict variable, you
 add a \hs{seq} for that variable for the expression of that pattern,
 and you simply add the axioms for \hs{seq} to the theory if the
-program uses it or bang patterns. This also works for data types with
-strictness fields.
+program uses it or bang patterns. For data types with strictness
+fields one proceeds by adding \hs{seq} when constructing elements.
 
 \subsection{Pattern Guards}
 
-Patterns guards is a GHC specific extension to Haskell, allowing
-arbitrary pattern matching on an expression in a guard. An example is
-this elaboration of the \hs{lookup} function from the \hs{Prelude},
-which applies a function to the element, if found:
+Patterns guards is a GHC specific extension to Haskell which allows
+arbitrary pattern matching on the result from an expression in a
+guard. An example is this elaboration of the \hs{lookup} function from
+the \hs{Prelude}, which applies a function to the element, if found:
 
 \begin{code}
 transformLookup :: Eq k => k -> [(k,v)] -> (k -> v -> b) -> Maybe b
@@ -658,13 +662,12 @@ transformLookup k xs f | Just v <- lookup k xs = Just (f k v)
 \end{code}
 
 \noindent
-If the lookup returns \hs{Just}, you already have the value \hs{v}
-bound and can use it in the expression for this pattern. This is not
-at all unlike the normal guards, they are a special case of pattern
-guards: the guard \hs{f x | p x} is expressed as
-\hs{f x | True <- p x}. The translation of guards currently checks if
-\hs{p x} is \hs{True}, and then ``picks'' this branch, or $\bot$ and
-then ``returns'' $\bot$. You could just as well do this for other
-constructors, you just need to add bottoms in the guard branches just
-as is currently done for ordinary patterns.
+If the lookup returns \hs{Just}, \hs{v} is already bound and can be
+used in the expression of the right hand side. This is very simiar to
+normal guards, as they are a special case of pattern guards: the guard
+\hs{f x | p x} is expressed as \hs{f x | True <- p x}. The current
+translation of guards checks if \hs{p x} is \hs{True}, and then
+``picks'' this branch, or is $\bot$. This could be done for
+constructors, bottoms would need to be added in the guard branches as
+is currently done for ordinary patterns.
 

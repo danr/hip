@@ -1,8 +1,9 @@
 
-Imagine you find the following data type for binary trees
-\citep{grafting} and an implementation of the \hs{Monad} type class
-\citep{mtl} for it:
+\chapter{Introduction}
 
+
+Consider this data type of trees \citep{grafting} and its implementation
+of \hs{Monad} \citep{mtl}:
 
 \begin{code}
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
@@ -24,6 +25,7 @@ write down the equations in a similar style as properties in
 QuickCheck \citep{quickcheck}. Run the tool on the source file which
 reports this after a few seconds\footnote{The presentation format is
   slightly rewritten for your viewing pleasure.}:
+
 
 \begin{code}
 Theorems (3/3):

@@ -25,7 +25,16 @@
 \setlist{nolistsep}
 
 %\usepackage{parskip}
-%\setlength{\parindent}{0cm}
+%\setlength{\parindent}{-0.0cm}
+%\setlength{\parskip}{0.3\baselineskip}
+
+
+
+%\usepackage[compact]{titlesec}
+
+%\usepackage{titlesec}
+%\titleformat{\chapter}[hang]{\huge}{\thechapter}{1em}{}
+%\titlespacing{\chapter}{0pt}{0pt}{0cm}
 
 \let\cleardoublepage\clearpage
 
@@ -47,13 +56,15 @@
   {
    \noindent
    \minipage{\linewidth}
-   \vspace{0.3\baselineskip}
+   \vspace{0.2\baselineskip}
+%   \vspace{-0.4\baselineskip}
    \lstset{basicstyle=\ttfamily\footnotesize,
            frame=single,
            language=Haskell,
            keywordstyle=\color{black},
            #1}}
-  {\endminipage}
+  {%\vspace{-0.8\baselineskip}
+   \endminipage}
 
 \makeatletter
 \newcommand*{\rom}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@.}}
@@ -74,7 +85,7 @@
 \newcommand\fa[1]{\forall \, #1 . \,}
 \newcommand\faa[2]{\forall \, #1 , #2 . \,}
 \newcommand\faaa[3]{\forall \, #1 , #2 , #3 . \,}
-\newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 \, #4 , #5 , #6 . \,}
+\newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 , #4 , #5 , #6 . \,}
 
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}%\usetikzlibrary {\trees,positioning,arrows}
 
@@ -145,8 +156,6 @@
 
 \newpage
 \setcounter{page}{1}
-
-\chapter{Introduction}
 
 \input{intro}
 

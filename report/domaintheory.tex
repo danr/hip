@@ -2,22 +2,20 @@
 \label{sec:domaintheory}
 
 This section is stand alone, and could be skipped especially if you
-already know the basics of Domain Theory: comp\-lete partial orders,
-monotonicity and continuity.
-It explains these concepts and discusses how it can be
-used to verify the translation, furthermore it is used as a reference
-in the future sections that rely on concepts from domain theory.
-%The section explains these concepts and acts as a reference in future
-%sections that rely on concepts from domain theory.
+already know the basics of domain theory: comp\-lete partial orders,
+monotonicity and continuity.  It explains these concepts and discusses
+how it can be used to verify the translation, furthermore it is used
+as a reference in for later sections that rely on concepts from domain
+theory.
 
 The values of every data type are ordered on how much ``information''
 they contain. The least element bottom, denoted $\bot$, contains least
 information. It corresponds to all kinds of crashes in Haskell; use of
-\hs{undefined}, non-termination or non exhausite pattern matches.
+\hs{undefined}, non-termination and non exhausite pattern matches.
 Different constructors hold different information, so they are not
-related by the ordering; this is a partial order, a relation that is
-reflexive, transitive and antisymmetric. The ordering is usually
-written $\sqsubseteq$ sometimes with a subscript indicating the type.
+related by the ordering; this is a partial order. Such orders are
+reflexive, transitive and antisymmetric. The ordering is written
+$\sqsubseteq$, sometimes with a subscript indicating the type.
 
 \begin{wrapfigure}{O}{0.4\textwidth} %\begin{figure}
 \vspace{-7pt}
@@ -28,14 +26,14 @@ written $\sqsubseteq$ sometimes with a subscript indicating the type.
     \label{fig:boolcpo}
 }
 \end{wrapfigure}
-For the \hs{Bool} data type the partial order can be drawn as a Hasse
-Diagram and this can be shown in Figure \ref{fig:boolcpo}.  From the
-picture it is understood that $\bot$ is the least element, and the
-line from it to \hs{False} means that $\bot \sqsubseteq \hs{False}$,
-since $\bot$ is below $\hs{False}$. Correspondingly for $\hs{True}$,
-the diagram tells us that $\bot \sqsubseteq \hs{True}$. It can also
-been seen that $\hs{True} \nsqsubseteq \hs{False}$; they are unrelated
-since there is no line between them.
+For the \hs{Bool} data type the partial order can be drawn as a
+diagram in Figure \ref{fig:boolcpo}.  From the picture it is
+understood that $\bot$ is the least element, and the line from it to
+\hs{False} means that $\bot \sqsubseteq \hs{False}$, since $\bot$ is
+below $\hs{False}$. Correspondingly for $\hs{True}$, the diagram tells
+us that $\bot \sqsubseteq \hs{True}$. It can also been seen that
+$\hs{True} \nsqsubseteq \hs{False}$; they are unrelated since there is
+no line between them. This kind of diagram is called a Hasse Diagram.
 
 %\begin{figure}[h]
 %\centering
@@ -59,7 +57,7 @@ since there is no line between them.
 \vspace{-30pt}
 \input{boolboolcpo}
 \caption{
-    \texttt{(Bool,Bool)} partial order.
+    \texttt{(Bool,Bool)} order.
     \label{fig:boolboolcpo}
 }
 \end{center}
@@ -95,8 +93,6 @@ This can be understood in many ways. One way to see it is if you have
 two inputs to a function, one containing \emph{less} information that
 the other, i.e. more bottoms, it is impossible to return \emph{more}
 information from the input with less information.
-
-\pagebreak
 
 One simple example of a consequence of this is the impossibility to
 make a function \hs{isBottom :: a -> Bool}, returning \hs{True} if the
@@ -194,33 +190,32 @@ continuous.
 
 \subsection{Unsafe Haskell}
 In GHC, you can use \hs{unsafePerformIO} and \hs{catch} from
-\hs{Control.Exception} and other tricks to unsafely catch errors
+\hs{Control.Exception} and other tricks to ``unsafely'' catch errors
 (bottoms). With this machinery it is possible to write a function
 \hs{isBottom :: a -> Bool} to catch calls to \hs{undefined}, pattern
-match failures, etcetera. In addition, some non-termination some can
-also be catched in Haskell because of the \emph{blackhole} run time
+match failures, etcetera. In addition, some non-termination can also
+be determined in Haskell because of the \emph{blackhole} run time
 object that replaces a \emph{thunk} that is being currently
 evaluated. It does not and indeed cannot cover all non terminating
-functions because of the undecidability of the Halting problem.
+functions because of the undecidability of the halting problem.
 
-The domain theoretic results remain; one can see $\bot$ as another,
-albeit inconveniently inspected, constructor to every data type. All
-patterns are exhaustive: every function has an implicit match any
-pattern to $\bot$.  Then we add a \emph{true} bottom to the domain
-denotes the uncatchable bottoms; undeterminable non termination. With
-this setting all Haskell functions are continuous with respect to the
-\emph{true} bottoms. But for the rest of this thesis, we shall only
-consider pure and safe Haskell functions.
+The domain theoretic results remain; in this setting $\bot$ can be
+seen as another, albeit inconveniently inspected, constructor to every
+data type. All patterns are exhaustive: every function has an implicit
+match any pattern to $\bot$.  Then we add a \emph{true} least element
+to the domain denoting the uncatchable bottoms; undeterminable non
+termination. With this setting all Haskell functions are continuous
+with respect to the \emph{true} bottoms. But for the rest of this
+thesis, we shall only consider pure and ``safe'' Haskell functions.
 
 \subsection{Monotonicity as Verification}
 
-Continuity is a concept that is hard to express in first order logic:
-it in not able to express countability. We can come close with an
-axiomatization of set theory, but we leave that issue and focus on
-monotonicity. A way to verify the translation is to add axioms to the
-generated theory describing the $\sqsubseteq$ relation, and axioms
-that asserts that each function is monotone. An automated theorem
-prover could not easily show that it is a satisfiable theory since it
-will normally only have infinite models. However, a long run without
-any counter model could be seen as a witness for a successful
-translation in this respect.
+A way to verify the translation is to add axioms to the generated
+theory describing the $\sqsubseteq$ relation, and axioms that asserts
+that each function is monotone. An automated theorem prover could not
+easily show that it is a satisfiable theory since it will normally
+only have infinite models. However, a long run without any counter
+model could be seen as a witness for a successful translation in this
+respect.  On the other hand, continuity is a concept that is hard to
+express in first order logic. We can come close with an axiomatization
+of set theory, but it is beyond the scope of this thesis.
