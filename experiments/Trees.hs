@@ -4,7 +4,6 @@ import AutoPrelude
 import Prelude (Eq,Show)
 
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
-  deriving(Eq,Show)
 
 return :: a -> Tree a
 return = Leaf

@@ -713,13 +713,13 @@ CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:37] =>  0:00
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-06 Mon 01:02]
+Clock summary at [2012-02-06 Mon 13:08]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *52:04* |       |       |      |
+| *Total time*                                                  | *55:08* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 52:04   |       |       |      |
+| Plan                                                          | 55:08   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -742,10 +742,12 @@ Clock summary at [2012-02-06 Mon 01:02]
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         |  0:59 |       |      |
-| ONGOING Time planning                                         |         |       |  0:38 |      |
+| Tasks                                                         |         |  3:27 |       |      |
+| ONGOING Time planning                                         |         |       |  0:43 |      |
 | TODO Better name than autospec!                               |         |       |  0:20 |      |
-| Report tasks                                                  |         | 22:15 |       |      |
+| TODO Presentation                                             |         |       |  0:08 |      |
+| DONE Mail Abstract to Meng                                    |         |       |  2:15 |      |
+| Report tasks                                                  |         | 22:51 |       |      |
 | NEXT Introduction                                             |         |       |  7:10 |      |
 | NEXT Fancy pants Tree monad example                           |         |       |       | 0:30 |
 | TODO Related work                                             |         |       |  0:14 |      |
@@ -753,7 +755,7 @@ Clock summary at [2012-02-06 Mon 01:02]
 | DONE Revert to the old translation technique                  |         |       |       | 0:14 |
 | TODO Proof methods                                            |         |       |  3:05 |      |
 | TODO Fixed point induction                                    |         |       |       | 2:44 |
-| TODO Future work                                              |         |       |  6:19 |      |
+| TODO Future work                                              |         |       |  6:55 |      |
 | TODO Implications and quantifiers                             |         |       |       | 0:18 |
 | DONE Finite lemmas                                            |         |       |       | 1:49 |
 | DONE Pattern matching rerevisited                             |         |       |       | 0:29 |
@@ -1099,6 +1101,7 @@ CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
 ** Tasks
 CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
 *** ONGOING Time planning
+CLOCK: [2012-02-06 Mon 08:58]--[2012-02-06 Mon 09:03] =>  0:05
 CLOCK: [2012-02-05 Sun 23:00]--[2012-02-05 Sun 23:04] =>  0:07
 CLOCK: [2012-02-04 Sat 14:40]--[2012-02-04 Sat 14:51] =>  0:11
 CLOCK: [2012-02-02 Thu 09:14]--[2012-02-02 Thu 09:14] =>  0:00
@@ -1123,13 +1126,16 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 CLOCK: [2012-02-05 Sun 15:25]--[2012-02-05 Sun 15:45] =>  0:20
 
 *** TODO Presentation
+CLOCK: [2012-02-06 Mon 11:18]--[2012-02-06 Mon 11:26] =>  0:08
 **** CANCELLED GTK2Hs frontend for proofs for presentation
 CLOSED: [2012-02-04 Sat 14:39]1
 **** TODO Ideas on live examples
 **** NEXT
 
-*** TODO Mail Abstract to Meng
-DEADLINE: <2012-02-03 Fri>
+*** DONE Mail Abstract to Meng
+CLOSED: [2012-02-06 Mon 11:18] DEADLINE: <2012-02-03 Fri>
+- State "DONE"       from "TODO"       [2012-02-06 Mon 11:18]
+CLOCK: [2012-02-06 Mon 09:03]--[2012-02-06 Mon 11:18] =>  2:15
 *** TODO Final presentation
 SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete
@@ -1191,6 +1197,7 @@ have that possibility. Then we need to make a lambda.0* and lambda.0.,
 where the latter actually has an implementation, it just calls >>=..
 **** NEXT Concrete concerns
 *** TODO Future work
+CLOCK: [2012-02-06 Mon 12:32]--[2012-02-06 Mon 13:08] =>  0:36
 
 CLOCK: [2012-02-05 Sun 14:24]--[2012-02-05 Sun 14:24] =>  0:00
 CLOCK: [2012-02-05 Sun 10:44]--[2012-02-05 Sun 10:45] =>  0:01

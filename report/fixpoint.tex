@@ -135,7 +135,7 @@ P(f^0 \w \bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
 P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
 \desclra{induction} \\
 \fa{n} & P(f^n \w \bot) \\
-\desclra{\textit{P} \w admissible} \\
+\descra{\textit{P} \w admissible} \\
 & P(\lub{n}(f^n \w \bot)) \\
 \desclra{definition \w of \w \hs{fix}} \\
 & P(\hs{fix} \w f) \\
@@ -424,12 +424,12 @@ depth. As an example, the map-iterate property impossible to show with
 \hs{map} redefined to \hs{doublemap}, defined below, with ordinary one
 depth fixed point induction.
 
-\begin{verbatim}
+\begin{code}
 doublemap :: (a -> b) -> [a] -> [b]
 doublemap f []       = []
 doublemap f [x]      = [f x]
 doublemap f (x:y:zs) = f x : f y : doublemap f zs
-\end{verbatim}
+\end{code}
 
 \noindent
 While \hs{doublemap} is behaviorally equivalent to \hs{map} on total

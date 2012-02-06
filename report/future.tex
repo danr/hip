@@ -38,46 +38,46 @@ anything but \hs{Tri}s and bottoms.
 One weakness of that approach is that two functions that are
 extensionally equivalent in Haskell are not in the generated theory,
 when applied to non sense arguments. An example of this behaviour is
-these two implementations of the boolean or function in Figure
-\ref{code:or}.
+these two implementations of the boolean and function in Figure
+\ref{code:and}.
 
 \begin{figure}[h!]
 \centering
 \begin{minipage}[b]{6cm}
 \begin{code}
-or :: Bool -> Bool -> Bool
-or False b = b
-or True  _ = True
+and :: Bool -> Bool -> Bool
+and True  b = b
+and False _ = False
 \end{code}
 \end{minipage}
 \hspace{10pt}
 \begin{minipage}[b]{6cm}
 \begin{code}
-or' :: Bool -> Bool -> Bool
-or' False b = b
-or' _     _ = True
+and' :: Bool -> Bool -> Bool
+and' True  b = b
+and' _     _ = False
 \end{code}
 \end{minipage}
 \caption{Two definitions of boolean and, \texttt{and} and \texttt{and'}
-\label{code:or}
+\label{code:and}
 }
 \end{figure}
 
-Let us analyse the models of this program in Figure \ref{code:or} with
-an additional value $\diamond$ in the domain. The translation makes
-$\fn{or}(\diamond,\fn{true}) = \bot$, since there is a wild pattern that
-goes to $\bot$. For the other function we have
-$\fn{or'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern already
-goes to $\fn{false}$. Because of this differences, the approximation
-lemma cannot prove this property. While this is a simple example, it
-is easy to imagine more complex cases where different pattern matching
-techniques makes no difference to the Haskell program, but to this
-translation.
+Let us analyse the models of this program in Figure \ref{code:and}
+with an additional value $\diamond$ in the domain. The translation
+makes $\fn{and}(\diamond,\fn{true}) = \bot$, since there is a wild
+pattern that goes to $\bot$. For the other function we have
+$\fn{and'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern
+already goes to $\fn{false}$. Because of this differences, the
+approximation lemma cannot prove their extensional equality. While
+this is a simple example, it is easy to imagine more complex cases
+where different pattern matching techniques makes no difference to the
+Haskell program, but to this translation.
 
 This suggests that wild patterns should be expanded to pattern for all
 their constructors, and add a match any pattern that goes to
 bottom. This make the the meta theorem
-$\faa{x}{y} \fn{or}(x,y) = \fn{or'}(x,y)$ consistent with rest of the
+$\faa{x}{y} \fn{and}(x,y) = \fn{and'}(x,y)$ consistent with rest of the
 theory.  Further, it would be provable by the approximation lemma, and
 in more complex cases with recursive functions, by fixed point
 induction. This translation is also assumed to be a little easier to
@@ -150,7 +150,7 @@ Proofs by definitional equality would also benefit from type tags. The
 the current limitations are discussed section
 \ref{sec:concreteconcerns}. Furthermore, the extensional equality of
 the different implementations of the or function in Figure
-\ref{code:or} is not provable with approximation lemma with the
+\ref{code:and} is not provable with approximation lemma with the
 current translation. However, stated with $\fn{force}$-tags it should
 be possible. This could give us the best of two worlds: minimal
 translation of pattern matching and wider applicability of untyped
@@ -158,62 +158,69 @@ proof methods.
 
 \subsection{Lemmas from Finite Theorems}
 
+\newcommand\Inf{\fn{Inf}}
+\newcommand\Total{\fn{Total}}
+\newcommand\Fin{\fn{Fin}}
 The $\fn{force}$ function from the previous section is not easily
 generatised to remove partiality from a value. Another way to do this
-is to introduce a predicate $Total$, indicating totality. This is a
-way to axiomatise $Total$ for natural numbers:
+is to introduce a predicate $\Total$, indicating totality. This is a
+way to axiomatise $\Total$ for natural numbers:
 
 \begin{align*}
-\rom{1} &&        & \neg \, Total(\bot) \\
-\rom{2} &&        & Total(\fn{zero}) \\
-\rom{3} && \fa{x} & Total(x) \rightarrow Total(\fn{succ}(x))
+\rom{1} &&        & \neg \, \Total(\bot) \\
+\rom{2} &&        & \Total(\fn{zero}) \\
+\rom{3} && \fa{x} & \Total(x) \rightarrow \Total(\fn{succ}(x))
 \end{align*}
 
 As with the $\fn{force}$ function, it could be wise to add an argument
-to $Total$ indicating the type, but for the rest of this section we
+to $\Total$ indicating the type, but for the rest of this section we
 will only consider the (Haskell) natural numbers. A property such as the
 commutativity of plus could be expressed with this meta theorem:
 
 \begin{equation*}
-\faa{x}{y} Total(x) \wedge Total(y) \rightarrow x + y = y + x
+\faa{x}{y} \Total(x) \wedge \Total(y) \rightarrow x + y = y + x
 \end{equation*}
 
-We would also like to express finiteness. Our canonical example of a
-an infinite value is the natural number
-\hs{inf = Succ inf}. Identification of such cyclic values leads to
-infinite values, and can be axiomatised:
+
+We would also like to express infiniteness. Our canonical example of a
+an infinite value is the natural number \hs{inf = Succ inf}. This is
+the only infinite natural number so a prediate $\Inf$ for infinite
+natural numbers is easy to axiomatise:
 
 \begin{equation*}
-\fa{x} Infinite(x) \leftrightarrow (x = \fn{succ}(x) \vee (\ex{y} x = \fn{succ}(y) \wedge Infinite(y))) \\
+\fa{x} \Inf(x) \leftrightarrow (x = \fn{succ}(x))
 \end{equation*}
 
-While defining $Infinite$ is straightforward for natural numbers,
-further complexities are added for other data types and introduction
-schemas are needed. But since Haskell functions are continuous and
-finite, every infinite value is produced from finite information
-(\hs{repeat}, \hs{iterate}, \hs{enumFrom}), so a predicate $Infinite$
-should be enough for our purposes, and $Infinite$ should be defined so
-that $Infinite(x)\ rightarrow Total(x)$, that is excluding partial
-infinite values.
+While defining $\Inf$ is straightforward for natural numbers, further
+complexities are added for other data types and introduction schemas
+are needed. But since Haskell functions are continuous and finite,
+every infinite value is produced from finite information (\hs{repeat},
+\hs{iterate}, \hs{enumFrom}), so a predicate $\Inf$ should be enough
+for our purposes, and $\Inf$ should be defined so that it excludes
+partial values, that is satisfying $\Inf(x) \rightarrow \Total(x)$.
 
 \pagebreak
 
 We can now define finiteness of a value $x$ as
-$Finite(x) \leftrightarrow Total(x) \wedge \neg Infinite(x)$.  The results
+$\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$.  The results
 from a function would be necessary to axiomatise to make such axioms
 useable. To exemplify why this is not trivial, consider the
 complexities of the plus function:
 
 \begin{align*}
-\rom{1} && \faa{x}{y} & Finite(x) \wedge Finite(y)                  & \leftrightarrow &&& Finite(x + y) \\
-\rom{2} && \faa{x}{y} & Infinite(x) \vee (Finite(x) \wedge Infinite(y)) & \leftrightarrow &&& Infinite(x + y)
+\rom{1} && \faa{x}{y} & \Fin(x) \wedge \Fin(y)                  & \leftrightarrow &&& \Fin(x + y) \\
+\rom{2} && \faa{x}{y} & \Inf(x) \vee (\Fin(x) \wedge \Inf(y)) & \leftrightarrow &&& \Inf(x + y)
 \end{align*}
 
-How to prove the status for the return value of a function in terms of
-$Finite$, $Total$ and $Infinite$ for different statuses of the arguments is
-an open problem. Possible sources for inspiration is the work by
-\cite{exhaustiblesets}, where topological compactness for
-data types play a significant r\^{o}le.
+\noindent
+Axiom $\romnodot{1}$ asserts that $x + y$ is finite iff $x$ and $y$
+is. Further, $x + y$ is infinite iff then $x$ is or $x$ is finite and
+$y$ is infinite. This is expressed in Axiom $\romnodot{2}$. How to
+prove such statuses for the return value of a function in terms of
+$\Fin$, $\Total$ and $\Inf$ for different statuses of arguments is an
+open problem. Possible sources for inspiration is the work by
+\cite{exhaustiblesets}, where topological compactness for data types
+play a significant r\^{o}le.
 
 \subsection{Speculating Lemmas}
 
@@ -247,19 +254,21 @@ program. Another is how to express type classes in logic. An approach
 would be to use dictionary passing, inlined for concrete types.
 
 A third obstacle is to decide which axioms to use for the functions
-from a type class. Let us take Monoids as an example. Its signature
-consists of a binary operator and an element from the type. The
-required laws are associativity of the operator and that the element
-is the identity element for this operator. Lists are an instance of
-Monoid, and the associativity law holds for finite and partial lists,
-but the right identity does not hold: \hs{$\bot$ ++ []} is not equal
-to \hs{[]}, as it is equal to $\bot$. This example suggests that it
-could be appropriate to assume the laws only for total values, and
-that it would be sensible to automatically check these laws for all
-instances.
+from a type class, as there is no set agreement on how strong the
+rules are that we expect from some instances to obey. Take Monoids as
+an example. Its signature consists of a binary operator and an
+element. The required laws are associativity and that the element acts
+as an identity for the operator. Lists with concatenation and the
+empty list are an instance of Monoid, and the associativity law holds
+for finite and partial lists. The right identity does not hold for
+partial values: \hs{$\bot$ ++ []} is not equal to \hs{[]}, as it is
+equal to $\bot$. This example suggests that it could be appropriate to
+assume the laws only for total values, and that it would be sensible
+to automatically check these laws for all instances.
 
-We know something else about the functions from a type class: they are
-all continuous. This is also true for functions which are quantified
+Since instances have to be polymorphic some classes admits free
+naturality conditions. The functions from a type class are all
+continuous. This is also true for functions which are quantified
 over. This is currently not enforced in the generated theories, and an
 open question is how this effects the results.
 

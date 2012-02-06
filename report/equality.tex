@@ -86,29 +86,29 @@ the proof search.
 
 This only works on non-concrete types because of the way bottoms are
 added. One example when this is a problem with is this plausible
-definition of boolean or, and the property of right identity:
+definition of boolean and, and the property of right identity:
 
 \begin{code}
-False || a = a
-True  || _ = True
+True  && a = a
+False && _ = False
 
 prop_or_right_identity :: Bool -> Prop Bool
-prop_or_right_identity x = x || False =:= x
+prop_or_right_identity x = x && False =:= x
 \end{code}
 
-The translation of \hs{||} makes any element in the domain that is not
+The translation of \hs{&&} makes any element in the domain that is not
 the introduced constants $\fn{false}$ or $\fn{true}$ for \hs{Bool}'s
 constructors, equal $\bot$. Now consider the translation of the
 property:
 
 \begin{equation*}
-\fa{x} x \, \fn{||} \, \fn{false} = x
+\fa{x} x \, \fn{\&\!\&} \, \fn{true} = x
 \end{equation*}
 
-Now this is false: take a model with another element $\star$ in the
+Now this is false, take a model with another element $\diamond$ in the
 domain:
 
-$$\star \, \fn{||} \, \fn{false} = \bot$$
+$$\diamond \, \fn{\&\!\&} \, \fn{true} = \bot$$
 
 The consequence of this is that the proof principle of definitional
 equality is only used on abstract types, rather than polymorphic, as
