@@ -711,14 +711,15 @@ CLOSED: [2012-01-16 Mon 12:34]
 **** DONE Coinduction work in Agda by NAD
 CLOSED: [2012-01-16 Mon 12:35]
 * Plan
+CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:37] =>  0:00
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-05 Sun 10:38]
+Clock summary at [2012-02-06 Mon 01:02]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *42:41* |       |       |      |
+| *Total time*                                                  | *52:04* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 42:41   |       |       |      |
+| Plan                                                          | 52:04   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -741,19 +742,22 @@ Clock summary at [2012-02-05 Sun 10:38]
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         |  0:35 |       |      |
-| ONGOING Time planning                                         |         |       |  0:34 |      |
-| Report tasks                                                  |         | 13:16 |       |      |
-| NEXT Introduction                                             |         |       |  3:03 |      |
+| Tasks                                                         |         |  0:59 |       |      |
+| ONGOING Time planning                                         |         |       |  0:38 |      |
+| TODO Better name than autospec!                               |         |       |  0:20 |      |
+| Report tasks                                                  |         | 22:15 |       |      |
+| NEXT Introduction                                             |         |       |  7:10 |      |
 | NEXT Fancy pants Tree monad example                           |         |       |       | 0:30 |
 | TODO Related work                                             |         |       |  0:14 |      |
 | TODO Translation                                              |         |       |  0:14 |      |
 | DONE Revert to the old translation technique                  |         |       |       | 0:14 |
-| TODO Proof methods                                            |         |       |  1:14 |      |
-| TODO Fixed point induction                                    |         |       |       | 0:55 |
-| TODO Future work                                              |         |       |  3:21 |      |
+| TODO Proof methods                                            |         |       |  3:05 |      |
+| TODO Fixed point induction                                    |         |       |       | 2:44 |
+| TODO Future work                                              |         |       |  6:19 |      |
+| TODO Implications and quantifiers                             |         |       |       | 0:18 |
+| DONE Finite lemmas                                            |         |       |       | 1:49 |
 | DONE Pattern matching rerevisited                             |         |       |       | 0:29 |
-| NEXT Lemmas and translation                                   |         |       |       | 2:52 |
+| TODO Lemmas and translation                                   |         |       |       | 3:42 |
 | TODO Results                                                  |         |       |  3:00 |      |
 #+END:
 ** Refile
@@ -1095,6 +1099,7 @@ CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
 ** Tasks
 CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
 *** ONGOING Time planning
+CLOCK: [2012-02-05 Sun 23:00]--[2012-02-05 Sun 23:04] =>  0:07
 CLOCK: [2012-02-04 Sat 14:40]--[2012-02-04 Sat 14:51] =>  0:11
 CLOCK: [2012-02-02 Thu 09:14]--[2012-02-02 Thu 09:14] =>  0:00
 CLOCK: [2012-02-02 Thu 09:01]--[2012-02-02 Thu 09:05] =>  0:04
@@ -1115,6 +1120,7 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 :END:
 
 *** TODO Better name than autospec!
+CLOCK: [2012-02-05 Sun 15:25]--[2012-02-05 Sun 15:45] =>  0:20
 
 *** TODO Presentation
 **** CANCELLED GTK2Hs frontend for proofs for presentation
@@ -1129,20 +1135,21 @@ SCHEDULED: <2012-02-10 Fri>
 *** TODO Report complete
 DEADLINE: <2012-02-14 Tue>
 ** Report tasks                                                     :report:
+CLOCK: [2012-02-06 Mon 00:59]--[2012-02-06 Mon 01:02] =>  0:03
 CLOCK: [2012-02-04 Sat 14:51]--[2012-02-04 Sat 15:05] =>  0:14
 CLOCK: [2012-02-03 Fri 16:44]--[2012-02-03 Fri 18:39] =>  1:55
 CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
 *** NEXT Introduction
+CLOCK: [2012-02-05 Sun 21:37]--[2012-02-05 Sun 22:47] =>  1:10
+CLOCK: [2012-02-05 Sun 17:08]--[2012-02-05 Sun 19:23] =>  2:15
+CLOCK: [2012-02-05 Sun 11:55]--[2012-02-05 Sun 12:37] =>  0:42
 CLOCK: [2012-02-01 Wed 10:31]--[2012-02-01 Wed 10:58] =>  0:27
 CLOCK: [2012-02-01 Wed 10:00]--[2012-02-01 Wed 10:26] =>  0:26
-Shit this is hard
 CLOCK: [2012-01-31 Tue 18:08]--[2012-01-31 Tue 19:22] =>  1:14
 CLOCK: [2012-01-31 Tue 17:46]--[2012-01-31 Tue 18:02] =>  0:16
 CLOCK: [2012-01-31 Tue 17:39]--[2012-01-31 Tue 17:41] =>  0:02
 CLOCK: [2012-01-31 Tue 14:35]--[2012-01-31 Tue 14:43] =>  0:08
 CLOCK: [2012-01-31 Tue 14:28]--[2012-01-31 Tue 14:28] =>  0:00
-Write this: introduce the problem and why it is interesting
-Get to the point! Don't be hand-wavy
 **** TODO Schematic view of this work
 Haskell -> Logic -> ATP invocations -> Results
 **** NEXT Fancy pants Tree monad example
@@ -1150,7 +1157,6 @@ CLOCK: [2012-02-05 Sun 10:05]--[2012-02-05 Sun 10:35] =>  0:30
 Properties provable with all techniques in this thesis!! Excellent!
 
 *** TODO Abstract
-*** TODO Introduction
 *** TODO Related work
 CLOCK: [2012-02-05 Sun 01:15]--[2012-02-05 Sun 01:29] =>  0:14
 **** TODO Talk with Moa on winter meeting
@@ -1163,9 +1169,12 @@ CLOSED: [2012-02-04 Sat 22:29]
 CLOCK: [2012-02-04 Sat 22:15]--[2012-02-04 Sat 22:29] =>  0:14
 This needs to introduce the fancy techinque later on
 *** TODO Proof methods
+CLOCK: [2012-02-05 Sun 10:47]--[2012-02-05 Sun 10:47] =>  0:00
+CLOCK: [2012-02-05 Sun 10:45]--[2012-02-05 Sun 10:47] =>  0:02
 CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
 CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
 **** TODO Fixed point induction
+CLOCK: [2012-02-05 Sun 23:10]--[2012-02-06 Mon 00:59] =>  1:49
 - State "TODO"       from "DONE"       [2012-01-31 Tue 18:50]
 - State "DONE"       from "NEXT"       [2012-01-31 Tue 18:50]
 CLOCK: [2012-01-31 Tue 10:24]--[2012-01-31 Tue 11:19] =>  0:55
@@ -1174,25 +1183,52 @@ Redo the section called Implementation. How can we minimize the
 explanation of fix? Probably, a lot of proofs can be removed too, that
 are not too interesting and just state them as properties easily
 proved by induction (or something)
+***** Future work
+Associativity of bind
+=:= (>>= (>>= t f) g) (>>= t (lambda.0 f g))
+Here we cannot do fpi on the bind in the lambda. It would be nice to
+have that possibility. Then we need to make a lambda.0* and lambda.0.,
+where the latter actually has an implementation, it just calls >>=..
 **** NEXT Concrete concerns
 *** TODO Future work
-**** TODO Implications
+
+CLOCK: [2012-02-05 Sun 14:24]--[2012-02-05 Sun 14:24] =>  0:00
+CLOCK: [2012-02-05 Sun 10:44]--[2012-02-05 Sun 10:45] =>  0:01
+**** TODO Implications and quantifiers
+CLOCK: [2012-02-05 Sun 16:23]--[2012-02-05 Sun 16:41] =>  0:18
 Chain complete?
 #+BEGIN_SRC haskell
 x + y = x + z -> y = x
 #+END_SRC
 needs induction on the whole property, you cannot simply the
 antecedent as a lemma
+
+prop_lookup_count x xs = exists (\y -> lookup x xs =:= Just y) ->
+                         count x xs =/= Zero
+**** TODO Equality and invariants
+Queue has invariants... How to enfore them? By implications?
+invariant q =:= True -> ...
+
+Equality on Queues is by fromList.
+
 **** CANCELLED How does the min predicate work
 CLOSED: [2012-01-29 Sun 00:36]
 - State "CANCELLED"  from ""           [2012-01-29 Sun 00:36] \\
 ***** TODO Min predicate:
 Just write in the report that it is possible
+**** DONE Finite lemmas
+CLOSED: [2012-02-05 Sun 14:24]
+CLOCK: [2012-02-05 Sun 21:18]--[2012-02-05 Sun 21:37] =>  0:19
+CLOCK: [2012-02-05 Sun 21:13]--[2012-02-05 Sun 21:18] =>  0:05
+- State "DONE"       from "NEXT"       [2012-02-05 Sun 14:24]
+CLOCK: [2012-02-05 Sun 12:39]--[2012-02-05 Sun 14:04] =>  1:25
 **** DONE Pattern matching rerevisited
 CLOSED: [2012-02-04 Sat 23:26]
 - State "DONE"       from "NEXT"       [2012-02-04 Sat 23:26]
 CLOCK: [2012-02-04 Sat 22:57]--[2012-02-04 Sat 23:26] =>  0:29
-**** NEXT Lemmas and translation
+**** TODO Lemmas and translation
+CLOCK: [2012-02-05 Sun 14:24]--[2012-02-05 Sun 14:56] =>  0:32
+CLOCK: [2012-02-05 Sun 14:08]--[2012-02-05 Sun 14:24] =>  0:16
 CLOCK: [2012-02-05 Sun 00:43]--[2012-02-05 Sun 01:13] =>  0:30
 CLOCK: [2012-02-04 Sat 23:26]--[2012-02-05 Sun 00:37] =>  1:11
 CLOCK: [2012-02-04 Sat 22:29]--[2012-02-04 Sat 22:57] =>  0:28
@@ -1204,9 +1240,13 @@ CLOCK: [2012-02-04 Sat 15:05]--[2012-02-04 Sat 15:14] =>  0:09
 :END:
 Here we can elaborate on different ways of translating, how to use
 predicates and if we should pattern match on all constructors and make
-the wild pattern always go to []. Say something about how this can be
-problematic with GADTs and other fancy type extensions.
+the wild pattern always go to [].
+***** DONE Problematic with GADTs and other fancy type extensions.
+CLOSED: [2012-02-05 Sun 12:39]
+- State "DONE"       from ""           [2012-02-05 Sun 12:39]
+CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:39] =>  0:02
 ***** Schematic view of lemmas with/without QuickSpec
+***** Change or to and
 **** Refutation
 Refutation is a proof that ends in $false
 [[http://www.cs.miami.edu/~tptp/TPTP/TPTPTParty/2007/PositionStatements/GeoffSutcliffe_SZS.html][SZS Output Ontology]]
@@ -1217,6 +1257,9 @@ CLOCK: [2012-02-03 Fri 11:39]--[2012-02-03 Fri 11:42] =>  0:03
 **** TODO Refer to the different theorem provers
 Prover9 has a bibtex
 **** TODO SZS Status ontology paper
+**** TODO Put the other success times from other provers in the same graph?
+**** TODO Use log time? How to handle 0? change this to 1 ms? ^^ It doesn't take 0ms anyway
+**** TODO Put test suite and test results summary on a separate page?
 *** TODO Conclusions
 This may need some thinking :)
 *** Misc
@@ -1228,3 +1271,8 @@ Maybe blend this with type classes? Abstract implementations of
 functions from typeclasses are at least monotone, and could respect
 the typeclass equalities.
 
+*** TODO Thorough reading
+Be consequent when talking about Haskell functions and their
+equivalent in logic. Specify the convention in the translation chapter
+*** TODO Change to and example
+*** TODO The only infinite nat satisfies x = succ(x)

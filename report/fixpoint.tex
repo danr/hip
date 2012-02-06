@@ -222,45 +222,6 @@ universally quantified equality. Hence, fixpoint induction gives us the
 \hs{map}-\hs{iterate} property.
 
 
-\begin{comment}
-To illustrate why it is important that the property $P$ is admissible,
-we shall consider an example
-consider the predicate P to be “is not infinite”, and then you can
-prove for a lot of functions that they return finite objects. For
-instance, define this function:
-
-CHANGE THIS
-
-  Instead do the finite list predicate, and use $\neq
-  \hs{False}$. This then servers for an example why inequality
-  predicates are not admissible!
-
-\begin{code}
-listrec :: ([a] -> [a]) -> [a] -> [a]
-listrec i [] = []
-listrec i (x:xs) = x : i xs
-\end{code}
-
-Then define
-$P(f) \Leftrightarrow \fa{x} ``f(x) \w \mathrm{is \w not \w infinite}"$,
-and proceed to prove $P(\hs{fix listrec})$ by fixed point induction. The
-base case $P(\bot)$ succeeds, since $\bot$ is not infinite, and if we
-assume $P(\hs{i})$, we have no problem proving $P(\hs{listrec i})$.
-Hence $P(\hs{fix listrec})$, and since \hs{fix listrec} is essentially
-a linear identity function on lists, we have ``proved'' that all lists
-are finite (but possibly partial).
-
-The error is as promised that $P$ is not admissible: for the sequence
-\begin{equation*}
-\bot \sqsubseteq
-\hs{0:}\bot \sqsubseteq
-\hs{0:1:}\bot \sqsubseteq
-\hs{0:1:2:}\bot \sqsubseteq
-\cdots
-\end{equation*}
-$P$ holds for all elements but $P$ does not hold for its limit \hs{[0..]}.
-
-\end{comment}
 
 \begin{comment}
 \subsection{Mutually Recursive Functions}
@@ -383,51 +344,42 @@ appropriate calls of $f$ are replaced.
 
 \subsection{Erroneous Use of Fixed Point Induction}
 
-The importance that the predicate $P$ is admissible is illustrated in
-this example. The function \hs{finite} below returns \hs{True} on
-finite lists and $\bot$ on partial lists.
+It is crucial that $P$ is admissible to avoid deriving nonsense. This
+section gives a simple example of such nonsense.  Recall the
+definition of the infinite natural number:
 
 \begin{code}
-finite :: [a] -> Bool
-finite []     = True
-finite (x:xs) = finite xs
+inf = Succ inf
 \end{code}
 
-Is it possible to use \hs{finite} to prove that \emph{all} lists in
-Haskell are either finite or partial? Let the predicate be
-$P(f) \Leftrightarrow \fa{xs} f \w xs \neq \hs{False}$, and proceed by fixed
-point induction. This is the proof plan with the predicate inlined:
+\noindent
+We shall deliberately use a predicate that is not admissible to
+``prove'' that $\hs{inf} \neq \hs{Succ inf}$.  The predicate is $P(x)
+\Leftrightarrow x \neq \fn{succ}(x)$. Furthermore, \hs{inf} is
+translated to logic and rewritten in terms of $\unfix{}$ and
+$\tofix{}$, as introduced in the previous section:
 
-\begin{mathpar}
-  \inferrule*
-     {
-       \fa{xs} \bot \w xs \neq \hs{False}
-       \\
-                     (\fa{xs} \unfix{\hs{finite}} \w xs \neq \hs{False})
-         \rightarrow (\fa{xs} \tofix{\hs{finite}} \w xs \neq \hs{False})
-     }
-     { \fa{xs} \hs{finite} \w xs \neq \hs{False} }
-\end{mathpar}
+\begin{equation*}
+\tofix{\fn{inf}} = \fn{succ}(\unfix{\fn{inf}})
+\end{equation*}
 
 \noindent
-The base case is trivial, as anything applied to bottom is $\bot$ and
-$\bot \neq \hs{False}$. The step case also succeeds; trivially if $xs$
-is the empty list, by the hypothesis if $xs$ is non-empty, and if $xs$
-is bottom for similar reasons as in the base case.
+Base case: $\bot \neq \fn{succ}(\bot)$ is true by the axioms of
+disjoint constructors.
 
-The error is as promised that $P$ is not admissible. See the
-$\sqsubseteq$-chain below:
-\begin{equation*}
-\bot \sqsubseteq
-\hs{0:}\bot \sqsubseteq
-\hs{0:1:}\bot \sqsubseteq
-\hs{0:1:2:}\bot \sqsubseteq
-\cdots
-\end{equation*}
-$P$ holds for all elements in the chain, but $P$ does not hold for its
-limit \hs{[0..]}. This example also serves as a proof that inequality
-in general is not admissible.
+\noindent
+Step case: assume
+$\unfix{\fn{inf}} \neq \fn{succ}(\unfix{\fn{inf}})$.
+Injectivity of $\fn{succ}$ gives
+$\fn{succ}(\unfix{\fn{inf}}) \neq \fn{succ}(\fn{succ}(\unfix{\fn{inf}}))$.
+By the definition of $\tofix{\fn{inf}}$, this is equal to the goal
+$\tofix{\fn{inf}} \neq \fn{succ}(\tofix{\fn{inf}})$.
 
+The conclusion $\hs{inf} \neq \hs{Succ inf}$ is clearly nonsense as it
+directly contradicts the definition of $\hs{inf}$! A consequence of
+this example is that inequality is in general not admissible.
+
+\end{comment}
 
 \subsection{Candidate Selection}
 
