@@ -713,13 +713,13 @@ CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:37] =>  0:00
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-06 Mon 20:30]
+Clock summary at [2012-02-07 Tue 09:27]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *58:44* |       |       |      |
+| *Total time*                                                  | *63:15* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 58:44   |       |       |      |
+| Plan                                                          | 63:15   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -742,12 +742,12 @@ Clock summary at [2012-02-06 Mon 20:30]
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         |  3:27 |       |      |
+| Tasks                                                         |         |  5:48 |       |      |
 | ONGOING Time planning                                         |         |       |  0:43 |      |
 | TODO Better name than autospec!                               |         |       |  0:20 |      |
-| TODO Presentation                                             |         |       |  0:08 |      |
+| TODO Presentation                                             |         |       |  2:29 |      |
 | DONE Mail Abstract to Meng                                    |         |       |  2:15 |      |
-| Report tasks                                                  |         | 26:27 |       |      |
+| Report tasks                                                  |         | 28:37 |       |      |
 | NEXT Introduction                                             |         |       |  7:10 |      |
 | NEXT Fancy pants Tree monad example                           |         |       |       | 0:30 |
 | TODO Related work                                             |         |       |  0:14 |      |
@@ -761,7 +761,7 @@ Clock summary at [2012-02-06 Mon 20:30]
 | DONE Pattern matching rerevisited                             |         |       |       | 0:29 |
 | TODO Lemmas and translation                                   |         |       |       | 3:42 |
 | TODO Results                                                  |         |       |  3:00 |      |
-| TODO Thorough reading                                         |         |       |  3:36 |      |
+| TODO Thorough reading                                         |         |       |  5:46 |      |
 #+END:
 ** Refile
 *** SOMEDAY Example ideas
@@ -1127,7 +1127,9 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 CLOCK: [2012-02-05 Sun 15:25]--[2012-02-05 Sun 15:45] =>  0:20
 
 *** TODO Presentation
-CLOCK: [2012-02-06 Mon 23:28]
+CLOCK: [2012-02-07 Tue 08:51]--[2012-02-07 Tue 09:27] =>  0:36
+CLOCK: [2012-02-07 Tue 08:51]--[2012-02-07 Tue 08:51] =>  0:00
+CLOCK: [2012-02-06 Mon 23:28]--[2012-02-07 Tue 01:13] =>  1:45
 CLOCK: [2012-02-06 Mon 11:18]--[2012-02-06 Mon 11:26] =>  0:08
 **** CANCELLED GTK2Hs frontend for proofs for presentation
 CLOSED: [2012-02-04 Sat 14:39]1
@@ -1287,4 +1289,14 @@ CLOCK: [2012-02-06 Mon 15:50]--[2012-02-06 Mon 17:42] =>  1:52
 Be consequent when talking about Haskell functions and their
 equivalent in logic. Specify the convention in the translation chapter
 *** TODO Change to and example
-*** TODO The only infinite nat satisfies x = succ(x)
+*** TODO Jonas' ideas for non implemented
+**** Module system for abstraction
+Would allow non concrete properties in the theory
+**** Work on GHC core
+That would solve desugaring, some module system issues and dictionary
+inlining.
+**** GHC Core Semantics
+**** GHC Core proving that a fuction behaves the same before and after optimisation
+*** DONE The only infinite nat satisfies x = succ(x)
+CLOSED: [2012-02-07 Tue 09:00]
+- State "DONE"       from "TODO"       [2012-02-07 Tue 09:00]

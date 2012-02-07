@@ -79,9 +79,10 @@
 
 * Translation of bind
 
-\hs{bind (Fork u v) f = Fork (bind u f) (bind v f)}
-
-\hs{bind (Leaf x) f = f x}
+\begin{verbatim}
+bind (Fork u v) f = Fork (bind u f) (bind v f)
+bind (Leaf x) f = f x
+\end{verbatim}
 
 #+BEGIN_LATEX
 \begin{align*}
@@ -131,7 +132,7 @@ $\fa{x} \app{\ptr{return}}{x} = \fn{return}(x)$
 #+END_LATEX
 
 
-* Lemma system - Totality
+* Future Work: Lemma system - Totality
 
 \centering
 \hs{data Nat = Succ Nat | Zero}
@@ -152,13 +153,13 @@ $\fa{x} \app{\ptr{return}}{x} = \fn{return}(x)$
 \faa{x}{y} \Total(x) \wedge \Total(y) \rightarrow x + y = y + x
 \end{equation*}
 
-* Lemma system - Finiteness
+* Future Work: Lemma system - Finiteness
 
 \begin{center}
 $\fa{xs} \Fin(xs) \rightarrow \fn{reverse}(\fn{reverse}(xs)) = xs$
 \end{center}
 
-* Lemma system - Infiniteness
+* Future Work: Lemma system - Infiniteness
 
 \begin{center}
 $\fa{x} \Inf(x) \leftrightarrow (x = \fn{succ}(x))$
@@ -178,7 +179,42 @@ $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
 \end{align*}
 
 
-* Future work: Type classes by Dictionary passing
+* Future Work: GHC Core
+** Mimic GHC Semantics
+** Type classes and desugaring for free
+* Future Work: Lemma synthesis by QuickSpec
+
+\begin{verbatim}
+Universe has 867 terms.
+== definitions ==
+1: suc x := x+suc zero
+== equations ==
+1: y+x == x+y
+2: y*x == x*y
+3: x+zero == x
+4: x*zero == zero
+5: y+(x+z) == x+(y+z)
+6: y*(x*z) == x*(y*z)
+7: x+suc y == suc (x+y)
+8: x*suc y == x+(x*y)
+9: (x*y)+(x*z) == x*(y+z)
+\end{verbatim}
+
+* Name Contest!
+
+** auhapp - AUtomated HAskell Property Prover
+
+** gluppe - GLUppe Proves Properties Equationally
+
+** glapp - GLapp Automatically Proves Properties
+
+** herp - Haskell Equational Reasoning Prover
+
+
+
+
+
+* Dictionary passing
 
 \begin{verbatim}
 class Monoid a where
@@ -200,17 +236,3 @@ data Monoid a = Monoid { mappend :: a -> a -> a
 mconcat :: Monoid a -> [a] -> a
 mconcat m = foldr (mappend m) (mempty m)
 \end{verbatim}
-
-* Name
-
-** auhapp - AUtomated HAskell Property Prover
-
-** gluppe - GLUppe Proves Properties Equationally
-
-** glapp - GLapp Automatically Proves Properties
-
-** herp - Haskell Equational Reasoning Prover
-
-
-
-

@@ -13,10 +13,10 @@ listFunctions = describe "ListFunctions"
                 , con "++"      ((++)    :: [Int] -> [Int] -> [Int])
                 , con "map"     (map     :: (Int -> Int) -> [Int] -> [Int])
                 , con "zipWith" (zipWith :: (Int -> Int -> Int) -> [Int] -> [Int] -> [Int])
-                , con "f" unOpType
-                , con "g" unOpType
-                , con "k" binOpType
-                , con "h" binOpType
+                , var "f" unOpType
+                , var "g" unOpType
+                , var "k" binOpType
+                , var "h" binOpType
                 ]
   where
     listType  = undefined :: [Int]
