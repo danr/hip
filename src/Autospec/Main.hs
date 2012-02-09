@@ -130,18 +130,20 @@ main = do
   let propRes :: [PropResult]
       propRes = concatMap snd totalRes
 
-  putStrLn "-- Total summary --------------------------------------------------"
-  putStrLn $ stringSummary propRes
+  when (length files > 1 || statistics) $ do
 
-  when statistics $ do
-       let header = "% " ++ showParams params
-       writeFile "statistics.data" $ unlines $
-            [header,tableHeader] ++
-            map (uncurry tableSummary) totalRes ++
-            [tableSummary "Total" propRes | length files > 1 ]
-       forM_ (times propRes) $ \(st,mm,ts) -> do
-            let fname = show st ++ "_" ++ maybe "" liberalShow mm ++ "Times.data"
-            writeFile fname (header ++ "\n" ++ unwords (map show ts) ++ "\n")
+    putStrLn "-- Total summary --------------------------------------------------"
+    putStrLn $ stringSummary propRes
+
+    when statistics $ do
+         let header = "% " ++ showParams params
+         writeFile "statistics.data" $ unlines $
+              [header,tableHeader] ++
+              map (uncurry tableSummary) totalRes ++
+              [tableSummary "Total" propRes | length files > 1 ]
+         forM_ (times propRes) $ \(st,mm,ts) -> do
+              let fname = show st ++ "_" ++ maybe "" liberalShow mm ++ "Times.data"
+              writeFile fname (header ++ "\n" ++ unwords (map show ts) ++ "\n")
 
 echo :: Show a => IO a -> IO a
 echo mx = mx >>= \x -> whenLoud (putStr (show x)) >> return x
@@ -169,13 +171,8 @@ proveAll latex processes timeout output reprove provers file properties = do
          putStrLn propCode
          forM_ parts $ \part@(Part partMethod partCoverage particles) ->
               when (statusFromPart part > None) $ do
-                  putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part)
-                  putStr "    "
-                  forM_ particles $ \(Particle particleDesc (result,maybeProver)) ->
-                       putStr $ particleDesc ++ ": " ++ show result ++
-                                concat [ "[" ++ show prover ++ "]" | prover <- maybeToList maybeProver ]
-                                ++ "  "
-                  putStrLn ""
+                  putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part) ++
+                             " (" ++ intercalate ", " (map (\(Particle _ (result,_)) -> show (successTime result `div` 1000) ++ "ms") particles) ++ ")"
          putStrLn ""
 
     putStrLn $ stringSummary propRes

@@ -1,7 +1,7 @@
 module Trees where
 
 import AutoPrelude
-import Prelude (Eq,Show)
+import Prelude ()
 
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
 

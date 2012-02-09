@@ -713,13 +713,13 @@ CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:37] =>  0:00
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-07 Tue 09:27]
+Clock summary at [2012-02-08 Wed 12:42]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *63:15* |       |       |      |
+| *Total time*                                                  | *64:23* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 63:15   |       |       |      |
+| Plan                                                          | 64:23   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -742,10 +742,10 @@ Clock summary at [2012-02-07 Tue 09:27]
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         |  5:48 |       |      |
+| Tasks                                                         |         |  6:56 |       |      |
 | ONGOING Time planning                                         |         |       |  0:43 |      |
 | TODO Better name than autospec!                               |         |       |  0:20 |      |
-| TODO Presentation                                             |         |       |  2:29 |      |
+| TODO Presentation                                             |         |       |  2:55 |      |
 | DONE Mail Abstract to Meng                                    |         |       |  2:15 |      |
 | Report tasks                                                  |         | 28:37 |       |      |
 | NEXT Introduction                                             |         |       |  7:10 |      |
@@ -1100,6 +1100,8 @@ CLOSED: [2012-01-31 Tue 11:54]
 CLOCK: [2012-01-31 Tue 11:36]--[2012-01-31 Tue 11:47] =>  0:11
 CLOCK: [2012-01-31 Tue 11:23]--[2012-01-31 Tue 11:33] =>  0:10
 ** Tasks
+CLOCK: [2012-02-08 Wed 12:42]--[2012-02-08 Wed 12:42] =>  0:00
+CLOCK: [2012-02-08 Wed 12:00]--[2012-02-08 Wed 12:42] =>  0:42
 CLOCK: [2012-01-29 Sun 14:52]--[2012-01-29 Sun 14:53] =>  0:01
 *** ONGOING Time planning
 CLOCK: [2012-02-06 Mon 08:58]--[2012-02-06 Mon 09:03] =>  0:05
@@ -1127,6 +1129,10 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 CLOCK: [2012-02-05 Sun 15:25]--[2012-02-05 Sun 15:45] =>  0:20
 
 *** TODO Presentation
+CLOCK: [2012-02-09 Thu 11:14]
+CLOCK: [2012-02-09 Thu 09:40]--[2012-02-09 Thu 11:00] =>  1:20
+CLOCK: [2012-02-08 Wed 11:55]--[2012-02-08 Wed 12:00] =>  0:05
+CLOCK: [2012-02-07 Tue 12:55]--[2012-02-07 Tue 13:16] =>  0:21
 CLOCK: [2012-02-07 Tue 08:51]--[2012-02-07 Tue 09:27] =>  0:36
 CLOCK: [2012-02-07 Tue 08:51]--[2012-02-07 Tue 08:51] =>  0:00
 CLOCK: [2012-02-06 Mon 23:28]--[2012-02-07 Tue 01:13] =>  1:45

@@ -44,6 +44,7 @@
 \newcommand{\desclra}[1]{& \hspace{35mm} \Leftrightarrow \hspace{4mm} \{ \text{#1} \}}
 
 \newcommand\lub[1]{\sqcup_{#1}}
+
 \newcommand\defof[1]{definition of #1}
 
 \newcommand\w[0]{\,\,}
@@ -81,7 +82,7 @@
 
 \begin{verbatim}
 bind (Fork u v) f = Fork (bind u f) (bind v f)
-bind (Leaf x) f = f x
+bind (Leaf x)   f = f x
 \end{verbatim}
 
 #+BEGIN_LATEX
@@ -117,9 +118,31 @@ $\fa{x} \app{\ptr{return}}{x} = \fn{return}(x)$
 
 ** Structural Induction
 
-** Fixed Point Induction
+\begin{verbatim}
+prop_return_right :: Tree a -> Prop (Tree a)
+prop_return_right t = t >>= return =:= t
+\end{verbatim}
+
+
+\pause
 
 ** Approximation Lemma
+
+\begin{verbatim}
+prop_return_left :: (a -> Tree b) -> a -> Prop (Tree b)
+prop_return_left f x = return x >>= f =:= f x
+\end{verbatim}
+
+\pause
+
+** Fixed Point Induction
+
+\footnotesize{
+\begin{verbatim}
+prop_assoc :: Tree a -> (a -> Tree b) -> (b -> Tree c) -> Prop (Tree c)
+prop_assoc t f g = (t >>= f) >>= g =:= t >>= (\x -> f x >>= g)
+\end{verbatim}
+}
 
 * Results
 
@@ -166,6 +189,8 @@ $\fa{x} \Inf(x) \leftrightarrow (x = \fn{succ}(x))$
 \end{center}
 
 \vspace{1\baselineskip}
+
+\pause
 
 \begin{center}
 $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
