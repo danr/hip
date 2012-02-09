@@ -125,8 +125,20 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+\frametitle{Overview}
 
-%% ADD OVERVIEW
+Add an overview picture of the project. Highlight the parts that
+
+\begin{itemize}
+\item The programmer supplies (source + properties)
+\item What my tool does (translation, instantiating, displaying results)
+\item ATPs job
+\end{itemize}
+
+It is possible that this picture could make the previous slide superfluous
+
+\end{frame}
 
 
 \begin{frame}[fragile]
@@ -134,8 +146,8 @@
 \label{sec-2}
 
 \begin{code}
-bind (Fork u v) f = Fork (bind u f) (bind v f)
-bind (Leaf x)   f = f x
+Fork u v >>= f = Fork (u >>= f) (v >>= f)
+Leaf x   >>= f = f x
 \end{code}
 
 \begin{align*}
@@ -324,7 +336,7 @@ bind' b (Fork u v) f = Fork (b u f) (b v f)
 bind' b (Leaf x)   f = f x
 \end{code}
 
-\hs{bind = fix bind'}
+\hs{(>>=) = fix bind'}
 
 \pause
 
@@ -374,9 +386,9 @@ Leaf x   >>=$\fixb$ f = f x
 \frametitle{Bind Associativity with Fixed Point Induction}
 
 \begin{code}
-prop_assoc t f g = (t >>= f) >>= g =:=
-                   t >>= (\x -> f x >>= g)
+(t >>= f) >>= g =:= t >>= (\x -> f x >>= g)
 \end{code}
+
 
 To show:
 
@@ -455,21 +467,44 @@ lhs = & \; \bind{(\bindb{\fork{u}{v}}{f})}{g} \\
 
 \end{frame}
 
+%\begin{frame}[fragile]
+%\frametitle{Approximation Lemma - iterate}
+%
+%\begin{code}
+%iterate f x = x : iterate f (f x)
+%\end{code}
+%
+%\begin{code}
+%iterate (^2) 1 = 1 : 2 : 4 : 8 : 16 : ...
+%\end{code}
+%
+%\end{frame}
+
 \begin{frame}[fragile]
-\frametitle{Approximation Lemma - iterate}
+\frametitle{Bind Associativity with Fixed Point Induction}
+
+We have shown
+\begin{align*}
+&\bindw{(\bindb{t}{f})}{g} = \bindw{t}{\lamptr{f}{g}} \rightarrow \\
+&\bindb{(\bindb{t}{f})}{g} = \bindb{t}{\lamptr{f}{g}}
+\end{align*}
+
+Base case is trivial
+$$\bot(g) = \bot(\lamptr{f}{g})$$
+
+Fixed Point Induction gives
+$$\bind{(\bindb{t}{f})}{g} = \bind{t}{\lamptr{f}{g}}$$
 
 \begin{code}
-iterate f x = x : iterate f (f x)
-\end{code}
-
-\begin{code}
-iterate (^2) 1 = 1 : 2 : 4 : 8 : 16 : ...
+(t >>= f) >>= g =:= t >>= (\x -> f x >>= g)
 \end{code}
 
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Approximation Lemma - map-iterate}
+
+\pause
 
 \begin{code}
 map f (iterate f x) =:= iterate f (f x)
@@ -489,7 +524,7 @@ approx []     = []
 approx (x:xs) = x : approx n xs
 \end{code}
 
-And use Fixed Point Induction
+Now we can use Fixed Point Induction!
 
 \end{frame}
 
@@ -535,7 +570,9 @@ lhs = & \; \appb{\map{f}{\iter{f}{x}}} \\
 
 \begin{frame}
 \frametitle{Test Suite}
-A mind map of the different parts of the test suite
+
+A mind map of the different parts of the test suite, and some example
+properties from the different kinds
 \end{frame}
 
 
@@ -623,6 +660,8 @@ $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
 
 \begin{frame}[fragile]
 \frametitle{Future Work: Lemma synthesis from QuickSpec}
+Change to something more exotic than natural numbers?
+
 \begin{verbatim}
 == definitions ==
 1: suc x := x+suc zero
@@ -643,10 +682,12 @@ $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
 \begin{frame}
   \frametitle{Related Work}
   \begin{itemize}
-    \item Zeno
-    \item Combining Interactive and Automatic Reasoning about Functional Programs
+    \item Zeno (Sonnex, Drossopoulou, Eisenbach) {\footnotesize(Imperial College)}
+
+    \item Combining Interactive and Automatic Reasoning about Functional Programs \\
           (Bove, Dybjer, Sicard)
-    \item
+    \item Dependently Typed Programming based on Automated Theorem Proving \\
+          (Armstrong, Foster, Struth) {\footnotesize(Univ. of Sheffield)}
   \end{itemize}
 \end{frame}
 
