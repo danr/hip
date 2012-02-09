@@ -106,6 +106,7 @@
 \newcommand{\forkl}[1]{\fn{left}(#1)}
 \newcommand{\leaf}[1]{\fn{leaf}(#1)}
 \newcommand{\unleaf}[1]{\fn{unleaf}(#1)}
+\newcommand{\return}[1]{\fn{return}(#1)}
 
 \newcommand{\bindb}[2]{#1 \tofix{\bindname} #2}
 \newcommand{\bindw}[2]{#1 \unfix{\bindname} #2}
@@ -225,8 +226,16 @@ For each function in the theory, make a pointer with its axiom:
 \frametitle{Plain Equality Example}
 
 \begin{code}
-prop_return_left f x = return x >>= f =:= f x
+return x >>= f =:= f x
 \end{code}
+
+\begin{align*}
+lhs = & \; \bind{\return{x}}{f}        \\
+    = & \; \bind{\leaf{x}}{f}          \\
+    = & \; f @ x                       \\
+    = & \; rhs
+\end{align*}
+
 
 \end{frame}
 
@@ -234,9 +243,78 @@ prop_return_left f x = return x >>= f =:= f x
 \frametitle{Structural Induction Example}
 
 \begin{code}
-prop_assoc t f g = (t >>= f) >>= g =:=
-                   t >>= (\x -> f x >>= g)
+t >>= return =:= t
 \end{code}
+
+\vspace{2\baselineskip}
+
+Case $\leaf{x}$:
+
+\begin{align*}
+lhs = & \; \bind{\leaf{x}}{\ptr{return}} \\
+    = & \; \app{\ptr{return}}{x}         \\
+    = & \; \return{x}                    \\
+    = & \; \leaf{x}                      \\
+    = & \; rhs
+\end{align*}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Structural Induction Example}
+
+\begin{code}
+t >>= return =:= t
+\end{code}
+
+\vspace{2\baselineskip}
+
+Case: $\fork{u}{v}$
+
+\vspace{1\baselineskip}
+
+Induction hypothesis: $\bind{t}{\ptr{return}} = t$
+
+\begin{align*}
+lhs = & \; \bind{\fork{u}{v}}{\ptr{return}}                      \\
+    = & \; \fork{\bind{u}{\ptr{return}}}{\bind{v}{\ptr{return}}} \\
+    = & \; \fork{u}{v}                                           \\
+    = & \; rhs
+\end{align*}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Structural Induction for Infinite Values}
+
+\begin{code}
+t >>= return =:= t
+\end{code}
+
+\vspace{1\baselineskip}
+
+But, if we also show the $\bot$ case...
+
+$$\bind{\bot}{\ptr{return}} = \bot$$
+
+\vspace{1\baselineskip}
+
+By a theorem from domain theory then it holds for \emph{infinite trees}:
+
+\begin{mathpar}
+  \inferrule*
+    {
+      P(\bot)
+      \and
+      P(\leaf{x})
+      \and
+      P(u)\!\wedge\!P(v)\!\!\rightarrow\!\!P(\fork{u}{v})
+      \and
+      P \, \mathrm{admissible}
+    }
+    { P(t) }
+\end{mathpar}
+
 \end{frame}
 
 \begin{frame}[fragile]
@@ -289,7 +367,6 @@ Leaf x   >>=$\fixb$ f = f x
 \end{mathpar}
 
 \end{frame}
-
 
 \newcommand\lamptr[2]{(\appp{\app{\ptr{lam}}{#1}}{#2})}
 
@@ -378,33 +455,86 @@ lhs = & \; \bind{(\bindb{\fork{u}{v}}{f})}{g} \\
 
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Approximation Lemma - iterate}
 
-%\begin{frame}
-%\frametitle{Properties with infinite values}
-%map-iterate explanation
-%\vspace{1cm}
-%nothing to do induction on!
+\begin{code}
+iterate f x = x : iterate f (f x)
+\end{code}
 
-%\end{frame}
+\begin{code}
+iterate (^2) 1 = 1 : 2 : 4 : 8 : 16 : ...
+\end{code}
 
-%\begin{frame}
-%\frametitle{Approximation lemma}
-%we approximate the result in the equality \\
-%\vspace{1cm}
-%IS: assume it holds for lists of length $n$, and show for length $n+1$
-%\end{frame}
-%
-%\begin{frame}
-%\frametitle{Fixpoint induction}
-%over the recursive structure of the function \\
-%\vspace{1cm}
-%IS: assume for $\unfix{iterate}$, prove for $\tofix{iterate}$
-%\end{frame}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Approximation Lemma - map-iterate}
+
+\begin{code}
+map f (iterate f x) =:= iterate f (f x)
+\end{code}
+
+\begin{code}
+approx :: Nat -> [a] -> [a]
+approx (1 + n) []     = []
+approx (1 + n) (x:xs) = x : approx xs
+\end{code}
+
+\pause
+
+\begin{code}
+approx :: [a] -> [a]
+approx []     = []
+approx (x:xs) = x : approx n xs
+\end{code}
+
+And use Fixed Point Induction
+
+\end{frame}
+
+\newcommand\iter[2]{\fn{iterate}(#1,\,#2)}
+\newcommand\map[2]{\fn{map}(#1,\,#2)}
+\newcommand\appw[1]{\fn{\unfix{approx}}(#1)}
+\newcommand\appb[1]{\fn{\tofix{approx}}(#1)}
+
+\begin{frame}[fragile]
+\frametitle{Approximation Lemma - map-iterate}
+
+\small{
+\begin{code}[mathescape]
+approx$\fixb$ :: [a] -> [a]
+approx$\fixb$ []     = []
+approx$\fixb$ (x:xs) = x : approx$\fixw$ xs
+\end{code}
+}
+
+$$\map{f}{\iter{f}{x}} = \iter{f}{\app{f}{x}}$$
+
+\pause
+
+Induction hypothesis:
+$$\appw{\map{f}{\iter{f}{x}}} = \appw{\iter{f}{\app{f}{x}}}$$
+
+\pause
+
+\begin{align*}
+lhs = & \; \appb{\map{f}{\iter{f}{x}}} \\
+    = & \; \appb{\map{f}{x:\iter{f}{\app{f}{x}}}}\\
+    = & \; \appb{\app{f}{x} : \map{f}{\iter{f}{\app{f}{x}}}}\\
+    = & \; \app{f}{x} : \appw{\map{f}{\iter{f}{\app{f}{x}}}}\\
+    = & \; \app{f}{x} : \appw{\iter{f}{\app{f}{(\app{f}{x})}}}\\
+    = & \; \appb{\app{f}{x} : \iter{f}{\app{f}{(\app{f}{x})}}}\\
+    = & \; \appb{\iter{f}{\app{f}{x}}} \\
+    = & \; rhs
+\end{align*}
+
+\end{frame}
 
 %% DRAW THIS
 
 \begin{frame}
-\frametitle{Testsuite}
+\frametitle{Test Suite}
 A mind map of the different parts of the test suite
 \end{frame}
 
@@ -415,11 +545,23 @@ A mind map of the different parts of the test suite
 \frametitle{Results}
 \label{sec-5}
 
+540 properties in the test suite
 
-\begin{tabular}{ >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l || >{\small}r@{/}>{\small}l }
-\multicolumn{2}{>{\small}l|}{Theorem} & \multicolumn{2}{>{\small}l|}{plain} & \multicolumn{2}{>{\small}l|}{induction} & \multicolumn{2}{>{\small}l|}{approx} & \multicolumn{2}{>{\small}l||}{fixpoint} & \multicolumn{2}{>{\small}l}{Finite Thm.}  \\
-214&540 & 74&214 & 124&214 & 145&214 & 26&214 & 111&540 \\
-\end{tabular}
+\begin{itemize}
+\item 214 Theorems
+      \begin{itemize}
+      \item Definitional Equality: 74
+      \item Structural Induction:  124
+      \item Approximation Lemma:   145
+      \item Fixed Point Induction: 26
+      \end{itemize}
+\item 111 Finite Theorems
+\end{itemize}
+
+%\begin{tabular}{ >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l | >{\small}r@{/}>{\small}l || >{\small}r@{/}>{\small}l }
+%\multicolumn{2}{>{\small}l|}{Theorem} & \multicolumn{2}{>{\small}l|}{plain} & \multicolumn{2}{>{\small}l|}{induction} & \multicolumn{2}{>{\small}l|}{approx} & \multicolumn{2}{>{\small}l||}{fixpoint} & \multicolumn{2}{>{\small}l}{Finite Thm.}  \\
+%214&540 & 74&214 & 124&214 & 145&214 & 26&214 & 111&540 \\
+%\end{tabular}
 \end{frame}
 
 
@@ -504,6 +646,7 @@ $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
     \item Zeno
     \item Combining Interactive and Automatic Reasoning about Functional Programs
           (Bove, Dybjer, Sicard)
+    \item
   \end{itemize}
 \end{frame}
 
@@ -513,8 +656,8 @@ $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
 \begin{itemize}
 \item FOL is expressible enough for various Haskell concepts; pattern
   matching, infinite data structures and higher order functions
-\item Much thanks to referential transparency
-\item Possible to prove properties without proving termination
+\item Thanks to referential transparency
+\item Possible to prove many properties without proving termination
 \end{itemize}
 \end{frame}
 
@@ -541,16 +684,12 @@ these are slides from the old presentation
 \frametitle{Name Contest!}
 \label{sec-11}
 \begin{itemize}
-
+\item hip - Haskell Inductive Prover\\
 \item auhapp - AUtomated HAskell Property Prover\\
-\label{sec-11-1}%
 \item gluppe - GLUppe Proves Properties Equationally\\
-\label{sec-11-2}%
 \item glapp - GLapp Automatically Proves Properties\\
-\label{sec-11-3}%
 \item herp - Haskell Equational Reasoning Prover\\
-\label{sec-11-4}%
-\end{itemize} % ends low level
+\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
