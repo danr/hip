@@ -118,27 +118,27 @@
 
 \begin{frame}
   \frametitle{Behind the Scenes}
-  \begin{itemize}
-    \item Translation to first order logic\\
-    \item Trying different induction techniques\\
-    \item Running automated theorem provers\\
-  \end{itemize}
+%  \begin{itemize}
+%    \item Translation to first order logic\\
+%    \item Trying different induction techniques\\
+%    \item Running automated theorem provers\\
+%  \end{itemize}
 \end{frame}
 
-\begin{frame}
-\frametitle{Overview}
-
-Add an overview picture of the project. Highlight the parts that
-
-\begin{itemize}
-\item The programmer supplies (source + properties)
-\item What my tool does (translation, instantiating, displaying results)
-\item ATPs job
-\end{itemize}
-
-It is possible that this picture could make the previous slide superfluous
-
-\end{frame}
+%\begin{frame}
+%\frametitle{Overview}
+%
+%Add an overview picture of the project. Highlight the parts that
+%
+%\begin{itemize}
+%\item The programmer supplies (source + properties)
+%\item What my tool does (translation, instantiating, displaying results)
+%\item ATPs job
+%\end{itemize}
+%
+%It is possible that this picture could make the previous slide superfluous
+%
+%\end{frame}
 
 
 \begin{frame}[fragile]
@@ -194,7 +194,7 @@ representing the function with an axiom:
     \item Sugar etc
       \begin{itemize}
         \item list comprehensions \\
-        \item \hs{do}-notation) \\
+        \item \hs{do}-notation \\
         \item no \hs{seq}
       \end{itemize}
   \end{itemize}
@@ -262,6 +262,31 @@ lhs = & \; \bind{\return{x}}{f}        \\
 \begin{frame}[fragile]
 \frametitle{Structural Induction Example}
 
+\begin{mathpar}
+  \inferrule*
+    {
+      P(\leaf{x})
+      \and
+      P(u)\wedge P(v)\rightarrow P(\fork{u}{v})
+    }
+    { P(t) }
+\end{mathpar}
+
+\pause
+
+\begin{code}
+t >>= return =:= t
+\end{code}
+
+We define $P$ as:
+
+$$P(t) \Leftrightarrow \bind{t}{\ptr{return}} = t$$
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Structural Induction Example}
+
 \begin{code}
 t >>= return =:= t
 \end{code}
@@ -293,7 +318,7 @@ Case $\fork{u}{v}$:
 
 \vspace{1\baselineskip}
 
-Induction hypothesis: $\bind{t}{\ptr{return}} = t$
+Hypotheses: $\bind{u}{\ptr{return}} = u$ and $\bind{v}{\ptr{return}} = v$
 
 \begin{align*}
 lhs = & \; \bind{\fork{u}{v}}{\ptr{return}}                      \\
@@ -353,11 +378,11 @@ bind' b (Leaf x)   f = f x
     {
       P(\bot)
       \\
-      P(b) \rightarrow P(\fn{bind'} \w b)
+      P(x) \rightarrow P(f \w x)
       \\
       P \, \mathrm{admissible}
     }
-    { P(\fn{fix} \w \fn{bind'}) }
+    { P(\fn{fix} \w f) }
 \end{mathpar}
 
 \pause
@@ -379,12 +404,22 @@ Leaf x   >>=$\fixb$ f = f x
      {
        P(\bot)
        \\
-       P(\unfix{\fn{bind}}) \rightarrow P(\tofix{\fn{bind}})
+       P(\unfix{\bindname}) \rightarrow P(\tofix{\bindname})
        \\
        P \, \mathrm{admissible}
      }
-     { P(\fn{bind}) }
+     { P(\bindname) }
 \end{mathpar}
+
+\pause
+
+\begin{code}
+(t >>= f) >>= g =:= t >>= (\x -> f x >>= g)
+\end{code}
+
+Define $P$:
+
+$$P(h) :\Leftrightarrow \bind{h(t,f)}{g} = h(t,\lambda x . \bind{\app{f}{x}}{g})$$
 
 \end{frame}
 
@@ -522,7 +557,7 @@ map f (iterate f x) =:= iterate f (f x)
 \begin{code}
 approx :: Nat -> [a] -> [a]
 approx (1 + n) []     = []
-approx (1 + n) (x:xs) = x : approx xs
+approx (1 + n) (x:xs) = x : approx n xs
 \end{code}
 
 \pause
