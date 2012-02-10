@@ -59,24 +59,27 @@ sort :: [Nat] -> [Nat]
 sort [] = []
 sort (x:xs) = insert x (sort xs)
 
-prop_sort_idem :: [Nat] -> Prop [Nat]
-prop_sort_idem xs = sort (sort xs) =:= sort xs
-
-prop_length_sort :: [Nat] -> Prop Nat
-prop_length_sort xs = length (sort xs) =:= length xs
-
-prop_sort_sorts :: [Nat] -> Prop Bool
-prop_sort_sorts xs = proveBool (sorted (sort xs))
-
-prop_count :: Nat -> [Nat] -> Prop Nat
-prop_count n xs = count n xs =:= count n (sort xs)
-
 prop_elem :: Nat -> [Nat] -> Prop Bool
 prop_elem n xs = elem n xs =:= elem n (sort xs)
 
 prop_elem_insert :: Nat -> [Nat] -> Prop Bool
 prop_elem_insert x xs = proveBool (elem x (insert x xs))
 
+
+--prop_sort_idem :: [Nat] -> Prop [Nat]
+--prop_sort_idem xs = sort (sort xs) =:= sort xs
+--
+--prop_length_sort :: [Nat] -> Prop Nat
+--prop_length_sort xs = length (sort xs) =:= length xs
+--
+--prop_sort_sorts :: [Nat] -> Prop Bool
+--prop_sort_sorts xs = proveBool (sorted (sort xs))
+--
+--prop_count :: Nat -> [Nat] -> Prop Nat
+--prop_count n xs = count n xs =:= count n (sort xs)
+
+
+{-
 
 otherwise = True
 
@@ -152,3 +155,5 @@ main = do
   quickCheck (printTestCase "prop_countBool" (prop_countBool :: Bool -> [Bool] -> Prop Nat))
   quickCheck (printTestCase "prop_elemBool" (prop_elemBool :: Bool -> [Bool] -> Prop Bool))
   quickCheck (printTestCase "prop_elemBool_insert" (prop_elemBool_insert :: Bool -> [Bool] -> Prop Bool))
+
+  -}

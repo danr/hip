@@ -171,11 +171,12 @@ Leaf x   >>= f = f x
 $\rom{2} \quad \faa{x}{f} \bind{\leaf{x}}{f} = \app{f}{x}$
 
 \vspace{2\baselineskip}
-
-For each function in the theory, make a pointer with its axiom:
-
+\end{center}
+For each function in the theory, make a new constant
+representing the function with an axiom:
+\begin{center}
 \begin{align*}
-\app{\ptr{return}}{x}        & = \fn{return}(x) \\
+\app{\ptr{return}}{x}         & = \fn{return}(x) \\
 \appp{\app{\ptr{bind}}{t}}{f} & = \bind{t}{f}
 \end{align*}
 
@@ -185,10 +186,17 @@ For each function in the theory, make a pointer with its axiom:
 \begin{frame}[fragile]
   \frametitle{Limitations in the Haskell translation}
   \begin{itemize}
-    \item Type classes
-    \item Built-in types (\hs{Integer}, \hs{Int}, \hs{Char} $\ldots$)
-    \item Sugar (list comprehensions, \hs{do}-notation)
-    \item no \hs{seq}
+    \item Difficult
+      \begin{itemize}
+        \item Type classes \\
+        \item Built-in types (\hs{Integer}, \hs{Int}, \hs{Char} $\ldots$)
+      \end{itemize}
+    \item Sugar etc
+      \begin{itemize}
+        \item list comprehensions \\
+        \item \hs{do}-notation) \\
+        \item no \hs{seq}
+      \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -281,7 +289,7 @@ t >>= return =:= t
 
 \vspace{2\baselineskip}
 
-Case: $\fork{u}{v}$
+Case $\fork{u}{v}$:
 
 \vspace{1\baselineskip}
 
@@ -349,7 +357,7 @@ bind' b (Leaf x)   f = f x
       \\
       P \, \mathrm{admissible}
     }
-    { P(\fn{bind'}) }
+    { P(\fn{fix} \w \fn{bind'}) }
 \end{mathpar}
 
 \pause
@@ -381,6 +389,7 @@ Leaf x   >>=$\fixb$ f = f x
 \end{frame}
 
 \newcommand\lamptr[2]{(\appp{\app{\ptr{lam}}{#1}}{#2})}
+\newcommand\lam[3]{\fn{lam}(#1, \, #2, \, #3)}
 
 \begin{frame}[fragile]
 \frametitle{Bind Associativity with Fixed Point Induction}
@@ -396,7 +405,7 @@ $$\bind{(\bindb{t}{f})}{g} = \bindb{t}{\lamptr{f}{g}}$$
 
 where
 
-$$\fn{lambda}(f,g,x) = \bind{\app{f}{x}}{g}$$
+$$\lam{f}{g}{x} = \bind{\app{f}{x}}{g}$$
 
 \pause
 
@@ -434,12 +443,12 @@ Case $\leaf{x}$. To show:
 $$\bind{(\bindb{\leaf{x}}{f})}{g} = \bindb{\leaf{x}}{\lamptr{f}{g}}$$
 
 where
-$$\fn{lambda}(f,g,x) = \bind{\app{f}{x}}{g}$$
+$$\lam{f}{g}{x} = \bind{\app{f}{x}}{g}$$
 
 \begin{align*}
 lhs = & \; \bind{(\bindb{\leaf{x}}{f})}{g} \\
     = & \; \bind{\app{f}{x}}{g}            \\
-    = & \; \fn{lambda}(f,g,x)              \\
+    = & \; \lam{f}{g}{x}              \\
     = & \; \app{\lamptr{f}{g}}{x}          \\
     = & \; \bindb{\leaf{x}}{\lamptr{f}{g}} \\
     = & \; rhs
@@ -485,15 +494,15 @@ lhs = & \; \bind{(\bindb{\fork{u}{v}}{f})}{g} \\
 
 We have shown
 \begin{align*}
-&\bindw{(\bindb{t}{f})}{g} = \bindw{t}{\lamptr{f}{g}} \rightarrow \\
-&\bindb{(\bindb{t}{f})}{g} = \bindb{t}{\lamptr{f}{g}}
+&\bind{(\bindw{t}{f})}{g} = \bindw{t}{\lamptr{f}{g}} \rightarrow \\
+&\bind{(\bindb{t}{f})}{g} = \bindb{t}{\lamptr{f}{g}}
 \end{align*}
 
 Base case is trivial
-$$\bot(g) = \bot(\lamptr{f}{g})$$
+$$\bind{\bot}{g} = \bot(\lamptr{f}{g})$$
 
 Fixed Point Induction gives
-$$\bind{(\bindb{t}{f})}{g} = \bind{t}{\lamptr{f}{g}}$$
+$$\bind{(\bind{t}{f})}{g} = \bind{t}{\lamptr{f}{g}}$$
 
 \begin{code}
 (t >>= f) >>= g =:= t >>= (\x -> f x >>= g)
@@ -518,10 +527,16 @@ approx (1 + n) (x:xs) = x : approx xs
 
 \pause
 
+To show $xs = ys$, use induction over $\mathbb{N}$ to prove
+
+$$\fa{n}\fn{approx}(n,xs) = \fn{approx}(n,ys)$$
+
+\pause
+
 \begin{code}
-approx :: [a] -> [a]
-approx []     = []
-approx (x:xs) = x : approx n xs
+ind :: [a] -> [a]
+ind []     = []
+ind (x:xs) = x : ind xs
 \end{code}
 
 Now we can use Fixed Point Induction!
@@ -530,17 +545,17 @@ Now we can use Fixed Point Induction!
 
 \newcommand\iter[2]{\fn{iterate}(#1,\,#2)}
 \newcommand\map[2]{\fn{map}(#1,\,#2)}
-\newcommand\appw[1]{\fn{\unfix{approx}}(#1)}
-\newcommand\appb[1]{\fn{\tofix{approx}}(#1)}
+\newcommand\appw[1]{\fn{\unfix{ind}}(#1)}
+\newcommand\appb[1]{\fn{\tofix{ind}}(#1)}
 
 \begin{frame}[fragile]
 \frametitle{Approximation Lemma - map-iterate}
 
 \small{
 \begin{code}[mathescape]
-approx$\fixb$ :: [a] -> [a]
-approx$\fixb$ []     = []
-approx$\fixb$ (x:xs) = x : approx$\fixw$ xs
+ind$\fixb$ :: [a] -> [a]
+ind$\fixb$ []     = []
+ind$\fixb$ (x:xs) = x : ind$\fixw$ xs
 \end{code}
 }
 

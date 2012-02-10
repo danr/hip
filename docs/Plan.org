@@ -713,13 +713,13 @@ CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:37] =>  0:00
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-09 Thu 13:46]
+Clock summary at [2012-02-10 Fri 10:38]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *67:49* |       |       |      |
+| *Total time*                                                  | *76:02* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 67:49   |       |       |      |
+| Plan                                                          | 76:02   |       |       |      |
 | Completed                                                     |         | 28:50 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -742,11 +742,12 @@ Clock summary at [2012-02-09 Thu 13:46]
 | DONE Disable combinatorial explosions from fpi and str ind    |         |       |       | 1:53 |
 | Report                                                        |         |       |  0:21 |      |
 | DONE Quantifying functions and app                            |         |       |       | 0:21 |
-| Tasks                                                         |         | 10:22 |       |      |
+| Tasks                                                         |         | 18:35 |       |      |
 | ONGOING Time planning                                         |         |       |  0:43 |      |
 | TODO Better name than autospec!                               |         |       |  0:20 |      |
-| TODO Presentation                                             |         |       |  6:21 |      |
+| TODO Presentation                                             |         |       |  2:50 |      |
 | DONE Mail Abstract to Meng                                    |         |       |  2:15 |      |
+| TODO Final presentation                                       |         |       | 11:44 |      |
 | Report tasks                                                  |         | 28:37 |       |      |
 | NEXT Introduction                                             |         |       |  7:10 |      |
 | NEXT Fancy pants Tree monad example                           |         |       |       | 0:30 |
@@ -1129,10 +1130,6 @@ CLOCK: [2012-01-29 Sun 14:53]--[2012-01-29 Sun 14:56] =>  0:03
 CLOCK: [2012-02-05 Sun 15:25]--[2012-02-05 Sun 15:45] =>  0:20
 
 *** TODO Presentation
-CLOCK: [2012-02-09 Thu 13:26]--[2012-02-09 Thu 13:46] =>  0:20
-CLOCK: [2012-02-09 Thu 11:14]--[2012-02-09 Thu 13:00] =>  1:46
-CLOCK: [2012-02-09 Thu 09:40]--[2012-02-09 Thu 11:00] =>  1:20
-CLOCK: [2012-02-08 Wed 11:55]--[2012-02-08 Wed 12:00] =>  0:05
 CLOCK: [2012-02-07 Tue 12:55]--[2012-02-07 Tue 13:16] =>  0:21
 CLOCK: [2012-02-07 Tue 08:51]--[2012-02-07 Tue 09:27] =>  0:36
 CLOCK: [2012-02-07 Tue 08:51]--[2012-02-07 Tue 08:51] =>  0:00
@@ -1147,6 +1144,13 @@ CLOSED: [2012-02-06 Mon 11:18] DEADLINE: <2012-02-03 Fri>
 CLOCK: [2012-02-06 Mon 09:03]--[2012-02-06 Mon 11:18] =>  2:15
 *** TODO Final presentation
 SCHEDULED: <2012-02-10 Fri>
+CLOCK: [2012-02-10 Fri 09:40]--[2012-02-10 Fri 10:38] =>  0:58
+CLOCK: [2012-02-09 Thu 18:59]--[2012-02-09 Thu 22:52] =>  3:53
+CLOCK: [2012-02-09 Thu 14:00]--[2012-02-09 Thu 17:22] =>  3:22
+CLOCK: [2012-02-09 Thu 13:26]--[2012-02-09 Thu 13:46] =>  0:20
+CLOCK: [2012-02-09 Thu 11:14]--[2012-02-09 Thu 13:00] =>  1:46
+CLOCK: [2012-02-09 Thu 09:40]--[2012-02-09 Thu 11:00] =>  1:20
+CLOCK: [2012-02-08 Wed 11:55]--[2012-02-08 Wed 12:00] =>  0:05
 *** TODO Report complete
 DEADLINE: <2012-02-14 Tue>
 ** Report tasks                                                     :report:

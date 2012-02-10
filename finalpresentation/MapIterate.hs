@@ -9,3 +9,4 @@ iterate f x = x : iterate f (f x)
 
 prop_map_iterate :: (a -> a) -> a -> Prop [a]
 prop_map_iterate f x = map f (iterate f x) =:= iterate f (f x)
+
