@@ -618,11 +618,12 @@ lhs = & \; \appb{\map{f}{\iter{f}{x}}} \\
 
 %% DRAW THIS
 
-\begin{frame}
+\begin{frame}[fragile]
 \frametitle{Test Suite}
-
-A mind map of the different parts of the test suite, and some example
-properties from the different kinds
+\begin{table}[p]
+\centering
+\input{testsuite}
+\end{table}
 \end{frame}
 
 
@@ -710,21 +711,21 @@ $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$
 
 \begin{frame}[fragile]
 \frametitle{Future Work: Lemma synthesis from QuickSpec}
-Change to something more exotic than natural numbers?
 
 \begin{verbatim}
-== definitions ==
-1: suc x := x+suc zero
+1: return x := x:[]
+2: x:xs := return x++xs
 == equations ==
-1: y+x == x+y
-2: y*x == x*y
-3: x+zero == x
-4: x*zero == zero
-5: y+(x+z) == x+(y+z)
-6: y*(x*z) == x*(y*z)
-7: x+suc y == suc (x+y)
-8: x*suc y == x+(x*y)
-9: (x*y)+(x*z) == x*(y+z)
+1: x:[] == return x
+2: xs++[] == xs
+3: []++xs == xs
+4: reverse [] == []
+5: (x:xs)++ys == x:(xs++ys)
+6: (xs++ys)++zs == xs++(ys++zs)
+7: reverse (return x) == return x
+8: reverse (reverse xs) == xs
+9: reverse xs++return x == reverse (x:xs)
+10: reverse xs++reverse ys == reverse (ys++xs)
 \end{verbatim}
 \end{frame}
 
