@@ -3,8 +3,8 @@
 
 Some properties cannot or need not use induction or some more
 sophisticated technique, since they are true by definition. Examples
-are properties for fully polymorphic functions such as the definition
-of \hs{id} in the SK-calculus, here
+are properties for fully polymorphic functions such as this definition
+of \hs{id} in the SK-calculus:
 
 \begin{code}
 s f g x = f x (g x)
@@ -15,20 +15,17 @@ prop_skk_id :: Prop (a -> a)
 prop_skk_id = s k k =:= id
 \end{code}
 
-Then, the generated conjecture is simply
+The generated conjecture is this equality stated with function pointers:
 
 \begin{equation*}
 \app{ (\app {\ptr{s}} {\ptr{k}} )
     }{\ptr{k}} = \ptr{id}
 \end{equation*}
 
-Another example where this is useful is to prove functor and monad
-laws for the environment monad.
-
 \subsection{Extensional Equality and seq}
 
 To prove the previous property we also need to have extensional
-equality, postulated with the following axiom
+equality, postulated with this following axiom:
 
 \begin{equation*}
 \faa{f}{g} (\fa{x} \app{f}{x} = \app{g}{x}) \rightarrow f = g
@@ -37,8 +34,8 @@ equality, postulated with the following axiom
 \noindent
 which identifies function pointers and functions composed with $@$.
 One problem with extensional equality in Haskell, is that the presence
-of \hs{seq} breaks it. \hs{seq} is a built in function with the
-following behavior:
+of \hs{seq} weakens it. \hs{seq} is a built in function with the
+following behaviour:
 
 \begin{code}[mathescape]
 seq :: a -> b -> b
@@ -50,7 +47,8 @@ It forces the first argument to weak head normal form and returns the
 second. For our purposes, it is only important if the first argument
 is $\bot$, then the function also returns this as it is strict in its
 first argument. With \hs{seq} it is possibly to distinguish between
-these two functions, which otherwise are observationally equal:
+these two functions, breaking extensional equality since they are
+otherwise observationally equal:
 
 \begin{code}[mathescape]
 f = $\bot$
@@ -71,22 +69,21 @@ apart, so we will ignore its presence in Haskell.  In the future,
 there could be added as a switch \hs{--enable-seq}, which weakens
 extensional equality appropriately.
 
-Furthermore, if extensional equality is assumed we also have the
-property that \hs{Prop (a -> b)} is equivalent to \hs{a -> Prop b}, by
-letting the property have an extra argument that is applied to the
-left and right hand side of the equality. This has two
-benefits. Firstly, it can trigger other proof methods should \hs{a} or
-\hs{b} be concrete types (the former for induction and the latter for
-approximation lemma). Secondly, it does not need to use the
-extensionality axiom introduced above which introduces extra steps in
-the proof search.
+If extensional equality is assumed we also have the property that
+\hs{Prop (a -> b)} is equivalent to \hs{a -> Prop b}, by letting the
+property have an extra argument that is applied to the left and right
+hand side of the equality. This has two benefits. Firstly, it can
+trigger other proof methods should \hs{a} or \hs{b} be concrete types
+(the former for induction and the latter for approximation
+lemma). Secondly, for many properties the extensionality axiom which
+introduces extra steps in the proof search is not needed.
 
 \subsection{Future Work: Concrete Concerns}
 \label{sec:concreteconcerns}
 
 This only works on non-concrete types because of the way bottoms are
-added. One example when this is a problem with is this plausible
-definition of boolean and, and the property of right identity:
+added. One example of such a problem is this standard definition of
+\hs{\&\&}, and a property of right identity:
 
 \begin{code}
 True  && a = a
@@ -96,7 +93,7 @@ prop_or_right_identity :: Bool -> Prop Bool
 prop_or_right_identity x = x && False =:= x
 \end{code}
 
-The translation of \hs{&&} makes any element in the domain that is not
+The translation of \hs{\&\&} makes any element in the domain that is not
 the introduced constants $\fn{false}$ or $\fn{true}$ for \hs{Bool}'s
 constructors, equal $\bot$. Now consider the translation of the
 property:
@@ -114,7 +111,10 @@ The consequence of this is that the proof principle of definitional
 equality is only used on abstract types, rather than polymorphic, as
 they cannot be strict. Do not fear: the property above is trivially
 proved by induction, as induction for \hs{Bool} and other non
-recursive data types degenerate into mere case enumeration. Structural
-induction is described in detail in the next section.
+recursive data types degenerate into mere case enumeration. However,
+it can only be seen as a meta theorem as it cannot simply be added as
+a lemma in the theory. This is described in more detail is Section
+\ref{sec:thmlemmas}. Structural induction is described in detail in
+the next section.
 
 

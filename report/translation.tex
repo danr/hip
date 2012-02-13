@@ -35,7 +35,8 @@ singleton x = Fork Leaf x Leaf
 \noindent
 Following our intuition we make an universal quantification for
 \hs{x}, and a new logic function for \hs{singleton}. The result
-is this axiom:
+is this axiom\footnote{Haskell functions and constructors are written in
+\hs{monospace} and their counterpart in first order logic as $\fn{this}$.}:
 \begin{equation*}
 \fa{x} \fn{singleton}(x) = \fn{fork}(\fn{leaf},x,\fn{leaf})
 \end{equation*}
