@@ -3,7 +3,7 @@
 
 Induction is applicable when arguments are of a concrete type, such as
 lists or natural numbers. There are also properties where all
-arguments are of abstract types. The canonical example is the
+arguments are of abstract types. A canonical example is the
 map-iterate property:
 
 \begin{equation*}
@@ -13,8 +13,9 @@ map-iterate property:
 
 Here $f$ is an abstract function $a \rightarrow a$, and $x$ is
 something of type $a$. This example is further investigated in Section
-\ref{sec:mapiter} below, but it is already clear that we cannot proceed to
-prove this with structural induction.
+\ref{sec:mapiter} below, but it is already clear that we cannot
+proceed to prove this with structural induction since there is no
+argument of a concrete type.
 
 Enter fixed point induction. It allows a way of performing induction
 on the recursive structure of the program. In short, if the property
@@ -22,31 +23,89 @@ regards a function $f$, the hypothesis is that the property holds for all
 the recursive calls in the definiton of $f$, and the goal is to prove
 that it holds for $f$.
 
-\begin{comment}
-It
-is an early example of a technique from domain theory, attributed to
-Scott and de Bakker,
-\note{Citation needed: there is a book called
-  Mathematical Theory of Program Correctness by Jaco de Bakker that
-  could be appropriate if found}
-and sometimes called Scott induction
-or computational induction.  \cite{domains}
-\end{comment}
-
-The least fixed point for a function can be found in Haskell with the
-function \hs{fix}, which can simply be defined as:
+It is traditionally stated in terms of the least fixed point. It can
+be defined in Haskell as \hs{fix}:
 
 \begin{code}
 fix :: (a -> a) -> a
 fix f = f (fix f)
 \end{code}
 
-This function solves the equation $x = f \w x$, since substituting $x$
-for $\hs{fix} \w x$: the left side evaluates to $f \w (\hs{fix} \w f)$
-in one step, which is then equal to the right side. This is the origin
-of the name of the combinator \hs{fix}: this is a fixed point of the
-equation.  Any self-recursive function can be rewritten in terms of
-\hs{fix}. Recall the \hs{Prelude} function \hs{repeat}, which makes an
+This function solves the fixed point equation $x = f \w x$.
+Subtituting substituting $x$ for $\hs{fix} \w x$: the left side
+evaluates to $f \w (\hs{fix} \w f)$ in one step, which is then equal
+to the right side. This is the origin of the name of the combinator
+\hs{fix}: this is a fixed point of the equation, futhermore it is the
+least fixed point.  Another more domain theoretic approach is to say
+that $\hs{fix} \w f \eq \lub{n}(f^n \bot)$, where $f^n \bot$ is $n$
+applications of $f$:
+\begin{equation*}
+f^n \bot \eq \underbrace{f (f (\cdots (f}_{n \w \mathrm{copies \w of} \w f}} \bot) \cdots))
+\end{equation*}
+This corresponds to a potentially infinite, countable unrolling of $f$.
+It is easy to verify that $\langle f^n \bot\rangle_{n\in\omega}$ is a
+$\sqsubseteq$-chain by induction on $n$, and that this is the least
+pre-fixed point of $f$ is also showed by induction: Assume there
+is another pre-fixed point $\theta$, thus satisfying
+$\theta \eq f \w \theta$. The base case is
+$\bot \eq f^0 \bot \sqsubseteq \theta$, trivially satisified since
+$\bot$ is the least element. For the step case, assume that
+$f^n \bot \sqsubseteq \theta$, and we get the conclusion
+$f^{n+1} \bot = f (f^n \bot) \sqsubseteq f \w \theta = \theta$ as desired.
+
+
+Any self-recursive function can be rewritten in terms of
+\hs{fix}. This is a mechanical translation which simply prepends a new
+argument which is used for each recursive call of the function. This
+is exemplified for the \hs{map} function in Figure \ref{code:mapfix}
+below. A new argument \hs{m} is introduced and the recursive call uses
+\hs{m} instead of \hs{map}.
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}[b]{6cm}
+\begin{code}[mathescape]
+map :: (a -> b) -> [a] -> [b]
+map f (x:xs) = f x : map f xs
+map f [] = []
+$\newline$
+$\newline$
+\end{code}
+\end{minipage}
+\hspace{10pt}
+\begin{minipage}[b]{6cm}
+\begin{code}
+map' m f (x:xs) = f x : m f xs
+map' m f [] = []
+
+map :: (a -> b) -> [a] -> [b]
+map = fix map'
+\end{code}
+\end{minipage}
+\caption{The standard definition of \texttt{map} and a definition in
+  terms of \texttt{fix}
+\label{code:mapfix}
+}
+\end{figure}
+
+The correctness of the translation of \hs{map} in Figure
+\ref{code:mapfix} is immediate: \hs{fix map'} evaluates to
+\hs{map' (fix map')} by the definition of \hs{fix}, and this means
+that the recursive function \hs{m} be \hs{fix map'}, so by
+construction it is equal to the originial deinition of \hs{map}.
+
+Generally, for a function \hs{f} with $n \leq 0$ arguments $\hs{x}_1$
+to $\hs{x}_n$ and a body $e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n]$ with
+these variables free, the definition in terms of \hs{fix} is:
+
+\begin{align*}
+& \hs{f} = e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n] & \Rightarrow &&& \hs{f' g = }e[\hs{g},\hs{x}_1,\ldots,\hs{x}_n] \\
+&                                             &             &&& \hs{f = fix f'}
+\end{align*}
+
+
+\begin{comment}
+Recall the \hs{Prelude} function \hs{repeat}, which makes an
 infinite list of the same element \hs{repeat x = x : repeat}. Its
 transformation to \hs{fix}-style is this:
 
@@ -76,23 +135,10 @@ f \w \overline{x} \eq e(f,\overline{x})
 f \eq \hs{fix} \w (\lambda \w f' \w \overline{x} \w \rightarrow \w e(f',\overline{x}))
 \end{equation*}
 
-Another more domain theoretic approach is to say that
-$\hs{fix} \w f \eq \lub{n}(f^n \bot)$, where $f^n \bot$ is $n$ applications of $f$:
-\begin{equation*}
-f^n \bot \eq \underbrace{f (f (\cdots (f}_{n \w \mathrm{copies \w of} \w f}} \bot) \cdots))
-\end{equation*}
-This corresponds to a potentially infinite, countable unrolling of $f$.
-It is easy to verify that $\langle f^n \bot\rangle_{n\in\omega}$ is a
-$\sqsubseteq$-chain by induction on $n$, and that this is the least
-pre-fixed point of $f$ is also showed by induction: Assume there
-is another pre-fixed point $\theta$, thus satisfying
-$\theta \eq f \w \theta$. The base case is
-$\bot \eq f^0 \bot \sqsubseteq \theta$, trivially satisified since
-$\bot$ is the least element. For the step case, assume that
-$f^n \bot \sqsubseteq \theta$, and we get the conclusion
-$f^{n+1} \bot = f (f^n \bot) \sqsubseteq f \w \theta = \theta$ as desired.
-Fixpoint induction proves properties about a function written in terms
-of \hs{fix}, and its inference rule is this:
+\end{comment}
+
+As promised, fixpoint induction proves properties about a function written in terms
+of \hs{fix}. We can now state its inference rule:
 
 \begin{mathpar}
   \inferrule*
@@ -160,29 +206,13 @@ application of a function, i.e \hs{iterate f x} is the list
 \end{equation*}
 
 \noindent
-With their standard definitions given in \ref{code:mapiterate} below.
+The standard definition of \hs{map} was given above and \hs{iterate}
+is defined as this:
 
-\begin{figure}[h!]
-\centering
-\begin{minipage}[b]{6cm}
 \begin{code}
-map :: (a -> b) -> [a] -> [b]
-map f (x:xs) = f x : map f xs
-map f [] = []
-\end{code}
-\end{minipage}
-\hspace{10pt}
-\begin{minipage}[b]{6cm}
-\begin{code}[mathescape]
 iterate :: (a -> a) -> a -> [a]
 iterate f x = x : iterate f (f x)
-$\newline$
 \end{code}
-\end{minipage}
-\caption{Definition of \texttt{map} and \texttt{iterate}
-\label{code:mapiterate}
-}
-\end{figure}
 
 The behavior of \hs{map} is to apply a function to every element of a
 list. We see that we cannot use structural induction here, since both

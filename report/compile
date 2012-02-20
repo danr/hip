@@ -1,5 +1,6 @@
 #!/bin/bash
 
+./incscript
 yes '' | pdflatex report.tex
 bibtex report
 yes '' | pdflatex report.tex

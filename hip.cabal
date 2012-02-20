@@ -1,16 +1,16 @@
-name:               autospec
+name:               hip
 version:            0.1
 license:            BSD3
 author:             Dan Rosén
 maintainer:         danr@student.gu.se
-synopsis:           Prove properties of Haskell functions using ATPs
+synopsis:           Haskell Inductive Prover - Prove properties of Haskell functions using ATPs
 category:           Proving
 stability:          Experimental
 cabal-version:      >= 1.6
 build-type:         Simple
-homepage:           github.com/danr/autospec
+homepage:           github.com/danr/hip
 
-executable          autospec
+executable          hip
     ghc-options:    -threaded -O2 -rtsopts
     hs-source-dirs: src
     main-is:        Autospec/Main.hs
