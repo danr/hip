@@ -713,13 +713,13 @@ CLOSED: [2012-01-16 Mon 12:35]
 * Plan
 CLOCK: [2012-02-05 Sun 12:37]--[2012-02-05 Sun 12:37] =>  0:00
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
-Clock summary at [2012-02-20 Mon 14:07]
+Clock summary at [2012-02-21 Tue 14:29]
 
 | Headline                                                      | Time    |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| *Total time*                                                  | *76:02* |       |       |      |
+| *Total time*                                                  | *79:48* |       |       |      |
 |---------------------------------------------------------------+---------+-------+-------+------|
-| Plan                                                          | 76:02   |       |       |      |
+| Plan                                                          | 79:48   |       |       |      |
 | Completed                                                     |         | 45:59 |       |      |
 | DONE Fix the lambda bug                                       |         |       |  0:42 |      |
 | DONE Fill results incrementally                               |         |       |  1:22 |      |
@@ -746,16 +746,17 @@ Clock summary at [2012-02-20 Mon 14:07]
 | DONE Presentation                                             |         |       |  2:50 |      |
 | DONE Mail Abstract to Meng                                    |         |       |  2:15 |      |
 | DONE Final presentation                                       |         |       | 11:44 |      |
-| Tasks                                                         |         |  1:26 |       |      |
-| ONGOING Time planning                                         |         |       |  0:43 |      |
-| Report tasks                                                  |         | 28:37 |       |      |
-| NEXT Introduction                                             |         |       |  7:10 |      |
+| Tasks                                                         |         |  1:36 |       |      |
+| ONGOING Time planning                                         |         |       |  0:53 |      |
+| Report tasks                                                  |         | 32:13 |       |      |
+| NEXT Introduction                                             |         |       |  8:20 |      |
 | NEXT Fancy pants Tree monad example                           |         |       |       | 0:30 |
+| TODO Outline                                                  |         |       |       | 1:10 |
 | TODO Related work                                             |         |       |  0:14 |      |
 | TODO Translation                                              |         |       |  0:14 |      |
 | DONE Revert to the old translation technique                  |         |       |       | 0:14 |
-| TODO Proof methods                                            |         |       |  3:05 |      |
-| TODO Fixed point induction                                    |         |       |       | 2:44 |
+| TODO Proof methods                                            |         |       |  5:31 |      |
+| TODO Fixed point induction                                    |         |       |       | 5:10 |
 | TODO Future work                                              |         |       |  6:55 |      |
 | TODO Implications and quantifiers                             |         |       |       | 0:18 |
 | DONE Finite lemmas                                            |         |       |       | 1:49 |
@@ -1170,6 +1171,7 @@ CLOCK: [2012-02-04 Sat 14:51]--[2012-02-04 Sat 15:05] =>  0:14
 CLOCK: [2012-02-03 Fri 16:44]--[2012-02-03 Fri 18:39] =>  1:55
 CLOCK: [2012-01-31 Tue 14:26]--[2012-01-31 Tue 14:27] =>  0:01
 *** NEXT Introduction
+CLOCK: [2012-02-20 Mon 21:26]--[2012-02-20 Mon 21:26] =>  0:00
 CLOCK: [2012-02-05 Sun 21:37]--[2012-02-05 Sun 22:47] =>  1:10
 CLOCK: [2012-02-05 Sun 17:08]--[2012-02-05 Sun 19:23] =>  2:15
 CLOCK: [2012-02-05 Sun 11:55]--[2012-02-05 Sun 12:37] =>  0:42
@@ -1186,6 +1188,7 @@ Haskell -> Logic -> ATP invocations -> Results
 CLOCK: [2012-02-05 Sun 10:05]--[2012-02-05 Sun 10:35] =>  0:30
 Properties provable with all techniques in this thesis!! Excellent!
 **** TODO Outline
+CLOCK: [2012-02-20 Mon 21:26]--[2012-02-20 Mon 22:36] =>  1:10
 *** TODO Abstract
 *** TODO Related work
 CLOCK: [2012-02-05 Sun 01:15]--[2012-02-05 Sun 01:29] =>  0:14
@@ -1206,6 +1209,11 @@ CLOCK: [2012-02-05 Sun 10:45]--[2012-02-05 Sun 10:47] =>  0:02
 CLOCK: [2012-01-31 Tue 11:47]--[2012-01-31 Tue 11:54] =>  0:07
 CLOCK: [2012-01-31 Tue 10:12]--[2012-01-31 Tue 10:24] =>  0:12
 **** TODO Fixed point induction
+CLOCK: [2012-02-21 Tue 14:29]--[2012-02-21 Tue 15:33] =>  1:04
+CLOCK: [2012-02-21 Tue 13:51]--[2012-02-21 Tue 14:29] =>  0:38
+CLOCK: [2012-02-21 Tue 12:40]--[2012-02-21 Tue 13:09] =>  0:29
+CLOCK: [2012-02-21 Tue 11:09]--[2012-02-21 Tue 11:36] =>  0:27
+CLOCK: [2012-02-21 Tue 10:35]--[2012-02-21 Tue 10:58] =>  0:23
 CLOCK: [2012-02-20 Mon 17:29]--[2012-02-20 Mon 17:58] =>  0:29
 CLOCK: [2012-02-05 Sun 23:10]--[2012-02-06 Mon 00:59] =>  1:49
 - State "TODO"       from "DONE"       [2012-01-31 Tue 18:50]

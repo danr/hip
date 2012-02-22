@@ -1,0 +1,11 @@
+#!/bin/bash
+
+while true;
+do
+        ./compile;
+        cp report.pdf ~/remote;
+        cp report.pdf old/report-`cat counter`.pdf;
+        clear
+        echo -n Build: `cat counter`;
+        inotifywait -qq -e modify *.tex resultdata/*tex;
+done

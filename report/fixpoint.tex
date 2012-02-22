@@ -1,43 +1,51 @@
-\section{Fixed point induction}
+\section{Fixed Point Induction}
 \label{sec:fixpoint}
 
-Induction is applicable when arguments are of a concrete type, such as
-lists or natural numbers. There are also properties where all
-arguments are of abstract types. A canonical example is the
-map-iterate property:
+Structural induction is applicable when at least one argument is of a
+concrete type, such as lists or trees. There are also properties where
+all arguments are of abstract types. A canonical example is the
+map-iterate property, here stated with types:
 
 \begin{equation*}
 \faa{(f : a \rightarrow a)}{(x : a)} \hs{map} \w f \w (\hs{iterate} \w f \w x) \eq
            \hs{iterate} \w f \w (f \w x)
 \end{equation*}
 
-Here $f$ is an abstract function $a \rightarrow a$, and $x$ is
-something of type $a$. This example is further investigated in Section
-\ref{sec:mapiter} below, but it is already clear that we cannot
-proceed to prove this with structural induction since there is no
-argument of a concrete type.
+Here $f$ is any function of type $a \rightarrow a$, and $x$ is a value
+of type $a$. This example is further investigated in Section
+\ref{sec:mapiter} below, but it is already clear that this cannot be
+proved with structural induction since there is no argument of a
+concrete type.
 
-Enter fixed point induction. It allows a way of performing induction
-on the recursive structure of the program. In short, if the property
-regards a function $f$, the hypothesis is that the property holds for all
-the recursive calls in the definiton of $f$, and the goal is to prove
-that it holds for $f$.
-
-It is traditionally stated in terms of the least fixed point. It can
-be defined in Haskell as \hs{fix}:
+Enter fixed point induction. It gives a way of performing induction on
+the recursive structure of the program. In short, if the property
+regards a function $f$, the hypothesis is that the property holds for
+all the recursive calls in the definition of $f$, and the goal is to
+prove that it holds for $f$. The origin of the name is the use of the
+fixed point combinator, which is traditionally defined in Haskell as
+\hs{fix}:
 
 \begin{code}
 fix :: (a -> a) -> a
 fix f = f (fix f)
 \end{code}
 
-This function solves the fixed point equation $x = f \w x$.
-Subtituting substituting $x$ for $\hs{fix} \w x$: the left side
-evaluates to $f \w (\hs{fix} \w f)$ in one step, which is then equal
-to the right side. This is the origin of the name of the combinator
-\hs{fix}: this is a fixed point of the equation, futhermore it is the
-least fixed point.  Another more domain theoretic approach is to say
-that $\hs{fix} \w f \eq \lub{n}(f^n \bot)$, where $f^n \bot$ is $n$
+Fixed point induction can prove properties about \hs{fix f} for some
+\hs{f}. In the next section a way to rewrite any recursive function is
+introduced, and thus properties about recursive functions in general
+can be proved by fixed point induction.
+
+The fixed point in question is the solution of the fixed point
+equation $x = f \w x$. The function \hs{fix} solves this equation:
+substitute $x$ for $\hs{fix} \w x$, then the left side evaluates to $f
+\w (\hs{fix} \w f)$ in one step, which is then equal to the right
+side. This is the origin of the name of the combinator \hs{fix}: this
+is a fixed point of the equation, furthermore it is the least fixed
+point \citep{domains}.
+
+\begin{comment}
+The domain theoretic approach is to say that
+$\hs{fix} \w f \eq \lub{n}(f^n \bot)$, where $f^n \bot$ is $n$
 applications of $f$:
 \begin{equation*}
 f^n \bot \eq \underbrace{f (f (\cdots (f}_{n \w \mathrm{copies \w of} \w f}} \bot) \cdots))
@@ -48,14 +56,16 @@ $\sqsubseteq$-chain by induction on $n$, and that this is the least
 pre-fixed point of $f$ is also showed by induction: Assume there
 is another pre-fixed point $\theta$, thus satisfying
 $\theta \eq f \w \theta$. The base case is
-$\bot \eq f^0 \bot \sqsubseteq \theta$, trivially satisified since
+$\bot \eq f^0 \bot \sqsubseteq \theta$, trivially satisfied since
 $\bot$ is the least element. For the step case, assume that
 $f^n \bot \sqsubseteq \theta$, and we get the conclusion
 $f^{n+1} \bot = f (f^n \bot) \sqsubseteq f \w \theta = \theta$ as desired.
+\end{comment}
 
+\subsection{Rewriting Functions in Terms of \texttt{fix}}
 
 Any self-recursive function can be rewritten in terms of
-\hs{fix}. This is a mechanical translation which simply prepends a new
+\hs{fix} \citep{YMcAdam}. This is a mechanical translation which simply prepends a new
 argument which is used for each recursive call of the function. This
 is exemplified for the \hs{map} function in Figure \ref{code:mapfix}
 below. A new argument \hs{m} is introduced and the recursive call uses
@@ -92,53 +102,48 @@ The correctness of the translation of \hs{map} in Figure
 \ref{code:mapfix} is immediate: \hs{fix map'} evaluates to
 \hs{map' (fix map')} by the definition of \hs{fix}, and this means
 that the recursive function \hs{m} be \hs{fix map'}, so by
-construction it is equal to the originial deinition of \hs{map}.
+construction it is equal to the original definition of \hs{map}.
 
-Generally, for a function \hs{f} with $n \leq 0$ arguments $\hs{x}_1$
+Generally, for a function \hs{f} with $n \geq 0$ arguments $\hs{x}_1$
 to $\hs{x}_n$ and a body $e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n]$ with
 these variables free, the definition in terms of \hs{fix} is:
 
 \begin{align*}
-& \hs{f} = e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n] & \Rightarrow &&& \hs{f' g = }e[\hs{g},\hs{x}_1,\ldots,\hs{x}_n] \\
-&                                             &             &&& \hs{f = fix f'}
+& \hs{f } \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n] & \Rightarrow &&& \hs{f' g } \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\hs{g},\hs{x}_1,\ldots,\hs{x}_n] \\
+&                                                                     &             &&& \hs{f = fix f'}
 \end{align*}
 
 
 \begin{comment}
-Recall the \hs{Prelude} function \hs{repeat}, which makes an
-infinite list of the same element \hs{repeat x = x : repeat}. Its
-transformation to \hs{fix}-style is this:
-
-\begin{code}
-repeat x = fix r
-  where r i = x : i
-\end{code}
-
-Computing \hs{repeat x}, we get the following unfolds:
-\begin{equation*}
-  \hs{repeat x}
-= \hs{fix r}
-= \hs{x:fix r}
-= \hs{x:x:fix r}
-= \hs{x:x:x:fix r}
-  \cdots
-\end{equation*}
-So \hs{fix (x:)} is the infinite list of \hs{x}. The translation of a
-self-recursive function to be defined in terms of \hs{fix} is
-mechanical. Assume $f$ is defined with arguments $\overline{x}$ and
-has a body $e$ that uses both itself and its arguments, let us write
-this as $e(f,\overline{x})$. Then the translation is this:
-
-\begin{equation*}
-f \w \overline{x} \eq e(f,\overline{x})
-\w \Leftrightarrow \w
-f \eq \hs{fix} \w (\lambda \w f' \w \overline{x} \w \rightarrow \w e(f',\overline{x}))
-\end{equation*}
-
+This translation needs to be carried out with some care, since for $f
+\, \overline{x} = e(\overline{x},f)$, it is also possible that $f$ is
+called in bodies of other functions. These are of two kinds: either
+this function is also called from $f$, making it recursive, or another
+function which is not called from $f$, but makes use of $f$
+anyway. The first example, with a recursive call, the body needs to be
+edited so $f$ becomes translated (to $\bot$, $\unfix{f}$ or
+$\tofix{f}$), and the second case should use the original $f$. The
+transitive closure of the call graph is calculated, and every
+appropriate calls of $f$ are replaced.
 \end{comment}
 
-As promised, fixpoint induction proves properties about a function written in terms
-of \hs{fix}. We can now state its inference rule:
+%\noindent
+As promised, fix point induction proves properties about a function written in terms
+of \hs{fix}, and its inference rule will be stated in the next section.
+
+\subsection{Inference Rule}
+
+Fixed point induction can show a property $P$ about \hs{fix f} for
+some function \hs{f}. The base case is to show that $P$ holds when the
+function is replaced with $\bot$, which corresponds to zero
+``unrolls'' of the function. For the step case, assume $P$
+holds for a function $x$, and the goal is to show $P(\hs{f} \w x)$.
+Intuitively, we can see $x$ as a number of ``enrolling'' of the
+function and we need to show for the next. Moreover, it can also be
+seen as $x$ corresponds to all the recursive occurrences in the body of
+the function, and we need to show it for the real function.
+
+Formally, it is stated by \cite{corecursive} with this inference rule:
 
 \begin{mathpar}
   \inferrule*
@@ -152,43 +157,47 @@ of \hs{fix}. We can now state its inference rule:
      { P(\fn{fix} f) }
 \end{mathpar}
 
-
-Here it is important that $P$ is \emph{admissible} , meaning that for
-all $\sqsubseteq$-chains of length $\omega$, if the property holds for
-all elements in the chain it must necessary hold for its limit, futher
-described in Section \ref{sec:admissible}, where a proof is given that
-the properties we are interested in, universally quantified equalities
-of continuous functions, are admissible predicates.
+Admissible predicates was introduced in Section \ref{sec:admissible},
+and as with structural induction with the bottom base case, this
+induction technique also has the admissibility requirement. Again,
+predicates from equality properties that are of interest here are
+admissible.
 
 An interesting property of fixed point induction is that it does not
-care about types: indeed, it works in an untyped setting. In addition,
-it can exploit strange recursive structures of the function. A caveat
-is that it can only prove properties that must hold for infinite and
-partial values.
+care about types. Indeed, it works in an untyped setting. In addition,
+it can exploit arbitrary recursive structures of the function. A
+caveat is that it can only prove properties that must hold for
+infinite and partial values.
 
-The proof that fixed point induction relies on the fact that
-$\lub{n}(f^n \w \bot) \eq \hs{fix} \, f$, where $f^n$ is $n$
-self-applications of $f$. This is true since \hs{fix} is defined as
-$f$ self-applied to it self. Apart from this, the proof only uses
-induction over natural numbers and that $f^0 \w \bot \eq \bot$, and
-it is of course important that $P$ is admissible. See proof below:
+Fixed point induction is a consequence of induction of natural
+numbers. The proof for this relies on the fact that $\lub{n}(f^n \w
+\bot) \eq \hs{fix} \, f$, where $f^n$ is $n$ self-applications of
+$f$. This is true since \hs{fix} is defined as $f$ applied to it
+self. Apart from this, the proof only uses induction over natural
+numbers and that $f^0 \w \bot \eq \bot$, and the admissibility of
+$P$. Proof:
 
 \begin{align*}
 P(\bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
 \desclra{$f^0 \w \bot \eq \bot$} \\
 P(f^0 \w \bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
-\descra{quantifying} \\
+\descra{instantiation \, of \, $x$ \, to \, $f^n$} \\
 P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
-\desclra{induction} \\
+\descra{induction \, over \, $\mathbb{N}$} \\
 \fa{n} & P(f^n \w \bot) \\
 \descra{\textit{P} \w admissible} \\
 & P(\lub{n}(f^n \w \bot)) \\
-\desclra{definition \w of \w \hs{fix}} \\
+\descra{definition \w of \w \hs{fix}} \\
 & P(\hs{fix} \w f) \\
 \end{align*}
 
+\noindent
 One reason to introduce fixed point induction is to avoid the natural
-numbers in $\fa{n} P(f^n \bot)$  to prove $P(\hs{fix} \w f)$.
+numbers in $\fa{n} P(f^n \bot)$ to prove $P(\hs{fix} \w f)$.
+
+The necessary theory ought to be explained by now, so the next section
+shows how to apply fixed point induction on the example in the
+introduction.
 
 \subsection{Example: map-iterate}
 \label{sec:mapiter}
@@ -214,7 +223,7 @@ iterate :: (a -> a) -> a -> [a]
 iterate f x = x : iterate f (f x)
 \end{code}
 
-The behavior of \hs{map} is to apply a function to every element of a
+The behaviour of \hs{map} is to apply a function to every element of a
 list. We see that we cannot use structural induction here, since both
 $f$ and $x$ are abstract, but this can be proved by fixpoint induction
 on \hs{iterate}. First, we rewrite this function in terms of \hs{fix}:
@@ -224,10 +233,11 @@ iterate = fix iter
 iter i f x = x : i f (f x)
 \end{code}
 
-The predicate $P$ from fixpoint induction is $P(g) \w \Leftrightarrow
-\w \faa{f}{x} \hs{map} \w f \w (g \w f \w x) \eq g \w f \w (f \w x) $. If we
-prove the base case and step case we can then conclude
-$P(\hs{fix iter})$, and that is by definition $P(\hs{iterate})$.
+\noindent
+The predicate $P$ is defined to be $P(g) \w \Leftrightarrow \w
+\faa{f}{x} \hs{map} \w f \w (g \w f \w x) \eq g \w f \w (f \w x)$.
+If the base and the step case is shown $P(\hs{fix iter})$ can be
+concluded, which by definition is $P(\hs{iterate})$.
 
 The base case is $P(\bot)$. Since \hs{map} is strict in its second
 argument, it is both the left side and right side evaluate to $\bot$.
@@ -237,9 +247,9 @@ hypothesis and work towards the goal as follows:
 
 \begin{align*}
 \w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w x) & \eq \hs{i} \w f \w (f \w x) \\
-\descra{generalizing $x$ to $f \w x$} \\
+\descra{generalising $x$ to $f \w x$} \\
 \w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq \hs{i} \w f \w (f \w (f \w x)) \\
-\descra{substitutivity} \\
+\descra{substitution} \\
 \w \faa{f}{x} f \w x \hs{:} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
 \desclra{\defof{\texttt{map}}} \\
 \w \faa{f}{x} \hs{map} \w f \w (x \hs{:} \hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
@@ -247,9 +257,7 @@ hypothesis and work towards the goal as follows:
 \w \faa{f}{x} \hs{map} \w f \w (\hs{iter} \w \hs{i} \w f \w x) & \eq \hs{iter} \w \hs{i} \w f \w (f \w x) \\
 \end{align*}
 
-As discussed earlier, the $P$ used is admissible since it is an
-universally quantified equality. Hence, fixpoint induction gives us the
-\hs{map}-\hs{iterate} property.
+Now fixed point induction gives the \hs{map}-\hs{iterate} property.
 
 
 
@@ -296,35 +304,36 @@ the same relation hols for \hs{odd'} and \hs{odd}.
 
 \subsection{Simplification}
 
-The mechanical translations introduced above for self-recursive
-functions and mutually recursive functions makes a new function with
-an additional argument, the ``non-recursive'' version of itself. By
-the translation to FOL that is used, this would introduce a new
-argument as a ``function pointer'' and introduce uses of $\appfn$,
-which gives unnecessary overhead to the automated theorem
-provers.
+The mechanical translation introduced above for self-recursive
+functions introduces a new function with an additional argument, the
+``non-recursive'' version of itself. The generated first order
+function would use the new argument as a function pointer, which in
+turn means a lot of use of the $\appfn$. This can be seen in the cons
+case for \hs{map}:
+function, the cons case is translated to:
 
-This is another approach. It avoids introducing these function
-pointers and the additional argument to every function. Given a
-function $f$ with arguments $\overline{x}$ defined as this:
+\begin{align*}
+  \faaa{m}{x}{xs} \fn{map'}(m,x\fn{:}xs) = (\app{f}{x}) \fn{:} (\app{(\app{m}{f})}{xs})
+\end{align*}
 
-\begin{equation*}
-f \, \overline{x} = e(\overline{x},f)
-\end{equation*}
+This gives unnecessary overhead to the automated theorem provers.
+There is another approach. It avoids introducing these function
+pointers and the additional argument to every function. Consider the
+translation of a function \hs{f} with the same setting as before: $n
+\geq 0$ arguments $\hs{x}_1$ to $\hs{x}_n$ and a body
+$e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n]$ with these variables free,
+instead this translation is made:
 
-Two new constants are introduced, $\tofix{f}$ and $\unfix{f}$
-and this definition:
+\begin{align*}
+& \hs{f } \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n] & \Rightarrow &&& \fixhsb{f} \w \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\fixhsw{f},\hs{x}_1,\ldots,\hs{x}_n] \\
+\end{align*}
 
-\begin{equation*}
-\tofix{f} \, \overline{x} = e(\overline{x},\unfix{f})
-\end{equation*}
-
-\noindent
-The empty circle $\unfix{}$ describes that this function is empty
-(lacks implementation,) and the filled circle $\tofix{}$ means that
-this function has an implementation.
-
-Now we can get a simplified fixpoint schema:
+Two new functions are introduced to the vocabulary: $\fixhsb{f}$ and
+$\fixhsw{f}$. The empty circle $\unfix{}$ describes that this function
+is empty (lacks implementation,) and the filled circle $\tofix{}$
+means that this function has an implementation. This implementation is
+in terms of the unfilled version. The fixed point induction schema can
+now be stated using these functions:
 
 \begin{mathpar}
   \inferrule*
@@ -339,15 +348,25 @@ Now we can get a simplified fixpoint schema:
 \end{mathpar}
 
 \noindent
-The empty $\unfix{f}$ does not have any implementation. But it has
-something much better, namely the induction hypothesis. The induction
-conclusion is to prove the property for $\tofix{f}$, where the
-recursive call to $f$ is replaced with $\unfix{f}$. We do this
-simplification since it is better suited for the theorem provers.
+The empty circle in $\unfix{f}$ indicates that it does not have any
+implementation, but the induction hypothesis is asserted for it. The
+induction conclusion is to prove the property for $\tofix{f}$, where
+the recursive call to $f$ is replaced with $\unfix{f}$. This
+simplification is done since it is better suited for the theorem
+provers.
 
-\pagebreak
-This also works for several functions at the same time, possibly
-mutually recursive:
+Further, it is now necessary to ``inline'' the predicate in the
+generated theory. The reason is that $\fixb{f}$ and $\fixw{f}$ are
+first order functions rather than expressible as pointers, and
+predicates that quantify over functions are not first order
+expressible. Such ``inlining'' is also beneficial for theorem provers
+as unnecessary predicates are not introduced to the theory.
+
+\paragraph{Mutually recursive functions} It is also possible to
+rewrite a group of mutually recursive functions by packing the
+``non-recursive'' copies of themselves in a tuple. The inference rule
+for two functions at the same time, possibly mutually recursive then
+looks like this:
 
 \begin{mathpar}
   \inferrule*
@@ -361,22 +380,12 @@ mutually recursive:
      { P(f,g) }
 \end{mathpar}
 
-This translation needs to be carried out with some care, since for $f
-\, \overline{x} = e(\overline{x},f)$, it is also possible that $f$ is
-called in bodies of other functions. These are of two kinds: either
-this function is also called from $f$, making it recursive, or another
-function which is not called from $f$, but makes use of $f$
-anyway. The first example, with a recursive call, the body needs to be
-edited so $f$ becomes translated (to $\bot$, $\unfix{f}$ or
-$\tofix{f}$), and the second case should use the original $f$. The
-transitive clousure of the call graph is calculated, and every
-appropriate calls of $f$ are replaced.
 
 \subsection{Erroneous Use of Fixed Point Induction}
 
-It is crucial that $P$ is admissible to avoid deriving nonsense. This
-section gives a simple example of such nonsense.  Recall the
-definition of the infinite natural number:
+It is crucial that $P$ is admissible to avoid deriving falsities. This
+section gives a simple example of what can happen otherwise. Recall
+the definition of the infinite natural number:
 
 \begin{code}
 inf = Succ inf
@@ -386,7 +395,7 @@ inf = Succ inf
 We shall deliberately use a predicate that is not admissible to
 ``prove'' that $\hs{inf} \neq \hs{Succ inf}$.  The predicate is $P(x)
 \Leftrightarrow x \neq \fn{succ}(x)$. Furthermore, \hs{inf} is
-translated to logic and rewritten in terms of $\unfix{}$ and
+translated to first order logic and rewritten in terms of $\unfix{}$ and
 $\tofix{}$, as introduced in the previous section:
 
 \begin{equation*}
@@ -394,16 +403,13 @@ $\tofix{}$, as introduced in the previous section:
 \end{equation*}
 
 \noindent
-Base case: $\bot \neq \fn{succ}(\bot)$ is true by the axioms of
-disjoint constructors.
-
-\noindent
-Step case: assume
-$\unfix{\fn{inf}} \neq \fn{succ}(\unfix{\fn{inf}})$.
-Injectivity of $\fn{succ}$ gives
-$\fn{succ}(\unfix{\fn{inf}}) \neq \fn{succ}(\fn{succ}(\unfix{\fn{inf}}))$.
-By the definition of $\tofix{\fn{inf}}$, this is equal to the goal
-$\tofix{\fn{inf}} \neq \fn{succ}(\tofix{\fn{inf}})$.
+Now we proceed by ``fixed point induction''. Base case: $\bot \neq
+\fn{succ}(\bot)$ is true by the axioms of disjoint constructors. Step
+case: assume $\unfix{\fn{inf}} \neq \fn{succ}(\unfix{\fn{inf}})$.
+Injectivity of $\fn{succ}$ gives $\fn{succ}(\unfix{\fn{inf}}) \neq
+\fn{succ}(\fn{succ}(\unfix{\fn{inf}}))$.  By the definition of
+$\tofix{\fn{inf}}$, this is equal to the goal $\tofix{\fn{inf}} \neq
+\fn{succ}(\tofix{\fn{inf}})$.
 
 The conclusion $\hs{inf} \neq \hs{Succ inf}$ is clearly nonsense as it
 directly contradicts the definition of $\hs{inf}$! A consequence of
@@ -418,10 +424,10 @@ from a list the length of this is the same as the length of the
 original list minus $n$, which functions should one do fixed point
 induction on?
 
-\begin{verbatim}
+\begin{code}
 prop_length_drop :: [a] -> Nat -> Prop Nat
 prop_length_drop xs n = length (drop n xs) =:= length xs - n
-\end{verbatim}
+\end{code}
 
 The answer here is to do fixed point induction on \hs{drop}, and on
 \hs{-}. So far no better way to tackle this is used than to try fixed
@@ -462,11 +468,13 @@ doublemap f (x:y:zs) = f x : f y : doublemap f zs
 \end{code}
 
 \noindent
-While \hs{doublemap} is behaviorally equivalent to \hs{map} on total
+While \hs{doublemap} is behaviourally equivalent to \hs{map} on total
 lists, it makes the induction hypothesis in fixed point induction too
 weak.
 
 
 An issue with the candidate selection is that is some selections are
-quite stupid, for instance doing fixating functions on only one side
-of the equality. A heuristic to find good candidates would be beneficial.
+immediate dead ends. An example is fixating functions on only one side
+of the equality, then the base case will generally never succeed
+unless the other side is constant bottom. A heuristic to find good
+candidates would be beneficial.

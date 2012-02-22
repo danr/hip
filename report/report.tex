@@ -88,8 +88,14 @@
 
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}%\usetikzlibrary {\trees,positioning,arrows}
 
-\newcommand\tofix[1]{#1^{\bullet}}
-\newcommand\unfix[1]{#1^{\circ}}
+\newcommand\tofix[1]{\fixb{#1}}
+\newcommand\unfix[1]{\fixw{#1}}
+
+\newcommand\fixb[1]{#1^{\bullet}}
+\newcommand\fixw[1]{#1^{\circ}}
+
+\newcommand\fixhsb[1]{\hs{#1}^{\bullet}}
+\newcommand\fixhsw[1]{\hs{#1}^{\circ}}
 
 \newcommand\append[0]{\texttt{\small{++}}}
 
