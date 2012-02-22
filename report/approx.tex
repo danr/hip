@@ -313,13 +313,14 @@ prop_nub_idem xs = nub (nub xs) =:= nub xs
 \noindent
 This is not a theorem for infinite and partial lists: Consider the
 list \hs{True:False:}$\bot$. One application of \hs{nub} gives
-\hs{True:}$\bot$, and two gives $\bot$ immediately. Similarly, we get
-different results for \hs{repeat True}, however this property is true
-for finite lists and a way to adjust the approximation lemma to prove
-such properties is to add a predicate indicating totality. A value is
-total if it does not contain any bottoms. This predicate can be
-approximated is first order equality, and these axioms sketches out
-the approach for the theory of the \hs{nub} function:
+\hs{True:}$\bot$, and two gives $\bot$ immediately. Similar results
+are obtained for the infinite and total list \hs{repeat True}, however
+this property is true for total finite lists and a way to adjust the
+approximation lemma to prove such properties is to add a predicate
+indicating totality. A value is total if it does not contain any
+bottoms. This predicate can be approximated is first order equality,
+and these axioms sketches out the approach for the theory of the
+\hs{nub} function:
 
 \begin{align*}
 \rom{1} &&             & \neg \, Total(\bot) \\
