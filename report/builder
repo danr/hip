@@ -5,7 +5,7 @@ do
         ./compile;
         cp report.pdf ~/remote;
         cp report.pdf old/report-`cat counter`.pdf;
-        clear
+        clear;
         echo -n Build: `cat counter`;
         inotifywait -qq -e modify *.tex resultdata/*tex;
 done
