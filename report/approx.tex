@@ -22,7 +22,7 @@ applied to equalities of any polynomial data type
 \begin{minipage}[b]{6.2cm}
 \begin{code}
 take :: Nat -> [a] -> [a]
-take Zero    _      = []
+take Zero     _      = []
 take (Succ n) []     = []
 take (Succ n) (x:xs) = x : take n xs
 \end{code}

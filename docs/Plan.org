@@ -1239,6 +1239,8 @@ proved by induction (or something)
 
 **** NEXT Concrete concerns
 **** TODO Total Approxiomation Lemma
+CLOCK: [2012-02-22 Wed 20:00]--[2012-02-22 Wed 21:32] =>  1:32
+CLOCK: [2012-02-22 Wed 18:27]--[2012-02-22 Wed 18:37] =>  0:10
 This will work and I have a proof of it.
 Point to the future work about the problems about axiomatising Total
 *** TODO Future work
