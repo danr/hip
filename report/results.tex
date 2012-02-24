@@ -13,9 +13,12 @@ Haskell source files, and all together includes over 500 equality
 properties.  The files of can be divided into groups with different
 aims of complexity, suitable proving methods and different aspects of
 Haskell. All files of the test suite are briefly described in Table
-\ref{tbl:testsuite}.
+\ref{tbl:testsuite}, and available in the project's
+repository\footnote{See the \hs{testsuite} directory in
+  \url{http://github.com/danr/hip/}}, but some parts and design
+decisions are highlighted in the rest of this section.
 
-\begin{table}[p]
+\begin{table}[h]
 \centering
 \input{testsuite}
 \caption{Description of the files in the test suite, by group.}
@@ -23,25 +26,148 @@ Haskell. All files of the test suite are briefly described in Table
 }
 \end{table}
 
+The test suite includes many properties about natural numbers, because
+they constitute the minimal recursive data type with a base case. The
+properties originates from the Zeno test suite, but are extended with
+different versions with addition and multiplication defined in
+different ways, the definitions for addition viewed in Figure
+\ref{code:natadd} below.
+
+% xparse magic, see http://tex.stackexchange.com/a/25753/11395
+
+\ExplSyntaxOn
+\NewDocumentCommand {\codeListing} { m m +v }
+  {
+    \begin{minipage}[b]{#2cm}
+    {\small\hs{#1}}
+    \newlinechar=\endlinechar
+    \exp_args:Nx \scantokens{
+       \string\begin{code}
+       #3
+       \string\end{code}
+    }
+    \end{minipage}
+  }
+\ExplSyntaxOff
+
+
+\begin{figure}[h!]
+\centering
+\codeListing{Nat}{3.75}{
+Z   + y = y
+S x + y = S (x + y)
+}\hspace{10pt}
+\codeListing{NatSwap}{3.75}{
+Z   + y = y
+S x + y = S (y + x)
+}\hspace{10pt}
+
+\codeListing{Nat2ndArg}{3.75}{
+x + Z   = x
+x + S y = S (x + y)
+}\hspace{10pt}
+\codeListing{NatAcc}{3.75}{
+Z   + y = y
+S x + y = x + S y
+}\hspace{10pt}
+
+\codeListing{NatDouble}{4.75}{
+Z       + y = y
+S Z     + y = S y
+S (S x) + y = S (S (x + y))
+}\hspace{10pt}
+\codeListing{NatDoubleSlow}{4.5}{
+Z       + y = y
+S Z     + y = S y
+S (S x) + y = S (S x + y)
+}\hspace{10pt}
+\codeListing{NatStrict}{3.75}{
+Z   + Z   = Z
+Z   + S x = S x
+S x + y   = S (x + y)
+}
+\caption{The test suite's different versions of addition over \texttt{data Nat = Z | S Nat}.
+\label{code:natadd}
+}
+\end{figure}
+
+To test reasoning about higher order functions the file \hs{Functions}
+states standard properties about function combinators, and the file
+\hs{MonadEnv} defines the reader monad. To make it a little more
+complicated there is also a definition of the state monad in
+\hs{MonadState}, defined without a \hs{newtype}.
+
+Properties about functions that produce infinite lists and trees can
+be found in the file \hs{Infinite}, and many of these are not provable
+with structural induction. There are some more complex properties
+about infinite lists in \hs{Streams}.
+
+Many properties are easier to prove with other properties as lemmas,
+and some properties even requires this. An example of this are the
+properties about insertion sort in the test suite. It includes
+properties such that the resulting list after sorting is sorted, and
+that the sorted list contains the same elements as the input
+list. Insertion sort works with a helper function \hs{insert} that
+inserts an element in a sorted list at its right position. To prove
+properties about insertion sort lemmas for \hs{insert} are needed.
+
+Unfortunately there is no information available about which properties
+require lemmas, nor is there any data of which properties should be
+provable with a given proof technique. To produce such information it
+would be necessary to prove that a given property is \emph{not}
+provable in a certain way, and this is out of scope of this thesis.
+
 \section{Setup}
 
 This section describes the setup for the exhaustive run of the test
-suite.  Five theorem provers were used: Vampire 0.6, E 1.0-004 Temi,
-prover9 2009-02A \citep{prover9}, SPASS 3.5 and equinox
-6.0.1alpha. Each prover invocation had an own thread on a 2.40GHz
-Intel Xeon CPU. All properties were tested for each theorem prover,
-and also one run which tried every invocation with all provers. The
-time limit for each invocation was 5 seconds.
+suite. Five theorem provers were used and they are summarised in Table
+\ref{tbl:provers}.
 
-To make this tractable, some restrictions were needed. The maximum depth
-and induction variables for structural induction was 2, and to prevent
-combinatorial explosion the number of induction steps was limited to
-20, and a maximum of 500 hypotheses were generated. For fixed point
-induction there is a similar problem since there are many possible
-candidate functions, so the maximum number of fixed functions were 100
-for each property.
+\begin{table}[h]
+  \centering
+  \begin{tabular}{l | l | l}
+    Name    & Version      & Reference \\
+    \hline
+    Vampire & 0.6          & \url{http://www.vprover.org/}                                \\
+    E       & 1.0-004 Temi & \url{http://www4.informatik.tu-muenchen.de/~schulz/E/E.html} \\
+    prover9 & 2009-02A     & \citep{prover9}                                              \\
+    SPASS   & 3.5          & \url{http://www.spass-prover.org/}                           \\
+    equinox & 6.0.1alpha   & \url{http://www.cse.chalmers.se/~koen/code/}                 \\
+  \end{tabular}
+  \caption{The theorem provers used on the test suite
+    \label{tbl:provers}
+  }
+\end{table}
 
-\section{Results for Provers and Proof Techniques}
+The provers were run on a 2.40GHz Intel Xeon CPU. All properties were
+tested for each theorem prover, and also one run which tried every
+invocation with all provers. To make this tractable, some restrictions
+were needed. The time limit for each invocation was 5 seconds. The
+maximum depth and induction variables for structural induction was 2,
+and to prevent combinatorial explosion the number of induction steps
+was limited to 20, and a maximum of 500 hypotheses were generated. For
+fixed point induction there is a similar problem since there are many
+possible candidate functions, so the maximum number of invocations
+with different fixed functions were 100 for each property.
+
+\section{Results for Proof Techniques}
+
+\begin{figure}[h]
+  \centering
+  \input{resultdata/venn}
+  \caption{Venn diagram of intersection between proved theorems for
+    different techniques. The data is from the 214 proved theorems
+    when using all provers.
+    \label{fig:venn}
+  }
+\end{figure}
+
+
+The stats from theorems are considered in Figure
+\ref{fig:venn}. \emph{more info to be added...}
+
+
+\section{Results for Provers}
 
 In this section we present how well the different provers succeeded on
 the big run of the test suite. It is important to distinguish between
@@ -68,6 +194,8 @@ only applicable method is structural induction.
 \label{tbl:proved}
 }
 \end{table}
+
+
 
 \paragraph{Discussion}
 
