@@ -5,34 +5,54 @@
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
 #+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
-* Autospec
+* HIP - Haskell Inductive Prover
 
 Prove properties of Haskell functions by translating the functions to
 First Order Logic and use Automated Theorem Provers.
 
+** To install
+
+cabal install
+
+Then install one or more of the following theorem provers:
+vampire, eprover, equinox, SPASS or prover9.
+
+** To run
+
+hip File.hs
+
+Where File.hs is a file with properties written in the format
+exemplified in the test suite. There is a also a little prelude called
+AutoPrelude which makes the properties testable with QuickCheck.
+
 ** Folders and Files
 
-| latex         | produces latex output of Haskell -> FOL translation           |
-| consistency   | checks if the translation of a Haskell module is consistent   |
-| consistencies | checks if an entire directory is consistent after translation |
-| src/          | source code                                                   |
-| examples-hs/  | Haskell examples subject to translation to FOL                |
-| examples-ec/  | Core examples subject to translation to FOL                   |
-| examples/     | Example proof haskell files                                   |
-| docs/         | Documents                                                     |
-| tptp-test/    | Some example formulas written in tptp format                  |
+| src/               | source code                                    |
+| testsuite/         | Test suite of properties                       |
+| report/            | The final report                               |
+| docs/              | Some documents                                 |
+| scratch/           | Bunch of tests with tptp and Agda              |
+| finalpresentation/ | Slides from the final presentation             |
+| presentation/      | Slides from a  small presentation              |
+| experiments/       | Property experiments not in the test suite     |
+| examples-hs/       | Haskell examples subject to translation to FOL |
+| examples-ec/       | Core examples subject to translation to FOL    |
 
 ** Source contents
 *** Language.TPTP
 The TPTP library used in this project
-*** Autospec
-Everything concerning Haskell -> FOL translation
-**** Autospec.FromHaskell
-From Haskell to Core
-**** Autospec.ToFOL
-From Core to FOL. Here are also the modules that makes proofs.
+*** HIP
+Everything concerning Haskell -> FOL translation and proving properties
+**** HIP.FromHaskell
+From Haskell to the intermediate Core language.
+**** HIP.ToFOL
+From Core to FOL. Here are also the modules that makes proofs, namely
+HIP.ToFOL.MakeProofs, HIP.ToFOL.StructuralInduction and
+HIP.ToFOL.FixpointInduction.
 *** Test.QuickSpec
-The QuickSpec library made my Nick Smallbone and Koen Claessen
+The QuickSpec library made my Nick Smallbone and Koen Claessen. The
+original project goal was to interoperate this to produce lemmas, but
+this is still future work
 
 ** Links
 
