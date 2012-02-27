@@ -19,7 +19,9 @@
 \usepackage{longtable}
 \usepackage{tikz}
 \usepackage{array}
-\usepackage{graphicx}
+%\usepackage{graphicx}
+%\usepackage[table]{xcolor}
+\usepackage{colortbl}
 %\usepackage{url}
 \usepackage[pdfborder=0 0 0]{hyperref}
 \hypersetup{
@@ -82,8 +84,8 @@
 %\newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
 \newcommand\note[1]{}
 \newcommand\PA{\mathcal{P\!A}}
-\newcommand\hs[1]{\verb~#1~}
-\newcommand\ts[1]{\verb~#1~}
+\newcommand\hs[1]{\texttt{#1}}
+\newcommand\ts[1]{\texttt{#1}}
 \newcommand\fn[1]{\mathrm{#1}}
 \newcommand\ptr[1]{\fn{#1.ptr}}
 \newcommand\appfn{@}

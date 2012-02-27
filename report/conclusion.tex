@@ -3,9 +3,9 @@
 
 In this thesis we developed an tool able to prove equational
 properties for Haskell programs. This was accomplished by means of a
-translation to first order logic, instantiation of several different
-proving techniques for functional programs. The proof search is
-carried out by automated theorem provers. The translation handles
+translation to first order logic and instantiation of several
+different proving techniques for functional programs. The proof search
+is carried out by automated theorem provers. The translation handles
 partial values and some proof techniques can prove properties about
 corecursive programs generating infinite values, and properties that
 hold for infinite or partial arguments.
@@ -14,10 +14,11 @@ An exhaustive test of the test suite developed by side consisting of
 over 500 such properties was carried out. The approach of using
 automated theorem provers on this kind of problems turned out to be
 successful; the proved theorems took often took much less time than
-100 milliseconds for the theorem provers. The most successful proving
-techniques were structural induction and the approximation lemma. The
-number of proved theorems for infinite and partial values were over
-200, and for total and finite values more than 100.
+100 milliseconds for the theorem provers. The number of proved
+theorems for infinite and partial values were over 200, and for total
+and finite values more than 100. There were both overlap in the
+different proof techniques, and properties that could only be proved
+with a certain technique.
 
 The future work includes adding a system of adding proved properties
 as lemmas for proving other properties. This turned out to be

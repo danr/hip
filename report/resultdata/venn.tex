@@ -1,23 +1,26 @@
-\newcommand\resS   [0]{\Large28}
-\newcommand\resSF  [0]{\Large3}
-\newcommand\resSFA [0]{\Large16}
-\newcommand\resSA  [0]{\Large77}
-\newcommand\resF   [0]{\Large1}
-\newcommand\resFA  [0]{\Large6}
-\newcommand\resP   [0]{\Large37}
-\newcommand\resPA  [0]{\Large37}
-\newcommand\resA   [0]{\Large9}
+\newcommand\resS   [0]{\large28}
+\newcommand\resSF  [0]{\large3}
+\newcommand\resSFA [0]{\large16}
+\newcommand\resSA  [0]{\large77}
+\newcommand\resF   [0]{\large1}
+\newcommand\resFA  [0]{\large6}
+\newcommand\resP   [0]{\large37}
+\newcommand\resPA  [0]{\large37}
+\newcommand\resA   [0]{\large9}
 
-\tikzset{
-  every node/.style={scale=0.6}
-}
-\begin{tikzpicture}[scale=0.6]
-  \tikzset{venn circle/.style={draw,circle,minimum width=6cm,fill=#1,opacity=0.2}}
+
+\begin{tikzpicture}
+  \tikzset{venn circle/.style={draw,circle,minimum width=3.8cm,fill=#1,opacity=0.2}}
+  \tikzset{outline/.style={circle,draw=circle edge,minimum width=3.8cm,edge=black,thin}}
 
   \node [venn circle = red]    (S) at (0,0)                              {};
-  \node [venn circle = blue]   (F) at (-60:4cm)                          {};
-  \node [venn circle = green]  (A) at (0:4cm)                            {};
-  \node [venn circle = orange] (P) at (0:8cm)                            {};
+  \node [outline]                  at (0,0)                              {};
+  \node [venn circle = blue]   (F) at (-60:2.7cm)                        {};
+  \node [outline]                  at (-60:2.7cm)                        {};
+  \node [venn circle = green]  (A) at (0:2.7cm)                          {};
+  \node [outline]                  at (0:2.7cm)                          {};
+  \node [venn circle = orange] (P) at (0:5.4cm)                          {};
+  \node [outline]                  at (0:5.4cm)                          {};
   \node [above]                    at (barycentric cs:S=1)               {Str. Ind.};
   \node [below]                    at (barycentric cs:S=1)               {\resS};
   \node [above]                    at (barycentric cs:F=1)               {\resF};
@@ -29,7 +32,22 @@
   \node [left]                     at (barycentric cs:S=1/2,F=1/2)       {\resSF};
   \node                            at (barycentric cs:S=1/2,A=1/2)       {\resSA};
   \node [right]                    at (barycentric cs:F=1/2,A=1/2)       {\resFA};
-  \node [below]                    at (barycentric cs:S=1/3,F=1/3,A=1/3) {\resSFA};
+  \node                            at (barycentric cs:S=1/3,F=1/3,A=1/3) {\resSFA};
   \node                            at (barycentric cs:A=1/2,P=1/2)       {\resPA};
+
+  \node [draw,rectangle] (summary) at (8cm,-3.25cm) {%
+                          \begin{minipage}{5.15cm}
+                                 \begin{tabular}{|lr|}
+                                 \hline
+                                 Total Theorems:        & 214 \\
+                                 \hline
+                                 \rowcolor{red!20}    Structural Induction:  & 124 \\
+                                 \rowcolor{blue!20}   Fixed Point Induction: & 26 \\
+                                 \rowcolor{green!20}  Approximation Lemma:   & 145 \\
+                                 \rowcolor{orange!20} Definitional Equality: & 74 \\
+                                 \hline
+                                 \end{tabular}
+                          \end{minipage}
+                         }
 
 \end{tikzpicture}

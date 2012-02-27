@@ -319,8 +319,8 @@ this property is true for total finite lists and a way to adjust the
 approximation lemma to prove such properties is to add a predicate
 indicating totality. A value is total if it does not contain any
 bottoms. This predicate can be approximated is first order equality,
-and these axioms sketches out the approach for the theory of the
-\hs{nub} function:
+and these axioms sketches out the approach for the totality theory
+relevant for the \hs{nub} function:
 
 \begin{align*}
 \rom{1} &&             & \neg \, Total(\bot) \\
@@ -331,11 +331,11 @@ and these axioms sketches out the approach for the theory of the
 
 The last axiom should only be added after a proof of termination
 proof. However, without an axiomatisation of set theory, it is
-impossible to express totality for infinite values such as lists. The
-approximation above will have models where infinite total lists are
-$Total$ and also $\neg Total$. Hence, out setting, $Total$ must
-necessarily mean finite. This is further discussed in Section
-\ref{sec:total}.
+impossible to express totality for infinite length lists. The axioms
+above are then only an approximation and will have models where
+infinite total lists are $Total$ and also $\neg Total$. Hence, out
+setting, $Total$ must necessarily mean finite. This is further
+discussed in Section \ref{sec:total}.
 
 \pagebreak
 Furthermore, the admissibility of this approach needs to be proved. A

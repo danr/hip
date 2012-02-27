@@ -158,15 +158,15 @@ prop_27 xs       = toList (fromList xs) =:= xs
 prop_28 :: Queue a -> Prop Bool
 prop_28 q        = invariant q =:= True
 
-prop_34 :: a -> a -> Prop a
-prop_34 x q     = top (enqueue x empty) =:= x
+prop_34 :: a -> Prop a
+prop_34 x        = top (enqueue x empty) =:= x
 
 prop_35 :: a -> a -> Prop (Queue a)
-prop_35 x q     = pop (enqueue x empty) =:= empty
+prop_35 x q      = pop (enqueue x empty) =:= empty
 
-prop_36 :: a -> a -> Prop (Queue a)
-prop_36 x q     = fromList (x:[]) =:= enqueue x empty
+prop_36 :: a -> Prop (Queue a)
+prop_36 x         = fromList (x:[]) =:= enqueue x empty
 
 prop_37 :: a -> Queue a -> Prop [a]
-prop_37 x q     = toList q++(x:[]) =:= toList (enqueue x q)
+prop_37 x q      = toList q++(x:[]) =:= toList (enqueue x q)
 

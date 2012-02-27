@@ -9,16 +9,16 @@ this section describes the setup and results.
 
 To carry out a throughout testing of the system a large test suite was
 developed and collected from other sources.  It consists of over 25
-Haskell source files, and all together includes over 500 equality
-properties.  The files of can be divided into groups with different
-aims of complexity, suitable proving methods and different aspects of
-Haskell. All files of the test suite are briefly described in Table
-\ref{tbl:testsuite}, and available in the project's
-repository\footnote{See the \hs{testsuite} directory in
-  \url{http://github.com/danr/hip/}}, but some parts and design
-decisions are highlighted in the rest of this section.
+Haskell source files, and includes over 500 equality properties.  The
+files of can be divided into groups with different aims of complexity,
+suitable proving methods and different aspects of Haskell. All files
+of the test suite are briefly described in Table \ref{tbl:testsuite},
+and available in the project's repository\footnote{See the
+  \hs{testsuite} directory in \url{http://github.com/danr/hip/}}, but
+some parts and design decisions are highlighted in the rest of this
+section.
 
-\begin{table}[h]
+\begin{table}[p]
 \centering
 \input{testsuite}
 \caption{Description of the files in the test suite, by group.}
@@ -95,21 +95,20 @@ To test reasoning about higher order functions the file \hs{Functions}
 states standard properties about function combinators, and the file
 \hs{MonadEnv} defines the reader monad. To make it a little more
 complicated there is also a definition of the state monad in
-\hs{MonadState}, defined without a \hs{newtype}.
+\hs{MonadState}.
 
 Properties about functions that produce infinite lists and trees can
 be found in the file \hs{Infinite}, and many of these are not provable
 with structural induction. There are some more complex properties
 about infinite lists in \hs{Streams}.
 
-Many properties are easier to prove with other properties as lemmas,
-and some properties even requires this. An example of this are the
-properties about insertion sort in the test suite. It includes
-properties such that the resulting list after sorting is sorted, and
-that the sorted list contains the same elements as the input
-list. Insertion sort works with a helper function \hs{insert} that
-inserts an element in a sorted list at its right position. To prove
-properties about insertion sort lemmas for \hs{insert} are needed.
+Many properties are easier to prove with other properties available as
+lemmas in the generated theory. Some properties even requires this. An
+example are the properties about insertion sort in the test suite. It
+includes properties such that the resulting list after sorting is
+sorted. Insertion sort works with a helper function \hs{insert} that
+inserts an element in a sorted list at its right position. Lemmas
+for \hs{insert} are needed to prove properties about insertion sort.
 
 Unfortunately there is no information available about which properties
 require lemmas, nor is there any data of which properties should be
@@ -129,10 +128,10 @@ suite. Five theorem provers were used and they are summarised in Table
     Name    & Version      & Reference \\
     \hline
     Vampire & 0.6          & \url{http://www.vprover.org/}                                \\
-    E       & 1.0-004 Temi & \url{http://www4.informatik.tu-muenchen.de/~schulz/E/E.html} \\
-    prover9 & 2009-02A     & \citep{prover9}                                              \\
+    E       & 1.0-004 Temi & \cite{schulzE} \\ % \url{http://www4.informatik.tu-muenchen.de/~schulz/E/E.html} \\
+    prover9 & 2009-02A     & \cite{prover9}                                              \\
     SPASS   & 3.5          & \url{http://www.spass-prover.org/}                           \\
-    equinox & 6.0.1alpha   & \url{http://www.cse.chalmers.se/~koen/code/}                 \\
+    equinox & 6.0.1alpha   & \cite{equinoxCADE} \\ % \url{http://www.cse.chalmers.se/~koen/code/}                 \\
   \end{tabular}
   \caption{The theorem provers used on the test suite
     \label{tbl:provers}
@@ -150,7 +149,25 @@ fixed point induction there is a similar problem since there are many
 possible candidate functions, so the maximum number of invocations
 with different fixed functions were 100 for each property.
 
+This was the setup used when testing the tool on the test suite. The
+rest of this chapter explains the results, comparing the different
+proof techniques, the used theorem provers and the success times for
+the theorem prover invocations.
+
 \section{Results for Proof Techniques}
+
+Of the 540 properties of the test suite, 111 could only be proved when
+universally quantifying only finite values. Those theorems will
+be referred to as Finite Theorems. All of the were proved with
+structural induction without a bottom base case as it is the only
+applicable technique implemented for them.
+
+An additional 214 properties were proved with the four proof
+techniques for infinite values. These are succinctly referred to as
+Theorems. This section will discuss the performance of the proof
+methods on properties which were stated as Theorems.  The overlap
+between the different techniques can be viewed in the Venn diagram in
+Figure \ref{fig:venn}.
 
 \begin{figure}[h]
   \centering
@@ -162,16 +179,207 @@ with different fixed functions were 100 for each property.
   }
 \end{figure}
 
+There are a number of observations to do from this figure. The
+different parts of the diagram is studied in the rest of this section.
 
-The stats from theorems are considered in Figure
-\ref{fig:venn}. \emph{more info to be added...}
+
+\subsection{Definitional Equality and the Approximation Lemma}
+\label{sec:defeqandapprox}
+
+Firstly, definitional equality only overlaps with the approximation
+lemma. The reason for this is that this technique is only applied when
+all arguments are abstract, as outlined in Section
+\ref{sec:concreteconcerns}. Further, fixed point induction is only
+used for recursive functions and properties about such functions
+generally need induction. Approximation lemma is applicable when the
+type of the equality is concrete, so that is the source of the overlap.
+
+The properties provable with definitional equality and the
+approximation lemma naturally comes from properties regarding only
+functions from files \ts{Functions}, \ts{MonadEnv} and
+\ts{MonadState}, where definitional equality alone proves the
+properties where the type of the equality is not concrete. Two
+unit test properties could for these reasons also only be proved with
+definitional equality, like this one from \ts{Queues}:
+
+\begin{code}
+prop_34 :: a -> Prop a
+prop_34 x = top (enqueue x empty) =:= x
+\end{code}
+
+\noindent
+Indeed, this property is not applicable for proving with any other
+technique. There were about 10 unit test properties provable with both
+approximation lemma and definitional equality.
+
+\paragraph{Only Approximation Lemma}
+The 9 properties provable with only approximation lemma can be divided
+in two parts. The first part consists of a property from \ts{Streams}:
+
+\begin{code}
+zero :: Stream Nat
+zero = pure Zero
+
+one :: Stream Nat
+one = pure (Succ Zero)
+
+prop_one :: Prop (Stream Nat)
+prop_one = Succ <$> zero =:= one
+\end{code}
+
+\noindent
+Here, \hs{pure} is the infinite stream constructed by repeating a
+value, and \hs{<\$>} is map over streams. This could be proved with
+fixed point induction, but it currently does not do any
+inlining. Should \hs{zero} be inlined to \hs{pure Z} and similarly for
+\hs{one}, the property is provable with fixed point induction as well.
 
 
-\section{Results for Provers}
+The other 8 properties only proved with approximation lemma come from
+\ts{MonadState}. This monad is written without a newtype wrapper, and
+in many different ways. The implementations of bind with a strict
+\hs{uncurry} definition and the property of right return identity are
+stated in this file as this:
+
+\begin{code}
+-- Strict in its second argument. The normal definition uses a irrefutable pattern.
+uncurry f (a,b) = f a b
+
+(>>=) :: State s a -> (a -> State s b) -> State s b
+(m >>= f) s = uncurry f (m s)
+
+return :: a -> State s a
+return x s = (x,s)
+
+prop_return_right_strict :: (s -> (a,s)) -> Prop (s -> (a,s))
+prop_return_right_strict f = (f >>= return) =:= f
+\end{code}
+
+\noindent
+The property will be expanded to \hs{(f >>= return) s =:= f s}.
+Interestingly, proving this with the approximation lemma works as a
+typing predicate: it will provide the information that \hs{f s} is
+either bottom or \hs{(a,b)} for some \hs{a} and \hs{b}. This
+information is not available for the untyped setting in definitional
+equality and thus gets stuck.
+
+
+\paragraph{Approximation Lemma and Fixed Point Induction}
+The properties provable with only these two techniques all come from
+\ts{Infinite}, and include properties about \hs{map}, \hs{repeat},
+\hs{iterate} and similar constructions for Trees rather than
+lists. Neither of these properties have concrete arguments to do
+structural induction on.
+
+\subsection{Structural Induction}
+\label{sec:strindres}
+
+The properties provable with only structural induction include
+properties from \ts{Fix}, where ordinary functions are written in
+terms of \hs{fix}, where fixed point induction ironically does not
+work. In addition, many properties come are about natural numbers and
+lists.
+
+Some structural induction and approximation lemma theorems are
+essentially doing proof by plain equality but with cases, from
+\ts{Bool}. However, most of them come from properties about lists and
+natural numbers, integers and the \hs{Maybe} monad.
+
+\paragraph{Structural Induction and Fixed Point Induction}
+The three properties provable with only these two techniques point
+induction come from \ts{IWC}, \ts{Infinite} and \ts{Nat}
+respectively. The first is a definition of proving the equivalence
+between a mutually recursive definition of an even predicate over
+natural numbers and a self-recursive definition in depth two. The
+first is readily not provable with the approximation lemma as it
+approximates the resulting \hs{Bool}, and a stronger induction
+hypothesis is needed.
+
+The second property is one of the functor laws for \hs{fmap} for trees:
+
+\begin{code}
+prop_fmap_comp :: (b -> c) -> (a -> b) -> Tree a -> Prop (Tree c)
+prop_fmap_comp f g t = fmap (f . g) t =:= fmap f (fmap g t)
+\end{code}
+
+\noident
+Interestingly, this property is provable with the approximation lemma,
+but it takes more than 5 seconds: the E theorem prover produces a
+proof in 18s.
+
+The last property does not seem to be suitable for approximation:
+
+\begin{code}
+prop_max_assoc :: Nat -> Nat -> Nat -> Prop Nat
+prop_max_assoc a b c = max (max a b) c =:= max a (max b c)
+\end{code}
+
+\paragraph{Using all inductive techniques}
+The properties provable with all three techniques are associativity
+proofs, symmetry of \hs{max} from \ts{Nat}, some properties about
+lists from \ts{ZenoLists} and some lemmas from
+\ts{ProductiveUseOfFailure}, including:
+
+\begin{code}
+prop_L7 :: a -> a -> [a] -> Nat -> Nat -> Nat -> Prop [a]
+prop_L7 x y zs m n o = drop (S o) (drop n (drop (S m) (x:y:zs)))
+                   =:= drop (S o) (drop n (drop m (x:zs)))
+\end{code}
+
+\subsection{Fixed Point Induction and Exponential Types}
+There was only one property only provable with fixed point induction,
+namely the property of associative addition for Brouwer ordinals from
+\cite{dixonphd} in the test file \ts{Ordinals}. The relevant
+definitions are these:
+
+\begin{code}
+data Ord = Zero | Suc Ord | Lim (Nat -> Ord)
+
+(+) :: Ord -> Ord -> Ord
+Zero  + b = b
+Suc a + b = Suc (a + b)
+Lim f + b = Lim (\n -> f n + b)
+
+prop_assoc_plus :: Ord -> Ord -> Ord -> Prop Ord
+prop_assoc_plus a b c = a + (b + c) =:= (a + b) + c
+\end{code}
+
+\noindent
+The \hs{Ord} data type is exponential, and complete support for such
+types were never implemented for structural induction and the
+approximation lemma (see Section \ref{sec:futind}). With fixed point
+induction, this support comes for free. For the proof of associativity
+the fixed functions are the first addition in both sides, with this
+induction hypothesis:
+
+\newcommand{\Lim}{\fn{lim}}
+\newcommand{\pw}{\fixw{+}}
+\newcommand{\pb}{\fixb{+}}
+
+\begin{equation*}
+\faaa{a}{b}{c} a \pw (b + c) = (a \pw b) + c
+\end{equation*}
+
+\noindent
+The interesting case is for the limit $\Lim(f)$ in the step part of
+proof by fixed point induction. A proof that liberally uses
+lambdas instead of explicit pointers is given below:
+
+\begin{align*}
+lhs = & \; \Lim (f) \pb \big(b + c\big)                               && \{\textrm{definition of $\pb$}\}\\
+    = & \; \Lim (\lambda n . f(n) \pw \big(b + c\big))                && \{\textrm{induction hypothesis}\}\\
+    = & \; \Lim (\lambda n . (f(n) \pw b) + c)                && \{\textrm{$\eta$-expansion}\}\\
+    = & \; \Lim (\lambda n . (\lambda m . f(m) \pw b)(n) + c) && \{\textrm{definition of $+$}\}\\
+    = & \; \big(\Lim (\lambda m . f(m) \pw b\big) + c                 && \{\textrm{definition of $\pb$}\}\\
+    = & \; \big(\Lim (f) \pb b\big) + c = \; rhs
+\end{align*}
+
+
+
+\section{Results for Different Theorem Provers}
 
 In this section we present how well the different provers succeeded on
-the big run of the test suite. It is important to distinguish between
-the value domains the different techniques work for. Successes for
+the big run of the test suite. As in the previos section, successes for
 methods which handle all values are called Theorems, and for methods
 that only work on finite and total values are called Finite Theorems.
 
@@ -195,35 +403,40 @@ only applicable method is structural induction.
 }
 \end{table}
 
-
-
 \paragraph{Discussion}
-
 In general, all provers tested in this experiment but equinox
 performed almost equally well on this problem set. For those four in
 the top the differences are small, but the most successful is
 Vampire. It is closely followed by E, which performs slighly better on
-the approximation lemma. One of the few notable differences is that
+the approximation lemma. One of the notable differences is that
 prover9 performs worse proofs by the approximation lemma and fixed
-point induction.
+point induction. The theorem provers has been considered as
+black-boxes and examining these results in terms of how the theorem
+provers operate is out of scope of this thesis.
+
+\begin{comment}
 
 A striking observation is that the approximation lemma is the most
-successful of proving techniques for Theorems. It is also the easiest
-to formulate and implement. These good results for approximation
-lemma motivates the search for a reformulation of that holds for
-finite or total infinite values.
+successful of proving techniques for Theorems. As we saw in the
+previous section, it intersects definitional equality on 37
+properties, and 8 of its uniquely proved properties could be proved
+with definitional equality if it had more typing information, and the
+last one if fixed point induction did more inlining. However, after
+definitional equality, it is also the easiest to formulate and
+implement.
 
 Structural induction could become even stronger if the combinatorial
 explosion when generating induction hypotheses could be
 restricted. Currently, it creates all smaller trees than the induction
-conclusion, but another alternative is to use all subtrees.
+conclusion, but another alternative is to use all sub trees.
 
-Definitional equality, written as plain in the table, is only
-applicable for properties with only abstract arguments. There are some
-notable files in the test suite with these, \ts{Functions}, \ts{MonadEnv} and
-\ts{MonadState}, and most successes come from there. Should the translation
-be changed so that it also applicable on concrete arguments, it would
-also be able to prove properties from for example \ts{Bool}.
+Definitional equality is only applicable for properties with only
+abstract arguments. There are some notable files in the test suite
+with these, \ts{Functions}, \ts{MonadEnv} and \ts{MonadState}, and
+most successes come from there. Should the translation be changed so
+that it also applicable on concrete arguments, it would also be able
+to prove properties from for example \ts{Bool}, and intersect
+structural induction that currently proves these techniques.
 
 
 \section{Results per File}
@@ -266,27 +479,23 @@ examples are \ts{InsertionSort} and \ts{Reverse}. It is also needed to
 prove more sophisticated properties not widely included in this test
 suite.
 
+\end{comment}
+
+
 \section{Proving Time}
 
 Most invocations to the theorem provers are solved in a few
 milliseconds, and few can take up to 500 ms. SPASS had the largest
-success time of all invocation: about 1500ms, but that was the only success
-over one second. The cumulative amount of success times can be viewed
-in Figure \ref{fig:provingtime}. Each method can give rise to
+success time of all invocation: about 1500ms, but that was the only
+success over one second. The cumulative amount of success times can be
+viewed in Figure \ref{fig:provingtime}. Each method can give rise to
 several different ways of proving a property, an example is fixed
-point induction on different functions. These are called parts. A part
-can consist of one or many invocations to a theorem prover, an example
-is the base and the different step cases in a proof by structural
-induction. These invocations are called particles. All particles from
-a part that ended in success are counted in the figure.
+point induction on different functions, and each of these can consist
+of one or many invocations to a theorem prover, an example is the base
+and the different step cases in a proof by structural induction.  All
+invocations from a technique with a given setting that ended in
+success are counted in the figure.
 
-\paragraph{Discussion}
-
-The theorem provers are well suited for these kinds of problems, with
-some variance already discussed. This motivates using automated
-theorem provers to prove properties about Haskell programs. For the
-specific setup, 5 seconds were used as timeout, but one second should
-be sufficient, possibly less.
 
 \begin{figure}[h]
 \centering
@@ -304,5 +513,19 @@ be sufficient, possibly less.
 }
 \end{figure}
 
+\paragraph{Discussion}
+The figure conveys that more than the majority of invocations for
+successes take less than 50ms, and after 300ms almost no new successes
+are encountered. However, as noticed in Section \ref{sec:strindres},
+there are also examples where much longer invocation times are
+needed. A way of guiding the theorem provers in the search space of
+proofs is discussed in Section \ref{sec:minpredicate}.
 
+\begin{comment}
+The theorem provers are well suited for these kinds of problems, with
+some variance already discussed. This motivates using automated
+theorem provers to prove properties about Haskell programs. For the
+specific setup, 5 seconds were used as timeout, but one second should
+be sufficient, possibly less.
+\end{comment}
 

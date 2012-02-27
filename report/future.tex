@@ -246,7 +246,7 @@ more complex properties, and it would be very interesting to extend
 our approach with a lemma synthesis.
 
 
-\section{Type classes}
+\section{Type Classes}
 \label{sec:typeclasses}
 
 There are some obstacles to support type classes. One is introduced by
@@ -256,22 +256,20 @@ would be to use dictionary passing, inlined for concrete types.
 
 A third obstacle is to decide which axioms to use for the functions
 from a type class, as there is no set agreement on how strong the
-rules are that we expect from some instances to obey. Take Monoids as
-an example. Its signature consists of a binary operator and an
-element. The required laws are associativity and that the element acts
-as an identity for the operator. Lists with concatenation and the
-empty list are an instance of Monoid, and the associativity law holds
-for finite and partial lists. The right identity does not hold for
-partial values: \hs{$\bot$ ++ []} is not equal to \hs{[]}, as it is
-equal to $\bot$. This example suggests that it could be appropriate to
-assume the laws only for total values, and that it would be sensible
-to automatically check these laws for all instances.
+rules are that we expect from some instances to obey. An example
+is the Eq class, whose instances typically only constitute an
+equivalence relation for finite values.
 
-Since instances have to be polymorphic some classes admits free
-naturality conditions. The functions from a type class are all
-continuous. This is also true for functions which are quantified
-over. This is currently not enforced in the generated theories, and an
-open question is how this effects the results.
+\section{Quantifying over Functions and Free Theorems}
+
+Polymorphic functions generally enjoy free theorems
+\citep{freetheorems} which could be added to the theory.  Furthermore,
+the functions quantified over are monotone (and continuous), and this
+is currently not enforced in the generated theories. An open question
+is how this effects the results. As seen in Section
+\ref{sec:defeqandapprox}, definitional equality would be stronger if
+types of the result of a function was expressed.
+
 
 \section{Material Implication and Existential Quantifiers}
 
@@ -281,7 +279,7 @@ This example about soundness for a prefix predicate is given by
 \cite{smallcheck}:
 
 \begin{code}
-prop_isPrefixSound :: Eq a => [a] -> [a] -> Prop (Bool :=> Exists [a] [a])
+prop_isPrefixSound :: Eq a => [a] -> [a] -> Prop (Bool :=> Exists [a] Bool)
 prop_isPrefixSound xs ys = isPrefix xs ys ==> exists (\xs' -> xs ++ xs' == ys)
 \end{code}
 
@@ -294,17 +292,25 @@ set of function combinators in the theory to construct a witness.
 \section{Other Proof Techniques}
 
 Each of the proof methods have their own future work chapter, but
-there are of other techniques not implemented. One is recursion
-induction \citep{recind}, where you prove that two functions are equal
-by asserting that one of them fulfills the same equations as the
+there are other techniques not implemented. One is recursion induction
+\citep{recind}, where you prove that two functions are equal by
+asserting that one of them fulfills the same equations as the
 other. Another is bisimulation \citep{bisimulationCapretta}, which
 could possibly be extended to prove properties about total but
-infinite values.
+infinite values. To prove properties about infinite streams, an
+automated approach using anamorphisms and idiom laws as in
+\cite{streams} could be used.
 
 \section{Faster Proof Searches via Predicates}
+\label{sec:minpredicate}
 
 It is possible to add annotations in the equations generated for
 functions to make the theorem prover not unroll unnecessary
 definitions and regard these equalities more like definitions. This
 would avoid the theorem provers to get ``lost'' in the search space,
-and in some cases also allow finite models.
+and in some cases also allow finite models. The predicate indicates
+that an expression is suitable of reducing to weak head normal
+form. This predicate would be need to be added at various places in
+the translated theory, an example is that functions doing pattern
+matching would need to indicate that the expression under scrutiny is
+suitable for reduction.
