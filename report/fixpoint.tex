@@ -31,9 +31,9 @@ fix f = f (fix f)
 \end{code}
 
 Fixed point induction can prove properties about \hs{fix f} for some
-\hs{f}. In the next section a way to rewrite any recursive function is
-introduced, and thus properties about recursive functions in general
-can be proved by fixed point induction.
+\hs{f}, and the next section gives a method to rewrite any recursive
+functions in terms of \hs{fix}. Then properties about recursive
+functions in general can be proved by fixed point induction.
 
 The fixed point in question is the solution of the fixed point
 equation $x = f \w x$. The function \hs{fix} solves this equation:
@@ -109,10 +109,16 @@ to $\hs{x}_n$ and a body $e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n]$ with
 these variables free, the definition in terms of \hs{fix} is:
 
 \begin{align*}
-& \hs{f } \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n] & \Rightarrow &&& \hs{f' g } \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\hs{g},\hs{x}_1,\ldots,\hs{x}_n] \\
-&                                                                     &             &&& \hs{f = fix f'}
+& \hs{f } \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n] & \Rightarrow &&& \fixhsb{f} \w \fixhsw{f} \w \hs{x}_1 \ldots \hs{x}_n \hs{ = } e[\fixhsw{f},\hs{x}_1,\ldots,\hs{x}_n] \\
+&                                                                     &             &&& \hs{f = fix} \w \fixhsb{f}
 \end{align*}
 
+The funny notation with filled and outlined circles carry some
+meaning. The black dot in $\fixhsb{f}$ indicates that this function
+has an implementation, mnemonic filled with implementation. The
+outlined circle in $\fixhsw{f}$ means that this function does not have
+any implementation, it is empty. However, when $\hs{fix }\hsfixb{f}$
+unrolls this will replace $\fixshw{f}$.
 
 \begin{comment}
 This translation needs to be carried out with some care, since for $f
@@ -310,7 +316,6 @@ functions introduces a new function with an additional argument, the
 function would use the new argument as a function pointer, which in
 turn means a lot of use of the $\appfn$. This can be seen in the cons
 case for \hs{map}:
-function, the cons case is translated to:
 
 \begin{align*}
   \faaa{m}{x}{xs} \fn{map'}(m,x\fn{:}xs) = (\app{f}{x}) \fn{:} (\app{(\app{m}{f})}{xs})
@@ -380,6 +385,10 @@ looks like this:
      { P(f,g) }
 \end{mathpar}
 
+\noindent
+This also works when the functions are not mutually recursive. An
+example is the map-iterate property which can be proved by fixating
+both \hs{map} and \hs{iterate}.
 
 \subsection{Erroneous Use of Fixed Point Induction}
 
@@ -392,7 +401,7 @@ inf = Succ inf
 \end{code}
 
 \noindent
-We shall deliberately use a predicate that is not admissible to
+A predicate that is not admissible will deliberately be used to
 ``prove'' that $\hs{inf} \neq \hs{Succ inf}$.  The predicate is $P(x)
 \Leftrightarrow x \neq \fn{succ}(x)$. Furthermore, \hs{inf} is
 translated to first order logic and rewritten in terms of $\unfix{}$ and

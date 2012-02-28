@@ -9,7 +9,7 @@ range over the data type's different constructors. Such a case
 analysis combined with induction is especially strong.
 
 Induction is a very fundamental concept of mathematics and is directly
-or indirectly an axiom in axiomatizations of mathematics. We shall
+or indirectly an axiom in axiomatisation of mathematics. We shall
 take the Peano Arithmetic, $\PA$, axioms for true. This theory has the
 natural numbers as standard model with a small vocabulary consisting
 only of the constant $0$, the unary successor function $s$, and binary
@@ -42,7 +42,7 @@ with the assumed hypothesis and the obligated conclusion.
 This is a axiom \emph{schema} since it is not possible to quantify
 over a predicate in first order logic. Rather, it is a infinite set of
 axioms, one for each (well-formed) formula instantiated in place for
-$P$. Generally, theorem provers do not instantiate schemas themselves
+$P$. Generally, theorem provers do not instantiate schemata themselves
 so it has to be done manually, with an appropriate formula for $P$. In
 this thesis, the predicates will be equalities that depend on the
 argument to $P$. For example, to show that two functions $f$ and $g$
@@ -113,7 +113,7 @@ $\sqsubseteq$. Such chains are described in more detail in Section
 
 This chain has the limit \hs{inf}, defined as \hs{inf = Succ inf}. If
 $P$ is an admissible predicate, then if $P$ holds for every element in
-that chain then $P(\hs{inf})$. We can now define admissble.
+that chain then $P(\hs{inf})$. We can now define admissible.
 
 \paragraph{Definition} A predicate $P$ is \emph{admissible} for every
 $\omega$-chain $\langle x_n \rangle_{n \in \omega}$}, this holds:
@@ -171,7 +171,7 @@ principle for possibly partial and infinite lists:
 \subsection{Generalisations}
 \label{sec:genind}
 
-The structural induction schemata seen so far only unses each
+The structural induction schemata seen so far only uses each
 constructor once and that does not work for proving properties about
 functions defined with recursion with a bigger depth. For instance,
 the induction on Peano numbers in Haskell can be adjusted to a
@@ -342,7 +342,7 @@ for bottom.
     with less constructors you can generate with the correct type with
     the typed variables, here \hs{(Nat,Nat)}. Then you proceed as in the
     simple case: one invocation to the theorem prover for each step,
-    variables are skolemized and the predicate inlined.
+    variables are skolemised and the predicate inlined.
 
     This leads to a combinatorial explosion for a lot of data types. If
     you need to prove something with length $n$ lists, you get a induction
@@ -430,7 +430,7 @@ of axioms in the theory itself. A simple example of this is to prove a
 property $P$ on one Peano natural number, and choose how many base
 cases in form of $P(0)$, $P(1)$, up to $P(n)$ to get a stronger
 induction hypothesis $P(x)\wedge P(x+1)\wedge \cdots\wedge
-P(x+n-1)\rightarrow P(x+n)$. It is possible to axiomatize such a
+P(x+n-1)\rightarrow P(x+n)$. It is possible to axiomatise such a
 ``machine'' in first order logic as this:
 
 \newcommand{\QZ}[2]{\inferrule* [left=q-0]{ }{Q(#1,#2)}}

@@ -36,10 +36,10 @@ Haskell source is well typed, and \hs{equal} will not be applied to
 anything but \hs{Tri}s and bottoms.
 
 One weakness of that approach is that two functions that are
-extensionally equivalent in Haskell are not in the generated theory,
-when applied to non sense arguments. An example of this behaviour is
-these two implementations of the boolean and function in Figure
-\ref{code:and}.
+extensionally equivalent in Haskell are not in the generated
+theory. Due to its untyped nature, results can differ when applied to
+non sense arguments. An example of this behaviour occurs for these two
+implementations of the boolean and function in Figure \ref{code:and}.
 
 \begin{figure}[h!]
 \centering
@@ -65,9 +65,9 @@ and' _     _ = False
 
 Let us analyse the models of this program in Figure \ref{code:and}
 with an additional value $\diamond$ in the domain. The translation
-makes $\fn{and}(\diamond,\fn{true}) = \bot$, since there is a wild
-pattern that goes to $\bot$. For the other function we have
-$\fn{and'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern
+makes $\fn{and}(\diamond,\fn{true}) = \bot$, since there is an
+implicit wild pattern to $\bot$. For the other function we
+have $\fn{and'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern
 already goes to $\fn{false}$. Because of this differences, the
 approximation lemma cannot prove their extensional equality. While
 this is a simple example, it is easy to imagine more complex cases
@@ -76,15 +76,15 @@ Haskell program, but to this translation.
 
 This suggests that wild patterns should be expanded to pattern for all
 their constructors, and add a match any pattern that goes to
-bottom. This make the the meta theorem
-$\faa{x}{y} \fn{and}(x,y) = \fn{and'}(x,y)$ consistent with rest of the
-theory.  Further, it would be provable by the approximation lemma, and
-in more complex cases with recursive functions, by fixed point
-induction. This translation is also assumed to be a little easier to
-implement. The down side is that functions such as \hs{equal} above
-would generate $O(n^2)$ axioms, where $n$ is the number of constructors for
-the data type. The presence of GADTs and other type extensions such as
-type families would requite type information and add a lot of complexity.
+bottom. This make the the meta theorem $\faa{x}{y} \fn{and}(x,y) =
+\fn{and'}(x,y)$ consistent with rest of the theory.  Further, it would
+be provable by the approximation lemma, and in more complex cases with
+recursive functions, by fixed point induction. This translation is
+also assumed to be a little easier to implement. The down side is that
+functions such as \hs{equal} above would generate $O(n^2)$ axioms for
+a data type with $n$ constructors. The presence of GADTs and other
+type extensions such as type families would requite type information
+and add a lot of complexity.
 
 \section{Lemmas}
 
@@ -164,7 +164,7 @@ proof methods.
 \newcommand\Total{\fn{Total}}
 \newcommand\Fin{\fn{Fin}}
 The $\fn{force}$ function from the previous section is not easily
-generatised to remove partiality from a value. Another way to do this
+generalised to remove partiality from a value. Another way to do this
 is to introduce a predicate $\Total$, indicating totality. This is a
 way to axiomatise $\Total$ for natural numbers:
 
@@ -185,7 +185,7 @@ commutativity of plus could be expressed with this meta theorem:
 
 We would also like to express infiniteness. Our canonical example of a
 an infinite value is the natural number \hs{inf = Succ inf}. This is
-the only infinite natural number so a prediate $\Inf$ for infinite
+the only infinite natural number so a predicate $\Inf$ for infinite
 natural numbers is easy to axiomatise:
 
 \begin{equation*}
@@ -193,7 +193,7 @@ natural numbers is easy to axiomatise:
 \end{equation*}
 
 While defining $\Inf$ is straightforward for natural numbers, further
-complexities are added for other data types and introduction schemas
+complexities are added for other data types and introduction schemata
 are needed. But since Haskell functions are continuous and finite,
 every infinite value is produced from finite information (\hs{repeat},
 \hs{iterate}, \hs{enumFrom}), so a predicate $\Inf$ should be enough
@@ -205,7 +205,7 @@ partial values, that is satisfying $\Inf(x) \rightarrow \Total(x)$.
 We can now define finiteness of a value $x$ as
 $\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$.  The results
 from a function would be necessary to axiomatise to make such axioms
-useable. To exemplify why this is not trivial, consider the
+usable. To exemplify why this is not trivial, consider the
 complexities of the plus function:
 
 \begin{align*}
@@ -232,13 +232,13 @@ not always clear which lemmas are required to prove a given
 property. This section discusses some ideas to generate candidate
 lemmas.
 
-Inductive proofs by rippling enables techinques such as cricics
-\citep{productiveuse}, which makes lemmas and generalizations when
+Inductive proofs by rippling enables techniques such as critics
+\citep{productiveuse}, which makes lemmas and generalisations when
 rippling fails. As our approach relies on theorem provers, it is very
 hard to extract some information from a timeout of a proof by induction.
 
 Another approach is to do property speculation, implemented for
-Isabell \citep{isacosy} and Haskell \citep{quickspec}. The idea is to
+Isabelle \citep{isacosy} and Haskell \citep{quickspec}. The idea is to
 use the signatures from the functions in the source file and it try to
 find equality properties by creating small syntax trees of the
 functions by testing. Such equalities are well suited as lemmas for

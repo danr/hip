@@ -11,10 +11,10 @@ theory.
 The values of every data type are ordered on how much ``information''
 they contain. The least element bottom, denoted $\bot$, contains least
 information. It corresponds to all kinds of crashes in Haskell; use of
-\hs{undefined}, non-termination and non exhausite pattern matches.
+\hs{undefined}, non-termination and non exhaustive pattern matches.
 Different constructors hold different information, so they are not
 related by the ordering; this is a partial order. Such orders are
-reflexive, transitive and antisymmetric. The ordering is written
+reflexive, transitive and anti-symmetric. The ordering is written
 $\sqsubseteq$, sometimes with a subscript indicating the type.
 
 \begin{wrapfigure}{O}{0.4\textwidth} %\begin{figure}
@@ -153,9 +153,12 @@ the property of being less than or equal to the limit: $\hs{Succ}^n \,
 
 A partial order is a complete partial order iff there is a limit for
 every $\omega$ chain. All data types in Haskell are complete partial
-orders\footnote{Notice that the data type \hs{data StrictNat = Zero |
+orders.
+\begin{comment}
+\footnonte{Notice that the data type \hs{data StrictNat = Zero |
     Succ !StrictNat} is flat and therefore complete.}. Now we can
 define continuity.
+\end{comment}
 
 \paragraph{Definition} A function $f$ is \emph{continuous} iff it is
 monotone and preserves the $\lub{ }$ of all $\omega$-chains: i.e.
@@ -184,7 +187,7 @@ is given by Plotkin \cite{domains}:
 \emph{A function is continuous iff it is physically feasible.}
 \end{center}
 
-This means that all computable functions are contiuous, and the other
+This means that all computable functions are continuous, and the other
 way around. The conclusion for us is that all Haskell functions are
 continuous.
 
@@ -217,5 +220,5 @@ easily show that it is a satisfiable theory since it will normally
 only have infinite models. However, a long run without any counter
 model could be seen as a witness for a successful translation in this
 respect.  On the other hand, continuity is a concept that is hard to
-express in first order logic. We can come close with an axiomatization
+express in first order logic. We can come close with an axiomatisation
 of set theory, but it is beyond the scope of this thesis.

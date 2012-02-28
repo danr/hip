@@ -1,35 +1,52 @@
 \chapter{Conclusion}
 \label{ch:conclusion}
 
-In this thesis we developed an tool able to prove equational
-properties for Haskell programs. This was accomplished by means of a
-translation to first order logic and instantiation of several
-different proving techniques for functional programs. The proof search
-is carried out by automated theorem provers. The translation handles
-partial values and some proof techniques can prove properties about
+In this thesis we developed a tool able to prove equational properties
+for Haskell programs. This was accomplished by means of a translation
+to first order logic and instantiation of several different induction
+techniques for functional programs. The proof search is carried out by
+automated theorem provers. The translation handles partial values and
+some of the available proof techniques can prove properties about
 corecursive programs generating infinite values, and properties that
-hold for infinite or partial arguments.
+hold for infinite and partial arguments.
 
-An exhaustive test of the test suite developed by side consisting of
-over 500 such properties was carried out. The approach of using
-automated theorem provers on this kind of problems turned out to be
-successful; the proved theorems took often took much less time than
-100 milliseconds for the theorem provers. The number of proved
-theorems for infinite and partial values were over 200, and for total
-and finite values more than 100. There were both overlap in the
-different proof techniques, and properties that could only be proved
-with a certain technique.
+An exhaustive test of the system was carried out on a test suite
+developed as a part of this project. The test suite consists of over
+500 properties. % presumably true properties
+The approach of using automated theorem provers on
+this kind of problems turned out to be successful; the proved theorems
+often took much less time than 100 milliseconds for the theorem
+provers. For the properties in the test suite, over 200 theorems were
+proved to hold for infinite and partial values, and for total and
+finite values more than 100. There were properties that could be
+proved with many techniques, but every technique had some properties
+that it could exclusively prove.
 
 The future work includes adding a system of adding proved properties
 as lemmas for proving other properties. This turned out to be
-difficult of two reasons. First, the translation of pattern matching
+difficult for two reasons. First, the translation of pattern matching
 needs to be carried out in a certain way. Second, adding lemmas that
 only holds for finite values needs to be tagged by means of predicates
 or functions in the generated theory that witnesses their
 finiteness. To appropriately use these tags, it would be necessary to
 prove termination of functions, and conversely explain which arguments
 are finite given that a function terminate with a finite value.
+To generate suitable lemmas it would be interesting to automatically
+synthesise conjectures, and verify the specifications by testing
+before proving. Such tools for specifications are QuickSpec
+\citep{quickspec} and IsaCosy \citep{isacosy}. This would relief the
+user of the burden of figuring out exactly which lemmas are needed to
+prove desired properties.
 
-To generate lemmas it would be interesting to automatically deduce
-specifications via means of testing. Such tools for specifications are
-QuickSpec \citep{quickspec} and IsaCosy \citep{isacosy}.
+Finally, two of Haskell's beauties is its purity and simplicity, and
+the simple and effective technique of equational reasoning is readily
+available thanks to referential transparency. We believe that this
+tool is on the right track of using these properties to accomplish
+automatic verification of Haskell programs.  It should be noted that
+the tool is able to prove properties without type information and
+without proving termination for functions.  As this thesis shows,
+first order logic is expressible enough to capture many different
+aspects of Haskell, including closures of higher order functions, even
+though no native support for quantifying over functions is available
+in the logic. By using automated theorem provers the
+burden of reimplementing a proof system is avoided.

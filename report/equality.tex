@@ -15,12 +15,14 @@ prop_skk_id :: Prop (a -> a)
 prop_skk_id = s k k =:= id
 \end{code}
 
-The generated conjecture is this equality stated with function pointers:
+The generated conjecture stated with function pointers as this:
 
 \begin{equation*}
 \app{ (\app {\ptr{s}} {\ptr{k}} )
     }{\ptr{k}} = \ptr{id}
 \end{equation*}
+
+However, it is not provable in this form. The next section will solve this.
 
 \subsection{Extensional Equality and \texttt{seq}}
 
@@ -77,6 +79,14 @@ trigger other proof methods should \hs{a} or \hs{b} be concrete types
 (the former for induction and the latter for approximation
 lemma). Secondly, for many properties the extensionality axiom which
 introduces extra steps in the proof search is not needed.
+
+The property about \hs{s k k} is then instead translated to:
+
+\begin{equation*}
+\fa{x} \fn{s}(\ptr{k},\ptr{k},x) = \fn{id}(x)
+\end{equation*}
+
+This gives a little less unnecessary overhead to the theorem provers.
 
 \subsection{Future Work: Concrete Concerns}
 \label{sec:concreteconcerns}

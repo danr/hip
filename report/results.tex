@@ -374,12 +374,14 @@ lhs = & \; \Lim (f) \pb \big(b + c\big)                               && \{\text
     = & \; \big(\Lim (f) \pb b\big) + c = \; rhs
 \end{align*}
 
-
+In hindsight, it is not so surprising that this property is provable
+with fixed point induction, but its applicability on exponential data
+types actually not thought of during its implementation.
 
 \section{Results for Different Theorem Provers}
 
 In this section we present how well the different provers succeeded on
-the big run of the test suite. As in the previos section, successes for
+the big run of the test suite. As in the previous section, successes for
 methods which handle all values are called Theorems, and for methods
 that only work on finite and total values are called Finite Theorems.
 
@@ -407,7 +409,7 @@ only applicable method is structural induction.
 In general, all provers tested in this experiment but equinox
 performed almost equally well on this problem set. For those four in
 the top the differences are small, but the most successful is
-Vampire. It is closely followed by E, which performs slighly better on
+Vampire. It is closely followed by E, which performs slightly better on
 the approximation lemma. One of the notable differences is that
 prover9 performs worse proofs by the approximation lemma and fixed
 point induction. The theorem provers has been considered as

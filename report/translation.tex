@@ -42,29 +42,31 @@ is this axiom\footnote{Haskell functions and constructors are written in
 \end{equation*}
 
 \noindent
-So far so good, but what if someone wants to prove that \hs{singleton
-  x} is a \hs{Leaf}? With a theory with only this axiom there are
-models with only one element where \hs{Leaf} is equal to
-\hs{Fork}. Axioms needs to be added expressing that values created
-from different constructors are unequal. We will call those
-\emph{disjoint constructor axioms}. The sole axiom for \hs{Tree} is:
+To capture the intuition that values produced by different
+constructors are indeed different, appropriate axioms needs to be
+added. Without these, there will be models with only one element where
+everything is identified. The axioms added expressing that values
+created from different constructors are unequal will be called
+\emph{disjoint constructor axioms}. For the data type \hs{Tree}, only
+this axiom is generated for its two constructors:
+
 \begin{equation*}
 \faaa{l}{x}{r} \fn{leaf} \neq \fn{fork}(l,x,r)
 \end{equation*}
 
 Constructors should also be injective to get regular models, and
-expressing such axioms is straightforward. For \hs{Tree} only \hs{Fork} has
+expressing such axioms is straightforward. For \hs{Tree}, only \hs{Fork} has
 arguments and this injectivity axiom is needed:
 \begin{equation*}
 \faaaaaa{l_0}{l_1}{x_0}{x_1}{r_0}{r_1} \fn{fork}(l_0,x_0,r_0) \eq
 \fn{fork}(l_1,x_1,r_1) \rightarrow l_0 \eq l_1 \wedge x_0 \eq x_1 \wedge r_0 \eq r_1
 \end{equation*}
 
-To describe pattern matching, we consider a \hs{mirror} function,
-which recursively swaps the left sub tree with the right and
-vice-versa, we follow our intuition to translate the pattern matching
-and to these two axioms\footnote {Axioms are enumerated by Roman
-  numerals to tell them apart.}:
+To describe pattern matching, consider a \hs{mirror} function, which
+recursively swaps the left sub tree with the right and vice-versa. We
+follow our intuition to translate the pattern matching to these
+two axioms\footnote {Axioms are enumerated by Roman numerals to tell
+  them apart.}:
 
 \begin{code}
 mirror :: Tree a -> Tree a
@@ -78,8 +80,8 @@ mirror Leaf         = Leaf
 
 \noindent
 A problem with this translation is that there are no axioms for other
-arguments of $\fn{mirror}$ than leafs and forks, and we have models that
-include other values than leafs and forks. Another problem is
+arguments of $\fn{mirror}$ than leafs and forks, and there are models
+including other values than leafs and forks. Another problem is
 encountered for \hs{singleton}'s left inverse \hs{top} defined below,
 which returns the top element of a \hs{Tree}. This is a partial
 function since the \hs{Leaf} pattern is omitted:
@@ -96,12 +98,14 @@ shall see in the next section how to fix this.
 
 \section{Bottom and Pattern Matching}
 
-We borrow the concepted bottom from domain theory. It is denoted
+We borrow the concept bottom from domain theory. It is denoted
 $\bot$ and is the least defined value: pattern match failures, use of
 \hs{error} and \hs{undefined} in the source code, and also
-non-terminating functions. For \hs{top} the idea is to add an axiom so
-that $\fn{top}$ of anything that is not a \hs{Fork} is bottom. This is
-an example of such an axiomatization:
+non-terminating functions. For \hs{top}, the idea is to add an axiom
+so that $\fn{top}$ applied to anything that is not a \hs{Fork} is
+bottom. This is an example of such an axiomatisation\footnote{This
+  thesis uses the same convention for quantifiers as for lambda
+  functions: they bind as far as possible.}:
 
 \begin{align*}
 \rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq x \\
@@ -109,22 +113,21 @@ an example of such an axiomatization:
 \end{align*}
 
 Most theorem provers would as a preprocessing step \note{\qquad \qquad citation
-  needed}skolemize the existential quantification in the second
+  needed}skolemise the existential quantification in the second
 axiom. A new unary function would be introduced for $l$, $x$ and $r$,
-depending on $t$, an arbitrary choice of names are $\fn{top}$ prependend
+depending on $t$, an arbitrary choice of names are $\fn{top}$ prepended
 to the original variable. The axiom then looks like
-this\footnote{This thesis uses the same convention for quantifiers as
-  for lambda functions: they bind as far as possible.}:
+this:
 \begin{align*}
 \rom{2}' \qquad & \fa{t} \fn{fork}(\fn{topl}(t),\fn{topx}(t),\fn{topr}(t))) \neq t \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
 
-For another function, like \hs{mirror} above, one of the skolemized
+For another function, like \hs{mirror} above, one of the skolemised
 functions could be called $\fn{mirrorl}$. Since axioms of injective
 constructors are also added, a theorem prover could, in some steps,
 conclude that $\fn{mirrorl}(\fn{fork}(l,x,r)) \eq
-\fn{topl}(\fn{fork}(l,x,r)) \eq l$. Instead such skolemized
-\emph{selection functions} are introduced manually.  For the \hs{Fork}
+\fn{topl}(\fn{fork}(l,x,r)) \eq l$. Instead such skolemised
+\emph{selector functions} are introduced manually.  For the \hs{Fork}
 constructor let us call them $\fn{fork_0}$, $\fn{fork_1}$ and
 $\fn{fork_2}$, and their axioms are:
 \begin{align*}
@@ -141,8 +144,8 @@ The translation of \hs{top} with these selector functions is:
 \end{align*}
 
 \noindent
-Another nice side effect of writing in this skolemized selector style
-is that implies injective constructors. Assume we have
+As a nice side effect, injectivity of constructors is implied by the
+axioms of the skolemised selector functions. Assume we have
 $\fn{fork}(l_0,x_0,r_0)=\fn{fork}(l_1,x_1,r_1)$ then the first
 selector, $\fn{fork_0}$, gives $l_0=l_1$. Analogously the second and
 the third give $x_0=x_1$ and $r_0=r_1$, respectively. Thus selector
@@ -186,12 +189,14 @@ arguments of a function, a small intermediate language was designed
 that can only do pattern matching at a very controlled location: in a
 case statement that is the entire body of a function, and all arms are
 simple expressions consisting of function and constructor applications
-and variables. We translate Haskell is translated to language. Pattern
-matching matching at other locations are moved to new top level
-definitions. Functions definined in let and where are raised to the
+and variables. As a first step, Haskell is translated to this
+language. This process includes several simplifications; pattern
+matching at other locations are moved to new top level
+definitions. Functions defined in let and where are raised to the
 top level, with the necessary variables in scope as additional
-arguments. The same is done for sections and lambda functions. The BNF
-for the language is this:
+arguments. The same is done for sections and lambda functions.
+
+The BNF for the language is this:
 
 \begin{equation*}
 \begin{aligned}
@@ -219,11 +224,12 @@ for the language is this:
 \end{aligned}
 \end{equation*}
 
-This language is a strict subset of Haskell. Repeated entities are
-notated with an $\overline{\text{overline}}$.  Data declarations are
-needed to generate axioms of disjointedness and selectors. Type
-signatures are ignored in the translation, but the proof techniques
-introduced later use this information.
+This language is a strict subset of Haskell, and inherits its
+semantics.  Repeated entities in the BNF are notated with an
+$\overline{\text{overline}}$.  Data declarations are needed to
+generate axioms of disjointedness and selectors. Type signatures are
+ignored in the translation, but the proof techniques introduced later
+use this information.
 
 A function is just a function name with a number of variables, and
 then a function body, which is either an expression of variables,
@@ -234,8 +240,10 @@ expression.
 
 Now we need to distinguish between two translations: the intermediate
 translation from Haskell to the intermediate language, and the logic
-translation from this language to first order logic.
+translation from this language to first order logic. The next section
+explains the first part.
 
+\pagebreak
 \section{The Intermediate Translation}
 
 This section describes the transformation from Haskell to the
@@ -313,10 +321,13 @@ liftM :: Monad m => (a -> b) -> m a -> m b
 liftM f m = m >>= lambda f
 \end{code}
 
-A similar translation is done for sections.
+A similar translation as is done for lambdas is done for sections.
 
-In the rest of this thesis we shall write code with pattern matching
-on arguments directly.
+This concludes the translation to the intermediate language, and the
+rest of this chapter concentrates on the translation from it to first
+order logic. Note that sometimes code will for clarity be written with pattern
+matching on arguments directly, but it is implicitly assumed to be
+translated to a pattern matching in a case statement.
 
 \section{Pattern Matching Revisited}
 \label{sec:patternsrevisited}
@@ -407,7 +418,7 @@ even Nil                  = True
 even _                    = $\bot$
 \end{code}
 
-Haskell's behavior of matching patterns from top to bottom is
+Haskell's behaviour of matching patterns from top to bottom is
 justified with implications ensuring the \emph{upward agreement}. The
 axioms for this definitions are:
 \newcommand\uncons[1]{\cons{\fn{cons_0}(#1)}{\fn{cons_1}(#1)}}
@@ -436,7 +447,7 @@ patterns.
 \section{Functions as Arguments}
 
 In Haskell, functions readily take other functions as arguments, and
-functions can also be partially applied. To get the same behavior in
+functions can also be partially applied. To get the same behaviour in
 logic, each function is assigned a \emph{function pointer}, and a new
 binary function is added to the language, written infix as $\appfn$.
 For instance if there is a binary function \hs{plus} then a constant
@@ -508,7 +519,7 @@ filter p Nil               = Nil
 \end{code}
 
 
-To translation this to logic it is needed to ensure that if \hs{p x}
+To translate this to logic it is needed to ensure that if \hs{p x}
 evaluates to $\bot$, then so should the function. The axioms look
 like this:
 \newcommand\filter[2]{\fn{filter}(#1,#2)}
@@ -663,8 +674,8 @@ transformLookup k xs f | Just v <- lookup k xs = Just (f k v)
 \end{code}
 
 \noindent
-If the lookup returns \hs{Just}, \hs{v} is already bound and can be
-used in the expression of the right hand side. This is very simiar to
+If the look up returns \hs{Just}, \hs{v} is already bound and can be
+used in the expression of the right hand side. This is very similar to
 normal guards, as they are a special case of pattern guards: the guard
 \hs{f x | p x} is expressed as \hs{f x | True <- p x}. The current
 translation of guards checks if \hs{p x} is \hs{True}, and then
