@@ -4,7 +4,9 @@ Zeno \citep{zeno} is probably the most similar work to this and
 proving equational properties for Haskell programs. Zeno supports type
 classes, and implications with equational antecedents, and can
 generalise properties, it makes no attempt to tackle infinite and
-partial values, a goal of our work.
+partial values, a goal of our work. Another notable difference is that
+Zeno has its own theory for equational reasoning whereas our approach
+puts this work on automated theorem provers.
 
 %Indeed, the authors even ask themselves if it is not really a ML theorem prover.
 
@@ -33,14 +35,15 @@ Martin-Löf type theory \citep{mltt} with inductive families makes it a
 proof assistant thanks to the Curry-Howard correspondence. The
 support for corecursion in Agda has been investigated by \cite{productivity}.
 
-In the work by \cite{agdaatp} Agda is used as a fronted to ATPs
-enabling classical reasoning about functional programs.  Reconstruction
-of proofs from the ATP Waldmeister to dependently typed code is
-investigated by \cite{dtatp}. The source language is Mella,
-syntactically similar to Agda but based on the Calculus of
-Constructions. A similar approach was taken by \cite{agsy} does a
-search akin to Prolog, and can also handle induction. A contemporary
-implementation of this is the Agsy proof search assistant for Agda.
+In the work by \cite{agdaatp} Agda is used as a frontend to automated
+theorem provers enabling classical reasoning about functional
+programs. Reconstruction of proofs from the theorem prover Waldmeister
+to dependently typed code is investigated by \cite{dtatp}. The source
+language is Mella, syntactically similar to Agda but based on the
+Calculus of Constructions. A similar approach was taken by \cite{agsy}
+does a search akin to Prolog, and can also handle induction. A
+contemporary implementation of this is the Agsy proof search assistant
+for Agda.
 
 % Effort has been put into automating the proof generation in Agda,
 %notably by \cite{agdaatp}, which is quite alike this work in its

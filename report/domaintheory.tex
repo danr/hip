@@ -91,8 +91,8 @@ monotone with respect to this ordering.
 
 This can be understood in many ways. One way to see it is if you have
 two inputs to a function, one containing \emph{less} information that
-the other, i.e. more bottoms, it is impossible to return \emph{more}
-information from the input with less information.
+the other, it is impossible to return \emph{more} information from the
+input with less information.
 
 One simple example of a consequence of this is the impossibility to
 make a function \hs{isBottom :: a -> Bool}, returning \hs{True} if the
@@ -131,9 +131,12 @@ Diagram can be seen in Figure \ref{fig:natcpo}.
 \end{figure}
 
 At the top we have the infinite value \hs{inf}, defined in Haskell as
-\hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of an
-$\omega$-chain, i.e a chain with the same number of elements as
-$\omega$, the natural numbers. The chain is:
+\hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of a sequence
+of $\sqsubseteeq$ inclusions. We will consider $\omega$-chains, chains with the same number of elements as
+$\omega$, the natural numbers.
+
+An example of a chain which has the infinite natural number \hs{inf}
+as its limit is:
 
 \begin{equation*}
 \bot \sqsubseteq
@@ -153,11 +156,30 @@ the property of being less than or equal to the limit: $\hs{Succ}^n \,
 
 A partial order is a complete partial order iff there is a limit for
 every $\omega$ chain. All data types in Haskell are complete partial
-orders.
+orders. Notice that the number of $\omega$ chains are infinite for all
+non-empty data types. For booleans, there are chains that start with
+$bottom$ and shifts to $\hs{True}$ or $\hs{False}$ at some point. For
+the natural number data type, it is not necessary to add exactly one
+\hs{Succ} constructor at every inclusion. For lists, the chains can be
+even more involving:
+
+\newcommand\trueV{\hs{True}}
+\newcommand\consV{\hs{:}}
+\newcommand\falseV{\hs{False}}
+
+\begin{equation*}
+  \trueV \consV \bot    \consV \bot                    \sqsubseteq
+  \trueV \consV \bot    \consV \trueV \consV \bot      \sqsubseteq
+  \trueV \consV \falseV \consV \trueV \consV \bot      \sqsubseteq
+  \cdots
+\end{equation*}
+
+This could be the starting chain of an infinite list of booleans with $\trueV$
+and $\falseV$ interleaved. Now, let us define continuity.
+
 \begin{comment}
 \footnonte{Notice that the data type \hs{data StrictNat = Zero |
-    Succ !StrictNat} is flat and therefore complete.}. Now we can
-define continuity.
+    Succ !StrictNat} is flat and therefore complete.}.
 \end{comment}
 
 \paragraph{Definition} A function $f$ is \emph{continuous} iff it is
@@ -199,8 +221,9 @@ In GHC, you can use \hs{unsafePerformIO} and \hs{catch} from
 match failures, etcetera. In addition, some non-termination can also
 be determined in Haskell because of the \emph{blackhole} run time
 object that replaces a \emph{thunk} that is being currently
-evaluated. It does not and indeed cannot cover all non terminating
-functions because of the undecidability of the halting problem.
+evaluated. But this machinery does not and indeed cannot cover all non
+terminating functions because of the undecidability of the halting
+problem.
 
 The domain theoretic results remain; in this setting $\bot$ can be
 seen as another, albeit inconveniently inspected, constructor to every

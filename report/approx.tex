@@ -110,6 +110,7 @@ data types is simple, an example is given in the next section. For the
 \hs{take} lemma it is not as simple: for some data types there is no
 single nullary constructor in place for the empty list.
 
+\pagebreak
 \subsection{Example: Mirroring an Expression}
 
 Consider these definitions of a modest but prototypical expression
@@ -153,46 +154,53 @@ over natural numbers, and the base case is always trivial: true by
 reflexivity as both sides are $\bot$. For this reason, only the step
 case needs to be proved:
 
-\begin{equation*}
-\fa{e}  \fn{approx} \, (\fn{succ} \, n) \, e = \fn{approx} \, (\fn{succ} \, n) \, (\fn{mirror} \, (\fn{mirror} \, e))
-\end{equation*}
+\begin{mathpar}
+  \inferrule*
+     {
+         \fa{e}  \hs{approx} \, n \, e = \hs{approx} \, n \, (\hs{mirror} \, (\hs{mirror} \, e))
+     }
+     {
+         \fa{e}  \hs{approx} \, (\hs{Succ} \, n) \, e = \hs{approx} \, (\hs{Succ} \, n) \, (\hs{mirror} \, (\hs{mirror} \, e))
+     }
+\end{mathpar}
 
 An important property of the induction hypothesis is the universal
 quantification of the expression $e$, unlike the fixed natural number
-$n$:
+$n$. The proof is by cases, since for any argument, \hs{mirror} will
+return a value of $\bot$, \hs{Add} or \hs{Value}.  The $bot$ case is
+trivial as \hs{mirror} is strict in its first argument, and the
+\hs{Value} case is also straight forward as mirroring is the identity
+on this input. The \hs{Add} case slightly more involving. The
+reasoning is as follows:
 
-\begin{equation*}
-\fa{e}  \fn{approx} \, n \, e = \fn{approx} \, n \, (\fn{mirror} \, (\fn{mirror} \, e))
-\end{equation*}
-
-The proof is by cases, since for any argument, \hs{mirror} will return
-a value of $\bot$, \hs{Add} or \hs{Value}.  The $bot$ case is trivial
-as \hs{mirror} is strict in its first argument, and the \hs{Value}
-case is also straight forward as the function is the identity on this
-input. The \hs{Add} case a bit more involving. With names shortened to
-$\fn{app}$ and $\fn{mir}$ the reasoning is as follows:
-
-\newcommand{\Adds}[2]{\fn{add} \, #1 e_1 #2 \, #1 e_2 #2}
-\newcommand{\Approxn}[0]{\fn{app} \, n \,}
-\newcommand{\ApproxSuccn}[0]{\fn{app} \, (\fn{succ} \, n) \,}
-\newcommand{\mirmir}[0]{\fn{mir} \, (\fn{mir} \, }
+\newcommand{\Adds}[2]{\hs{Add} \, #1 e_1 #2 \, #1 e_2 #2}
+\newcommand{\Approxn}[0]{\hs{approx} \, n \,}
+\newcommand{\ApproxSuccn}[0]{\hs{approx} \, (\hs{Succ} \, n) \,}
+\newcommand{\mirmir}[0]{\hs{approx} \, n \, (\hs{mirror} \, }
 \begin{align*}
-\faa{e_1}{e_2}&  \ApproxSuccn (\Adds{}{})  = \ApproxSuccn (\mirmir \Adds{}{} ))                                                                   \\
-                                                                                 \desclra{\defof{$\fn{mirror}$}}                                   \\
-\faa{e_1}{e_2}&  \ApproxSuccn (\Adds{}{})  = \ApproxSuccn (\Adds{(\mirmir}{))})                                                                    \\
-                                                                                \desclra{\defof{$\fn{approx}$}}                                    \\
-\faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn(\mirmir}{)))}                                                                        \\
-                                                                                \desclra{induction hypothesis twice ($e_1$ and $e_2$)} \\
-\faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn}{)}                                                                                  \\
-                                                                                \desca{reflexivity}                                              \\
+lhs & = \ApproxSuccn (\Adds{}{})                                && \{\textrm{definition of \hs{approx}}\} \\
+    & = \Adds{(\Approxn}{)}                                     && \{\textrm{induction hypothesis}\} \\
+    & = \Adds{(\mirmir}{))}                            && \{\textrm{definition of \hs{approx}}\} \\
+    & = \ApproxSuccn (\Adds{(\hs{mirror}}{)}) = rhs
 \end{align*}
+%
+%
+%\faa{e_1}{e_2}&  \ApproxSuccn (\Adds{}{})  = \ApproxSuccn (\mirmir \Adds{}{} ))                                                                   \\
+%                                                                                 \desclra{\defof{$\fn{mirror}$}}                                   \\
+%\faa{e_1}{e_2}&  \ApproxSuccn (\Adds{}{})  = \ApproxSuccn (\Adds{(\mirmir}{))})                                                                    \\
+%                                                                                \desclra{\defof{$\fn{approx}$}}                                    \\
+%\faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn(\mirmir}{)))}                                                                        \\
+%                                                                                \desclra{induction hypothesis twice ($e_1$ and $e_2$)} \\
+%\faa{e_1}{e_2}&  \Adds{(\Approxn}{)}      = \Adds{(\Approxn}{)}                                                                                  \\
+%                                                                                \desca{reflexivity}                                              \\
+%\end{align*}
 
-As the all the cases is proved, the approximation lemma proves the
+As the all the cases are proved, the approximation lemma proves the
 property to be a theorem. The next section will investigate the
 relation between approximation lemma and fixed point induction. It
 will be shown that this section's technique can be expressed in terms
-of fixed point induction. This makes this method easier for theorem
-provers, and maybe also for humans.
+of fixed point induction. This makes this method lighter for theorem
+provers.
 
 \subsection{Approximation Lemma is Fixpoint Induction}
 
@@ -232,7 +240,6 @@ ind$_{\texttt{Expr}}$ (Add e1 e2) = Add (ind$_{\texttt{Expr}}$ e1) (ind$_{\textt
 Each \hs{ind} function constructed in this way is indeed an identity
 function, equivalent to the implementation \hs{ind x = x} when
 disregarding time and space complexity.
-
 Now, to prove an equality for two expressions $e_1$ and $e_2$ with
 some variables $x_1$ to $x_n$ free:
 
@@ -291,6 +298,8 @@ pattern, as it does  does not rely on natural numbers.
 %\note{Compare this to skolemization for induction? Can $\tofix{id}$ be
 %  viewed as a kind of skolemization?}
 
+\pagebreak
+
 \subsection{Future Work: Total Approximation Lemma}
 \label{sec:totalapprox}
 
@@ -337,7 +346,6 @@ infinite total lists are $Total$ and also $\neg Total$. Hence, out
 setting, $Total$ must necessarily mean finite. This is further
 discussed in Section \ref{sec:total}.
 
-\pagebreak
 Furthermore, the admissibility of this approach needs to be proved. A
 simple and general case is assumed, where the predicate is defined to
 be

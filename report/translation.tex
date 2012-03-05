@@ -34,9 +34,13 @@ singleton x = Fork Leaf x Leaf
 
 \noindent
 Following our intuition we make an universal quantification for
-\hs{x}, and a new logic function for \hs{singleton}. The result
-is this axiom\footnote{Haskell functions and constructors are written in
-\hs{monospace} and their counterpart in first order logic as $\fn{this}$.}:
+\hs{x}, and a new logic function for \hs{singleton}. The result is
+this axiom\footnote{Haskell functions and constructors are written in
+  \hs{monospace} and their counterpart in first order logic as
+  $\fn{this}$. As customary when writing first order logic formulae,
+  functions will be written in lowercase, and predicates with an
+  initial capital. Hence constructors will be written as \fn{fork}
+  rather than \fn{Fork}. }:
 \begin{equation*}
 \fa{x} \fn{singleton}(x) = \fn{fork}(\fn{leaf},x,\fn{leaf})
 \end{equation*}
@@ -47,8 +51,12 @@ constructors are indeed different, appropriate axioms needs to be
 added. Without these, there will be models with only one element where
 everything is identified. The axioms added expressing that values
 created from different constructors are unequal will be called
-\emph{disjoint constructor axioms}. For the data type \hs{Tree}, only
-this axiom is generated for its two constructors:
+\emph{disjoint constructor axioms}.
+
+\pagebreak
+\noindent
+For the data type \hs{Tree}, one disjoint constructor axiom is
+generated for its two constructors:
 
 \begin{equation*}
 \faaa{l}{x}{r} \fn{leaf} \neq \fn{fork}(l,x,r)
@@ -109,7 +117,7 @@ bottom. This is an example of such an axiomatisation\footnote{This
 
 \begin{align*}
 \rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq x \\
-\rom{2} \qquad & \fa{t}         (\nexxx{l}{x}{r} \fn{fork}(l,x,r)) \eq t) \rightarrow \fn{top}(t) \eq \bot
+\rom{2} \qquad & \fa{t}         (\nexxx{l}{x}{r} \fn{fork}(l,x,r) \eq t) \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
 
 Most theorem provers would as a preprocessing step \note{\qquad \qquad citation
@@ -140,16 +148,16 @@ $\fn{fork_2}$, and their axioms are:
 The translation of \hs{top} with these selector functions is:
 \begin{align*}
 \rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq x \\
-\rom{2} \qquad & \fa{t}         (\fn{fork}(\fn{fork_0}(t),\fn{fork_1}(t),\fn{fork_2}(t))) \neq t) \rightarrow \fn{top}(t) \eq \bot
+\rom{2} \qquad & \fa{t}         (\fn{fork}(\fn{fork_0}(t),\fn{fork_1}(t),\fn{fork_2}(t)) \neq t) \rightarrow \fn{top}(t) \eq \bot
 \end{align*}
 
 \noindent
-As a nice side effect, injectivity of constructors is implied by the
+As a nice side effect, injectivity of constructors is implied the
 axioms of the skolemised selector functions. Assume we have
 $\fn{fork}(l_0,x_0,r_0)=\fn{fork}(l_1,x_1,r_1)$ then the first
 selector, $\fn{fork_0}$, gives $l_0=l_1$. Analogously the second and
 the third give $x_0=x_1$ and $r_0=r_1$, respectively. Thus selector
-axioms are added in place of of injectivity axioms.
+axioms are added in place of the injectivity axioms.
 
 With the bottom constant in the theory, the axioms disjointedness are
 effected by this. It can be seen as an implicit constructor for every
@@ -236,7 +244,9 @@ then a function body, which is either an expression of variables,
 functions and constructors, or a case statement with an expression
 scrutinee. Branches consists of a pattern, possibly with nested uses
 of constructors, and an optional guard, and in the arm is an
-expression.
+expression. A notable exception from ordinary core languages is made
+here: nested cases are not allowed. This will aid the translation, as
+will be show later, and nested cases will be lifted to top level definitions.
 
 Now we need to distinguish between two translations: the intermediate
 translation from Haskell to the intermediate language, and the logic
@@ -273,10 +283,8 @@ of Peano natural numbers needs such a rewrite:
 
 \begin{code}
 (*) :: Nat -> Nat -> Nat
-x * y = go Zero x
-  where
-    go acc Zero    = acc
-    go acc (Suc n) = go (acc + y) n
+x * y = go Zero x where go acc Zero    = acc
+                        go acc (Suc n) = go (acc + y) n
 \end{code}
 
 \noindent
@@ -306,7 +314,6 @@ definitions. Take this example of defining \hs{fmap} in terms of the
 functions from the \hs{Monad} type class:
 
 \begin{code}
-liftM :: Monad m => (a -> b) -> m a -> m b
 liftM f m = m >>= \x -> return (f x)
 \end{code}
 
@@ -317,11 +324,10 @@ the new top level function called \hs{lambda} below:
 \begin{code}
 lambda f x = return (f x)
 
-liftM :: Monad m => (a -> b) -> m a -> m b
 liftM f m = m >>= lambda f
 \end{code}
 
-A similar translation as is done for lambdas is done for sections.
+An analogous translation as is done for lambdas is done for operator sections.
 
 This concludes the translation to the intermediate language, and the
 rest of this chapter concentrates on the translation from it to first
@@ -472,16 +478,20 @@ constructor \hs{:} written infix:
 \forall \, f \, x \, . \, \fn{iterate}(f,x) = x : \fn{iterate}(f,\app{f}{x})
 \end{equation*}
 
-Should a function not get all its arguments, appropriate use of $\, @ \, $ is
-added, as in this function which increments all elements of the list
-by one using \hs{map}:
+Translaning all function applications could be done using
+$\appfn$. However, this approach slows down the theorem provers
+significantly, so an optimisation is crucial: Functions will be
+regarded as having arity equal to the number of arguments on the left
+hand side in their definition. Should a function not get all of its
+arguments, appropriate use of $\, @ \, $ is added, as in this function
+which increments all elements of the list by one using \hs{map}:
 
 \begin{code}
 incr = map (plus one)
 \end{code}
 
-As \hs{incr} is written $\eta$-reduced, \hs{map} is
-only partially applied, this is the translated axiom:
+As \hs{incr} is written $\eta$-reduced, both \hs{map} and \hs{plus}
+are only partially applied. This is the translated axiom:
 
 \begin{equation*}
 \fn{incr} = \app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})}
@@ -489,8 +499,8 @@ only partially applied, this is the translated axiom:
 
 If \hs{incr} is applied to an argument $xs$, then \hs{incr} is applied
 to more arguments than it takes, so we add $\appfn$ so the
-corresponding formula becomes $\app{\fn{incr}}{xs}$, and by equational
-substitution from the definition of $\fn{incr}$ we get
+corresponding formula becomes $\app{\fn{incr}}{xs}$. By substituting
+the definition of $\fn{incr}$ we get
 $\app{(\app{\fn{map.ptr}}{(\app{\fn{plus.ptr}}{\fn{one}})})}{xs}$ and
 the axiom of $\fn{map.ptr}$ then equals this to
 $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
@@ -524,9 +534,9 @@ evaluates to $\bot$, then so should the function. The axioms look
 like this:
 \newcommand\filter[2]{\fn{filter}(#1,#2)}
 \begin{align*}
-\rom{1} && \faaa{p}{x}{xs} & (\app{p}{x}) = \fn{true}                                  \rightarrow \filter{p}{\cons{x}{\cons{y}{ys}}} = \cons{x}{\filter{p}{xs}} \\
-\rom{2} && \faaa{p}{x}{xs} & (\app{p}{x}) = \bot                                       \rightarrow \filter{p}{\cons{x}{\cons{y}{ys}}} = \bot \\
-\rom{3} && \faaa{p}{x}{xs} & (\app{p}{x}) \neq \fn{true} \wedge (\app{p}{x}) \neq \bot \rightarrow \filter{p}{\cons{x}{\cons{y}{ys}}} = \filter{p}{xs} \\
+\rom{1} && \faaa{p}{x}{xs} & (\app{p}{x}) = \fn{true}                                  \rightarrow \filter{p}{\cons{x}{xs}} = \cons{x}{\filter{p}{xs}} \\
+\rom{2} && \faaa{p}{x}{xs} & (\app{p}{x}) = \bot                                       \rightarrow \filter{p}{\cons{x}{xs}} = \bot \\
+\rom{3} && \faaa{p}{x}{xs} & (\app{p}{x}) \neq \fn{true} \wedge (\app{p}{x}) \neq \bot \rightarrow \filter{p}{\cons{x}{xs}} = \filter{p}{xs} \\
 \rom{4} &&                 & \filter{p}{\fn{nil}} = \fn{nil} \\
 \rom{5} && \fa{xs}         & xs \neq \fn{nil} \wedge xs \neq \uncons{xs} \rightarrow \filter{p}{xs} = \bot
 \end{align*}

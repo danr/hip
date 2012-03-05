@@ -93,7 +93,7 @@ This gives a little less unnecessary overhead to the theorem provers.
 
 This only works on non-concrete types because of the way bottoms are
 added. One example of such a problem is this standard definition of
-\hs{\&\&}, and a property of right identity:
+\hs{\&\&}, and a property stating its right identity:
 
 \begin{code}
 True  && a = a
@@ -123,8 +123,8 @@ they cannot be strict. Do not fear: the property above is trivially
 proved by induction, as induction for \hs{Bool} and other non
 recursive data types degenerate into mere case enumeration. However,
 it can only be seen as a meta theorem as it cannot simply be added as
-a lemma in the theory. This is described in more detail is Section
-\ref{sec:thmlemmas}. Structural induction is described in detail in
-the next section.
+a lemma in the theory. This phenomena is described in more detail in
+Section \ref{sec:thmlemmas}. Structural induction is described in
+detail in the next section.
 
 

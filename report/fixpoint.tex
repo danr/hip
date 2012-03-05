@@ -187,13 +187,13 @@ $P$. Proof:
 P(\bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
 \desclra{$f^0 \w \bot \eq \bot$} \\
 P(f^0 \w \bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
-\descra{instantiation \, of \, $x$ \, to \, $f^n$} \\
+\descra{instantiation of $x$ to $f^n$} \\
 P(f^0 \w \bot) & \wedge \fa{n} P(f^n \w \bot) \rightarrow P(f^{n+1} \w \bot) \\
-\descra{induction \, over \, $\mathbb{N}$} \\
+\descra{induction over $\mathbb{N}$} \\
 \fa{n} & P(f^n \w \bot) \\
-\descra{\textit{P} \w admissible} \\
+\descra{\textit{P} admissible} \\
 & P(\lub{n}(f^n \w \bot)) \\
-\descra{definition \w of \w \hs{fix}} \\
+\descra{definition of \hs{fix}} \\
 & P(\hs{fix} \w f) \\
 \end{align*}
 
@@ -240,28 +240,34 @@ iter i f x = x : i f (f x)
 \end{code}
 
 \noindent
-The predicate $P$ is defined to be $P(g) \w \Leftrightarrow \w
-\faa{f}{x} \hs{map} \w f \w (g \w f \w x) \eq g \w f \w (f \w x)$.
+The predicate $P$ is defined to be $P(i) \w \Leftrightarrow \w
+\faa{f}{x} \hs{map} \w f \w (i \w f \w x) \eq i \w f \w (f \w x)$.
 If the base and the step case is shown $P(\hs{fix iter})$ can be
 concluded, which by definition is $P(\hs{iterate})$.
 
 The base case is $P(\bot)$. Since \hs{map} is strict in its second
 argument, it is both the left side and right side evaluate to $\bot$.
-The for the step case we have to show
-$P(\hs{i}) \rightarrow P(\hs{iter i})$. We start from the induction
-hypothesis and work towards the goal as follows:
+The for the step case we have to show $P(\hs{i}) \rightarrow
+P(\hs{iter i})$.  The proof without explicitly writing out function
+pointer applications looks like this:
 
 \begin{align*}
-\w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w x) & \eq \hs{i} \w f \w (f \w x) \\
-\descra{generalising $x$ to $f \w x$} \\
-\w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq \hs{i} \w f \w (f \w (f \w x)) \\
-\descra{substitution} \\
-\w \faa{f}{x} f \w x \hs{:} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
-\desclra{\defof{\texttt{map}}} \\
-\w \faa{f}{x} \hs{map} \w f \w (x \hs{:} \hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
-\desclra{\defof{\texttt{iter}}} \\
-\w \faa{f}{x} \hs{map} \w f \w (\hs{iter} \w \hs{i} \w f \w x) & \eq \hs{iter} \w \hs{i} \w f \w (f \w x) \\
+lhs & = \hs{map} \w f \w (\hs{iter} \w \hs{i} \w f \w x)          && \{\textrm{definition of \hs{iter}}\} \\
+    & = \hs{map} \w f \w (x \hs{:} \hs{i} \w f \w (f \w x))       && \{\textrm{definition of \hs{map}} \} \\
+    & = f \w x \hs{:} \hs{map} \w f \w (\hs{i} \w f \w (f \w x))) && \{\textrm{induction hypothesis} \} \\
+    & = f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)))             && \{\textrm{definition of \hs{iter}} \} \\
+    & = \hs{iter} \w \hs{i} \w f \w (f \w x) = rhs
 \end{align*}
+%\w \faa{f}{x}  & \eq \hs{i} \w f \w (f \w x) \\
+%\descra{generalising $x$ to $f \w x$} \\
+%\w \faa{f}{x} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq \hs{i} \w f \w (f \w (f \w x)) \\
+%\descra{substitution} \\
+%\w \faa{f}{x} f \w x \hs{:} \hs{map} \w f \w (\hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
+%\desclra{\defof{\texttt{map}}} \\
+%\w \faa{f}{x} \hs{map} \w f \w (x \hs{:} \hs{i} \w f \w (f \w x)) & \eq f \w x \hs{:} \hs{i} \w f \w (f \w (f \w x)) \\
+%\desclra{\defof{\texttt{iter}}} \\
+%\w \faa{f}{x} \hs{map} \w f \w (\hs{iter} \w \hs{i} \w f \w x) & \eq \hs{iter} \w \hs{i} \w f \w (f \w x) \\
+%\end{align*}
 
 Now fixed point induction gives the \hs{map}-\hs{iterate} property.
 

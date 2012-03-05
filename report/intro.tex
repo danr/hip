@@ -29,13 +29,13 @@ reports this after a few seconds\footnote{The presentation format is
 
 \begin{code}
 Theorems (3/3):
-  prop_return_right: t >>= return == t
+  prop_return_right: t >>= return = t
     by structural induction on t and by approximation lemma
 
-  prop_return_left: return x >>= f == f x
+  prop_return_left: return x >>= f = f x
     by definitional equality and by approximation lemma
 
-  prop_assoc: (t >>= f) >>= g == t >>= (\x -> f x >>= g)
+  prop_assoc: (t >>= f) >>= g = t >>= (\x -> f x >>= g)
     by structural induction on t and by fixed point induction on (>>=)
 \end{code}
 
@@ -66,18 +66,21 @@ functions and infinite and partial values. The project is restricted
 to equational properties to keep it tractable, and equality should
 coincide with equality in first order logic. This means that two
 values are equal if they are created by the same constructor, and the
-arguments to the constructors are all equal.
+arguments to the constructors are all equal. As models of first order
+theories have extensional equality, this will also be asserted for
+Haskell functions.
 
 \section{Background}
 
 The target reader for this thesis typically has a good understanding
-of Haskell, or some related functional language. Some familiarity
+of Haskell or some related functional language. Some familiarity
 of model theory and proof deduction in first order logic is
 needed, as well as a some knowledge of proofs by induction.
 
-Automated theorem provers will be considered as black boxes. Different
-theorem provers accept different input formats describing first order
-theories, so axioms and conjectures will be typeset in \LaTeX.
+Automated theorem provers will be mainly considered as black
+boxes. While different theorem provers accept different input formats
+describing first order theories, the theories will be written as
+ordinary logic formulae.
 
 The rest of this thesis should be self contained.
 

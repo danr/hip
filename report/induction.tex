@@ -234,14 +234,14 @@ lemmas are needed if you do this with induction on the first argument:
 \begin{enumerate}
   \item $\fa{x} x + \hs{Zero} = x$. This corresponds the hypothesis
     $P(x,\hs{Zero})$ above.
-  \item $\faa{x}{y} \hs{Succ} \w x + y = x + \hs{Succ} \w y$. This is
-    derivable from two of the hypotheses in the last step above:
+  \item $\faa{x}{y} \hs{Succ} \w x + y = x + \hs{Succ} \w y$.
+    Derivable from two of the hypotheses in axiom $\romnodot{4}$:
     \begin{align*}
-    \hs{Succ} \w x + y   & = \{\mathrm{definition \w of \w \mathit{+}}\} \\
-    \hs{Succ} \w (x + y) & = \{\mathrm{hypothesis \w \mathit{P(x,y)}}\} \\
-    \hs{Succ} \w (y + x) & = \{\mathrm{definition \w of \w \mathit{+}}\} \\
-    \hs{Succ} \w y + x   & = \{\mathrm{hypothesis \w \mathit{P(x,\hs{Succ} \w y)}}\} \\
-    x + \hs{Succ} \w y
+    lhs & = \hs{Succ} \w x + y   && \{\textrm{definition of $+$}\} \\
+        & = \hs{Succ} \w (x + y) && \{\textrm{hypothesis $P(x,y)$}\} \\
+        & = \hs{Succ} \w (y + x) && \{\textrm{definition of $+$}\} \\
+        & = \hs{Succ} \w y + x   && \{\textrm{hypothesis $P(x,\hs{Succ} \w y)$}\} \\
+        & = x + \hs{Succ} \w y = rhs
     \end{align*}
 \end{enumerate}
 
@@ -253,9 +253,9 @@ well with data types defined in terms of other data types. An example
 is the definition of $\mathbb{Z}$ defined with a disjoint union as
 $\mathbb{N} + \mathbb{N}$, which can be defined as this in Haskell:
 
-\begin{verbatim}
+\begin{code}
 data Z = Pos Nat | Neg Nat
-\end{verbatim}
+\end{code}
 
 A value of $\hs{Pos} \w x$ denotes the integer $+\, x$ and $\hs{Neg} \w y$
 the integer $-(1+y)$. This avoids having two values denoting
