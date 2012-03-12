@@ -1,10 +1,10 @@
-module Hip.ToFOL.Test where
+module Hip.Trans.Test where
 
-import Hip.ToFOL.Core
-import Hip.ToFOL.Parser
-import Hip.ToFOL.Pretty
+import Hip.Trans.Core
+import Hip.Trans.Parser
+import Hip.Trans.Pretty
 
-import Hip.ToFOL.ArbitraryCore
+import Hip.Trans.ArbitraryCore
 import Test.QuickCheck
 
 import System.IO.Unsafe

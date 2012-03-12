@@ -1,8 +1,8 @@
 {-# LANGUAGE ViewPatterns #-}
-module Hip.ToFOL.TranslateExpr where
+module Hip.Trans.TranslateExpr where
 
-import Hip.ToFOL.Core
-import Hip.ToFOL.Monad
+import Hip.Trans.Core
+import Hip.Trans.Monad
 import Language.TPTP hiding (Decl,Var)
 import qualified Language.TPTP as T
 

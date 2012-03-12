@@ -1,14 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
-module Hip.ToFOL.ToTPTP where
+module Hip.Trans.ToTPTP where
 
-import Hip.ToFOL.Core
-import Hip.ToFOL.Monad
-import Hip.ToFOL.Constructors
-import Hip.ToFOL.ProofDatatypes
-import Hip.ToFOL.MakeProofs
-import Hip.ToFOL.TranslateDecl
-import Hip.ToFOL.NecessaryDefinitions
-import Hip.ToFOL.Pretty
+import Hip.Trans.Core
+import Hip.Trans.Monad
+import Hip.Trans.Constructors
+import Hip.Trans.ProofDatatypes
+import Hip.Trans.MakeProofs
+import Hip.Trans.TranslateDecl
+import Hip.Trans.NecessaryDefinitions
+import Hip.Trans.Pretty
 import Hip.Messages
 import Hip.Util
 import Hip.Params
@@ -49,7 +49,7 @@ dumpTPTP params ds = runTM params $ do
     addTypes types
     faxioms <- mapM translate funDecls
     extra   <- envStDecls
-    db      <- popDebug
+    db      <- popMsgs
     return (faxioms,extra,db)
   where
     ProcessedDecls{..} = processDecls ds
@@ -117,7 +117,7 @@ prepareProofs params ds = first (removeEmptyProperties . map removeEmptyParts)
                         addCons datadecls
                         part  <- partm
                         extra <- envStDecls
-                        db    <- popDebug
+                        db    <- popMsgs
                         return (extendPart extra part,db)
                 return $ (Property { propName   = propName
                                    , propCode   = prettyCore (funcBody d)

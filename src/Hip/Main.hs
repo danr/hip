@@ -5,12 +5,12 @@ import qualified Language.TPTP as T
 import Language.TPTP.Pretty
 
 import Hip.FromHaskell.FromHaskell
-import Hip.ToFOL.ToTPTP
-import Hip.ToFOL.Pretty
-import Hip.ToFOL.ProofDatatypes
-import Hip.ToFOL.Parser
-import Hip.ToFOL.Core
-import Hip.ToFOL.Latex hiding (latex)
+import Hip.Trans.ToTPTP
+import Hip.Trans.Pretty
+import Hip.Trans.ProofDatatypes
+import Hip.Trans.Parser
+import Hip.Trans.Core
+import Hip.Trans.Latex hiding (latex)
 import Hip.Util (groupSortedOn,concatMapM)
 import Hip.InvokeATPs
 import Hip.Messages
@@ -98,7 +98,7 @@ main = do
             let (funcAxiomsWithDef,extraAxioms,debug) = dumpTPTP params ds
                 axioms = extraAxioms ++ concatMap snd funcAxiomsWithDef
             -- Verbose output
-            when dbfol $ mapM_ print (filter (sourceIs ToFOL) debug)
+            when dbfol $ mapM_ print (filter (sourceIs Trans) debug)
             -- Warnings
             when (warnings && not latex) $ mapM_ print (filter isWarning debug)
             -- TPTP output
@@ -120,7 +120,7 @@ main = do
             whenLoud $ putStrLn "Preparing proofs..."
             let (proofs,debug) = prepareProofs params ds
             -- Verbose output
-            when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
+            when dbfol   $ mapM_ print (filter (sourceIs Trans) debug)
             when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
             -- Print warnings
             when (warnings && not latex) $ mapM_ print (filter isWarning debug)

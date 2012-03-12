@@ -11,7 +11,7 @@ module Hip.Messages
        ,sourceIs
        ) where
 
-data Source = FromHaskell | ToFOL | MakeProof
+data Source = FromHaskell | Trans | MakeProof
   deriving (Eq,Ord,Show)
 
 data Msg = Debug   { msgSource :: Source , msgString :: String }
@@ -24,7 +24,7 @@ instance Show Msg where
 
 dbfhMsg,dbfolMsg,dbproofMsg,warnMsg :: String -> Msg
 dbfhMsg    = Debug   FromHaskell
-dbfolMsg   = Debug   ToFOL
+dbfolMsg   = Debug   Trans
 dbproofMsg = Debug   MakeProof
 warnMsg    = Warning
 

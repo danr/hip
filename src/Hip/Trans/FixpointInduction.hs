@@ -1,11 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
-module Hip.ToFOL.FixpointInduction where
+module Hip.Trans.FixpointInduction where
 
-import Hip.ToFOL.ParserInternals
-import Hip.ToFOL.Core
-import Hip.ToFOL.Pretty
-import Hip.ToFOL.NecessaryDefinitions
-import Hip.ToFOL.Constructors
+import Hip.Trans.ParserInternals
+import Hip.Trans.Core
+import Hip.Trans.Pretty
+import Hip.Trans.NecessaryDefinitions
+import Hip.Trans.Constructors
 import Hip.Util
 
 import Control.Arrow

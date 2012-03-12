@@ -1,11 +1,11 @@
-module Hip.ToFOL.Run where
+module Hip.Trans.Run where
 
 import Language.TPTP.Pretty
-import Hip.ToFOL.Parser
-import Hip.ToFOL.Latex
-import Hip.ToFOL.ToTPTP
-import Hip.ToFOL.Core
-import Hip.ToFOL.Pretty
+import Hip.Trans.Parser
+import Hip.Trans.Latex
+import Hip.Trans.ToTPTP
+import Hip.Trans.Core
+import Hip.Trans.Pretty
 import qualified Language.TPTP as T
 
 import Control.Monad

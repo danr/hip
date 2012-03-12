@@ -1,12 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Hip.ToFOL.Parser where
+module Hip.Trans.Parser where
 
 import Prelude hiding (lex)
 import Data.Parser.Grempa.Static
-import Hip.ToFOL.ParserInternals (declsGrammar)
-import Hip.ToFOL.Lexer
-import Hip.ToFOL.Core
-import Hip.ToFOL.Pretty
+import Hip.Trans.ParserInternals (declsGrammar)
+import Hip.Trans.Lexer
+import Hip.Trans.Core
+import Hip.Trans.Pretty
 
 extTokParser :: [Tok] -> ParseResult Tok [Decl]
 extTokParser = $(mkStaticParser declsGrammar [|declsGrammar|])

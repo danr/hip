@@ -1,8 +1,8 @@
 {-# LANGUAGE DeriveFunctor,NamedFieldPuns #-}
-module Hip.ToFOL.ProofDatatypes where
+module Hip.Trans.ProofDatatypes where
 
 import qualified Language.TPTP as T
-import Hip.ToFOL.Core
+import Hip.Trans.Core
 import Data.Function
 
 proofDatatypes :: [Name]

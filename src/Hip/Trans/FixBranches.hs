@@ -6,7 +6,7 @@
                           This function needs more testing
 
 -}
-module Hip.ToFOL.FixBranches
+module Hip.Trans.FixBranches
 {-
        (fixBranches,moreSpecificPatterns,nameWilds
        ,addGuardConds,guardCondition
@@ -17,24 +17,24 @@ module Hip.ToFOL.FixBranches
 -}
  where
 
-import Hip.ToFOL.Core
--- import Hip.ToFOL.Pretty
-import Hip.ToFOL.ParserInternals
-import Hip.ToFOL.Constructors
+import Hip.Trans.Core
+-- import Hip.Trans.Pretty
+import Hip.Trans.ParserInternals
+import Hip.Trans.Constructors
 
 import Hip.Util
 import Control.Applicative
 import Control.Monad.State
 import Control.Arrow (second,(***))
 import Data.Maybe (listToMaybe,catMaybes,mapMaybe)
-import Hip.ToFOL.ArbitraryCore()
+import Hip.Trans.ArbitraryCore()
 --import Test.QuickCheck
 --import Test.QuickCheck.Arbitrary
 
 -- | Adds bottoms for each pattern-matched constructor
 --   and removes overlapping patterns
 fixBranches :: Expr -> [Branch] -> [Branch]
-fixBranches scrut = renameBranches . removeOverlap . addBottoms scrut
+fixBranches scrut = removeOverlap . renameBranches -- . addBottoms scrut
 
 -- | Removes the guards from PMGs that simply are otherwise or True,
 --   and the entire row if it is False
@@ -60,12 +60,10 @@ renameBranches = (`evalState` (0,[]))
               :-> substVars renames e)
 
     renamePattern :: Pattern -> State (Int,[(Name,Name)]) Pattern
-    renamePattern PWild       = return PWild
     renamePattern (PCon c ps) = PCon c <$> mapM renamePattern ps
     renamePattern (PVar x)    = do x' <- (((x ++ "_") ++) . show) <$> gets fst
                                    modify (succ *** ((x,x'):))
                                    return (PVar x')
-
 
 -- Remove overlapping branches ------------------------------------------------
 
@@ -118,6 +116,9 @@ instance Specificity Pattern where
   PCon _ _    <=? _           = False
   _           <=? _           = True
 
+
+  {-
+
 -- Add bottoms ---------------------------------------------------------------
 
 -- | Adds bottoms. Not in the most efficient way, since we
@@ -144,7 +145,6 @@ addBottoms scrut brs = concat [ (p :-> e) : [ p' :-> bottom
                                        ]
 -}
   where matchscrut (Con a as) = PCon a (map matchscrut as)
-        matchscrut _          = PWild
 
         brsBottomGuards = concatMap addBottomGuard brs
 
@@ -175,7 +175,6 @@ addBottom scrut pmg = [ Guard p (IsBottom g) | Guard p g <- [pmg] ] ++
 
 -- | Adds the bottom patterns for a pattern under a scrutinee
 addBottomPattern :: Pattern -> Pattern -> [Pattern]
-addBottomPattern _scrut        PWild       = []
 addBottomPattern _scrut        (PVar _)    = []
 addBottomPattern (PCon sc sps) (PCon c ps)
      | sc /= c   = []               -- Unreachable clause
@@ -188,9 +187,7 @@ addBottomPattern _scrut (PCon c ps) = bottomP : fails
               | (l,p,r) <- selections ps, fp <- addBottomPattern PWild p
               ]
 
--- | Makes a list of patterns into a list of wild patterns
-wild :: [Pattern] -> [Pattern]
-wild ps = [ PWild | _ <- ps ]
+ -}
 
 -- More specific patterns ----------------------------------------------------
 
@@ -207,6 +204,10 @@ wild ps = [ PWild | _ <- ps ]
 -- > moreSpecificPatterns (x:f x) [(x:y:ys),_] = [(f x,_:_)]
 -- > moreSpecificPatterns (x:xs)  [(x:xs | p x)] = [(x,x | p x),(xs,xs)]
 -}
+
+testExpr = parseExpr "Cons x xs"
+testPMG  = brPMG (parseBranch "Cons x xs | xs -> e")
+
 moreSpecificPatterns :: Expr -> [PMG] -> [[(Expr,Pattern)]]
 moreSpecificPatterns e pmgs = reverse $ filter (not . null) $ catMaybes
    [ addGuardConds (msp e (pattern pmg)) (guardCondition pmg)
@@ -233,13 +234,13 @@ msp e          p            = Just [(e,p)]
 -- | All wilds need to be named to use moreSpecificPatterns.
 --
 -- > nameWilds (Tup3 _ x _) = Tup3 _0 x _1
-nameWilds :: Pattern -> Pattern
-nameWilds = (`evalState` 0) . go
-  where
-    go :: Pattern -> State Int Pattern
-    go PWild       = do { x <- get; modify succ; return (PVar ('_':show x)) }
-    go (PCon c ps) = PCon c <$> mapM go ps
-    go p           = return p
+-- nameWilds :: Pattern -> Pattern
+-- nameWilds = (`evalState` 0) . go
+--   where
+--     go :: Pattern -> State Int Pattern
+--     go (PCon c ps) = PCon c <$> mapM go ps
+--     go p           = return p
+
 
 {-
 

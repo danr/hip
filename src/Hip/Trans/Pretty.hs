@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeSynonymInstances #-}
-module Hip.ToFOL.Pretty (prettyCore) where
+module Hip.Trans.Pretty (prettyCore) where
 
-import Hip.ToFOL.Core
+import Hip.Trans.Core
 import Text.PrettyPrint.HughesPJ
-import Hip.ToFOL.Constructors
+import Hip.Trans.Constructors
 
 prettyCore :: P a => a -> String
 prettyCore = render . p
@@ -60,7 +60,6 @@ instance P Pattern where
   p = ppat 2
 
 ppat :: Int -> Pattern -> Doc
-ppat _ PWild       = text "_"
 ppat _ (PVar n)    = text n
 ppat _ (PCon n []) = text n
 ppat l (PCon n ps) = enclose (l <= 1) (text n <+> hsep (map (ppat 1) ps))

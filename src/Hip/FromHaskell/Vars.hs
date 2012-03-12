@@ -2,7 +2,7 @@ module Hip.FromHaskell.Vars
        (freeVars,freeVarss
        ,boundVars,boundVarss) where
 
-import qualified Hip.ToFOL.Core as C
+import qualified Hip.Trans.Core as C
 import Language.Haskell.Exts
 import Hip.FromHaskell.Monad
 import Hip.FromHaskell.Names

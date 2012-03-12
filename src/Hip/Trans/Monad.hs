@@ -3,7 +3,7 @@
              TypeOperators,
              ParallelListComp,
              FlexibleContexts #-}
-module Hip.ToFOL.Monad
+module Hip.Trans.Monad
        (TM()
        ,runTM
        ,write
@@ -12,7 +12,7 @@ module Hip.ToFOL.Monad
        ,writeDelimiter
        ,indented
        ,getEnv
-       ,popDebug
+       ,popMsgs
        ,returnWithDebug
        ,locally
        ,Bound(..)
@@ -31,6 +31,8 @@ module Hip.ToFOL.Monad
        ,addFuns
        ,addCons
        ,useFunPtr
+       ,registerFunPtr
+       ,getUsedFunPtrs
        ,appFold
        ,envStDecls
        ) where
@@ -40,10 +42,10 @@ import Control.Category
 import Data.Label (mkLabels)
 import Data.Label.PureM
 
-import Hip.ToFOL.Core
-import Hip.ToFOL.Pretty
-import Hip.ToFOL.Constructors
-import Hip.ToFOL.ProofDatatypes
+import Hip.Trans.Core
+import Hip.Trans.Pretty
+import Hip.Trans.Constructors
+import Hip.Trans.ProofDatatypes
 import Hip.Messages
 import Hip.Util (isOp,putEither)
 import Hip.Params
@@ -167,15 +169,15 @@ indented (TM m) = TM $ do
   return r
 
 -- | Pop and return the debug messages
-popDebug :: TM [Msg]
-popDebug = TM $ do
+popMsgs :: TM [Msg]
+popMsgs = TM $ do
   r <- reverse <$> gets debug
   puts debug []
   return r
 
 -- | Perform an action and pop its debug messages and return in a tuple
 returnWithDebug :: TM a -> TM (a,[Msg])
-returnWithDebug m = liftM2 (,) m popDebug
+returnWithDebug m = liftM2 (,) m popMsgs
 
 -- | Locally manipulate boundNames, and arities since skolem variables
 --   are registered as functions with arity 0
@@ -355,6 +357,13 @@ useFunPtr :: Name -> TM ()
 useFunPtr fn = TM $ do
     arity <- unTM $ lookupArity fn
     modify usedFunPtrs (S.insert (fn,arity))
+
+-- | Register a fun ptr
+registerFunPtr :: Name -> Int -> TM ()
+registerFunPtr fn arity = TM $ do modify usedFunPtrs (S.insert (fn,arity))
+
+getUsedFunPtrs :: TM [(Name,Int)]
+getUsedFunPtrs = TM $ S.toList <$> gets usedFunPtrs
 
 -- | A list of nice variable names
 varNames :: [String]

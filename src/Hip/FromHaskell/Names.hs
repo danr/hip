@@ -1,8 +1,8 @@
 module Hip.FromHaskell.Names where
 
 import Hip.FromHaskell.Monad
-import qualified Hip.ToFOL.Core as C
-import Hip.ToFOL.Core (Name,tapp,tconapp,tycon0)
+import qualified Hip.Trans.Core as C
+import Hip.Trans.Core (Name,tapp,tconapp,tycon0)
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,name)
 import Control.Monad

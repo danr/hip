@@ -19,7 +19,7 @@ data Params = Params { files       :: [FilePath]
                      , inddepth    :: Int
                      , indvars     :: Int
                      , indhyps     :: Int
-                     , indsteps     :: Int
+                     , indsteps    :: Int
 
                      , fpimax      :: Int
 

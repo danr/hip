@@ -1,10 +1,10 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleContexts, UndecidableInstances #-}
-module Hip.ToFOL.ArbitraryCore where
+module Hip.Trans.ArbitraryCore where
 
 -- Orphan instances for the rescue!
 
-import Hip.ToFOL.Constructors
-import Hip.ToFOL.Core
+import Hip.Trans.Constructors
+import Hip.Trans.Core
 import Test.QuickCheck
 import Data.Char
 import Control.Monad
@@ -24,7 +24,6 @@ instance Arbitrary PMG where
 
 instance Arbitrary Pattern where
     arbitrary = sized (arbPat False)
-    shrink PWild    = []
     shrink (PVar _) = []
     shrink (PCon c as) = as ++ [PCon c as' | as' <- mapM shrink as]
 
@@ -46,7 +45,6 @@ arbPat :: Bool -> Int -> Gen Pattern
 arbPat bottoms s = frequency
                  [(5,PVar <$> arbName)
                  ,(if bottoms then 5 else 0,return bottomP)
-                 ,(1,return PWild)
                  ,(s,do n <- choose (0,3)
                         PCon <$> arbC n <*> replicateM n (arbPat bottoms s'))
                  ]

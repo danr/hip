@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Hip.ToFOL.Core where
+module Hip.Trans.Core where
 
 import Data.Data
 import Data.Generics.Uniplate.Data
@@ -53,7 +53,6 @@ data PMG = NoGuard { pattern :: Pattern }
 
 data Pattern = PVar { patName :: Name }
              | PCon { patName :: Name , patArgs :: [Pattern] }
-             | PWild
   deriving(Eq,Ord,Data,Typeable)
 
 -- Cannot handle type var applications, as f in : (a -> b) -> f a -> f b
@@ -108,14 +107,12 @@ conTypes (Data name vars cons) = map (conName &&& conType) cons
     conType (Cons name tys) = TyApp (tys ++ [dataType])
 conTypes _ = error "conTypes: Please report this error."
 
--- | The three kinds of patterns
-varPat,conPat,wildPat :: Pattern -> Bool
+-- | The two kinds of patterns
+varPat,conPat :: Pattern -> Bool
 varPat PVar{} = True
 varPat _      = False
 conPat PCon{} = True
 conPat _      = False
-wildPat PWild = True
-wildPat _     = False
 
 -- | Costructor pattern without arguments
 con0Pat :: Pattern -> Bool
@@ -217,6 +214,11 @@ stripTypes = transform f
   where
     f (e ::: t) = e
     f e         = e
+
+-- | The result of a type function
+resType :: Type -> Type
+resType t = case t of TyApp ts -> last ts
+                      _        -> t
 
 -- | Which arguments to this constructor are recursive?
 --

@@ -44,11 +44,14 @@ max Z     y     = y
 max x     Z     = x
 max (S x) (S y) = S (max x y)
 
-prop_zero_is_one :: Prop Nat
-prop_zero_is_one = Z =/= S Z
+--prop_zero_is_one :: Prop Nat
+--prop_zero_is_one = Z =/= S Z
 
 prop_refl :: Nat -> Prop Bool
 prop_refl x = proveBool (x == x)
+
+prop_movesuc :: Nat -> Nat -> Prop Nat
+prop_movesuc x y = S x + y =:= x + S y
 
 prop_assoc_plus :: Nat -> Nat -> Nat -> Prop Nat
 prop_assoc_plus x y z = x + (y + z) =:= (x + y) + z
@@ -86,11 +89,11 @@ prop_min_absorb x y = min x (max x y) =:= x
 prop_max_absorb :: Nat -> Nat -> Prop Nat
 prop_max_absorb x y = max x (min x y) =:= x
 
-prop_idem_plus :: Nat -> Prop Nat
-prop_idem_plus x = x + x =/= x
-
-prop_idem_mul :: Nat -> Prop Nat
-prop_idem_mul x = x * x =/= x
+--prop_idem_plus :: Nat -> Prop Nat
+--prop_idem_plus x = x + x =/= x
+--
+--prop_idem_mul :: Nat -> Prop Nat
+--prop_idem_mul x = x * x =/= x
 
 prop_minus_zeroish :: Nat -> Nat -> Prop Nat
 prop_minus_zeroish n m = n - (n + m) =:= Z

@@ -1,14 +1,14 @@
 {-# LANGUAGE ViewPatterns #-}
--- This module is only to be used for TPTP produced by the HFOL.ToFOL->TPTP tool
-module Hip.ToFOL.Latex where
+-- This module is only to be used for TPTP produced by the HFOL.Trans->TPTP tool
+module Hip.Trans.Latex where
 
 import Language.TPTP
 import Hip.Util (isOp)
 
-import qualified Hip.ToFOL.Core as C
-import Hip.ToFOL.Pretty
+import qualified Hip.Trans.Core as C
+import Hip.Trans.Pretty
 
-import Hip.ToFOL.Constructors
+import Hip.Trans.Constructors
 
 import Control.Monad.State
 import Control.Applicative

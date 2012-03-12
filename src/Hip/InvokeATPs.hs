@@ -63,7 +63,7 @@ import Data.Map (Map)
 --import qualified Data.Set as S
 --import Data.Set (Set)
 
-import Hip.ToFOL.ProofDatatypes
+import Hip.Trans.ProofDatatypes
 import Hip.ResultDatatypes
 import Hip.Provers
 import Hip.RunProver

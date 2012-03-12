@@ -1,11 +1,11 @@
-{-# LANGUAGE ParallelListComp #-}
-module Hip.ToFOL.TranslateDecl where
+{-# LANGUAGE ParallelListComp, RecordWildCards #-}
+module Hip.Trans.TranslateDecl where
 
-import Hip.ToFOL.Core
-import Hip.ToFOL.FixBranches
-import Hip.ToFOL.Pretty
-import Hip.ToFOL.Monad
-import Hip.ToFOL.TranslateExpr
+import Hip.Trans.Core
+import Hip.Trans.FixBranches
+import Hip.Trans.Pretty
+import Hip.Trans.Monad
+import Hip.Trans.TranslateExpr
 import Hip.Util
 import Language.TPTP hiding (Decl,Var,declName)
 import Language.TPTP.Pretty
@@ -17,16 +17,24 @@ import Control.Monad
 import Data.List (intercalate,sort,find)
 import Data.Maybe (catMaybes)
 
+import Hip.Trans.Theory
+
+translateLemma :: Prop -> TM T.Decl
+translateLemma (Prop{..}) = locally $ do
+    rhs <- translateExpr proprhs
+    lhs <- translateExpr proplhs
+    Lemma propName <$> forallUnbound (rhs === lhs)
+
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.
 --   If this is a proof object, handle it accordingly.
---   Most of that work is in Hip.ToFOL.ProofDecls
+--   Most of that work is in Hip.Trans.ProofDecls
 translate :: Decl -> TM (Decl,[T.Decl])
 translate d@(Func fname args (Expr e)) = locally $ do
     rhs <- translateExpr (App fname (map Var args))
     lhs <- translateExpr e
-    f <- Axiom fname <$> forallUnbound (rhs === lhs)
-    write (prettyTPTP f)
+    f <- Definition fname <$> forallUnbound (rhs === lhs)
+    write ("translate expr done: " ++ prettyTPTP f)
     return (d,[f])
 
 translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
@@ -37,7 +45,7 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
     sequence
       [ do mf <- indented
                $ locally
-               $ translateBranch (modifyPattern nameWilds p)
+               $ translateBranch p -- (modifyPattern nameWilds p)
                                  e
                                  (map brPMG prevbrs)
                                  num
@@ -86,16 +94,14 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
                           return Nothing
             Nothing -> do
               formula' <- formula `withConstraints` constr
-              Just . T.Axiom (fname ++ show num) <$> forallUnbound formula'
+              Just . T.Definition (fname ++ show num) <$> forallUnbound formula'
 translate d = error $ "translate on " ++ prettyCore d
 
 -- | Translate a pattern to an expression. This is needed to get the
 --   more specific pattern for a branch. This function in partial:
---   the PWild pattern does not exists, as the are named by nameWilds.
 patternToExpr :: Pattern -> Expr
 patternToExpr (PVar x)    = Var x
 patternToExpr (PCon p ps) = Con p (map patternToExpr ps)
-patternToExpr PWild       = error "patternToExpr on PWild: use nameWilds"
 
 -- | Follow indirections of an expression
 followExpr :: Expr -> TM Expr
@@ -124,7 +130,6 @@ Con c as ~~~ PCon c' ps | c == c'   = concatMaybe <$> zipWithM (~~) as ps
 e        ~~~ PVar n     = addIndirection n e                 >> noConditions
 Var n    ~~~ p          = addIndirection n (patternToExpr p) >> noConditions
 App f as ~~~ PCon c ps  = condition (App f as,PCon c ps)
-_        ~~~ PWild      = error "~~~ on PWild: use nameWilds"
 IsBottom{} ~~~ _        = error "~~~ on IsBottom"
 
 -- | No conditions from this unification
@@ -208,7 +213,6 @@ withConstraints f css =    -- write $ "withConstraints: "
 --     c = C.1 x
 invertPattern :: Pattern -> Expr -> Term -> TM Term
 invertPattern (PVar v)        e x = addIndirection v e >> return x
-invertPattern PWild           _ x = return x
 invertPattern p@(PCon n pats) e x = do
   write $ "inverting pattern " ++ prettyCore p
   projs <- lookupProj n

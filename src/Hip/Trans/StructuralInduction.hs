@@ -1,10 +1,10 @@
 {-# LANGUAGE FlexibleContexts, PatternGuards, ViewPatterns #-}
-module Hip.ToFOL.StructuralInduction where
+module Hip.Trans.StructuralInduction where
 
-import Hip.ToFOL.Core
-import Hip.ToFOL.ParserInternals
-import Hip.ToFOL.Pretty
-import Hip.ToFOL.Constructors
+import Hip.Trans.Core
+import Hip.Trans.ParserInternals
+import Hip.Trans.Pretty
+import Hip.Trans.Constructors
 import Hip.Util
 
 import Data.List hiding (partition)

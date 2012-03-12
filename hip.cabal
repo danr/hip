@@ -1,4 +1,4 @@
-name:               hip
+name:               hipspec
 version:            0.1
 license:            BSD3
 author:             Dan Rosén
@@ -10,10 +10,10 @@ cabal-version:      >= 1.6
 build-type:         Simple
 homepage:           github.com/danr/hip
 
-executable          hip
+executable          hipspec
     ghc-options:    -threaded -O2 -rtsopts
     hs-source-dirs: src
-    main-is:        Hip/Main.hs
+    main-is:        Hip/SpecMain.hs
 
     build-depends: base                          >= 4    && < 5
                  , process                       >= 1.0.1.1

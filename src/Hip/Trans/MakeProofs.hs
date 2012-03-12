@@ -1,17 +1,19 @@
 {-# LANGUAGE RecordWildCards #-}
-module Hip.ToFOL.MakeProofs where
+module Hip.Trans.MakeProofs where
 
-import Hip.ToFOL.TranslateExpr
-import Hip.ToFOL.TranslateDecl
-import Hip.ToFOL.Core
-import Hip.ToFOL.Constructors
-import Hip.ToFOL.Monad
-import Hip.ToFOL.Pretty
-import Hip.ToFOL.ProofDatatypes
-import Hip.ToFOL.NecessaryDefinitions
-import Hip.ToFOL.FixpointInduction
-import Hip.ToFOL.StructuralInduction hiding (VarName,ConName)
+import Hip.Trans.TranslateExpr
+import Hip.Trans.TranslateDecl
+import Hip.Trans.Core
+import Hip.Trans.Constructors
+import Hip.Trans.Monad
+import Hip.Trans.Pretty
+import Hip.Trans.ProofDatatypes
+import Hip.Trans.NecessaryDefinitions
+import Hip.Trans.FixpointInduction
+import Hip.Trans.StructuralInduction hiding (VarName,ConName)
+import Hip.Trans.Theory
 import Hip.Util (putEither,concatMapM)
+import Hip.Messages
 import Hip.Params
 
 import Language.TPTP hiding (Decl,Var,VarName,declName)
@@ -34,32 +36,29 @@ unProp :: Type -> Type
 unProp (TyCon _ [t]) = t
 unProp t             = t
 
-makeProofDecls :: Params -> [Decl] -> Set Name -> Type -> Decl -> [TM Part]
-makeProofDecls params fundecls recfuns ty (Func fname args (Expr e)) = do
-    let typedArgs = case ty of TyApp ts -> zip args ts
-                               _        -> []
+makeProofDecls :: Params -> Theory -> Prop -> [Prop] -> [TM Part]
+makeProofDecls params theory prop@(Prop{..}) lemmas =
+    let typedVars = case propType of TyApp ts -> zip propVars ts
+                                     _        -> []
 
-        resTy     = unProp $ case ty of TyApp ts -> last ts
-                                        t        -> t
+        resTy     = unProp (resType propType)
 
-        prove' :: Expr -> Expr -> [TM Part]
-        prove' lhs rhs = case resTy of
-              -- Prop (a -> b) ~= a -> Prop b
-              TyApp ts -> let extraTyArgs =  zip [ "x." ++ show x | x <- [0..] ]
-                                                 (init ts)
-                          in  prove params fundecls recfuns
-                                    (last ts)
-                                    fname
-                                    (typedArgs ++ extraTyArgs)
-                                    (foldl app lhs (map (Var . fst) extraTyArgs))
-                                    (foldl app rhs (map (Var . fst) extraTyArgs))
-              _        -> prove params fundecls recfuns resTy fname typedArgs lhs rhs
-    case e of
-      App "proveBool" [lhs]             -> prove' lhs (Con "True" [])
-      App "prove" [App "=:=" [lhs,rhs]] -> prove' lhs rhs
-      App "=:=" [lhs,rhs]               -> prove' lhs rhs
-      _  -> []
-makeProofDecls _ _ _ _ _ = []
+        fundecls  = theoryFunDecls theory
+
+        recfuns   = theoryRecFuns theory
+
+    in  case resTy of
+           -- Prop (a -> b) ~= a -> Prop b
+           TyApp ts -> let extraTyVars = zip [ "x." ++ show x | x <- [0..] ]
+                                             (init ts)
+                       in  prove params fundecls recfuns
+                                 (last ts)
+                                 propName
+                                 (typedVars ++ extraTyVars)
+                                 (foldl app proplhs (map (Var . fst) extraTyVars))
+                                 (foldl app proprhs (map (Var . fst) extraTyVars))
+           _        -> prove params fundecls recfuns resTy propName
+                             typedVars proplhs proprhs
 
 type Rec = Bool
 
@@ -88,27 +87,30 @@ prove :: Params
       -- ^ RHS
       -> [TM Part]
       -- ^ Resulting instructions how to do proof declarations for this
-prove params@(Params{..}) fundecls recfuns resTy fname typedArgs lhs rhs =
-    let indargs = filter (concreteType . snd) typedArgs
+prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
+    let indargs :: [(Name,Type)]
+        indargs = filter (concreteType . snd) typedVars
+        powset :: [[(Name,Type)]]
         powset = powerset indargs
     in  concat $ [ plainProof                                  | 'p' `elem` methods ]
-              ++ [ proofByFixpointInduction                    | 'f' `elem` methods ]
-              ++ [ proofByApproxLemma                          | 'a' `elem` methods ]
-              ++ [ map (proofByStructInd True  d)
-                       (filter ((<=indvars) .  length) powset) | d <- [1..inddepth], 's' `elem` methods ]
+--              ++ [ proofByFixpointInduction                    | 'f' `elem` methods ]
+--              ++ [ proofByApproxLemma                          | 'a' `elem` methods ]
+--              ++ [ map (proofByStructInd True  d)
+--                       (filter ((<=indargs) .  length) powset) | d <- [1..inddepth], 's' `elem` methods ]
               ++ [ map (proofByStructInd False d)
-                       (filter ((<=indvars) .  length) powset) | d <- [1..inddepth], 'i' `elem` methods ]
+                       (filter ((<=indvars) .  length) powset)
+                 | d <- [1..inddepth], 'i' `elem` methods ]
 
   where
     accompanyParts :: ProofMethod -> Coverage -> TM [Particle] -> TM Part
     accompanyParts prooftype coverage partsm = do
         let funs = map (declName &&& length . declArgs) fundecls
-        addFuns funs
-        theory <- concatMapM (fmap snd . translate) fundecls
+--        addFuns funs
+--        theory <- concatMapM (fmap snd . translate) fundecls
         parts  <- partsm
         return $ Part { partMethod     = prooftype
                       , partCoverage   = coverage
-                      , partMatter     = (theory,parts)
+                      , partMatter     = ([],parts)
                       }
 
 
@@ -186,7 +188,7 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedArgs lhs rhs =
 
     plainProof :: [TM Part]
     plainProof
-        | any (concreteType . snd) typedArgs = []
+        | any (concreteType . snd) typedVars = []
         | otherwise =
             return $ accompanyParts Plain Infinite $ do
                 p <- instantiateP []
@@ -222,8 +224,8 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedArgs lhs rhs =
         instantiateFixProof :: FixProof -> [TM Part]
         instantiateFixProof fp@(FixProof {..}) =
             [ accompanyPartsWithDecls (FixpointInduction fixedFuns) Infinite
-                 [(baseDecls ++ fundecls,baseAxioms)
-                 ,(stepDecls ++ fundecls,stepAxioms)]
+                 [(baseDecls,baseAxioms)
+                 ,(stepDecls,stepAxioms)]
             ]
           where
              baseAxioms = do
@@ -253,14 +255,107 @@ approximate f ty = do
     matrix <- forM cons $ \c -> do
                  Just ct <- lookupType c
                  let recs = recursiveArgs ct
-                     args = [ 'a':show i | (i,_) <- zip [(0 :: Int)..] recs ]
-                 return ([PCon c (map PVar args)] -- f (C x1 .. xn)
+                     vars = [ 'a':show i | (i,_) <- zip [(0 :: Int)..] recs ]
+                 return ([PCon c (map PVar vars)] -- f (C x1 .. xn)
                         ,Nothing                  -- no guard
                         ,Con c [ if rec then App f [Var arg] else Var arg
-                               | (rec,arg) <- zip recs args ])
+                               | (rec,arg) <- zip recs vars ])
     addFuns [(n,1)]
     let decl = funcMatrix n matrix
     wdproof $ prettyCore decl
     (_,theory) <- translate decl
     return (n,theory)
 
+
+-- | Is a type finite in a theory?
+finiteType :: Theory -> Type -> Bool
+finiteType thy n = undefined
+
+-- These were added since StructuralInduction sometimes returns empty
+-- parts because it overflowed the number allowed hyps or steps, and
+-- this was inside the monad so this was the easiest fix, but yes -
+-- an Ugly Hack!
+removeEmptyParts :: Property -> Property
+removeEmptyParts (Property n c parts)
+  = Property n c (filter (not . null . snd . partMatter) parts)
+
+-- | Takes a theory, and prepares the invocations
+--   for a property and adds the lemmas
+theoryToInvocations :: Params -> Theory -> Prop -> [Prop] -> (Property,[Msg])
+theoryToInvocations params theory prop@(Prop{..}) lemmas =
+    let partsm = makeProofDecls params theory prop lemmas
+        (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM params $ do
+                        wdproof $ propName
+                        addCons (thyDatas theory)
+                        let funs = map (declName &&& length . declArgs) (theoryFunDecls theory)
+                        addFuns funs
+                        part <- partm
+                        lemmaTPTP <- mapM translateLemma lemmas
+                        mapM_ (uncurry registerFunPtr) (theoryUsedPtrs theory)
+                        extra <- envStDecls
+                        db    <- popMsgs
+                        return (extendPart (extra ++ theoryFunTPTP theory ++ lemmaTPTP) part,db)
+        property = Property { propName   = propName
+                            , propCode   = propRepr
+                            , propMatter = parts
+                            }
+    in (removeEmptyParts property,concat dbg)
+
+{-
+prepareProofs :: Params -> [Decl] -> ([Property],[Msg])
+prepareProofs params ds = first (removeEmptyProperties . map removeEmptyParts)
+                        $ second ((extraDebug ++) . concat)
+                        $ unzip (concatMap processDecl proofDecls)
+  where
+    extraDebug = [dbproofMsg $ "Recursive functions: " ++ show recursiveFuns]
+
+    processDecl :: Decl -> [(Property,[Msg])]
+    processDecl d
+      | declName d `elem` proveFunctions = []
+      | otherwise =
+          let propName = declName d
+              mty = declType <$> find ((propName ==) . declName) typeDecls
+          in case mty of
+              Nothing -> []
+              Just sigty -> do
+                let (fsd,csd)    = usedFC d
+                    typesFromSig = getTypes sigty
+                    (fs,cs')  = compIterateFCs (fsd S.\\ S.fromList proveFunctions)
+                    cs        = S.insert bottomName $ csd `S.union` cs'
+                    datadecls = filterDatas typesFromSig cs dataDecls
+                    fundecls  = filterFuns  fs funDecls
+                    partsm    = makeProofDecls params fundecls recursiveFuns sigty d
+                    (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM params $ do
+                        wdproof $ propName
+                        addTypes types
+                        addCons datadecls
+                        part  <- partm
+                        extra <- envStDecls
+                        db    <- popMsgs
+                        return (extendPart extra part,db)
+                return $ (Property { propName   = propName
+                                   , propCode   = prettyCore (funcBody d)
+                                   , propMatter = parts
+                                   },concat dbg)
+
+    ProcessedDecls{..} = processDecls ds
+    types = map (declName &&& declType) typeDecls
+
+    compIterateFCs :: Set Name -> (Set Name,Set Name)
+    compIterateFCs = iterateFCs funDecls
+
+    usedFCmap :: Map Name (Set Name,Set Name)
+    usedFCmap = M.fromList [ (declName d,usedFC d) | d <- funDecls ]
+
+    recursiveFuns :: Set Name
+    recursiveFuns = S.fromList
+        [ name
+        | d@(Func name args body) <- funDecls
+        , let namecalls = fst (usedFCmap M.! name)
+              -- ^ Which functions this function calls
+              theycall  = fst (compIterateFCs namecalls)
+              -- ^ All functions they call. If name is member
+              --   there then there is a mutual recursion
+        , selfRecursive d || name `S.member` theycall
+        ]
+-}

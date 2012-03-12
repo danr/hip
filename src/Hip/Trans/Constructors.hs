@@ -1,6 +1,6 @@
-module Hip.ToFOL.Constructors where
+module Hip.Trans.Constructors where
 
-import Hip.ToFOL.Core
+import Hip.Trans.Core
 
 -- | The name for bottom
 bottomName :: Name

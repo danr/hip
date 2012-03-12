@@ -1,8 +1,8 @@
-module Hip.ToFOL.NecessaryDefinitions where
+module Hip.Trans.NecessaryDefinitions where
 
-import Hip.ToFOL.ParserInternals
-import Hip.ToFOL.Core
-import Hip.ToFOL.Constructors
+import Hip.Trans.ParserInternals
+import Hip.Trans.Core
+import Hip.Trans.Constructors
 
 import Data.List
 import Data.Maybe
@@ -12,6 +12,8 @@ import qualified Data.Set as S
 import Data.Set (Set)
 import qualified Data.Map as M
 import Data.Map (Map)
+
+import Debug.Trace
 
 import Data.Generics.Uniplate.Operations
 
@@ -70,7 +72,7 @@ iterateFCs funDecls = go
     safeLookup f = fromMaybe (S.empty,S.empty) (M.lookup f usedFCmap)
 
     go fs | S.null newfs = (fs,cs)
-          | otherwise    = go (fs `S.union` fs')
+          | otherwise    = trace "go" $ go (fs `S.union` fs')
       -- Get the new functions from here
       where fs',cs :: Set Name
             (fs',cs) = (S.unions *** S.unions)

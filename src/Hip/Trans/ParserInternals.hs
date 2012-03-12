@@ -1,5 +1,5 @@
 {-# LANGUAGE DoRec #-}
-module Hip.ToFOL.ParserInternals
+module Hip.Trans.ParserInternals
        (declsGrammar
        ,parseDecls
        ,parseBranch
@@ -13,9 +13,9 @@ import Data.Parser.Grempa.Grammar
 import Data.Parser.Grempa.Dynamic
 import Data.Data
 
-import qualified Hip.ToFOL.Lexer as L
-import Hip.ToFOL.Core
-import Hip.ToFOL.Pretty
+import qualified Hip.Trans.Lexer as L
+import Hip.Trans.Core
+import Hip.Trans.Pretty
 
 parseFromGrammar :: Data e => Grammar L.Tok e -> String -> e
 parseFromGrammar g = parse (mkDynamicParser constrWrapper g) . L.lex
@@ -65,7 +65,6 @@ patternGrammar parens = do
                 , id    <@> p2 ]
     p2  <- rule [ PVar  <@> l
                 , pcon0 <@> u
-                , PWild <@  L.Under
                 , id    <@  L.LPar <#> p <# L.RPar ]
     p2s <- several p2
 

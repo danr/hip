@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Hip.ResultDatatypes where
 
-import Hip.ToFOL.ProofDatatypes
+import Hip.Trans.ProofDatatypes
 import Hip.Util
 import Data.Maybe
 import Data.Function

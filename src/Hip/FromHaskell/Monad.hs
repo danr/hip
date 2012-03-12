@@ -1,8 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving,FlexibleContexts,TemplateHaskell #-}
 module Hip.FromHaskell.Monad where
 
-import Hip.ToFOL.Core as C
-import Hip.ToFOL.Constructors (bottomName)
+import Hip.Trans.Core as C
+import Hip.Trans.Constructors (bottomName)
 import Hip.Messages
 
 import Language.Haskell.Exts as H hiding (Name,Decl,binds)
@@ -116,6 +116,9 @@ newUnique = do
   x:xs <- gets namesupply
   puts namesupply xs
   return x
+
+wildName :: FH Name
+wildName = (("wild."++) . show) <$> newUnique
 
 _write :: Msg -> FH ()
 _write = tell . return . Left

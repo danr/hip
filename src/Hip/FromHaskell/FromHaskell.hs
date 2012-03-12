@@ -3,8 +3,8 @@ module Hip.FromHaskell.FromHaskell (parseHaskell,run) where
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,app)
 
-import qualified Hip.ToFOL.Core as C
-import Hip.ToFOL.Core hiding (Decl)
+import qualified Hip.Trans.Core as C
+import Hip.Trans.Core hiding (Decl)
 
 import Hip.FromHaskell.Names
 import Hip.FromHaskell.Monad
@@ -12,7 +12,7 @@ import Hip.FromHaskell.Vars
 
 import Hip.Messages
 import Hip.Util (concatMapM)
-import Hip.ToFOL.Pretty
+import Hip.Trans.Pretty
 
 import Control.Applicative
 import Control.Monad
@@ -313,7 +313,7 @@ fromPat pat = case pat of
                       PCon (tupleName (length ps)) <$> mapM fromPat ps
   PList ps      -> regData listTypeName >> listPattern ps
   PParen p      -> fromPat p
-  PWildCard     -> return PWild
+  PWildCard     -> C.PVar <$> wildName
   PApp qname ps -> PCon <$> fromQName qname <*> mapM fromPat ps
   PInfixApp p1 qname p2 ->
     (\n a b -> PCon n [a,b]) <$> fromQName qname <*> fromPat p1 <*> fromPat p2

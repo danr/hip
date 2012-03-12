@@ -1,6 +1,6 @@
 module Hip.Util
-       (unlist,avgList,selections,withPrevious,concatMapM,concatMaybe
-       ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted)
+       (unlist,avgList,selections,inspect,withPrevious,concatMapM,concatMaybe
+       ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted,forFind)
        where
 
 import Data.Maybe
@@ -8,6 +8,7 @@ import Data.List
 import Data.Function
 import Data.Ord
 import Test.QuickCheck
+import Control.Monad
 
 unlist :: a -> ([b] -> a) -> [b] -> a
 unlist d f [] = d
@@ -23,6 +24,12 @@ selections :: [a] -> [([a],a,[a])]
 selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
   where fromSplit (as,b:bs) = (as,b,bs)
         fromSplit _         = error "selections fromSplit unreachable"
+
+-- | Pair up a list with the element and the rest of the elements
+--
+-- > inspect "abc" = [('a',"bc"),('b',"ac"),('c',"ab")]
+inspect :: [a] -> [(a,[a])]
+inspect = map (\(i,x,r) -> (x,i++r)) . selections
 
 -- | Pair up a list with its previous elements
 --
@@ -75,3 +82,10 @@ countBy = (length .) . filter
 groupSortedOn :: (Eq b,Ord b) => (a -> b) -> [a] -> [[a]]
 groupSortedOn f = groupBy ((==) `on` f)
                 . sortBy (comparing f)
+
+
+forFind :: Monad m => [a] -> (a -> m Bool) -> m (Maybe a)
+forFind []     p = return Nothing
+forFind (x:xs) p = mif (p x)
+                       (return (Just x))
+                       (forFind xs p)

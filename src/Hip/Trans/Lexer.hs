@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell, DeriveDataTypeable #-}
-module Hip.ToFOL.Lexer where
+module Hip.Trans.Lexer where
 
 import Prelude hiding (lex)
 import Data.Data
