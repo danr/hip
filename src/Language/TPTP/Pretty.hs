@@ -83,6 +83,7 @@ declType Question{}   = "question"
 declType NegConj{}    = "negated_conjecture"
 declType Lemma{}      = "lemma"
 declType Hypothesis{} = "hypothesis"
+declType Definition{} = "definition"
 
 instance PrettyTPTP Decl where
     prettyTPTP d = pdecl (prettyName (declName d)) (declType d) (declFormula d)

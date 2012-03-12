@@ -46,7 +46,7 @@ $P$. Generally, theorem provers do not instantiate schemata themselves
 so it has to be done manually, with an appropriate formula for $P$. In
 this thesis, the predicates will be equalities that depend on the
 argument to $P$. For example, to show that two functions $f$ and $g$
-are equal, $P(x)$ is defined $P(x)$ to be $f(x)=g(x)$.
+are equal, $P(x)$ is defined to be $f(x)=g(x)$.
 
 To prove a property with induction in Haskell, induction can be
 carried out on the number of constructors in a value. It is possible
@@ -67,9 +67,13 @@ follows the same structure as in $\PA$:
      { \fa{x} x \text{ finite and total} \rightarrow P(x) }
 \end{mathpar}
 
-Any data type gives rise to induction schemata, and this is called
-structural induction. These are the axiom schemata for lists and the
-\hs{Tree} type defined in Section \ref{sec:treetrans}:
+In the schema above, a total value means that it does not contain any
+bottoms, whereas being only finite is weaker; values such as
+$\hs{1:2:}\bot$ are regarded as finite, but not total.
+
+Any data type gives rise to a structural induction schemata. These are
+the axiom schemata for lists and the \hs{Tree} type defined in Section
+\ref{sec:treetrans}:
 
 \begin{mathpar}
   \inferrule* % [left=List-Ind]
@@ -90,8 +94,8 @@ structural induction. These are the axiom schemata for lists and the
 \end{mathpar}
 
 For indexed sum of products data types the translation is
-straightforward: for a data type $T$, with a constructor $K$ you get
-all recursive arguments of $T$ to $K$ as hypotheses.
+straightforward: given a data type \hs{T}, then for every constructor
+\hs{K}, all recursive arguments of type \hs{T} to \hs{K} are hypotheses.
 
 \subsection{Partial and Infinite Values}
 \label{sec:admissible}
@@ -101,7 +105,7 @@ infinite and partial values of a data types. The predicate must then
 be \emph{admissible}, and is formally defined below. Informally, it
 means that the predicate preserves $\omega$-chains of
 $\sqsubseteq$. Such chains are described in more detail in Section
-\ref{sec:domaintheory}, an example of such a is:
+\ref{sec:domaintheory}, where this example of such a chain was given:
 
 \begin{equation*}
 \bot \sqsubseteq
@@ -116,7 +120,7 @@ $P$ is an admissible predicate, then if $P$ holds for every element in
 that chain then $P(\hs{inf})$. We can now define admissible.
 
 \paragraph{Definition} A predicate $P$ is \emph{admissible} for every
-$\omega$-chain $\langle x_n \rangle_{n \in \omega}$}, this holds:
+$\omega$-chain $\langle x_n \rangle_{n \in \omega}$, this holds:
 
 \begin{equation*}
 (\fa{n} P(x_n)) \Rightarrow P(\lub{n \in \omega}(x_n))
@@ -175,7 +179,9 @@ The structural induction schemata seen so far only uses each
 constructor once and that does not work for proving properties about
 functions defined with recursion with a bigger depth. For instance,
 the induction on Peano numbers in Haskell can be adjusted to a
-constructor depth two in this way:
+constructor depth two in this way\footnote{In this section, predicates
+  will silently be assumed admissible to avoid cluttering the
+  induction schemata.}:
 
 \begin{mathpar}
   \inferrule* % [left=Nat-Ind-Depth-Two]
@@ -214,11 +220,11 @@ induction steps:
 
 \end{comment}
 
-\pagebreak
+% \pagebreak
 
-This is used to use induction on more than one arguments, by using the
-tuple constructor. The base and the step cases of induction on two
-natural numbers is this:
+This unrolling is used to use induction on more than one arguments, by
+using the tuple constructor. The base and the step cases of induction
+on two natural numbers is this:
 
 \begin{align*}
 \rom{1} &&                                                                                        & P(\hs{Zero}     ,\hs{Zero}     ) \\
@@ -227,25 +233,30 @@ natural numbers is this:
 \rom{4} && \faa{x}{y} P(x,y) \wedge P(\hs{Succ} \w x,y) \wedge P(x,\hs{Succ} \w y) \rightarrow \, & P(\hs{Succ} \w x,\hs{Succ} \w y) \\
 \end{align*}
 
-This can be used to show the commutativity of plus for natural numbers
-defined recursively on the first argument. The predicate is defined as
-$P(x,y) \Leftrightarrow \faa{x}{y} x + y = y + x$. Only these two
-lemmas are needed if you do this with induction on the first argument:
+\noindent
+This induction schema can be used to show the commutativity of natural
+number addition defined recursively on the first argument. The
+predicate is defined as $P(x,y) \Leftrightarrow x + y = y + x$. This
+property can be proved with induction on the first argument, but with
+two lemmas. These two lemmas follow from the stronger induction schema
+above:
 \begin{enumerate}
+  \vspace{0.5\baselineskip}
   \item $\fa{x} x + \hs{Zero} = x$. This corresponds the hypothesis
-    $P(x,\hs{Zero})$ above.
+    $P(x,\hs{Zero})$.
+  \vspace{0.5\baselineskip}
   \item $\faa{x}{y} \hs{Succ} \w x + y = x + \hs{Succ} \w y$.
     Derivable from two of the hypotheses in axiom $\romnodot{4}$:
-    \begin{align*}
-    lhs & = \hs{Succ} \w x + y   && \{\textrm{definition of $+$}\} \\
-        & = \hs{Succ} \w (x + y) && \{\textrm{hypothesis $P(x,y)$}\} \\
-        & = \hs{Succ} \w (y + x) && \{\textrm{definition of $+$}\} \\
-        & = \hs{Succ} \w y + x   && \{\textrm{hypothesis $P(x,\hs{Succ} \w y)$}\} \\
-        & = x + \hs{Succ} \w y = rhs
-    \end{align*}
+\begin{align*}
+lhs & = \hs{Succ} \w x + y   && \{\textrm{definition of $+$}\} \\
+    & = \hs{Succ} \w (x + y) && \{\textrm{hypothesis $P(x,y)$}\} \\
+    & = \hs{Succ} \w (y + x) && \{\textrm{definition of $+$}\} \\
+    & = \hs{Succ} \w y + x   && \{\textrm{hypothesis $P(x,\hs{Succ} \w y)$}\} \\
+    & = x + \hs{Succ} \w y = rhs
+\end{align*}
 \end{enumerate}
 
-The commutativity of plus does only hold for total values since we have
+The commutativity of plus does only hold for total values since we have:
 $$\bot \eq \bot + \hs{Succ Zero} \, \neq \, \hs{Succ Zero} + \bot \eq \hs{Succ} \w \bot$$
 
 Unrolling data types in this way to construct hypotheses also work
@@ -257,10 +268,10 @@ $\mathbb{N} + \mathbb{N}$, which can be defined as this in Haskell:
 data Z = Pos Nat | Neg Nat
 \end{code}
 
-A value of $\hs{Pos} \w x$ denotes the integer $+\, x$ and $\hs{Neg} \w y$
-the integer $-(1+y)$. This avoids having two values denoting
-$0$. With the above technique, the induction principle for total
-\hs{Z} with two constructors is:
+A value of $\hs{Pos} \w x$ denotes the integer $+\, x$ and $\hs{Neg}
+\w y$ the integer $-(1+y)$. This interpretation avoids having two
+values denoting $0$. With the technique above, the induction principle
+for total \hs{Z} with two constructors is:
 
 \begin{mathpar}
   \inferrule* % [left=Nat-Ind-Depth-Two]
@@ -300,7 +311,7 @@ This prevents long formulas should there be many hypotheses.  It also
 makes the implementation of the simple induction technique with one
 argument and one constructor straightforward. For each constructor $C$
 with $n$ arguments, we make a new call to a theorem prover with $n$
-Skolem variables $x_1 \cdots x_n$ and try to prove
+skolem variables $x_1 \cdots x_n$ and try to prove
 $P(x_1,\cdots,x_n)$.  Additionally, for each argument with assigned
 variable $x_i$, if the type of this variable is the same as the
 constructor $C$'s, $P(x_i)$ is added as an axiom to the theory: this
@@ -309,13 +320,16 @@ an induction hypothesis.
 The predicate is inlined: there is no introduction of $P$ and its
 definition, it is replaced with the property. Suppose we want to prove
 the property
-$\fa{t} \fn{mirror}(\fn{mirror}(t)) = t$ where $t : \hs{Tree a}$,
-the \hs{Branch} case generates this call to the theorem prover:
+
+$$\fa{t} \fn{mirror}(\fn{mirror}(t)) = t$$
+
+where $t : \hs{Tree a}$. The \hs{Branch} case generates this call to
+the theorem prover:
 
 \begin{align*}
-\mathcal{T} \, & , \, \fn{mirror} \w (\fn{mirror} \w x_1) \eq x_1 \\
-            \, & , \, \fn{mirror} \w (\fn{mirror} \w x_3) \eq x_3 \\
-               &\vdash \fn{mirror} \w (\fn{mirror} \w (\fn{branch} \w x_1 \w x_2\w x_3) \eq \fn{branch} \w x_1 \w x_2\w x_3
+\mathcal{T} \, & , \, \fn{mirror} (\fn{mirror} (x_1)) \eq x_1 \\
+            \, & , \, \fn{mirror} (\fn{mirror} (x_3)) \eq x_3 \\
+               &\vdash \fn{mirror} (\fn{mirror} (\fn{branch}( x_1, x_2, x_3))) \eq \fn{branch}(  x_1, x_2, x_3)
 \end{align*}
 
 Here $\mathcal{T}$ is the theory for this Haskell program: it includes
@@ -323,8 +337,8 @@ the definition of $\hs{mirror}$, along with axioms that $\hs{Branch}$,
 $\hs{Empty}$ and $\bot$ are disjoint.  Hypotheses for $x_1$ and $x_3$
 are added since the first and the third argument for the \hs{Branch}
 constructor is \hs{Tree a}. For $x_2$, nothing is added since the type
-of this is just \hs{a}.  For this property, in total three invocations
-to a theorem prover is carried out: one for each constructor, and one
+of this value is just \hs{a}.  For this property, in total three invocations
+to a theorem prover is carried out: one for each of the two constructors, and one
 for bottom.
 
 \begin{comment}
@@ -381,8 +395,8 @@ The induction schema for this data type is:
      { \fa{x} P(x) }
 \end{mathpar}
 
-This was never implemented since the lack of examples with exponential
-data types.
+Generation of such schemata was never implemented because of too few
+examples with exponential data types.
 
 \paragraph{Lexicographic Induction} In the rest of this section only
 induction in $\PA$ is discussed. Again, $\PA$ has $0$ as zero and the
@@ -411,17 +425,18 @@ inference rule:
      { \faa{x}{y} P(x,y) }
 \end{mathpar}
 
-This is not yet implemented since it was not clear which examples
-would benefit from it, and the many combinations of how to apply this
-principle: in the example above induction is first on $x$, and then on
-$y$, but the other way around is also legit. If a property has $n$
-variables that could be used for induction, and you use all variables,
-you have $n!$ ways of doing lexicographic induction, and this is
-disregarding subsets of variables.  A solution to this problem, as
-well as the problem with how many constructors you want to use in the
-generalised induction, is to allow the user to annotate in the source
-code the desired way to do induction: furthermore, it does not blend
-well with the rest being a fully automated verification of properties.
+Generation of lexicographic induction schemata is not yet implemented
+since it was not clear which examples would benefit from it, and the
+many combinations of how to apply this principle: in the example above
+induction is first on $x$, and then on $y$, but the other way around
+is also legit. If a property has $n$ variables that could be used for
+induction, and you use all variables, you have $n!$ ways of doing
+lexicographic induction, and this is disregarding subsets of
+variables.  A solution to this problem, as well as the problem with
+how many constructors you want to use in the generalised induction, is
+to allow the user to annotate in the source code the desired way to do
+induction: furthermore, it does not blend well with the rest being a
+fully automated verification of properties.
 
 
 \paragraph{Automated Depth}
@@ -469,7 +484,9 @@ borrowed from $\PA$. The degenerate case come from $n=0$:
     {\fa{x} P(x)}
 \end{mathpar}
 
-\pagebreak
+%\pagebreak
+With $n=1$ the normal $\PA$-induction is obtained.
+
 A little bit of expanding is necessary for $n=2$ to obtain:
 
 \begin{mathpar}

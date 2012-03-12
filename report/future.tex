@@ -66,13 +66,13 @@ and' _     _ = False
 Let us analyse the models of this program in Figure \ref{code:and}
 with an additional value $\diamond$ in the domain. The translation
 makes $\fn{and}(\diamond,\fn{true}) = \bot$, since there is an
-implicit wild pattern to $\bot$. For the other function we
-have $\fn{and'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern
+implicit wild pattern to $\bot$. For the other function we have
+$\fn{and'}(\diamond,\fn{true}) = \fn{false}$, as the wild pattern
 already goes to $\fn{false}$. Because of this differences, the
-approximation lemma cannot prove their extensional equality. While
-this is a simple example, it is easy to imagine more complex cases
-where different pattern matching techniques makes no difference to the
-Haskell program, but to this translation.
+approximation lemma cannot prove their extensional equality. Although
+this example is a quite simple, it is easy to imagine more complex
+cases where different pattern matching techniques makes no difference
+to the Haskell program, but to the translation.
 
 This suggests that wild patterns should be expanded to pattern for all
 their constructors, and add a match any pattern that goes to
@@ -89,11 +89,11 @@ and add a lot of complexity.
 \section{Lemmas}
 
 For many properties, especially more advanced ones, it is crucial to
-be able to use lemmas to obtain a proof. The introduced proof
-techniques in this theses are just not strong enough. For structural
-induction, it is possible to do induction in more than one depth. This
-sometimes make the hypotheses equally strong as the required lemmas,
-as in the example of plus commutativity of natural numbers in Section
+be able to use lemmas to obtain a proof. The proof techniques used in
+this thesis are just not strong enough. For structural induction, it
+is possible to do induction in more than one depth. This sometimes
+make the hypotheses equally strong as the required lemmas, as in the
+example of plus commutativity of natural numbers in Section
 \ref{sec:genind}. But this approach fails for properties about
 multiplication: it is essential to use lemmas about addition.
 
@@ -110,26 +110,28 @@ addressed one by one below.
 \subsection{Lemmas from Theorems}
 \label{sec:thmlemmas}
 
-One example of a Theorem, a property that holds for partial and
-infinite values, is the right identity of \hs{||}, boolean or:
+One property that holds for partial values is our example of the right
+identity of \hs{\&\&}:
 
-$$\fa{x} x \w \hs{||} \w \fn{false} = x$$
+$$\fa{x} x \w \fn{\&\!\&} \w \fn{true} = x$$
 
 \noindent
 Adding this meta theorem to the theory would make it
-inconsistent. Again, in a model with an extra value $\diamond$, we have
-that $\diamond \w \hs{||} \w \fn{false} = \bot$. However, we can create a
+inconsistent; in a model with an extra value $\diamond$, we have
+that $\diamond \w \fn{\&\!\&} \w \fn{true} = \bot$. However, we can create a
 function that forces a value to be a \hs{Bool} or $\bot$ as this:
 
+\vspace{-1\baselineskip}
 \begin{align*}
 \rom{1} \qquad &&        & \fn{force}(\fn{true})  && = \fn{true} \\
 \rom{2} \qquad &&        & \fn{force}(\fn{false}) && = \fn{false} \\
 \rom{3} \qquad && \fa{x} & \fn{force}(x)          && = \bot \vee x = \fn{false} \vee x = \fn{true}
 \end{align*}
 
-The theory would be consistent with this reformulation of the meta theorem:
+The theory would be consistent if instead this reformulation of the
+theorem is added:
 
-$$\fa{x} \fn{force}(x) \w \hs{||} \w \fn{false} = \fn{force}(x)$$
+$$\fa{x} \fn{force}(x) \w \fn{\&\!\&} \w \fn{true} = \fn{force}(x)$$
 
 It is easy to generalise $\fn{force}$ beyond booleans. Make it a
 binary function with first argument a description of the type. Each
@@ -164,9 +166,11 @@ proof methods.
 \newcommand\Total{\fn{Total}}
 \newcommand\Fin{\fn{Fin}}
 The $\fn{force}$ function from the previous section is not easily
-generalised to remove partiality from a value. Another way to do this
-is to introduce a predicate $\Total$, indicating totality. This is a
-way to axiomatise $\Total$ for natural numbers:
+generalised to remove partiality from a value. A way to enforce
+totality is to introduce a predicate $\Total$ indicating totality.
+
+The axioms below are an example of how to axiomatise $\Total$ for
+natural numbers:
 
 \begin{align*}
 \rom{1} &&        & \neg \, \Total(\bot) \\
@@ -192,7 +196,7 @@ natural numbers is easy to axiomatise:
 \fa{x} \Inf(x) \leftrightarrow (x = \fn{succ}(x))
 \end{equation*}
 
-While defining $\Inf$ is straightforward for natural numbers, further
+Although defining $\Inf$ is straightforward for natural numbers, further
 complexities are added for other data types and introduction schemata
 are needed. But since Haskell functions are continuous and finite,
 every infinite value is produced from finite information (\hs{repeat},
@@ -202,11 +206,11 @@ partial values, that is satisfying $\Inf(x) \rightarrow \Total(x)$.
 
 \pagebreak
 
-We can now define finiteness of a value $x$ as
-$\Fin(x) \leftrightarrow \Total(x) \wedge \neg \Inf(x)$.  The results
-from a function would be necessary to axiomatise to make such axioms
-usable. To exemplify why this is not trivial, consider the
-complexities of the plus function:
+We can now define finiteness of a value $x$ as $\Fin(x)
+\leftrightarrow \Total(x) \wedge \neg \Inf(x)$.  The results from a
+function would be necessary to axiomatise to make such axioms
+usable. To exemplify why an axiomatisation is not trivial, consider
+the complexities of the plus function:
 
 \begin{align*}
 \rom{1} && \faa{x}{y} & \Fin(x) \wedge \Fin(y)                  & \leftrightarrow &&& \Fin(x + y) \\
@@ -215,7 +219,7 @@ complexities of the plus function:
 
 \noindent
 Axiom $\romnodot{1}$ asserts that $x + y$ is finite iff $x$ and $y$
-is. Further, $x + y$ is infinite iff then $x$ is or $x$ is finite and
+are. Further, $x + y$ is infinite iff $x$ is or $x$ is finite and
 $y$ is infinite. This is expressed in Axiom $\romnodot{2}$. How to
 prove such statuses for the return value of a function in terms of
 $\Fin$, $\Total$ and $\Inf$ for different statuses of arguments is an
@@ -226,11 +230,11 @@ play a significant r\^{o}le.
 \subsection{Speculating Lemmas}
 
 The previous sections assumed that the necessary lemmas are present as
-properties in the source file. This puts a lot of burden on the
-programmer to both figure out required lemmas and to state them, it is
-not always clear which lemmas are required to prove a given
-property. This section discusses some ideas to generate candidate
-lemmas.
+properties in the source file. In practice, this assumption puts a lot
+of burden on the programmer to both figure out required lemmas and to
+state them, it is not always clear which lemmas are required to prove
+a given property. This section discusses some ideas to generate
+candidate lemmas.
 
 Inductive proofs by rippling enables techniques such as critics
 \citep{productiveuse}, which makes lemmas and generalisations when
@@ -265,11 +269,10 @@ equivalence relation for finite values.
 Polymorphic functions generally enjoy free theorems
 \citep{freetheorems} which could be added to the theory.  Furthermore,
 the functions quantified over are monotone (and continuous), and this
-is currently not enforced in the generated theories. An open question
-is how this effects the results. As seen in Section
+restriction is currently not enforced in the generated theories. An
+open question is how this effects the results. As seen in Section
 \ref{sec:defeqandapprox}, definitional equality would be stronger if
 types of the result of a function was expressed.
-
 
 \section{Material Implication and Existential Quantifiers}
 

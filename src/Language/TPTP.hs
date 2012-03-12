@@ -57,6 +57,7 @@ data Decl = Axiom      { declName :: String , declFormula :: Formula }
           | NegConj    { declName :: String , declFormula :: Formula }
           | Lemma      { declName :: String , declFormula :: Formula }
           | Hypothesis { declName :: String , declFormula :: Formula }
+          | Definition { declName :: String , declFormula :: Formula }
   deriving (Eq,Ord,Show)
 
 forall' :: [VarName] -> Formula -> Formula

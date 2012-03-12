@@ -1,12 +1,14 @@
 \section{Related Work}
 
-Zeno \citep{zeno} is probably the most similar work to this and
-proving equational properties for Haskell programs. Zeno supports type
-classes, and implications with equational antecedents, and can
-generalise properties, it makes no attempt to tackle infinite and
-partial values, a goal of our work. Another notable difference is that
-Zeno has its own theory for equational reasoning whereas our approach
-puts this work on automated theorem provers.
+Zeno \citep{zeno} is probably the most similar work to ours. Zeno is a
+tool that proves equational properties for Haskell programs, but
+unlike ours also supports type classes, and implications with
+equational antecedents, and can generalise properties. A notable
+contrast is that it does not handle infinite and partial values, which
+is a motivation goal of our work. In the Zeno setting, all values are
+total and functions are assumed to terminate.  Another notable
+difference is that Zeno has its own theory for equational reasoning
+whereas our approach puts this work on automated theorem provers.
 
 %Indeed, the authors even ask themselves if it is not really a ML theorem prover.
 
@@ -42,7 +44,7 @@ to dependently typed code is investigated by \cite{dtatp}. The source
 language is Mella, syntactically similar to Agda but based on the
 Calculus of Constructions. A similar approach was taken by \cite{agsy}
 does a search akin to Prolog, and can also handle induction. A
-contemporary implementation of this is the Agsy proof search assistant
+contemporary implementation of this work is the Agsy proof search assistant
 for Agda.
 
 % Effort has been put into automating the proof generation in Agda,

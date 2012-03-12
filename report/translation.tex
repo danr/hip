@@ -7,7 +7,7 @@ here referred to as a translation, but it could also be regarded as a
 compilation. The idea is to use constants and functions in first order
 logic to correspond to constructors and functions, and arguments to
 functions need to be universally quantified. We shall try to do a
-na\"{\i}ve attempt of a translation with this ideas and see how far it
+na\"{\i}ve attempt of a translation with these ideas and see how far it
 takes us.
 
 \section{Na\"{\i}ve Translation}
@@ -39,8 +39,8 @@ this axiom\footnote{Haskell functions and constructors are written in
   \hs{monospace} and their counterpart in first order logic as
   $\fn{this}$. As customary when writing first order logic formulae,
   functions will be written in lowercase, and predicates with an
-  initial capital. Hence constructors will be written as \fn{fork}
-  rather than \fn{Fork}. }:
+  initial capital. Hence constructors will be written as $\fn{fork}$
+  rather than $\fn{Fork}$. }:
 \begin{equation*}
 \fa{x} \fn{singleton}(x) = \fn{fork}(\fn{leaf},x,\fn{leaf})
 \end{equation*}
@@ -70,6 +70,9 @@ arguments and this injectivity axiom is needed:
 \fn{fork}(l_1,x_1,r_1) \rightarrow l_0 \eq l_1 \wedge x_0 \eq x_1 \wedge r_0 \eq r_1
 \end{equation*}
 
+In the next section, injectivity of constructors will a consequence of
+another axiom.
+
 To describe pattern matching, consider a \hs{mirror} function, which
 recursively swaps the left sub tree with the right and vice-versa. We
 follow our intuition to translate the pattern matching to these
@@ -91,8 +94,8 @@ A problem with this translation is that there are no axioms for other
 arguments of $\fn{mirror}$ than leafs and forks, and there are models
 including other values than leafs and forks. Another problem is
 encountered for \hs{singleton}'s left inverse \hs{top} defined below,
-which returns the top element of a \hs{Tree}. This is a partial
-function since the \hs{Leaf} pattern is omitted:
+which returns the top element of a \hs{Tree}. This function is a partial
+since the \hs{Leaf} pattern is omitted:
 
 \begin{code}
 top :: Tree a -> a
@@ -102,18 +105,18 @@ top (Fork l x r) = x
 The translation must capture the pattern match failure that results
 from trying to evaluate \hs{top} applied to a \hs{Leaf}. We conclude
 that this na\"{\i}ve translation does not take us further, but we
-shall see in the next section how to fix this.
+shall see in the next section how to fix these problems.
 
 \section{Bottom and Pattern Matching}
 
-We borrow the concept bottom from domain theory. It is denoted
-$\bot$ and is the least defined value: pattern match failures, use of
-\hs{error} and \hs{undefined} in the source code, and also
-non-terminating functions. For \hs{top}, the idea is to add an axiom
-so that $\fn{top}$ applied to anything that is not a \hs{Fork} is
-bottom. This is an example of such an axiomatisation\footnote{This
-  thesis uses the same convention for quantifiers as for lambda
-  functions: they bind as far as possible.}:
+We borrow the concept bottom from domain theory. It is denoted $\bot$
+and is the least defined value, and corresponds to pattern match
+failures, use of \hs{error} and \hs{undefined} in the source code, and
+also non-terminating functions. For \hs{top}, the idea is to add an
+axiom so that $\fn{top}$ applied to anything that is not a \hs{Fork}
+is bottom. This function is an example of such an
+axiomatisation\footnote{This thesis uses the same convention for
+  quantifiers as for lambda functions: they bind as far as possible.}:
 
 \begin{align*}
 \rom{1} \qquad & \faaa{l}{x}{r} \fn{top}(\fn{fork}(l,x,r)) \eq x \\
@@ -245,15 +248,14 @@ functions and constructors, or a case statement with an expression
 scrutinee. Branches consists of a pattern, possibly with nested uses
 of constructors, and an optional guard, and in the arm is an
 expression. A notable exception from ordinary core languages is made
-here: nested cases are not allowed. This will aid the translation, as
-will be show later, and nested cases will be lifted to top level definitions.
+here: nested cases are not allowed. This restriction will aid the
+translation. Nested cases will be lifted to top level definitions.
 
 Now we need to distinguish between two translations: the intermediate
 translation from Haskell to the intermediate language, and the logic
 translation from this language to first order logic. The next section
 explains the first part.
 
-\pagebreak
 \section{The Intermediate Translation}
 
 This section describes the transformation from Haskell to the
@@ -311,7 +313,7 @@ A similar translation is done for let expressions.
 
 \paragraph{Lambda functions} These are translated to top level
 definitions. Take this example of defining \hs{fmap} in terms of the
-functions from the \hs{Monad} type class:
+functions from the \hs{Monad} type class as \hs{liftM}:
 
 \begin{code}
 liftM f m = m >>= \x -> return (f x)
@@ -382,11 +384,9 @@ even Nil                  = True
 \end{code}
 
 \noindent
-For the sake of readability it is not presented with a case
-expression, though this is what the intermediate translation would
-transform it to. Furthermore the constructors \hs{Cons} and \hs{Nil}
-are used since the selectors $\fn{:_0}$ and $\fn{:_1}$ for the
-normal cons are hard to read.
+For the sake of readability we use the constructors \hs{Cons} and
+\hs{Nil} for lists are used since the selectors $\fn{:_0}$ and
+$\fn{:_1}$ for the normal cons are hard to read.
 
 Here, \hs{even} should return $\bot$ when it is evaluated with an
 argument constructed with neither \hs{Cons} nor \hs{Nil} (recall that
@@ -411,9 +411,11 @@ are other constructors for the data type not mentioned in the
 patterns.
 \end{comment}
 
-No type information is needed to do this, only inspection of the
-patterns. Could the bottoms be seen in this Haskell definition it
-would be this after the insertion:
+
+\pagebreak
+No type information is needed to do this insertion, only inspection of
+the patterns is required. Could the bottoms be seen in the definition
+it would look like this:
 
 \begin{code}[mathescape]
 even :: List a -> Bool
@@ -480,7 +482,7 @@ constructor \hs{:} written infix:
 
 Translaning all function applications could be done using
 $\appfn$. However, this approach slows down the theorem provers
-significantly, so an optimisation is crucial: Functions will be
+significantly, so an optimisation is crucial. Functions will be
 regarded as having arity equal to the number of arguments on the left
 hand side in their definition. Should a function not get all of its
 arguments, appropriate use of $\, @ \, $ is added, as in this function
@@ -506,7 +508,7 @@ the axiom of $\fn{map.ptr}$ then equals this to
 $\fn{map}(\app{\fn{plus.ptr}}{\fn{one}},xs)$.
 
 \paragraph{Doing the impossible}
-While it is not possible to quantify over functions in first order
+Although it is not possible to quantify over functions in first order
 logic, this translation allows universal quantification of functions,
 allowing a way to reason syntactically about partially applied
 functions. On the model side, $\appfn$ gives a way to interpret

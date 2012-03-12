@@ -233,7 +233,9 @@ value, and \hs{<\$>} is map over streams. This could be proved with
 fixed point induction, but it currently does not do any
 inlining. Should \hs{zero} be inlined to \hs{pure Z} and similarly for
 \hs{one}, the property is provable with fixed point induction as well.
-
+Note that fixed point induction is instantiated when the theory is
+generated, so it does not help that the theorem provers can deduce that $\hs{zero} =
+\hs{pure Zero}$.
 
 The other 8 properties only proved with approximation lemma come from
 \ts{MonadState}. This monad is written without a newtype wrapper, and
@@ -366,17 +368,17 @@ proof by fixed point induction. A proof that liberally uses
 lambdas instead of explicit pointers is given below:
 
 \begin{align*}
-lhs = & \; \Lim (f) \pb \big(b + c\big)                               && \{\textrm{definition of $\pb$}\}\\
-    = & \; \Lim (\lambda n . f(n) \pw \big(b + c\big))                && \{\textrm{induction hypothesis}\}\\
-    = & \; \Lim (\lambda n . (f(n) \pw b) + c)                && \{\textrm{$\eta$-expansion}\}\\
+lhs = & \; \Lim (f) \pb \big(b + c\big)                       && \{\textrm{definition of $\pb$}\}\\
+    = & \; \Lim (\lambda n . f(n) \pw \big(b + c\big))        && \{\textrm{induction hypothesis}\}\\
+    = & \; \Lim (\lambda n . (f(n) \pw b) + c)                && \{\textrm{$\beta$-expansion}\}\\
     = & \; \Lim (\lambda n . (\lambda m . f(m) \pw b)(n) + c) && \{\textrm{definition of $+$}\}\\
-    = & \; \big(\Lim (\lambda m . f(m) \pw b\big) + c                 && \{\textrm{definition of $\pb$}\}\\
+    = & \; \big(\Lim (\lambda m . f(m) \pw b\big) + c         && \{\textrm{definition of $\pb$}\}\\
     = & \; \big(\Lim (f) \pb b\big) + c = \; rhs
 \end{align*}
 
 In hindsight, it is not so surprising that this property is provable
 with fixed point induction, but its applicability on exponential data
-types actually not thought of during its implementation.
+types was actually not thought of during its implementation.
 
 \section{Results for Different Theorem Provers}
 

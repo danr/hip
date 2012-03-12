@@ -16,6 +16,8 @@ module Language.TPTP.Monad (module Language.TPTP
                            ,axiom
                            ,conjecture
                            ,question
+                           ,hypothesis
+                           ,definition
                            ,lemma
                            ,forall'
                            ,exists'
@@ -39,7 +41,7 @@ newtype M a = M { runM :: State ST a }
 
 run :: M a -> a
 run m = evalState (runM m) vars
-  where vars = [ VarName ("X" ++ show x) | x <- [0..] ]
+  where vars = map VarName ((`replicateM` "XYZUVW") =<< [1..]) -- [ VarName ("X" ++ show x) | x <- [0..] ]
 
 newVar :: M VarName
 newVar = do
@@ -104,6 +106,13 @@ question s f = Question s (run f)
 
 lemma :: String -> M Formula -> Decl
 lemma s f = Lemma s (run f)
+
+hypothesis :: String -> M Formula -> Decl
+hypothesis s f = Hypothesis s (run f)
+
+definition :: String -> M Formula -> Decl
+definition s f = Definition s (run f)
+
 
 class Quantifier t where
     quantifier

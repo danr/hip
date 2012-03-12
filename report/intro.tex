@@ -2,8 +2,8 @@
 \chapter{Introduction}
 
 
-Consider this data type of trees \citep{grafting} and its implementation
-of \hs{Monad} \citep{mtl}:
+Consider this data type of trees and its implementation
+of the \hs{Monad} \citep{mtl} functions:
 
 \begin{code}
 data Tree a = Fork (Tree a) (Tree a) | Leaf a
@@ -20,11 +20,11 @@ Leaf x   >>= f = f x
 Could the elegant simplicity of bind possibly obey the three monad
 laws as stated by \cite{essenceoffp}? Referential transparency in
 Haskell allows equational reasoning, but proving the monad laws by
-hand can be tiresome. This is a situation where our tool can help:
-write down the equations in a similar style as properties in
-QuickCheck \citep{quickcheck}. Run the tool on the source file which
-reports this after a few seconds\footnote{The presentation format is
-  slightly rewritten for your viewing pleasure.}:
+hand can be tiresome. Further, as bind is recursive, induction will be
+necessary. This is a situation where our tool \hs{hip}, the Haskell
+Inductive Prover, can help. Write down the equations in a similar
+style as properties in QuickCheck \citep{quickcheck}. Run the tool on
+the source file which reports this after a few seconds:
 
 
 \begin{code}
@@ -42,9 +42,8 @@ Theorems (3/3):
 \noindent
 The output \hs{Theorem} means that the properties hold for infinite
 trees, in contrast to the possible result \hs{Finite Theorem}.
-
-What is going on behind the scenes to prove this? The key components
-of this tool are:
+What is going on behind the scenes to prove these properties? The key
+components of this tool are:
 
 \begin{enumerate}
 {\setlength\itemindent{18pt} \item a translation from Haskell to \emph{first order logic},}
@@ -78,9 +77,9 @@ of model theory and proof deduction in first order logic is
 needed, as well as a some knowledge of proofs by induction.
 
 Automated theorem provers will be mainly considered as black
-boxes. While different theorem provers accept different input formats
-describing first order theories, the theories will be written as
-ordinary logic formulae.
+boxes. Although different theorem provers accept different input
+formats describing first order theories, the theories will be written
+as ordinary logic formulae.
 
 The rest of this thesis should be self contained.
 

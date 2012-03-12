@@ -4,18 +4,18 @@
 Structural induction is applicable when at least one argument is of a
 concrete type, such as lists or trees. There are also properties where
 all arguments are of abstract types. A canonical example is the
-map-iterate property, here stated with types:
+map-iterate property::
 
 \begin{equation*}
-\faa{(f : a \rightarrow a)}{(x : a)} \hs{map} \w f \w (\hs{iterate} \w f \w x) \eq
+\faa{f}{x} \hs{map} \w f \w (\hs{iterate} \w f \w x) \eq
            \hs{iterate} \w f \w (f \w x)
 \end{equation*}
 
 Here $f$ is any function of type $a \rightarrow a$, and $x$ is a value
 of type $a$. This example is further investigated in Section
-\ref{sec:mapiter} below, but it is already clear that this cannot be
-proved with structural induction since there is no argument of a
-concrete type.
+\ref{sec:mapiter} below, but it is already clear that this property
+cannot be proved with structural induction since there is no argument
+of a concrete type.
 
 Enter fixed point induction. It gives a way of performing induction on
 the recursive structure of the program. In short, if the property
@@ -99,10 +99,10 @@ map = fix map'
 \end{figure}
 
 The correctness of the translation of \hs{map} in Figure
-\ref{code:mapfix} is immediate: \hs{fix map'} evaluates to
-\hs{map' (fix map')} by the definition of \hs{fix}, and this means
-that the recursive function \hs{m} be \hs{fix map'}, so by
-construction it is equal to the original definition of \hs{map}.
+\ref{code:mapfix} is immediate: \hs{fix map'} evaluates to \hs{map'
+  (fix map')} by the definition of \hs{fix}, which means that the
+recursive function \hs{m} is \hs{fix map'}. By construction it is then
+equal to the original definition of \hs{map}.
 
 Generally, for a function \hs{f} with $n \geq 0$ arguments $\hs{x}_1$
 to $\hs{x}_n$ and a body $e[\hs{f},\hs{x}_1,\ldots,\hs{x}_n]$ with
@@ -117,8 +117,8 @@ The funny notation with filled and outlined circles carry some
 meaning. The black dot in $\fixhsb{f}$ indicates that this function
 has an implementation, mnemonic filled with implementation. The
 outlined circle in $\fixhsw{f}$ means that this function does not have
-any implementation, it is empty. However, when $\hs{fix }\hsfixb{f}$
-unrolls this will replace $\fixshw{f}$.
+any implementation, it is empty. However, when $\hs{fix }\fixhsb{f}$
+unrolls this will replace $\fixhsw{f}$.
 
 \begin{comment}
 This translation needs to be carried out with some care, since for $f
@@ -149,7 +149,9 @@ function and we need to show for the next. Moreover, it can also be
 seen as $x$ corresponds to all the recursive occurrences in the body of
 the function, and we need to show it for the real function.
 
-Formally, it is stated by \cite{corecursive} with this inference rule:
+Using the notation from \cite{corecursive}, we now state its
+inference rule:
+
 
 \begin{mathpar}
   \inferrule*
@@ -164,10 +166,9 @@ Formally, it is stated by \cite{corecursive} with this inference rule:
 \end{mathpar}
 
 Admissible predicates was introduced in Section \ref{sec:admissible},
-and as with structural induction with the bottom base case, this
-induction technique also has the admissibility requirement. Again,
-predicates from equality properties that are of interest here are
-admissible.
+and just as structural induction with the bottom base case, this
+induction technique also has the admissibility requirement on the
+predicate. Again, predicates from equality properties are admissible.
 
 An interesting property of fixed point induction is that it does not
 care about types. Indeed, it works in an untyped setting. In addition,
@@ -179,9 +180,8 @@ Fixed point induction is a consequence of induction of natural
 numbers. The proof for this relies on the fact that $\lub{n}(f^n \w
 \bot) \eq \hs{fix} \, f$, where $f^n$ is $n$ self-applications of
 $f$. This is true since \hs{fix} is defined as $f$ applied to it
-self. Apart from this, the proof only uses induction over natural
-numbers and that $f^0 \w \bot \eq \bot$, and the admissibility of
-$P$. Proof:
+self. The proof also uses induction over natural numbers and that $f^0
+\w \bot \eq \bot$, and the admissibility of $P$. Proof:
 
 \begin{align*}
 P(\bot) & \wedge \fa{x} P(x) \rightarrow P(f x) \\
@@ -231,8 +231,9 @@ iterate f x = x : iterate f (f x)
 
 The behaviour of \hs{map} is to apply a function to every element of a
 list. We see that we cannot use structural induction here, since both
-$f$ and $x$ are abstract, but this can be proved by fixpoint induction
-on \hs{iterate}. First, we rewrite this function in terms of \hs{fix}:
+$f$ and $x$ are abstract, but the \hs{map}-\hs{iterate} property can
+be proved by fixpoint induction on \hs{iterate}. First, we rewrite
+this function in terms of \hs{fix}:
 
 \begin{code}
 iterate = fix iter
@@ -423,7 +424,7 @@ Now we proceed by ``fixed point induction''. Base case: $\bot \neq
 case: assume $\unfix{\fn{inf}} \neq \fn{succ}(\unfix{\fn{inf}})$.
 Injectivity of $\fn{succ}$ gives $\fn{succ}(\unfix{\fn{inf}}) \neq
 \fn{succ}(\fn{succ}(\unfix{\fn{inf}}))$.  By the definition of
-$\tofix{\fn{inf}}$, this is equal to the goal $\tofix{\fn{inf}} \neq
+$\tofix{\fn{inf}}$, which is then equal to the goal $\tofix{\fn{inf}} \neq
 \fn{succ}(\tofix{\fn{inf}})$.
 
 The conclusion $\hs{inf} \neq \hs{Succ inf}$ is clearly nonsense as it
@@ -444,7 +445,8 @@ prop_length_drop :: [a] -> Nat -> Prop Nat
 prop_length_drop xs n = length (drop n xs) =:= length xs - n
 \end{code}
 
-The answer here is to do fixed point induction on \hs{drop}, and on
+\noindent
+The answer is to do fixed point induction on \hs{drop}, and on
 \hs{-}. So far no better way to tackle this is used than to try fixed
 point induction on all subsets of recursive functions mentioned in the
 property.
@@ -483,7 +485,7 @@ doublemap f (x:y:zs) = f x : f y : doublemap f zs
 \end{code}
 
 \noindent
-While \hs{doublemap} is behaviourally equivalent to \hs{map} on total
+Although \hs{doublemap} is behaviourally equivalent to \hs{map} on total
 lists, it makes the induction hypothesis in fixed point induction too
 weak.
 

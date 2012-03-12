@@ -8,14 +8,22 @@ example, this is how the associativity of list concatenation can be
 entered:
 
 \begin{code}
+import Prelude ()
 import AutoPrelude
+
+(++) :: [a] -> [a] -> [a]
+[]   ++ ys = ys
+x:xs ++ ys = x:(xs ++ ys)
 
 prop_app_assoc :: [a] -> [a] -> [a] -> Prop [a]
 prop_app_assoc xs ys zs = xs ++ (ys ++ zs) =:= (xs ++ ys) ++ zs
 \end{code}
 
 \noindent
-The arguments are universally quantified, so this property means:
+There is no module system implemented, so all definitions must be
+present in one source file. The usual imports from \ts{Prelude} are
+hidden. The arguments are universally quantified, so this property
+means:
 
 \newcommand\append{+\!+}
 \begin{equation*}
@@ -25,13 +33,19 @@ The arguments are universally quantified, so this property means:
 \noindent
 The equality is interpreted as equality on the constructor level: two
 values are identified if they are constructed with the same
-constructor and their arguments are also equal.
+constructor and their arguments are also equal.  The function \hs{=:=}
+and the type constructor \hs{Prop} come from the imported module
+\ts{AutoPrelude}.  The type argument to \hs{Prop} is the type of the
+equality, so the type of \hs{=:=} is:
 
-The infix function \hs{=:=} comes from the import, as well as the type
-constructor \hs{Prop}. The type signature cannot be omitted as this is
-used for some proof techniques.  Using \hs{hip} is then a matter of
-saving the file, for instance to \hs{ListProps.hs}, and executing this
-statement in your favourite terminal:
+\begin{code}
+(=:=) :: a -> a -> Prop a
+\end{code}
+
+The type signature of properties cannot be omitted as this is used for
+some proof techniques. Using \hs{hip} is then a matter of saving the
+file, for instance to \hs{ListProps.hs}, and executing this statement
+in your favourite terminal:
 
 \begin{code}
 hip ListProps.hs
@@ -50,16 +64,14 @@ supported in this tool. Some properties are a direct consequence from
 the definitions in your file. How to prove such properties is
 described in Section \ref{sec:equality} about definitional
 equality. The three other techniques uses induction in different
-ways. Structural induction is explained in Section
+ways. Structural Induction is explained in Section
 \ref{sec:induction}, which uses the structure of the data types a
 property quantifies over. Another method which does induction on the
-recursive structure of the program is Fixed point induction,
+recursive structure of the program is Fixed Point Induction,
 introduced in Section \ref{sec:fixpoint}. A more subtle way of
 induction is used in the Approximation Lemma, Section
 \ref{sec:approx}, where the structure of the data type of the equality
 is approximated.
-
-\pagebreak
 
 % Definitional Equality -------------------------------------------------------
 

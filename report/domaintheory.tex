@@ -13,7 +13,7 @@ they contain. The least element bottom, denoted $\bot$, contains least
 information. It corresponds to all kinds of crashes in Haskell; use of
 \hs{undefined}, non-termination and non exhaustive pattern matches.
 Different constructors hold different information, so they are not
-related by the ordering; this is a partial order. Such orders are
+related by the ordering; this ordering is partial. Such orders are
 reflexive, transitive and anti-symmetric. The ordering is written
 $\sqsubseteq$, sometimes with a subscript indicating the type.
 
@@ -22,7 +22,7 @@ $\sqsubseteq$, sometimes with a subscript indicating the type.
 \centering \input{boolcpo}
 \vspace{-7pt}
 \caption{
-    The order of Bool values.
+    The order of \hs{Bool} values.
     \label{fig:boolcpo}
 }
 \end{wrapfigure}
@@ -94,9 +94,9 @@ two inputs to a function, one containing \emph{less} information that
 the other, it is impossible to return \emph{more} information from the
 input with less information.
 
-One simple example of a consequence of this is the impossibility to
-make a function \hs{isBottom :: a -> Bool}, returning \hs{True} if the
-argument is bottom, and \hs{False} otherwise:
+One simple example of a consequence of monotonicity is the
+impossibility to make a function \hs{isBottom :: a -> Bool}, returning
+\hs{True} if the argument is bottom, and \hs{False} otherwise:
 
 \note{rewrite with code}
 \begin{align*}
@@ -109,7 +109,7 @@ argument is bottom, and \hs{False} otherwise:
 Since $\bot \sqsubseteq x$ for any $x$, then by monotonicity we must
 necessarily have
 $$\hs{isBottom} \w \bot \sqsubseteq \hs{isBottom} \w x.$$
-Take any non-bottom $x$, and this equation gives
+Take any non-bottom $x$, then this equation gives
 $\hs{True} \sqsubseteq \hs{False}$, which is false. Hence
 \hs{isBottom} is not monotone.
 
@@ -132,7 +132,7 @@ Diagram can be seen in Figure \ref{fig:natcpo}.
 
 At the top we have the infinite value \hs{inf}, defined in Haskell as
 \hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of a sequence
-of $\sqsubseteeq$ inclusions. We will consider $\omega$-chains, chains with the same number of elements as
+of $\sqsubseteq$ inclusions. We will consider $\omega$-chains, chains with the same number of elements as
 $\omega$, the natural numbers.
 
 An example of a chain which has the infinite natural number \hs{inf}
@@ -231,8 +231,10 @@ data type. All patterns are exhaustive: every function has an implicit
 match any pattern to $\bot$.  Then we add a \emph{true} least element
 to the domain denoting the uncatchable bottoms; undeterminable non
 termination. With this setting all Haskell functions are continuous
-with respect to the \emph{true} bottoms. But for the rest of this
-thesis, we shall only consider pure and ``safe'' Haskell functions.
+with respect to the \emph{true} bottoms. However, proving properties
+about such programs is difficult as the order of evaluation now
+matters. For the rest of this thesis, only pure and ``safe'' Haskell
+functions are considered.
 
 \subsection{Monotonicity as Verification}
 

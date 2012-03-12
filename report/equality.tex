@@ -15,14 +15,18 @@ prop_skk_id :: Prop (a -> a)
 prop_skk_id = s k k =:= id
 \end{code}
 
-The generated conjecture stated with function pointers as this:
+\noindent
+The generated conjecture needs to be stated with function pointers as
+this:
 
 \begin{equation*}
 \app{ (\app {\ptr{s}} {\ptr{k}} )
     }{\ptr{k}} = \ptr{id}
 \end{equation*}
 
-However, it is not provable in this form. The next section will solve this.
+\noindent
+However, it is not provable in this form, but needs an axiom
+introduced in the next section.
 
 \subsection{Extensional Equality and \texttt{seq}}
 
@@ -34,7 +38,7 @@ equality, postulated with this following axiom:
 \end{equation*}
 
 \noindent
-which identifies function pointers and functions composed with $@$.
+This axiom identifies function pointers and functions composed with $@$.
 One problem with extensional equality in Haskell, is that the presence
 of \hs{seq} weakens it. \hs{seq} is a built in function with the
 following behaviour:
@@ -47,10 +51,12 @@ seq x y = y$, \qquad x \neq \bot$
 
 It forces the first argument to weak head normal form and returns the
 second. For our purposes, it is only important if the first argument
-is $\bot$, then the function also returns this as it is strict in its
-first argument. With \hs{seq} it is possibly to distinguish between
-these two functions, breaking extensional equality since they are
-otherwise observationally equal:
+is $\bot$, then the function also returns $\bot$ as it is strict in its
+first argument.
+
+With \hs{seq} it is possibly break extensional equality and distinguish between
+functions that are otherwise observationally equal. An example of a
+pair of such functions are:
 
 \begin{code}[mathescape]
 f = $\bot$
@@ -100,7 +106,7 @@ True  && a = a
 False && _ = False
 
 prop_or_right_identity :: Bool -> Prop Bool
-prop_or_right_identity x = x && False =:= x
+prop_or_right_identity x = x && True =:= x
 \end{code}
 
 The translation of \hs{\&\&} makes any element in the domain that is not
@@ -112,19 +118,22 @@ property:
 \fa{x} x \, \fn{\&\!\&} \, \fn{true} = x
 \end{equation*}
 
-Now this is false, take a model with another element $\diamond$ in the
+Now this equation is false, take a model with another element $\diamond$ in the
 domain:
 
 $$\diamond \, \fn{\&\!\&} \, \fn{true} = \bot$$
 
-The consequence of this is that the proof principle of definitional
-equality is only used on abstract types, rather than polymorphic, as
-they cannot be strict. Do not fear: the property above is trivially
-proved by induction, as induction for \hs{Bool} and other non
-recursive data types degenerate into mere case enumeration. However,
-it can only be seen as a meta theorem as it cannot simply be added as
-a lemma in the theory. This phenomena is described in more detail in
-Section \ref{sec:thmlemmas}. Structural induction is described in
-detail in the next section.
+The consequence of examples like the one above is that the proof
+principle of definitional equality is only used on abstract types, as
+they cannot be strict without \hs{seq}. Should any argument be
+concrete, this technique is not applied.
+
+Do not fear: the property above is trivially proved by
+induction, as induction for \hs{Bool} and other non recursive data
+types degenerate into mere case enumeration. However, it can only be
+seen as a meta theorem as it cannot simply be added as a lemma in the
+theory. This phenomena is described in more detail in Section
+\ref{sec:thmlemmas}. Structural induction is described in detail in
+the next section.
 
 

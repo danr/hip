@@ -1,4 +1,4 @@
-module WeirdPlus where
+2module WeirdPlus where
 
 open import Relation.Binary.PropositionalEquality
 open import Function
