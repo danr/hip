@@ -1,0 +1,30 @@
+#+TITLE:     Hipspec
+#+FILETAGS:  hipspec
+#+AUTHOR:    Dan Rosén
+#+EMAIL:     danr@student.gu.se
+
+* Hipspec
+** Remake the translation
+CLOCK: [2012-03-12 Mon 17:34]--[2012-03-12 Mon 19:22] =>  1:48
+CLOCK: [2012-03-12 Mon 13:41]--[2012-03-12 Mon 15:02] =>  1:20
+CLOCK: [2012-03-12 Mon 09:45]--[2012-03-12 Mon 12:50] =>  3:05
+*** DONE Remove wild patterns
+*** DONE Do not insert bottoms
+*** DONE Instantiate proofs in this setting
+*** DONE Instantiate lemmas
+*** Prune definitions
+** DONE Encapsulate each function and property with information
+*** Functions it depends on
+*** Datatypes it depends on
+*** Pointers it uses
+*** Function: is recursive
+*** Type
+*** Properties: lhs = rhs
+** Make a theory from some selected properties with some as lemmas
+** How to prune lemmas?
+** Consistency checks
+Would be nice if we could prune until there is no more inconsistency
+** Module system
+** A way to unroll wild patterns for finite types
+Q: Can we have wild patterns for infinite types? Maybe not.
+Pragmatic choice: If you use a wild pattern, a type signature is required!
