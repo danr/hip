@@ -49,9 +49,9 @@ defParams = Params
   , output      = Nothing &= opt  "proving/" &= typDir &= help "Output all tptp files in a directory (default proving/)"
   , statistics  = False   &= help "Generate statistics files (run with --reprove)"
 
-  , processes   = 4       &= help "Number of prover processes (default 4)" &= name "p" &= groupname "\nProving settings"
+  , processes   = 2       &= help "Number of prover processes (default 2)" &= name "p" &= groupname "\nProving settings"
   , timeout     = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
-  , provers     = "evpsx" &= help "Provers to use (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
+  , provers     = "e"     &= help "Provers to use (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
   , methods     = "pisfa" &= help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"
   , reprove     = False   &= help "Reprove theorems already known to be true"
   , consistency = False   &= help "Try to prove the consistency a file's generated theory"

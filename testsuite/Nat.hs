@@ -74,6 +74,9 @@ prop_left_identity_mul x = S Z * x =:= x
 prop_add_comm :: Nat -> Nat -> Prop Nat
 prop_add_comm x y = x + y =:= y + x
 
+prop_mul_lemma :: Nat -> Nat -> Prop Nat
+prop_mul_lemma m n = m * S n =:= m + m * n
+
 prop_mul_comm :: Nat -> Nat -> Prop Nat
 prop_mul_comm x y = x * y =:= y * x
 

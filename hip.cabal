@@ -28,6 +28,7 @@ executable          hipspec
                  , containers                    >= 0.3
                  , cmdargs                       >= 0.9
                  , stm                           >= 2.0
+                 , directory                     >= 1.0
 
 executable          FixLADR
     main-is: testsuite/Util/FixLADR.hs

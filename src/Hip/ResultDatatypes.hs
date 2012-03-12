@@ -49,8 +49,8 @@ latexStatus None          = ""
 statuses :: [Status]
 statuses = [minBound..maxBound]
 
-
 statusFromResults :: Coverage -> [ProverResult] -> Status
+statusFromResults coverage [] = None
 statusFromResults coverage res
     | all success res = case coverage of
                            Infinite -> Theorem

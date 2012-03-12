@@ -147,7 +147,7 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
                   pconj <- instP conj
                   return $ Particle { particleDesc   = unwords vars
                                     , particleMatter = Conjecture "conj" pconj :
-                                                       [ Axiom "hyp" phyp | phyp <- phyps ]
+                                                       [ Hypothesis "hyp" phyp | phyp <- phyps ]
                                     }
           else return []
       where
@@ -179,7 +179,7 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
              [accompanyParts ApproxLemma Infinite $ do
                    (hyp,step,approxAxioms) <- approxSteps
                    return $ [Particle { particleDesc   = "step"
-                                      , particleMatter = Axiom "approxhyp" hyp
+                                      , particleMatter = Hypothesis "approxhyp" hyp
                                                        : Conjecture "approxstep" step
                                                        : approxAxioms
                                       }]
@@ -214,7 +214,7 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
             forallUnbound (l' === r')
 
         addFunsFromDecls ds = sequence_
-           [ addFuns [(f,length as)] | Func f as _ <- ds ]
+           [ addFuns [(f,length as)] |Func f  as _ <- ds ]
 
         addUnrecFunsFromDecls ds fixedFuns = sequence_
            [ addFuns [(f ++ unRec,length as)]
@@ -240,7 +240,7 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
                  phyp  <- instantiateEq hyp
                  pstep <- instantiateEq step
                  return $ [Particle "step"
-                                 [Axiom "fixhyp" phyp
+                                 [Hypothesis "fixhyp" phyp
                                  ,Conjecture "fixstep" pstep]]
 
 

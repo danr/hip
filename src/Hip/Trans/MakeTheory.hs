@@ -52,7 +52,6 @@ makeTheory params ds =
       funs          = map (declName &&& length . declArgs) funDecls
       types         = map (declName &&& declType) typeDecls
 
-
       compIterateFCs :: Set Name -> (Set Name,Set Name)
       compIterateFCs = iterateFCs funDecls
 

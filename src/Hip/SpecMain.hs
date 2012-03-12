@@ -13,15 +13,18 @@ import Hip.FromHaskell.FromHaskell
 import Hip.Trans.MakeProofs
 import Hip.InvokeATPs
 import Hip.Trans.ProofDatatypes (propMatter)
+import qualified Hip.Trans.ProofDatatypes as PD
 import Hip.ResultDatatypes
 import Hip.Provers
 
 import Language.TPTP.Pretty
 
 import Data.List
+import Data.Maybe
 
 import Control.Monad
 import Control.Applicative
+import Control.Arrow ((***),(&&&),second)
 
 import System.Console.CmdArgs hiding (summary)
 import System.Exit (exitFailure,exitSuccess)
@@ -103,11 +106,11 @@ tryProve params@(Params{..}) props thy lemmas = do
 
     when warnings $ mapM_ print (filter isWarning msgs)
 
-    map ((/= None) . fst . propMatter) <$> invokeATPs properties env
-
-    let result = fst (propMatter propRes)
-
-    return (result /= None)
+    map (\property ->
+             (fromMaybe (error "tryProve: lost")
+                   (find ((PD.propName property ==) . propName) props)
+             ,fst (propMatter property) /= None))
+      <$> invokeATPs properties env
 
 proveLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
 proveLoop params thy props lemmas = do

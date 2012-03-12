@@ -71,6 +71,7 @@ import Hip.Util
 import Language.TPTP.Pretty
 
 import System.IO.Unsafe (unsafeInterleaveIO)
+import System.Directory (createDirectoryIfMissing)
 
 type PropName = String
 
@@ -228,8 +229,10 @@ worker partChan resChan = forever $ do
 
                 case store of
                    Nothing  -> return ()
-                   Just dir -> let filename = intercalate "_" [dir,propName,proofMethodFile partMethod,particleDesc] ++ ".tptp"
-                               in  liftIO (writeFile (filename) axiomsStr)
+                   Just dir -> let filename = dir ++ propName ++ "/" ++
+                                              intercalate "-" [proofMethodFile partMethod,particleDesc] ++ ".tptp"
+                               in  liftIO (do createDirectoryIfMissing True (dir ++ propName)
+                                              writeFile filename axiomsStr)
 
                 (res,maybeProver) <- liftIO (takeMVar resvar)
                 provedElsewhere <- unnecessary <$> lift (propStatus propName)
