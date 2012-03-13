@@ -70,8 +70,7 @@ main = do
         (unproved,proved) <- parLoop params theory props []
                           {- proveLoop -}
 
-        putStrLn ("Proved: " ++ unwords (map propName proved))
-        putStrLn ("Unproved: " ++ unwords (map propName unproved))
+        printInfo unproved proved
 
         return ()
 
@@ -84,6 +83,13 @@ main = do
 --        mapM_ (putStrLn . prettyTPTP . funcTPTP) (thyFuns theory)
 
   return ()
+
+printInfo :: [Prop] -> [Prop] -> IO ()
+printInfo unproved proved = do
+    putStrLn ("Proved: " ++ unwords (map propName proved))
+    putStrLn ("Unproved: " ++ unwords (map propName unproved))
+    putStrLn (show (length proved) ++ "/" ++ show (length (proved ++ unproved)))
+
 
 -- | Try to prove some properties in a theory, given some lemmas
 tryProve :: Params -> [Prop] -> Theory -> [Prop] -> IO [(Prop,Bool)]
@@ -106,11 +112,14 @@ tryProve params@(Params{..}) props thy lemmas = do
 
     when warnings $ mapM_ print (filter isWarning msgs)
 
-    map (\property ->
-             (fromMaybe (error "tryProve: lost")
-                   (find ((PD.propName property ==) . propName) props)
-             ,fst (propMatter property) /= None))
-      <$> invokeATPs properties env
+    res <- invokeATPs properties env
+
+    forM res $ \property -> do
+        let proved = fst (propMatter property) /= None
+        when proved (putStrLn $ "Proved " ++ PD.propName property ++ ".")
+        return (fromMaybe (error "tryProve: lost")
+                          (find ((PD.propName property ==) . propName) props)
+               ,proved)
 
 proveLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
 proveLoop params thy props lemmas = do
@@ -127,7 +136,6 @@ parLoop params thy props lemmas = do
     (proved,unproved) <-  (map fst *** map fst) . partition snd
                       <$> tryProve params props thy lemmas
     if null proved then return (props,lemmas)
-                   else do putStrLn ("Proved: "   ++ unwords (map propName proved))
-                           putStrLn ("Unproved: " ++ unwords (map propName unproved))
+                   else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ unwords (map propName proved)
                            parLoop params thy unproved (proved ++ lemmas)
 

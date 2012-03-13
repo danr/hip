@@ -175,6 +175,11 @@ test xold xnew = transformM f
         f e@(App x as) | x == xold = [e,App xnew as]
         f e = [e]
 
+-- | Translate a pattern to an expression. This is needed to get the
+--   more specific pattern for a branch.
+patternToExpr :: Pattern -> Expr
+patternToExpr (PVar x)    = Var x
+patternToExpr (PCon p ps) = Con p (map patternToExpr ps)
 
 -- | Substitute in a body
 substBody :: Name -> Name -> Body -> Body
@@ -219,6 +224,12 @@ stripTypes = transform f
 resType :: Type -> Type
 resType t = case t of TyApp ts -> last ts
                       _        -> t
+
+-- | Type of the arguments to a function
+argsTypes :: Type -> [Type]
+argsTypes t = case t of TyApp ts -> init ts
+                        _        -> []
+
 
 -- | Which arguments to this constructor are recursive?
 --

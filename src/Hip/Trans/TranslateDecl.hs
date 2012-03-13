@@ -97,12 +97,6 @@ translate d@(Func fname args (Case scrutinee brs)) = (,) d . catMaybes <$> do
               Just . T.Definition (fname ++ show num) <$> forallUnbound formula'
 translate d = error $ "translate on " ++ prettyCore d
 
--- | Translate a pattern to an expression. This is needed to get the
---   more specific pattern for a branch. This function in partial:
-patternToExpr :: Pattern -> Expr
-patternToExpr (PVar x)    = Var x
-patternToExpr (PCon p ps) = Con p (map patternToExpr ps)
-
 -- | Follow indirections of an expression
 followExpr :: Expr -> TM Expr
 followExpr (Var x) = do
