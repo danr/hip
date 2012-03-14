@@ -1,7 +1,7 @@
 module Hip.Trans.Theory where
 
 import Hip.Trans.Core
-import Hip.Trans.ProofDatatypes
+import Hip.Trans.ProofDatatypes hiding (propName)
 import Hip.Trans.Pretty
 import Hip.Util
 import qualified Language.TPTP as T
@@ -41,6 +41,15 @@ data Prop = Prop { proplhs  :: Expr
                  , propRepr :: String
                  }
   deriving (Eq,Ord,Show)
+
+inconsistentProp :: Prop
+inconsistentProp = Prop { proplhs  = Con "True" []
+                        , proprhs  = Con "False" []
+                        , propVars = []
+                        , propName = "inconsistencyCheck"
+                        , propType = TyCon "Prop" [TyCon "Bool" []]
+                        , propRepr = "inconsistecy check: this should never be provable"
+                        }
 
 theoryFunDecls :: Theory -> [Decl]
 theoryFunDecls = map funcDefinition . thyFuns

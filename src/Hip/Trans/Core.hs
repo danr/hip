@@ -230,6 +230,10 @@ argsTypes :: Type -> [Type]
 argsTypes t = case t of TyApp ts -> init ts
                         _        -> []
 
+-- | Removes the type constructor if there is one. Used for removing Prop
+unProp :: Type -> Type
+unProp (TyCon _ [t]) = t
+unProp t             = t
 
 -- | Which arguments to this constructor are recursive?
 --

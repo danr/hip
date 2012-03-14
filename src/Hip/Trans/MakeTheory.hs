@@ -79,16 +79,16 @@ makeTheory params ds =
                                      addTypes types
                                      (_,tptp) <- translate fun_decl
                                      maybe_type <- lookupType name
---                                     used_ptrs <- getUsedFunPtrs
+                                     used_ptrs <- getUsedFunPtrs
                                      msgs <- popMsgs
                                      return (ThyFun { funcName       = name
                                                     , funcTPTP       = tptp
-                                                    , funcPtrs       = [] -- used_ptrs
-                                                    , funcFunDeps    = S.empty -- used_funs
-                                                    , funcDataDeps   = S.empty -- used_datas
+                                                    , funcPtrs       = used_ptrs
+                                                    , funcFunDeps    = used_funs
+                                                    , funcDataDeps   = used_datas
                                                     , funcType       = maybe_type
                                                     , funcDefinition = fun_decl
-                                                    , funcRecursive  = False -- name `S.member` recursiveFuns
+                                                    , funcRecursive  = name `S.member` recursiveFuns
                                                     }
                                             ,msgs)
 
@@ -101,11 +101,22 @@ makeTheory params ds =
                                   Expr (App "=:=" [lhs,rhs])               -> Just (lhs,rhs)
                                   _ -> Nothing
                              ty <- lookup prop_name types
-                             return (Prop { proplhs  = lhs
-                                          , proprhs  = rhs
-                                          , propVars = args
+                             let resTy       = unProp (resType ty)
+                                 (lhs',rhs',args',ty') = case resTy of
+                                    -- Prop (a -> b) ~= a -> Prop b
+                                    TyApp ts -> let extraTyVars = zip [ "x." ++ show x | x <- [0..] ]
+                                                                      (init ts)
+                                                in (foldl app lhs (map (Var . fst) extraTyVars)
+                                                   ,foldl app rhs (map (Var . fst) extraTyVars)
+                                                   ,args ++ map fst extraTyVars
+                                                   ,foldr tapp (TyCon "Prop" [last ts]) (argsTypes ty ++ init ts)
+                                                   )
+                                    _        -> (lhs,rhs,args,ty)
+                             return (Prop { proplhs  = lhs'
+                                          , proprhs  = rhs'
+                                          , propVars = args'
                                           , propName = prop_name
-                                          , propType = ty
+                                          , propType = ty'
                                           , propRepr = prettyCore e
                                           })
   in  (Theory thy_functions dataDecls,properties,concat thy_msgs)

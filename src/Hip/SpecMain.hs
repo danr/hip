@@ -67,7 +67,19 @@ main = do
         -- Warnings
         when warnings $ mapM_ print (filter isWarning msgs)
 
-        (unproved,proved) <- parLoop params theory props []
+{-
+        forM props $ \(Prop{..}) -> do putStrLn propName
+                                       putStrLn (show proplhs ++ " = " ++ show proprhs)
+                                       putStrLn (intercalate "," (zipWith (\v t -> v ++ " :: " ++ show t) propVars (argsTypes propType)))
+                                       putStrLn (show propVars)
+                                       putStrLn (show propType)
+                                       putStrLn propRepr
+                                       putStrLn ""
+-}
+
+        let props' = inconsistentProp : props
+
+        (unproved,proved) <- parLoop params theory props' []
                           {- proveLoop -}
 
         printInfo unproved proved
@@ -104,9 +116,9 @@ tryProve params@(Params{..}) props thy lemmas = do
                   }
 
         (properties,msgs) = second concat
-                        . unzip
-                        . map (\prop -> theoryToInvocations params thy prop lemmas)
-                        $ props
+                          . unzip
+                          . map (\prop -> theoryToInvocations params thy prop lemmas)
+                          $ props
 
     when dbproof $ mapM_ print (filter (sourceIs MakeProof) msgs)
 

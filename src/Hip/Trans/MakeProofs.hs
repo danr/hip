@@ -32,10 +32,6 @@ import qualified Data.Set as S
 powerset :: [a] -> [[a]]
 powerset = init . filterM (const [True,False])
 
-unProp :: Type -> Type
-unProp (TyCon _ [t]) = t
-unProp t             = t
-
 makeProofDecls :: Params -> Theory -> Prop -> [Prop] -> [TM Part]
 makeProofDecls params theory prop@(Prop{..}) lemmas =
     let typedVars = case propType of TyApp ts -> zip propVars ts
@@ -47,18 +43,7 @@ makeProofDecls params theory prop@(Prop{..}) lemmas =
 
         recfuns   = theoryRecFuns theory
 
-    in  case resTy of
-           -- Prop (a -> b) ~= a -> Prop b
-           TyApp ts -> let extraTyVars = zip [ "x." ++ show x | x <- [0..] ]
-                                             (init ts)
-                       in  prove params fundecls recfuns
-                                 (last ts)
-                                 propName
-                                 (typedVars ++ extraTyVars)
-                                 (foldl app proplhs (map (Var . fst) extraTyVars))
-                                 (foldl app proprhs (map (Var . fst) extraTyVars))
-           _        -> prove params fundecls recfuns resTy propName
-                             typedVars proplhs proprhs
+    in  prove params fundecls recfuns resTy propName typedVars proplhs proprhs
 
 type Rec = Bool
 
@@ -301,61 +286,3 @@ theoryToInvocations params theory prop@(Prop{..}) lemmas =
                             }
     in (removeEmptyParts property,concat dbg)
 
-{-
-prepareProofs :: Params -> [Decl] -> ([Property],[Msg])
-prepareProofs params ds = first (removeEmptyProperties . map removeEmptyParts)
-                        $ second ((extraDebug ++) . concat)
-                        $ unzip (concatMap processDecl proofDecls)
-  where
-    extraDebug = [dbproofMsg $ "Recursive functions: " ++ show recursiveFuns]
-
-    processDecl :: Decl -> [(Property,[Msg])]
-    processDecl d
-      | declName d `elem` proveFunctions = []
-      | otherwise =
-          let propName = declName d
-              mty = declType <$> find ((propName ==) . declName) typeDecls
-          in case mty of
-              Nothing -> []
-              Just sigty -> do
-                let (fsd,csd)    = usedFC d
-                    typesFromSig = getTypes sigty
-                    (fs,cs')  = compIterateFCs (fsd S.\\ S.fromList proveFunctions)
-                    cs        = S.insert bottomName $ csd `S.union` cs'
-                    datadecls = filterDatas typesFromSig cs dataDecls
-                    fundecls  = filterFuns  fs funDecls
-                    partsm    = makeProofDecls params fundecls recursiveFuns sigty d
-                    (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM params $ do
-                        wdproof $ propName
-                        addTypes types
-                        addCons datadecls
-                        part  <- partm
-                        extra <- envStDecls
-                        db    <- popMsgs
-                        return (extendPart extra part,db)
-                return $ (Property { propName   = propName
-                                   , propCode   = prettyCore (funcBody d)
-                                   , propMatter = parts
-                                   },concat dbg)
-
-    ProcessedDecls{..} = processDecls ds
-    types = map (declName &&& declType) typeDecls
-
-    compIterateFCs :: Set Name -> (Set Name,Set Name)
-    compIterateFCs = iterateFCs funDecls
-
-    usedFCmap :: Map Name (Set Name,Set Name)
-    usedFCmap = M.fromList [ (declName d,usedFC d) | d <- funDecls ]
-
-    recursiveFuns :: Set Name
-    recursiveFuns = S.fromList
-        [ name
-        | d@(Func name args body) <- funDecls
-        , let namecalls = fst (usedFCmap M.! name)
-              -- ^ Which functions this function calls
-              theycall  = fst (compIterateFCs namecalls)
-              -- ^ All functions they call. If name is member
-              --   there then there is a mutual recursion
-        , selfRecursive d || name `S.member` theycall
-        ]
--}
