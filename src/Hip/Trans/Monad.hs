@@ -388,7 +388,7 @@ appFold = foldl (\f x -> T.Fun ptrapp [f,x])
 envStDecls :: TM [T.Decl]
 envStDecls = TM $ do
   s <- get
-  return $ extEquality : appBottom :
+  return $ extEquality : {- appBottom : -}
            projDecls (_conProj s) ++
            ptrDecls (_arities s) (_usedFunPtrs s) ++
            disjDecls (_datatypes s)
@@ -409,7 +409,7 @@ disjDecls = concatMap datatypeDisj
     datatypeDisj :: [(Name,Int)] -> [T.Decl]
     datatypeDisj ctors = concat (zipWith constrDisj ctors'
                                                     (tail (tails ctors')))
-      where ctors' = (bottomName,0) : ctors
+      where ctors' = {- (bottomName,0) : -} ctors
 
     -- Make this constructor unequal to all the constructors in the list
     constrDisj :: (Name,Int) -> [(Name,Int)] -> [T.Decl]
