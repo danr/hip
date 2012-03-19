@@ -46,6 +46,7 @@ import Hip.Trans.Core
 import Hip.Trans.Pretty
 import Hip.Trans.Constructors
 import Hip.Trans.ProofDatatypes
+import Hip.Trans.Names as N
 import Hip.Messages
 import Hip.Util (isOp,putEither)
 import Hip.Params
@@ -350,7 +351,7 @@ addCons datadecls = TM $ do
                ]
 
     projName :: (Name,Int) -> (Name,[Name])
-    projName (c,n) = (c,[c ++ "_" ++ show x  | x <- [0..n-1]])
+    projName (c,n) = (c,[ N.projName i | i <- [0..n-1]])
 
 -- | Mark a pointer as used
 useFunPtr :: Name -> TM ()
@@ -430,7 +431,7 @@ projDecls :: Map Name [Name] -> [T.Decl]
 projDecls = concatMap (uncurry mkDecl) . M.toList
   where
     mkDecl :: Name -> [Name] -> [T.Decl]
-    mkDecl c ps = [ Axiom ("proj" ++ p) $ forall' xs $
+    mkDecl c ps = [ Axiom (c ++ "proj" ++ p) $ forall' xs $
                         Fun (FunName p) [Fun (FunName c) (map T.Var xs)]
                         === T.Var x
                   | x <- xs | p <- ps ]

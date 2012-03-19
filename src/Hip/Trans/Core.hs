@@ -63,6 +63,10 @@ data Type = TyVar Name
 
 -- Auxiliary functions
 
+isTyVar :: Type -> Bool
+isTyVar TyVar{} = True
+isTyVar _       = False
+
 -- | Modify the pattern of a PMG
 modifyPattern :: (Pattern -> Pattern) -> PMG -> PMG
 modifyPattern f (Guard p e) = Guard (f p) e
@@ -161,6 +165,10 @@ tycon0 n = TyCon n []
 -- | Which variables does a pattern bind?
 patternBinds :: Pattern -> [Name]
 patternBinds p = [ x | PCon x _ <- universe p ]
+
+-- | Type variables in a type
+tyVars :: Type -> [Name]
+tyVars t = [ x | TyVar x <- universe t ]
 
 -- | Substitution
 subst :: Name -> Name -> Expr -> Expr

@@ -5,6 +5,7 @@ import Hip.Trans.Core
 import Hip.Trans.ParserInternals
 import Hip.Trans.Pretty
 import Hip.Trans.Constructors
+import Hip.Trans.TyEnv
 import Hip.Util
 
 import Data.List hiding (partition)
@@ -16,30 +17,6 @@ import Control.Monad
 import Control.Monad.State
 
 import Test.QuickCheck
-
-type ConName = Name
-type VarName = Name
-type TypeName = Name
-
-type Env = [(TypeName,[(Name,Type)])]
-
-testEnv :: Env
-testEnv = map (declName &&& conTypes) $ parseDecls $ concatMap (++ ";")
-  [ "data Tree a = Branch (Tree a) a (Tree a) | Empty"
-  , "data T = B T T | E"
-  , "data Nat = Suc Nat | Zero"
-  , "data List a = Cons a (List a) | Nil"
-  , "data Expr = Add Expr Expr | Mul Expr Expr | Value Nat | X | Neg Expr"
-  , "data Integ = PS Nat | NS Nat | Z"
-  , "data Tup a b = Tup a b"
-  , "data Either a b = Left a | Right b"
-  , "data Bool = True | False"
-  , "data Maybe a = Just a | Nothing"
-  , "data Unit = Unit"
-  , "data Ord = Zero | Suc Ord | Lim (Nat -> Ord)"
-  , "data WrapList a = Wrap (List a)"
-  , "data Z = P Nat | N Nat"
-  ]
 
 data IndPart = IndPart { hypotheses :: [[Expr]]
                        , conjecture :: [Expr]
@@ -78,39 +55,6 @@ iterateM :: Monad m => Int -> (a -> m a) -> a -> m a
 iterateM 0 f x = return x
 iterateM n f x = do y <- f x
                     iterateM (n - 1) f y
-
-substType :: [(Name,Type)] -> Type -> Type
-substType s = transform f
-  where
-    f (TyVar x) | Just t <- lookup x s = t
-    f t                                = t
-
-unTyVar :: Type -> Name
-unTyVar (TyVar x) = x
-unTyVar t         = error $ "unTyVar: " ++ show t
-
-bottomless :: Expr -> Bool
-bottomless e = and [ False | Var x <- universe e, x == bottomName ]
-
-instantiate :: Type -> Env -> Maybe [(Name,Type)]
-instantiate (TyCon n ts) env
-    | Just cons <- lookup n env = Just (map (uncurry inst) cons)
-  where
-    inst :: Name -> Type -> (Name,Type)
-    inst n t = case resTy of
-                   TyCon _ (map unTyVar -> as) ->
-                       -- as is for instance ["a","b","c"]
-                       -- ts could be [Nat,List a,b -> c]
-                       let instMap = zip as ts
-                       in  (n,foldr1 tapp [ substType instMap c | c <- argsTy ++ [resTy] ])
-                   _  -> (n,t)
-      where
-        resTy   :: Type
-        argsTy :: [Type]
-        (argsTy,resTy) = case t of
-                       TyApp xs -> (init xs,last xs)
-                       _        -> ([],t)
-instantiate _ _ = Nothing
 
 -- | For each constructor, unroll each typed variable to all its
 --   constructors.
