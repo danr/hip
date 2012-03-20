@@ -1,4 +1,11 @@
-module Types(finiteTy,keep,anyTypeAxiom,typeGuard,genTypePred) where
+{-# LANGUAGE PatternGuards #-}
+module Hip.Trans.Types
+       (finiteTy,keep,
+        anyTypeAxiom,
+        typeGuard,typeGuards,
+        infDomainAxiom,
+        genTypePred)
+       where
 
 import Hip.Trans.Core
 import Hip.Trans.Pretty
@@ -16,7 +23,7 @@ import Control.Applicative
 import Control.Monad
 
 -- | Is a constructor with a type finite?
-finiteCon :: Env -> [Type] -> Type -> Bool
+finiteCon :: TyEnv -> [Type] -> Type -> Bool
 finiteCon env tys t = not (any (`elem` tys) (argsTypes t))
                    && all (finiteTypeMut env tys) (argsTypes t)
 
@@ -24,7 +31,7 @@ finiteCon env tys t = not (any (`elem` tys) (argsTypes t))
 --
 --   True  : Bool, (Bool,Bool), Ordering, Unit
 --   False : a, [a], (a,Bool)
-finiteTy :: Env -> Type -> Bool
+finiteTy :: TyEnv -> Type -> Bool
 finiteTy env ty = finiteTypeMut env [] ty
 
 finiteTypeMut env tys ty@TyCon{} = case instantiate ty env of
@@ -37,7 +44,7 @@ finiteTypeMut _ _ _ = False -- Type variable or function space
 --
 --   True  : Bool, [Bool], (Bool,a), [(Nat,Bool)]
 --   False : [a], Nat
-keep :: Env -> Type -> Bool
+keep :: TyEnv -> Type -> Bool
 keep env ty@(TyCon _ ts) = finiteTy env ty || any (keep env) ts
 keep env _               = False
 
@@ -73,16 +80,16 @@ testKeep     = map ((,) <$> show <*> keep testEnv) testTypes
 --     Ty([a],x:xs) <-> (Ty(a,x) /\ Ty([a],xs))
 --
 --     Ty((a,b),(x,y)) <-> (Ty(a,x) /\ Ty(b,y))
-genTypePred :: Env -> Type -> T.Decl
+genTypePred :: TyEnv -> Type -> T.Decl
 genTypePred env ty@(TyCon n as) = case instantiate ty env of
-   Just cons -> genPred ty (map unTyVar as) cons
+   Just cons -> genPred ty cons
    Nothing   -> error $ "genTypePred, not found: " ++ show ty
 genTypePred env ty = error $ "genTypePred, not on a type constructor: " ++ show ty
 
-genPred :: Type -> [Name] -> [(Name,Type)] -> T.Decl
-genPred ty tvs cons = Axiom "ty" (forall' (x : map quantName (tyVars ty))
-                                          (rootFormula <=>
-                                             foldr1 (\/) (map (uncurry genPredCon) cons)))
+genPred :: Type -> [(Name,Type)] -> T.Decl
+genPred ty cons = Axiom "ty" (forall' (x : map quantName (tyVars ty))
+                                      (rootFormula <=>
+                                        foldl1 (\/) (map (uncurry genPredCon) cons)))
   where
      x  = VarName "R"
      xv = T.Var x
@@ -91,20 +98,29 @@ genPred ty tvs cons = Axiom "ty" (forall' (x : map quantName (tyVars ty))
 
      genPredCon :: ConName -> Type -> T.Formula
      genPredCon con_name ty =
-         exists' (map fst typedvars) $
-            foldr (/\)
-                  (xv === Fun (FunName con_name) (map (T.Var . fst) typedvars))
-                  (map (\(v,t) -> tyRel (genType t) (T.Var v)) typedvars)
+           foldl (/\) (xv === simpProjCon con_name xv con_name (length typedvars))
+                       (map (\(v,t) -> tyRel (genType t) v) typedvars)
        where
-         typedvars = makeVarNames (length (argsTypes ty)) `zip` argsTypes ty
+         typedvars = [ proj con_name i xv | i <- [0..] ] `zip` argsTypes ty
 
 
-infDomainAxiom :: Env -> Type -> Maybe T.Decl
-infDomainAxiom env t = undefined
+infDomainAxiom :: TyEnv -> Type -> Maybe T.Decl
+infDomainAxiom env ty
+  | not (finiteTy env ty), Just cons <- instantiate ty env =
+     Just (Axiom "inf" (forall' [x] (foldr1 (\/) (map (uncurry gen) cons))))
+       where
+         x  = VarName "X"
+         xv = T.Var x
+
+         rootFormula = tyRel (genType (resType ty)) xv
+
+         gen :: ConName -> Type -> T.Formula
+         gen con_name ty = xv === simpProjCon con_name xv con_name (length (argsTypes ty))
+infDomainAxiom env ty = Nothing
 
 genType :: Type -> T.Term
 genType (TyVar v)    = T.Var (quantName v)
-genType (TyCon n ts) = Fun (FunName n) (map genType ts)
+genType (TyCon n ts) = Fun (FunName ("t_" ++ n)) (map genType ts)
 genType t@TyApp{}    = error $ "genType on function space: " ++ show t
 
 anyTypeAxiom :: T.Decl
@@ -113,11 +129,17 @@ anyTypeAxiom = Axiom "anytype" $ forall' [x] (tyRel anyType xv)
     x  = VarName "X"
     xv = T.Var x
 
-typeGuard :: Env -> T.Term -> Type -> T.Formula -> T.Formula
+typeGuard :: TyEnv -> T.Term -> Type -> T.Formula -> T.Formula
 typeGuard env tm ty phi | keep env ty = tyRel (genType (instAny env ty)) tm ==> phi
 typeGuard env tm ty phi               = phi
 
-instAny :: Env -> Type -> Type
+typeGuards :: TyEnv -> [(T.Term,Type)] -> T.Formula -> T.Formula
+typeGuards env tytms phi = case filter (keep env . snd) tytms of
+    []       -> phi
+    finTyTms -> foldr1 (/\) tyRels ==> phi
+      where tyRels = (map (\(tm,ty) -> tyRel (genType (instAny env ty)) tm) finTyTms)
+
+instAny :: TyEnv -> Type -> Type
 instAny env t | not (keep env t) = TyVar anyTypeName
 instAny env (TyCon n ts)         = TyCon n [ if isTyVar t then TyVar anyTypeName
                                                           else instAny env t

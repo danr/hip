@@ -351,7 +351,7 @@ addCons datadecls = TM $ do
                ]
 
     projName :: (Name,Int) -> (Name,[Name])
-    projName (c,n) = (c,[ N.projName i | i <- [0..n-1]])
+    projName (c,n) = (c,[ N.projName c i | i <- [0..n-1]])
 
 -- | Mark a pointer as used
 useFunPtr :: Name -> TM ()

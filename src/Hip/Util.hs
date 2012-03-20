@@ -1,6 +1,7 @@
 module Hip.Util
        (unlist,avgList,selections,inspect,withPrevious,concatMapM,concatMaybe
-       ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted,forFind)
+       ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted,forFind
+       ,color,Color(..))
        where
 
 import Data.Maybe
@@ -89,3 +90,27 @@ forFind []     p = return Nothing
 forFind (x:xs) p = mif (p x)
                        (return (Just x))
                        (forFind xs p)
+
+color :: Color -> String -> String
+color c s = fgcol c ++ s ++ normal
+
+normal :: String
+normal = "\ESC[0m"
+
+bold :: String -> String
+bold = ("\ESC[1m" ++)
+
+fgcol :: Color -> String
+fgcol col = "\ESC[0" ++ show (30+col2num col) ++ "m"
+
+data Color = Red | Green | Blue | Pink | Yellow | Turquoise
+
+col2num c = case c of
+  Red       -> 1
+  Green     -> 2
+  Yellow    -> 3
+  Blue      -> 4
+  Pink      -> 5
+  Turquoise -> 7
+
+

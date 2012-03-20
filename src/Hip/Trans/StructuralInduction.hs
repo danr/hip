@@ -34,7 +34,7 @@ instance Show IndPart where
 prints :: Show a => [a] -> IO ()
 prints = mapM_ print
 
-simpleInduction :: VarName -> TypeName -> Env -> [IndPart]
+simpleInduction :: VarName -> TypeName -> TyEnv -> [IndPart]
 simpleInduction var ty env = do
     let cons = fromMaybe (error $ "unknown datatype " ++ show ty)
                          (lookup ty env)
@@ -58,7 +58,7 @@ iterateM n f x = do y <- f x
 
 -- | For each constructor, unroll each typed variable to all its
 --   constructors.
-unroll :: [Expr] -> Env -> Int -> [[Expr]]
+unroll :: [Expr] -> TyEnv -> Int -> [[Expr]]
 unroll es env i = evalStateT (iterateM i (mapM (transformM go)) es) 0
   where
     go :: Expr -> StateT Int [] Expr
@@ -88,10 +88,10 @@ prop_partInts_sum n k = all ((n ==) . sum) (partInts n k)
 prop_partInts_length :: Int -> Int -> Bool
 prop_partInts_length n k = all ((k ==) . length) (partInts n k)
 
-partitionTo :: Env -> [(Name,Type)] -> Type -> Int -> [Expr]
+partitionTo :: TyEnv -> [(Name,Type)] -> Type -> Int -> [Expr]
 partitionTo env vs t = concatMap (partition env vs t) . enumFromTo 1
 
-partition :: Env -> [(Name,Type)] -> Type -> Int -> [Expr]
+partition :: TyEnv -> [(Name,Type)] -> Type -> Int -> [Expr]
 partition env vs t n
   | n <= 0 = []
   | n == 1 = [ Var n | (n,t') <- vs, t' == t {- warning: List a /= List Nat -}]
@@ -114,7 +114,7 @@ subdiag [] = []
 subdiag (x:xs) = (if x > 1 then ((x-1:xs) :) else id)
                  [ x : ys | ys <- subdiag xs ]
 
-partitionListTo :: Env -> [[(Name,Type)]] -> [Type] -> [Int] -> [[Expr]]
+partitionListTo :: TyEnv -> [[(Name,Type)]] -> [Type] -> [Int] -> [[Expr]]
 partitionListTo env vs ts ps = do
     part <- subdiag ps
     sequence (zipWith3 (partitionTo env) vs ts part)
@@ -140,7 +140,7 @@ typedVars :: Expr -> [(Name,Type)]
 typedVars e = [ (v,t) | Var v ::: t <- universe e ]
 
 -- | Leads to combinatorial explosion (Tree a with depth 2)
-structuralInduction :: [(VarName,Type)] -> Env -> Int -> [IndPart]
+structuralInduction :: [(VarName,Type)] -> TyEnv -> Int -> [IndPart]
 structuralInduction vts env depth = map mkPart ess
    where
      ess :: [[Expr]]

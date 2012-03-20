@@ -25,9 +25,9 @@ type ConName = Name
 type VarName = Name
 type TypeName = Name
 
-type Env = [(TypeName,[(Name,Type)])]
+type TyEnv = [(TypeName,[(Name,Type)])]
 
-testEnv :: Env
+testEnv :: TyEnv
 testEnv = map (declName &&& conTypes) $ parseDecls $ concatMap (++ ";")
   [ "data Tree a = Branch (Tree a) a (Tree a) | Empty"
   , "data T = B T T | E"
@@ -62,7 +62,7 @@ unTyVar t         = error $ "unTyVar: " ++ show t
 bottomless :: Expr -> Bool
 bottomless e = and [ False | Var x <- universe e, x == bottomName ]
 
-instantiate :: Type -> Env -> Maybe [(Name,Type)]
+instantiate :: Type -> TyEnv -> Maybe [(Name,Type)]
 instantiate (TyCon n ts) env
     | Just cons <- lookup n env = Just (map (uncurry inst) cons)
   where

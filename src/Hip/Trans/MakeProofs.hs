@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards,TupleSections #-}
 module Hip.Trans.MakeProofs where
 
 import Hip.Trans.TranslateExpr
@@ -10,7 +10,9 @@ import Hip.Trans.Pretty
 import Hip.Trans.ProofDatatypes
 import Hip.Trans.NecessaryDefinitions
 import Hip.Trans.FixpointInduction
-import Hip.Trans.StructuralInduction hiding (VarName,ConName)
+import Hip.Trans.StructuralInduction
+import Hip.Trans.Types
+import Hip.Trans.TyEnv
 import Hip.Trans.Theory
 import Hip.Util (putEither,concatMapM)
 import Hip.Messages
@@ -23,7 +25,7 @@ import qualified Language.TPTP as T
 import Control.Applicative
 import Control.Monad
 
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe,mapMaybe)
 import Control.Arrow ((&&&))
 
 import Data.Set (Set)
@@ -32,8 +34,8 @@ import qualified Data.Set as S
 powerset :: [a] -> [[a]]
 powerset = init . filterM (const [True,False])
 
-makeProofDecls :: Params -> Theory -> Prop -> [Prop] -> [TM Part]
-makeProofDecls params theory prop@(Prop{..}) lemmas =
+makeProofDecls :: TyEnv -> Params -> Theory -> Prop -> [Prop] -> [TM Part]
+makeProofDecls env params theory prop@(Prop{..}) lemmas =
     let typedVars = case propType of TyApp ts -> zip propVars ts
                                      _        -> []
 
@@ -43,17 +45,11 @@ makeProofDecls params theory prop@(Prop{..}) lemmas =
 
         recfuns   = theoryRecFuns theory
 
-    in  prove params fundecls recfuns resTy propName typedVars proplhs proprhs
+    in  prove env params fundecls recfuns resTy propName typedVars proplhs proprhs
 
-type Rec = Bool
-
-type VarName = Name
-type ConName = Name
-type TyName  = Name
-type SkolemName = Name
-type LR a = Either a a
-
-prove :: Params
+prove :: TyEnv
+      -- ^ The type environment
+      -> Params
       -- ^ The parameters to the program
       -> [Decl]
       -- ^ The function definitions in the file. The reason why this is
@@ -72,12 +68,14 @@ prove :: Params
       -- ^ RHS
       -> [TM Part]
       -- ^ Resulting instructions how to do proof declarations for this
-prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
+prove env params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
     let indargs :: [(Name,Type)]
-        indargs = filter (concreteType . snd) typedVars
+        indargs = filter (\(_,t) -> not (finiteTy env t) && concreteType t) typedVars
         powset :: [[(Name,Type)]]
         powset = powerset indargs
-    in  concat $ [ plainProof                                  | 'p' `elem` methods ]
+   in  concat $ [ plainProof                                  | 'p' `elem` methods ]
+
+   -- When adding back fpi and approx, remember to type guard finite types!
 --              ++ [ proofByFixpointInduction                    | 'f' `elem` methods ]
 --              ++ [ proofByApproxLemma                          | 'a' `elem` methods ]
 --              ++ [ map (proofByStructInd True  d)
@@ -172,19 +170,17 @@ prove params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
        | otherwise = []
 
     plainProof :: [TM Part]
-    plainProof
-        | any (concreteType . snd) typedVars = []
-        | otherwise =
-            return $ accompanyParts Plain Infinite $ do
-                p <- instantiateP []
-                return $ [ Particle "plain" [Conjecture "plain" p] ]
+    plainProof = return $ accompanyParts Plain Infinite $ do
+                     p <- instantiateP []
+                     return $ [ Particle "plain" [Conjecture "plain" p] ]
 
 
     instantiateP :: [(VarName,VarName)] -> TM T.Formula
     instantiateP binds = locally $ do
         lhs' <- translateExpr (substVars binds lhs)
         rhs' <- translateExpr (substVars binds rhs)
-        forallUnbound (lhs' === rhs')
+        tytms <- mapM (\(n,t) -> (,t) <$> translateExpr (Var n)) typedVars
+        forallUnbound (typeGuards env tytms (lhs' === rhs'))
 
     proofByFixpointInduction :: [TM Part]
     proofByFixpointInduction = concatMap
@@ -268,7 +264,8 @@ removeEmptyParts (Property n c parts)
 --   for a property and adds the lemmas
 theoryToInvocations :: Params -> Theory -> Prop -> [Prop] -> (Property,[Msg])
 theoryToInvocations params theory prop@(Prop{..}) lemmas =
-    let partsm = makeProofDecls params theory prop lemmas
+    let tyEnv  = theoryTyEnv theory
+        partsm = makeProofDecls tyEnv params theory prop lemmas
         (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM params $ do
                         wdproof $ propName
                         addCons (thyDatas theory)
@@ -277,9 +274,12 @@ theoryToInvocations params theory prop@(Prop{..}) lemmas =
                         part <- partm
                         lemmaTPTP <- mapM translateLemma lemmas
                         mapM_ (uncurry registerFunPtr) (theoryUsedPtrs theory)
-                        extra <- envStDecls
+                        extra    <- envStDecls
+                        let tyaxioms = map (genTypePred tyEnv)         (theoryDataTypes theory)
+                                    ++ mapMaybe (infDomainAxiom tyEnv) (theoryDataTypes theory)
+                                    ++ [anyTypeAxiom]
                         db    <- popMsgs
-                        return (extendPart (extra ++ theoryFunTPTP theory ++ lemmaTPTP) part,db)
+                        return (extendPart (extra ++ tyaxioms ++ theoryFunTPTP theory ++ lemmaTPTP) part,db)
         property = Property { propName   = propName
                             , propCode   = propRepr
                             , propMatter = parts

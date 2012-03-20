@@ -6,6 +6,7 @@ import Hip.Trans.FixBranches
 import Hip.Trans.Pretty
 import Hip.Trans.Monad
 import Hip.Trans.TranslateExpr
+import Hip.Trans.Types
 import Hip.Util
 import Language.TPTP hiding (Decl,Var,declName)
 import Language.TPTP.Pretty
@@ -23,7 +24,9 @@ translateLemma :: Prop -> TM T.Decl
 translateLemma (Prop{..}) = locally $ do
     rhs <- translateExpr proprhs
     lhs <- translateExpr proplhs
-    Lemma propName <$> forallUnbound (rhs === lhs)
+    env <- getEnv False
+    tytms <- (`zip` argsTypes propType) <$> mapM (translateExpr . Var) propVars
+    Lemma propName <$> forallUnbound (typeGuards env tytms (lhs === rhs))
 
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.

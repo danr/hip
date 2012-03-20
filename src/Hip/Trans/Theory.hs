@@ -3,8 +3,13 @@ module Hip.Trans.Theory where
 import Hip.Trans.Core
 import Hip.Trans.ProofDatatypes hiding (propName)
 import Hip.Trans.Pretty
+import Hip.Trans.TyEnv
 import Hip.Util
+
 import qualified Language.TPTP as T
+
+import Control.Arrow ((&&&))
+
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -46,7 +51,7 @@ inconsistentProp :: Prop
 inconsistentProp = Prop { proplhs  = Con "True" []
                         , proprhs  = Con "False" []
                         , propVars = []
-                        , propName = "inconsistencyCheck"
+                        , propName = color Red "inconsistencyCheck"
                         , propType = TyCon "Prop" [TyCon "Bool" []]
                         , propRepr = "inconsistecy check: this should never be provable"
                         }
@@ -65,3 +70,9 @@ theoryUsedPtrs = nubSorted . concatMap funcPtrs . thyFuns
 
 theoryFiniteType :: Theory -> Type -> Bool
 theoryFiniteType = undefined
+
+theoryDataTypes :: Theory -> [Type]
+theoryDataTypes = map (\d -> TyCon (declName d) (map TyVar (declArgs d))) . thyDatas
+
+theoryTyEnv :: Theory -> TyEnv
+theoryTyEnv = map (declName &&& conTypes) . thyDatas

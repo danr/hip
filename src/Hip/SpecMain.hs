@@ -41,6 +41,7 @@ main = do
 
   forM_ files $ \file -> do
       when (file /= head files) $ putStrLn ""
+      unless (null files) $ putStrLn $ file ++ ":"
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
                                 then parseHaskell <$> readFile file
@@ -98,8 +99,10 @@ main = do
 
 printInfo :: [Prop] -> [Prop] -> IO ()
 printInfo unproved proved = do
-    putStrLn ("Proved: " ++ unwords (map propName proved))
-    putStrLn ("Unproved: " ++ unwords (map propName unproved))
+    let pr xs | null xs   = "(none)"
+              | otherwise = unwords (map propName xs)
+    putStrLn ("Proved: " ++ pr proved)
+    putStrLn ("Unproved: " ++ pr unproved)
     putStrLn (show (length proved) ++ "/" ++ show (length (proved ++ unproved)))
 
 
