@@ -32,6 +32,7 @@ finiteCon env tys t = not (any (`elem` tys) (argsTypes t))
 --   True  : Bool, (Bool,Bool), Ordering, Unit
 --   False : a, [a], (a,Bool)
 finiteTy :: TyEnv -> Type -> Bool
+finiteTy _ (TyCon "Int" []) = False
 finiteTy env ty = finiteTypeMut env [] ty
 
 finiteTypeMut env tys ty@TyCon{} = case instantiate ty env of
@@ -147,7 +148,7 @@ instAny env (TyCon n ts)         = TyCon n [ if isTyVar t then TyVar anyTypeName
 
 
 anyTypeName :: Name
-anyTypeName = "any-type"
+anyTypeName = "Any-Type"
 
 anyType :: T.Term
 anyType = Fun (FunName anyTypeName) []

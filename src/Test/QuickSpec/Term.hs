@@ -16,7 +16,14 @@ import Test.QuickCheck.Gen
 
 data SymbolType = TVar | TConst deriving (Eq, Ord, Show)
 data Symbol
-  = Symbol { name :: String, description :: Maybe String, label :: Int, isUndefined :: Bool, typ :: SymbolType, range :: Gen Data }
+  = Symbol { name :: String
+           , description :: Maybe String
+           , label :: Int
+           , isUndefined :: Bool
+           , typ :: SymbolType
+           , range :: Gen Data
+           , symbTypeRep :: TypeRep
+           }
   deriving Typeable
 
 instance Show Symbol where
@@ -39,18 +46,32 @@ isOp s | typ s == TConst && name s == "[]" = False
 isOp s | typ s == TConst = not (all isAlphaNum (name s))
 isOp _ = False
 
-var :: forall a. (Classify a, Arbitrary a) => String -> a -> Symbol
-var name _ = Symbol { name = name, label = undefined, description = Nothing, isUndefined = False, typ = TVar, range = fmap Data (arbitrary :: Gen a) }
+var :: forall a . (Classify a, Arbitrary a, Typeable a) => String -> a -> Symbol
+var name _ = Symbol { name = name
+                    , label = undefined
+                    , description = Nothing
+                    , isUndefined = False
+                    , typ = TVar
+                    , range = fmap Data (arbitrary :: Gen a)
+                    , symbTypeRep = typeOf (undefined :: a)
+                    }
 
 con :: Classify a => String -> a -> Symbol
-con name impl = Symbol { name = name, label = undefined, description = Nothing, isUndefined = False, typ = TConst, range = fmap Data (return impl) }
+con name impl = Symbol { name = name
+                       , label = undefined
+                       , description = Nothing
+                       , isUndefined = False
+                       , typ = TConst
+                       , range = fmap Data (return impl)
+                       , symbTypeRep = typeOf impl
+                       }
 
 sym :: Symbol -> Term Symbol
 sym elt = case typ elt of
             TVar -> Var elt
             TConst -> Const elt
 
-data Term c = Const c | Var Symbol | App (Term c) (Term c) deriving (Typeable, Eq)
+data Term c = Const c | Var Symbol | App (Term c) (Term c) deriving (Typeable , Eq)
 
 depth, size, numVars :: Term c -> Int
 depth (App s t) = depth s `max` (1 + depth t)
@@ -103,13 +124,13 @@ instance Ord s => Ord (Term s) where
   s `compare` t = stamp s `compare` stamp t
    where
     stamp t = (depth t, size t, -occur t, top t, args t)
-    
+
     occur t = length (vars t)
-    
+
     top (Var s)   = Just (Left s)
     top (Const s) = Just (Right s)
     top _         = Nothing
-    
+
     args (App s t) = [s, t]
     args _         = []
 

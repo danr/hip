@@ -155,7 +155,8 @@ flatten (App t u) = do
 
 killSymbols = mapConsts label
 
-prune1 :: (Term Symbol -> Bool) -> Context -> Int -> [(Int, Int, TypeRep)] -> Map Int (Term Symbol) -> [Symbol] -> [(Term Symbol, Term Symbol)] -> CC [(Term Symbol, Term Symbol)]
+prune1 :: (Term Symbol -> Bool) -> Context -> Int -> [(Int, Int, TypeRep)] -> Map Int (Term Symbol) -> [Symbol]
+       -> [(Term Symbol, Term Symbol)] -> CC [(Term Symbol, Term Symbol)]
 prune1 p ctx d univ univMap rigid es = fmap snd (runWriterT (mapM_ (consider univ) es))
     where consider univ (t, u) = do
             b <- lift (canDerive t u)
@@ -164,7 +165,10 @@ prune1 p ctx d univ univMap rigid es = fmap snd (runWriterT (mapM_ (consider uni
               lift (mapM_ unify (consequences p ctx d univ univMap' rigid (killSymbols t, killSymbols u)))
           univMap' = foldr (\s -> Map.insert (label s) (sym s)) univMap ctx
 
-prune2 :: (Term Symbol -> Bool) -> Context -> Int -> [(Int, Int, TypeRep)] -> Map Int (Term Symbol) -> [(Term Symbol, Term Symbol)] -> [(Term Symbol, Term Symbol)] -> [(Term Symbol, Term Symbol)]
+prune2 :: (Term Symbol -> Bool) -> Context -> Int -> [(Int, Int, TypeRep)] -> Map Int (Term Symbol)
+       -> [(Term Symbol, Term Symbol)]
+       -> [(Term Symbol, Term Symbol)]
+       -> [(Term Symbol, Term Symbol)]
 prune2 p ctx d univ univMap committed [] = reverse committed
 prune2 p ctx d univ univMap committed ((t,u):es) | derivable = prune2 p ctx d univ univMap committed es
                                                  | otherwise = prune2 p ctx d univ univMap ((t,u):committed) es
@@ -181,14 +185,32 @@ loadUniv univ = fmap ((sortBy (comparing (\(d,_,_) -> d)) *** Map.fromList) . un
             return (depth t, t', termType t, t)
           distr (t@(d,x,ty,u)) = ((d, x, ty), (x, u))
 
-prune :: (Term Symbol -> Bool) -> Context -> Int -> [Term Symbol] -> [(Term Symbol, Term Symbol)] -> [(Condition, [(Term Symbol, Term Symbol)])] -> [(Condition, Term Symbol, Term Symbol)]
+prune :: (Term Symbol -> Bool) -> Context -> Int
+      -> [Term Symbol] -> [(Term Symbol, Term Symbol)]
+      -> [(Condition, [(Term Symbol, Term Symbol)])]
+      -> [(Condition, Term Symbol, Term Symbol)]
 prune p ctx d univ0 es ess = runCCctx ctx $ do
   (univ, univMap) <- loadUniv univ0
   es' <- prune1 p ctx d univ univMap [] es
   -- let es'' = prune2 p ctx d univ univMap [] es'
   let es'' = es'
-  ess' <- mapM (\(cond, es) -> fmap (map (\(t, u) -> (cond, t, u))) (frozen (prune1 p ctx d univ univMap (condVars cond) es))) ess
+  ess' <- mapM (\(cond, es) -> fmap (map (\(t, u) -> (cond, t, u)))
+                                    (frozen (prune1 p ctx d univ univMap (condVars cond) es))) ess
   return ([ (Always, t, u) | (t, u) <- es'' ] ++ concat ess')
+
+{-
+pruneWithClass :: (Term Symbol -> Bool) -> Context -> Int
+      -> [Term Symbol] -> [(Term Symbol, Term Symbol)]
+      -> [(Condition, [(Term Symbol, Term Symbol)])]
+      -> [(Condition, [Term Symbol])]
+pruneWithClass p ctx d univ0 es ess = runCCctx ctx $ do
+  (univ, univMap) <- loadUniv univ0
+  es' <- prune1 p ctx d univ univMap [] es
+  -- let es'' = prune2 p ctx d univ univMap [] es'
+  let es'' = es'
+  ess' <- mapM (\(cond, es) -> fmap (map (\(t, u) -> (cond, t, u))) (frozen (prune1 p ctx d univ univMap (condVars cond) es))) ess
+  return ([ (Always, [t,u] ) | (t, u) <- es'' ] ++ concat ess')
+  -}
 
 condVars (a :/= b) = [a, b]
 condVars Always = []
@@ -248,6 +270,9 @@ mapTyCon :: (String -> String) -> TypeRep -> TypeRep
 mapTyCon f t = mkTyConApp (mkTyCon (f (tyConString tc))) (map (mapTyCon f) ts)
   where (tc, ts) = splitTyConApp t
 
+
+
+laws :: Int -> [Symbol] -> t -> (Term Symbol -> Bool) -> (Term Symbol -> Bool) -> IO ()
 laws depth ctx0 cond p p' = do
   hSetBuffering stdout NoBuffering
   let ctx = zipWith relabel [0..] (ctx0 ++ undefinedSyms ctx0)
@@ -348,3 +373,66 @@ congruenceCheck d ctx0 p = do
               putStrLn "but"
               printf "  %s /= %s\n" (show (App f x)) (show (App f' x'))
               error "not a congruence relation"
+
+-- For Hipspec
+packLaws :: Int -> [Symbol] -> t -> (Term Symbol -> Bool) -> (Term Symbol -> Bool)
+         -> IO [(Term Symbol,Term Symbol)]
+     --  -> IO [[Term Symbol]]
+packLaws depth ctx0 cond p p' = do
+
+  let ctx = zipWith relabel [0..] (ctx0 ++ undefinedSyms ctx0)
+
+  seeds <- genSeeds
+
+  cs <- tests p (take 1) depth ctx seeds
+
+  let eqs :: Condition -> [(Term Symbol,Term Symbol)]
+      eqs cond = map head
+               $ partitionBy equationOrder
+               $ [ (y,x) | x:xs <- map sort (unpack cs), funTypes [termType x] == [], y <- xs ]
+
+  -- printf "%d raw equations.\n\n" (length (eqs Always))
+
+  let univ = filter (not . termIsUndefined) (concat (unpack cs))
+
+  printf "Universe has %d terms.\n" (length univ)
+  putStrLn "== definitions =="
+
+  sequence_
+       [ putStrLn (show i ++ ": "++ show x ++ " := " ++ show y)
+       | (i, (y,x)) <- zip [1..] (definitions (eqs Always))
+       ]
+  putStrLn "== equations =="
+
+  let interesting (_, x, y) = p' x || p' y
+      conds = []
+      -- conds = [ i :/= j | cond, (i:j:_) <- partitionBy (show . symbolType) (filter (\s -> typ s == TVar) ctx) ]
+      pruned = filter interesting (prune p ctx depth univ (eqs Always)
+                                         [ (cond, eqs cond) | cond <- conds ])
+
+      getClassFromEq cond (l,r) = nubSort $ concat [ [l',r'] | (l',r') <- eqs cond, l' == l || l' == r || r' == r || r' == l ]
+
+  sequence_
+       [ putStrLn (show i ++ ": " ++ concat [ show x ++ "/=" ++ show y ++ " => "
+                                            | x :/= y <- [cond] ]
+                                  ++ show l ++ " == " ++ show r)
+                                  -- ++ intercalate " == " (map show (getClassFromEq cond (l,r))))
+       | (i, (cond, l,r)) <- zip [1..] pruned
+       ]
+
+  return $ [ {- getClassFromEq cond -} (l,r)
+           | (i, (cond, l,r)) <- zip [1..] pruned
+           ]
+
+  -- Missing terms?
+  {-
+  forM_ pruned $ \(cond, y, x) -> do
+    let c = head (filter (\(x':_) -> x == x') (map sort (unpack cs)))
+        commonVars = foldr1 intersect (map vars c)
+        subsumes t = sort (vars t) == sort commonVars
+    when (cond == Always && not (any subsumes c)) $
+         printf "*** missing term: %s = ???\n"
+                (show (mapVars (\s -> if s `elem` commonVars then s else s { name = "_" ++ name s }) x))
+  -}
+
+

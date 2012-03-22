@@ -69,6 +69,42 @@ defParams = Params
   , dbfol       = False   &= help "Print debug output of Core -> FOL"
   , dbproof     = False   &= help "Print debug output when making proofs"
   }
-  &= summary "autospec v0.1 Dan Rosén danr@student.gu.se"
-  &= program "autospec"
+  &= summary "hipspec v0.1 Dan Rosén danr@student.gu.se"
+  &= program "hipspec"
   &= verbosity
+
+
+hipSpecParams :: String -> Params
+hipSpecParams file = Params
+  { files       = []      &= ignore
+  , latex       = False   &= ignore -- help "Generate latex output (currently unsupported)"
+  , warnings    = False   &= help "Show warnings from translation"
+  , output      = Nothing &= opt  "proving/" &= typDir &= help "Output all tptp files in a directory (default proving/)"
+  , statistics  = False   &= ignore -- help "Generate statistics files (run with --reprove)"
+
+  , processes   = 2       &= help "Number of prover processes (default 2)" &= name "p" &= groupname "\nProving settings"
+  , timeout     = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
+  , provers     = "e"     &= help "Provers to use (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
+  , methods     = "pisfa" &= ignore -- help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"
+  , reprove     = False   &= help "Reprove theorems already known to be true"
+  , consistency = False   &= help "Add a consistency check (default: off)" &= name "c"
+
+  , inddepth    = 1       &= help "Max depth to do structural induction (default 1)" &= groupname "\nStructural induction"
+  , indvars     = 1       &= help "Number of variables to do structural induction on (default 1)"
+  , indhyps     = 200     &= help "Maximum number of hypotheses from structural induction (default 200)"
+  , indsteps    = 10      &= help "Maximum number of step cases from structural induction (default 10)"
+
+  , fpimax      = 25      &= ignore -- help "Maximum number of lifted functions (default 25)" &= groupname "\nFixpoint induction"
+
+  , tptp        = False   &= help "Generate tptp output and terminate" &= name "f"  &= groupname "\nDebug"
+  , core        = False   &= help "Translate hs to core and terminate" &= name "C"
+  , dbfh        = False   &= help "Print debug output of Haskell -> Core translation"
+  , dbfol       = False   &= help "Print debug output of Core -> FOL"
+  , dbproof     = False   &= help "Print debug output when making proofs"
+  }
+  &= summary ("HipSpec on " ++ file ++
+              "\n\nHipSpec v0.1 Dan Rosén danr@student.gu.se" ++
+              "\nQuickSpec by Nicholas Smallbone nicsma@chalmers.se" ++
+              "\n             and Koen Claessen koen@chalmers.se")
+  &= verbosity
+

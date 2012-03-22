@@ -1,16 +1,26 @@
 module Main where
 
-import Test.QuickSpec
+import Hip.HipSpec
+import Prelude hiding ((&&),(||),not)
 
-bool = describe "Bool" 
-                [ var "x" False
-                , var "y" False
-                , var "z" False
+True  && a = a
+False && _ = False
+
+False || a = a
+True  || _ = True
+
+not True  = False
+not False = True
+
+main = hipSpec "Bool.hs" conf 3
+  where conf = describe "Bool"
+                [ var "x" (undefined :: Bool)
+                , var "y" (undefined :: Bool)
+                , var "z" (undefined :: Bool)
                 , con "&&" (&&)
                 , con "||" (||)
                 , con "not" not
-                , con "true" True
-                , con "false" False
+                , con "True" True
+                , con "False" False
                 ]
 
-main = quickSpec bool True

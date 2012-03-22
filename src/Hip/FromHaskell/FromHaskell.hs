@@ -26,7 +26,9 @@ fixs = infix_ 0 ["=:=","=/="]
 
 parseMode :: ParseMode
 parseMode = defaultParseMode { fixities = fmap (fixs ++)
-                                               (fixities defaultParseMode) }
+                                               (fixities defaultParseMode)
+                             , extensions = TypeFamilies : extensions defaultParseMode
+                             }
 
 run :: FilePath -> IO ()
 run f = do
