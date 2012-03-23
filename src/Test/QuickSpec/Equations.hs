@@ -294,7 +294,7 @@ test p depth ctx seeds base = do
   printf "%d classes, %d raw equations.\n"
          (length cs)
          (sum (map (subtract 1 . length) cs))
-  return cs
+  return (sort (map sort cs))
 
 memoSym :: Context -> (Symbol -> a) -> (Symbol -> a)
 memoSym ctx f = (arr !) . label
