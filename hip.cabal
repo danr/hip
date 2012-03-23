@@ -19,7 +19,8 @@ Library
   Build-depends: base                          >= 4    && < 5
                , process                       >= 1.0.1.1
                , uniplate                      >= 1.6
-               -- , Grempa                        >= 0.2
+               , Grempa                        >= 0.2
+               , th-lift                       >= 0.5
                , haskell-src-exts              >= 1.11.1
                , mtl                           >= 2.0
                , pretty                        >= 1.1.1.0
