@@ -187,15 +187,24 @@ loadUniv univ = fmap ((sortBy (comparing (\(d,_,_) -> d)) *** Map.fromList) . un
             return (depth t, t', termType t, t)
           distr (t@(d,x,ty,u)) = ((d, x, ty), (x, u))
 
-prune :: (Term Symbol -> Bool) -> Context -> Int -> [Term Symbol] -> [(Term Symbol, Term Symbol)] -> [(Condition, [(Term Symbol, Term Symbol)])] -> [(Condition, Term Symbol, Term Symbol)]
-prune p ctx d univ0 es ess = runCCctx ctx $ do
-  (univ, univMap) <- loadUniv univ0
-  es' <- prune1 p ctx d univ univMap [] es
-  -- let es'' = prune2 p ctx d univ univMap [] es'
-  let es'' = es'
-  ess' <- mapM (\(cond, es) -> fmap (map (\(t, u) -> (cond, t, u))) (frozen (prune1 p ctx d univ univMap (condVars cond) es))) ess
-  return ([ (Always, t, u) | (t, u) <- es'' ] ++ concat ess')
+type PruneState = (([(Int, Int, TypeRep)], Map Int (Term Symbol)), S)
 
+initPrune :: Context -> [Term Symbol] -> PruneState
+initPrune ctx univ0 = runCC (initial (length ctx)) (loadUniv univ0)
+
+doPrune :: (Term Symbol -> Bool) -> Context -> Int -> [(Term Symbol, Term Symbol)] -> [(Condition, [(Term Symbol, Term Symbol)])] -> PruneState -> ([(Condition, Term Symbol, Term Symbol)], PruneState)
+doPrune p ctx d es ess ((univ, univMap), s) = (r, ((univ, univMap), s'))
+  where (r, s') = runCC s $ do
+          es' <- prune1 p ctx d univ univMap [] es
+          -- let es'' = prune2 p ctx d univ univMap [] es'
+          let es'' = es'
+          ess' <- mapM (\(cond, es) -> fmap (map (\(t, u) -> (cond, t, u))) (frozen (prune1 p ctx d univ univMap (condVars cond) es))) ess
+          return ([ (Always, t, u) | (t, u) <- es'' ] ++ concat ess')
+
+prune :: (Term Symbol -> Bool) -> Context -> Int -> [Term Symbol] -> [(Term Symbol, Term Symbol)] -> [(Condition, [(Term Symbol, Term Symbol)])] -> [(Condition, Term Symbol, Term Symbol)]
+prune p ctx d univ0 es ess = 
+  fst (doPrune p ctx d es ess (initPrune ctx univ0))
+  
 condVars (a :/= b) = [a, b]
 condVars Always = []
 
