@@ -241,7 +241,7 @@ tryProve params@(Params{..}) props thy lemmas = do
 
     forM res $ \property -> do
         let proved = fst (propMatter property) /= None
-        when   proved (putStrLn $ "Proved " ++ PD.propName property ++ ".")
+        when   proved (putStrLn $ bold (color Green ("Proved " ++ PD.propName property ++ "!!")))
         unless proved (putStrLn $ "Failed to prove " ++ PD.propName property ++ ".")
         return (fromMaybe (error "tryProve: lost")
                           (find ((PD.propName property ==) . propName) props)
