@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs,TypeFamilies,FlexibleInstances,FlexibleContexts,DeriveDataTypeable,ScopedTypeVariables,StandaloneDeriving #-}
-module Test.QuickSpec.Term where
+module Term where
 
-import Test.QuickSpec.CatchExceptions
+import CatchExceptions
 import Control.Monad
 import Data.Ord
 import Data.Char
@@ -113,7 +113,7 @@ instance Ord s => Ord (Term s) where
     args (App s t) = [s, t]
     args _         = []
 
-equationOrder (t, u) = (depth (ignoreFree t), size (ignoreFree t), depth t, size t, -(unsaturation (termType t)), t, u)
+equationOrder (t, u) = (depth (ignoreFree t), size (ignoreFree t), depth t, size t, -(arity (termType t)), t, u)
   where occur = length . vars
         ignoreFree t | isFree t = Const (fun t)
         ignoreFree (App t u) = App (ignoreFree t) (ignoreFree u)
@@ -121,10 +121,10 @@ equationOrder (t, u) = (depth (ignoreFree t), size (ignoreFree t), depth t, size
         isFree (App t (Var s)) = isFree t && s `notElem` vars t
         isFree (Const s) = True
         isFree _ = False
-        unsaturation ty =
+        arity ty =
           case funTypes [ty] of
             [] -> 0
-            [(_, ty')] -> 1 + unsaturation ty'
+            [(_, ty')] -> 1 + arity ty'
 
 instance Show (Term Symbol) where
   showsPrec p t = showString (showApp p (fun t) (args t))
@@ -169,7 +169,8 @@ funTypes :: [TypeRep] -> [(TypeRep, TypeRep)]
 funTypes tys =
   [ (ty1, ty2) | ty <- tys,
                  (c, [ty1, ty2]) <- [splitTyConApp ty],
-                 tyConString c == "->" ]
+                 c == arr ]
+  where (arr, _) = splitTyConApp (typeOf (undefined :: Int -> Int))
 
 symbolClass :: Symbol -> Data
 symbolClass s = unGen evalSym undefined undefined s

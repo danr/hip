@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs,ScopedTypeVariables #-}
-module Test.QuickSpec.Equations where
+module Equations where
 
 import Control.Arrow
 import Control.Monad.Writer
@@ -13,9 +13,15 @@ import Data.Map(Map)
 import System.IO
 import System.Random
 import Text.Printf
-import Test.QuickSpec.Term hiding (evaluate)
-import Test.QuickSpec.CongruenceClosure
+import Term hiding (evaluate)
+import CongruenceClosure
 import Debug.Trace
+
+-- HACK GHC bug
+ty1 `eqTypeRep` ty2 =
+  f1 == f2 && and (zipWith eqTypeRep tys1 tys2)
+  where (f1, tys1) = splitTyConApp ty1
+        (f2, tys2) = splitTyConApp ty2
 
 -- Term generation.
 
@@ -26,7 +32,7 @@ terms :: Context -> Universe -> Universe
 terms ctx base ty =
      [ sym elt
      | elt <- ctx
-     , symbolType elt == ty
+     , symbolType elt `eqTypeRep` ty
      ]
   ++ [ App f x
      | ty' <- argTypes ctx ty
@@ -37,7 +43,7 @@ terms ctx base ty =
      ]
 
 argTypes ctx ty = [ ty1 | (ty1, ty2) <- funTypes (allTypes ctx),
-                          ty2 == ty ]
+                          ty2 `eqTypeRep` ty ]
 termIsUndefined (Const s) = isUndefined s
 termIsUndefined _ = False
 
@@ -47,7 +53,7 @@ terms' ctx base ty = nubSort
        [ App (Const f) x
        | ty' <- argTypes ctx ty
        , f <- ctx
-       , symbolType f == mkFunTy ty' ty
+       , symbolType f `eqTypeRep` mkFunTy ty' ty
        , x <- terms ctx base ty' ])
 
 nubSort :: Ord a => [a] -> [a]
@@ -55,7 +61,7 @@ nubSort = map head . partitionBy id
 
 undefinedSyms :: Context -> Context
 undefinedSyms = typeNub . concatMap (makeUndefined . symbolClass) . typeNub
-  where typeNub = nubBy (\s1 s2 -> symbolType s1 == symbolType s2)
+  where typeNub = nubBy (\s1 s2 -> symbolType s1 `eqTypeRep` symbolType s2)
         makeUndefined (Data x) =
           Symbol { name = "undefined", label = undefined, description = Nothing,
                    isUndefined = True, typ = TConst, range = return (Data (undefined `asTypeOf` x)) }:
@@ -134,7 +140,7 @@ consequences p ctx d univ univMap rigid (t, u) = cons1 t u `mplus` cons1 u t
                 u' = subst (s ++ s') u
             guard (p (unflatten t') && p (unflatten u'))
             return (t', u')
-          substs (v, d) = [ (v, Const s) | (_, s, ty) <- takeWhile (\(d', _, _) -> d' <= d) univ, ty == symbolType v ]
+          substs (v, d) = [ (v, Const s) | (_, s, ty) <- takeWhile (\(d', _, _) -> d' <= d) univ, ty `eqTypeRep` symbolType v ]
           ok s = all okAtType (partitionBy (show . symbolType . fst) s)
           okAtType s@((v,_):_) =
             case symbolClass v of
@@ -322,7 +328,7 @@ tests p f 0 _ _ = return (pack [])
 tests p f d ctx vals = do
   cs0 <- tests p f (d-1) ctx vals
   let reps = concatMap f (map sort (unpack cs0))
-      base ty = [ t | t <- reps, termType t == ty ]
+      base ty = [ t | t <- reps, termType t `eqTypeRep` ty ]
   test p d ctx vals base
 
 traceM :: Monad m => String -> m ()
