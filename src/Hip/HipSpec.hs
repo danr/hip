@@ -29,6 +29,8 @@ import Data.Maybe
 import Data.Typeable
 import Data.Char
 import Data.Ord
+import Data.Tuple
+import Data.Function
 
 import Control.Monad
 import Control.Applicative
@@ -47,13 +49,15 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
     loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
     loop ps@(_,cc) [] failed proved False = return (proved,failed)
     loop ps@(_,cc) (eq@(lhs,rhs):eqs) failed proved retry
+      | any (isomorphicTo eq) failed = do
+           putStrLn $ "Discarding renaming " ++ show lhs ++ " = " ++ show rhs ++ "."
+           loop ps eqs failed proved retry
       | evalCC cc (canDerive lhs rhs) = do
 
            putStrLn $ "No need to prove " ++ show lhs ++ " = " ++ show rhs ++ ", skipping."
            loop ps eqs failed proved retry
 
       | otherwise = do
-
            [(prop,success)] <- tryProve params [termsToProp lhs rhs] theory proved
            if success then let (cand,failed') = instancesOf ps eq failed
                                (_,ps') = doPrune (const True) ctxt depth [eq] [] ps
@@ -61,6 +65,27 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
                                             intercalate ", " (map (\(u,v) -> show u ++ " = " ++ show v) cand)
                                  loop ps' (cand ++ eqs) failed' (prop:proved) True
                       else loop ps eqs (failed ++ [eq]) proved retry
+
+    isomorphicTo :: QSEq -> QSEq -> Bool
+    e1 `isomorphicTo` e2 =
+      case matchEqSkeleton e1 e2 of
+        Nothing -> False
+        Just xs -> function xs && function (map swap xs)
+
+    matchEqSkeleton :: QSEq -> QSEq -> Maybe [(Symbol, Symbol)]
+    matchEqSkeleton (t, u) (t', u') =
+      liftM2 (++) (matchSkeleton t t') (matchSkeleton u u')
+
+    matchSkeleton :: Term Symbol -> Term Symbol -> Maybe [(Symbol, Symbol)]
+    matchSkeleton (T.Const f) (T.Const g) | f == g = return []
+    matchSkeleton (T.Var x) (T.Var y) = return [(x, y)]
+    matchSkeleton (T.App t u) (T.App t' u') =
+      liftM2 (++) (matchSkeleton t t') (matchSkeleton u u')
+    matchSkeleton _ _ = Nothing
+
+    function :: (Ord a, Eq b) => [(a, b)] -> Bool
+    function = all singleton . groupBy ((==) `on` fst) . nub . sortBy (comparing fst)
+      where singleton xs = length xs == 1
 
     instancesOf :: PruneState -> QSEq -> [QSEq] -> ([QSEq],[QSEq])
     instancesOf ps new = partition (instanceOf ps new)
