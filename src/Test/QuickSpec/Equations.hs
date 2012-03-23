@@ -16,6 +16,7 @@ import Text.Printf
 import Term hiding (evaluate)
 import CongruenceClosure
 import Debug.Trace
+import qualified TestTree as T
 
 -- HACK GHC bug
 ty1 `eqTypeRep` ty2 =
@@ -72,40 +73,9 @@ undefinedSyms = typeNub . concatMap (makeUndefined . symbolClass) . typeNub
 -- Equivalence class refinement.
 
 data Condition = Always | Symbol :/= Symbol deriving (Eq, Ord, Show)
--- satisfied :: Ord a => (Symbol -> a) -> Condition -> Bool
--- satisfied value (a :/= b) = value a /= value b
--- satisfied value Always = True
-
-data Classes a = Classes [TestResults a]
-data TestResults a = TestResults [a] [[Int]]
-
-pack :: [[a]] -> Classes a
-pack xss = Classes [ TestResults xs [] | xs <- xss ]
-
-evaluate :: Ord b => (() -> [(a -> b)]) -> Classes a -> Classes a
-evaluate ss (Classes rss) = Classes [ TestResults xs (vss ++ map (evaluate1 xs) (ss ()))
-                                    | TestResults xs vss <- rss ]
-  where evaluate1 xs eval = collate (map eval xs)
-        collate vs = [ Map.findWithDefault undefined v m | v <- vs ] `using` seqList rwhnf
-          where m = Map.fromList (zip (nubSort vs) [0..])
-
--- restrict :: Condition -> Classes a -> Classes a
--- restrict c (Classes ps rss) = Classes (filter keep ps) (map restrict1 rss)
---   where keep p = p c
---         restrict1 (TestResults xs vss) =
---           TestResults xs [ vs | (p, vs) <- zip ps vss, p c ]
-
-limit :: Int -> Classes a -> Classes a
-limit n (Classes rss) = Classes (map limit1 rss)
-  where limit1 (TestResults xs rss) = TestResults xs (take n rss)
-
-unpack :: Classes a -> [[a]]
-unpack (Classes rss) = concatMap unpack1 rss
-  where unpack1 (TestResults xs vss) = map (map fst) (partitionBy snd (zip xs (transpose vss)))
-
-parRefine :: ([a] -> [[a]]) -> ([[a]] -> [[a]])
-parRefine f xs = concat (parMap (parList r0) f xs)
---parRefine = concatMap
+satisfied :: Ord a => (Symbol -> a) -> Condition -> Bool
+satisfied value (a :/= b) = value a /= value b
+satisfied value Always = True
 
 partitionBy :: Ord b => (a -> b) -> [a] -> [[a]]
 partitionBy value = map (map fst) . groupBy (\x y -> snd x == snd y) . sortBy (comparing snd) . map (id &&& value)
@@ -277,11 +247,12 @@ laws depth ctx0 cond p p' = do
   seeds <- genSeeds
   putStrLn "== classes =="
   cs <- tests p (take 1) depth ctx seeds
+  -- error "oops"
   let eqs cond = map head
                $ partitionBy equationOrder
-               $ [ (y,x) | x:xs <- map sort (unpack cs), funTypes [termType x] == [], y <- xs ]
+               $ [ (y,x) | x:xs <- map sort cs, funTypes [termType x] == [], y <- xs ]
   printf "%d raw equations.\n\n" (length (eqs Always))
-  let univ = filter (not . termIsUndefined) (concat (unpack cs))
+  let univ = filter (not . termIsUndefined) (concat cs)
   printf "Universe has %d terms.\n" (length univ)
   putStrLn "== definitions =="
   sequence_
@@ -298,24 +269,25 @@ laws depth ctx0 cond p p' = do
        | (i, (cond, y,x)) <- zip [1..] pruned
        ]
   forM_ pruned $ \(cond, y, x) -> do
-    let c = head (filter (\(x':_) -> x == x') (map sort (unpack cs)))
+    let c = head (filter (\(x':_) -> x == x') (map sort cs))
         commonVars = foldr1 intersect (map vars c)
         subsumes t = sort (vars t) == sort commonVars
     when (cond == Always && not (any subsumes c)) $
          printf "*** missing term: %s = ???\n"
                 (show (mapVars (\s -> if s `elem` commonVars then s else s { name = "_" ++ name s }) x))
 
-test :: (Term Symbol -> Bool) -> Int -> Context -> [(StdGen, Int)] -> (TypeRep -> [Term Symbol]) -> IO (Classes (Term Symbol))
+test :: (Term Symbol -> Bool) -> Int -> Context -> [(StdGen, Int)] -> (TypeRep -> [Term Symbol]) -> IO [[Term Symbol]]
 test p depth ctx seeds base = do
   printf "Depth %d: " depth
-  let cs0 = filter (not . null) [ filter p (terms ctx base ty) | ty <- allTypes ctx ]
-  printf "%d terms, " (length (concat cs0))
+  let ts = filter (not . null) [ filter p (terms ctx base ty) | ty <- allTypes ctx ]
+  printf "%d terms, " (length (concat ts))
   let evals = [ toValue . eval (memoSym ctx ctxFun) | (ctxFun, toValue) <- map useSeed seeds ]
-      cs1 = evaluate (\() -> take 200 evals) (pack cs0)
+      tree = map (T.test evals) ts
+      cs = concatMap (T.classes . T.cutOff 200) tree
   printf "%d classes, %d raw equations.\n"
-         (length (unpack cs1))
-         (sum (map (subtract 1 . length) (unpack cs1)))
-  return cs1
+         (length cs)
+         (sum (map (subtract 1 . length) cs))
+  return cs
 
 memoSym :: Context -> (Symbol -> a) -> (Symbol -> a)
 memoSym ctx f = (arr !) . label
@@ -332,11 +304,11 @@ memoSym ctx f = (arr !) . label
 --   return (n, cs)
 -- --  if cs0 == cs1 then return (n, cs) else tests (d+1) ctx vals n
 
-tests :: (Term Symbol -> Bool) -> ([Term Symbol] -> [Term Symbol]) -> Int -> Context -> [(StdGen, Int)] -> IO (Classes (Term Symbol))
-tests p f 0 _ _ = return (pack [])
+tests :: (Term Symbol -> Bool) -> ([Term Symbol] -> [Term Symbol]) -> Int -> Context -> [(StdGen, Int)] -> IO [[Term Symbol]]
+tests p f 0 _ _ = return []
 tests p f d ctx vals = do
   cs0 <- tests p f (d-1) ctx vals
-  let reps = concatMap f (map sort (unpack cs0))
+  let reps = concatMap f cs0
       base ty = [ t | t <- reps, termType t `eqTypeRep` ty ]
   test p d ctx vals base
 
@@ -347,7 +319,7 @@ congruenceCheck :: Int -> Context -> (Term Symbol -> Bool) -> IO ()
 congruenceCheck d ctx0 p = do
   let ctx = zipWith relabel [0..] (ctx0 ++ undefinedSyms ctx0)
   seeds <- genSeeds
-  terms <- fmap (sort . map sort . unpack) (tests p id d (zipWith relabel [0..] ctx) seeds)
+  terms <- fmap (sort . map sort) (tests p id d (zipWith relabel [0..] ctx) seeds)
   -- Check: for all f and x, rep (f $$ x) == rep(rep f $$ rep x).
   let reps = Map.unions [ Map.fromList (zip ts (repeat t)) | ts@(t:_) <- terms ]
       rep x = Map.findWithDefault undefined x reps
