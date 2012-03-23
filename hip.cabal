@@ -16,6 +16,49 @@ Library
   Exposed-modules:
     Hip.HipSpec
 
+  Other-modules:
+    Hip.InvokeATPs
+    Hip.Provers
+    Hip.FromHaskell.Names
+    Hip.FromHaskell.Monad
+    Hip.FromHaskell.Vars
+    Hip.FromHaskell.FromHaskell
+    Hip.Messages
+    Hip.Params
+    Hip.ResultDatatypes
+    Hip.Util
+    Hip.RunProver
+    Hip.Trans.NecessaryDefinitions
+    Hip.Trans.TranslateExpr
+    Hip.Trans.Names
+    Hip.Trans.Monad
+    Hip.Trans.MakeProofs
+    Hip.Trans.Theory
+    Hip.Trans.ProofDatatypes
+    Hip.Trans.Pretty
+    Hip.Trans.StructuralInduction
+    Hip.Trans.Parser
+    Hip.Trans.Core
+    Hip.Trans.Lexer
+    Hip.Trans.FixBranches
+    Hip.Trans.ArbitraryCore
+    Hip.Trans.TyEnv
+    Hip.Trans.ParserInternals
+    Hip.Trans.MakeTheory
+    Hip.Trans.Latex
+    Hip.Trans.TranslateDecl
+    Hip.Trans.FixpointInduction
+    Hip.Trans.Constructors
+    Hip.Trans.Types
+    Test.QuickSpec.Equations
+    Test.QuickSpec.UnionFind
+    Test.QuickSpec.CongruenceClosure
+    Test.QuickSpec.CatchExceptions
+    Test.QuickSpec.Term
+    Test.QuickSpec
+    Language.TPTP.Pretty
+    Language.TPTP
+
   Build-depends: base                          >= 4    && < 5
                , process                       >= 1.0.1.1
                , uniplate                      >= 1.6
