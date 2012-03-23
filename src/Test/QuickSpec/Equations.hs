@@ -16,7 +16,7 @@ import Text.Printf
 import Test.QuickSpec.Term hiding (evaluate)
 import Test.QuickSpec.CongruenceClosure
 import Debug.Trace
-import qualified TestTree as T
+import qualified Test.QuickSpec.TestTree as T
 
 -- HACK GHC bug
 ty1 `eqTypeRep` ty2 =
