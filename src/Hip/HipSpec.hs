@@ -10,7 +10,7 @@ import Hip.Util
 import Hip.Trans.MakeTheory
 import Hip.Trans.Theory
 import Hip.Messages
-import Hip.Params
+import Hip.Params as P
 import Hip.Trans.Parser
 import Hip.Trans.Core as C
 import Hip.Trans.Pretty
@@ -32,9 +32,10 @@ import Data.Ord
 import Data.Tuple
 import Data.Function
 
+import Control.Monad.State
 import Control.Monad
 import Control.Applicative
-import Control.Arrow ((***),(&&&),second)
+import Control.Arrow ((***),(&&&),second,first)
 
 import System.IO
 import System.Console.CmdArgs hiding (summary,name)
@@ -42,29 +43,56 @@ import System.Exit (exitFailure,exitSuccess)
 
 type QSEq = (Term Symbol,Term Symbol)
 
+showEq :: QSEq -> String
+showEq (lhs,rhs) = show lhs ++ " = " ++ show rhs
+
+csv :: [String] -> String
+csv = intercalate ", "
+
+
+-- (sat p,unsat p (at most n),rest)
+getUpTo :: Int -> (a -> [a] -> Bool) -> [a] -> [a] -> ([a],[a],[a])
+getUpTo 0 p xs     ys = ([],[],xs)
+getUpTo n p []     ys = ([],[],[])
+getUpTo n p (x:xs) ys | p x ys    = let (s,u,r) = getUpTo n     p xs (x:ys) in (x:s,  u,r)
+                      | otherwise = let (s,u,r) = getUpTo (n-1) p xs (x:ys) in (  s,x:u,r)
+
 deep :: Params -> Theory -> [Symbol] -> Int -> [Term Symbol] -> [QSEq] -> IO ([Prop],[QSEq])
 deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] False
   where
+    chunks = P.processes params
+
     loop :: PruneState -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
     loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
-    loop ps@(_,cc) [] failed proved False = return (proved,failed)
-    loop ps@(_,cc) (eq@(lhs,rhs):eqs) failed proved retry
-      | any (isomorphicTo eq) failed = do
-           putStrLn $ "Discarding renaming " ++ show lhs ++ " = " ++ show rhs ++ "."
-           loop ps eqs failed proved retry
-      | evalCC cc (canDerive lhs rhs) = do
+    loop ps@(_,cc) [] failed proved False = return (reverse proved,failed)
+    loop ps@(_,cc) eqs failed proved retry = do
 
-           putStrLn $ "No need to prove " ++ show lhs ++ " = " ++ show rhs ++ ", skipping."
-           loop ps eqs failed proved retry
+      let discard eq failedacc = any (isomorphicTo eq) failedacc || evalCC cc (uncurry canDerive eq)
 
-      | otherwise = do
-           [(prop,success)] <- tryProve params [termsToProp lhs rhs] theory proved
-           if success then let (cand,failed') = instancesOf ps eq failed
-                               (_,ps') = doPrune (const True) ctxt depth [eq] [] ps
-                           in do putStrLn $ "Interesting candidates: " ++
-                                            intercalate ", " (map (\(u,v) -> show u ++ " = " ++ show v) cand)
-                                 loop ps' (cand ++ eqs) failed' (prop:proved) True
-                      else loop ps eqs (failed ++ [eq]) proved retry
+          (renamings,tryEqs,nextEqs) = getUpTo chunks discard eqs failed
+
+      putStrLn $ "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
+
+      res <- tryProve params (map (uncurry termsToProp) tryEqs) theory proved
+
+      let (successes,failures) = (map fst *** map fst) (partition snd res)
+          (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
+          failureEqs = map propQSTerms failures
+
+      if null successes
+          then loop ps nextEqs (failed ++ failureEqs) proved retry
+          else do let (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
+                      failed' = failed ++ failureEqs
+                      (cand,failedWoCand) = first (sortBy (comparing equationOrder) . nub . concat)
+                                          $ flip runState failed'
+                                          $ forM successes
+                                          $ \prop -> do failed <- get
+                                                        let eq = propQSTerms prop
+                                                            (cand,failed') = instancesOf ps eq failed
+                                                        put failed'
+                                                        return cand
+                  putStrLn $ "Interesting candidates: " ++ csv (map showEq cand)
+                  loop ps' (cand ++ nextEqs) failedWoCand (proved ++ successes) True
 
     isomorphicTo :: QSEq -> QSEq -> Bool
     e1 `isomorphicTo` e2 =
@@ -94,25 +122,6 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
     instanceOf ps new cand =
        let (_,(_,cc)) = doPrune (const True) ctxt depth [cand] [] ps
        in  evalCC cc (uncurry canDerive new)
-
-  {-
-    loop :: PruneState -> [QSEq] -> [Prop] -> IO ([Prop],[QSEq])
-    loop ps@(_,cc) eqs proved = do
-      let (skip,eqs') = partition (\(lhs,rhs) -> evalCC cc (canDerive lhs rhs)) eqs
-      forM_ skip $ \(lhs,rhs) -> putStrLn $ "No need to prove " ++ show lhs ++ " = "
-                                                                ++ show rhs ++ ", skipping."
-      res <- tryProve params (map (uncurry termsToProp) eqs') theory proved
-      let (successes,failures) = (map fst *** map fst) (partition snd res)
-          (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
-          failureQSEqs = map propQSTerms failures
-      if null successes
-          then return (proved,failureQSEqs)
-          else loop ps' (map propQSTerms failures) (successes ++ proved)
-
-          -}
-
-{-
--}
 
 termToExpr :: Term Symbol -> Expr
 termToExpr t = case t of
@@ -147,7 +156,7 @@ typeableType tr
 
 hipSpec :: FilePath -> [Symbol] -> Int -> IO ()
 hipSpec file ctxt depth = do
-  hSetBuffering stdin LineBuffering
+  hSetBuffering stdout NoBuffering -- LineBuffering
 
   params@Params{..} <- cmdArgs (hipSpecParams file)
 
