@@ -1,5 +1,4 @@
-module Test.QuickSpec.UnionFind
-       (UF, Replacement((:>)), newSym, (=:=), rep, frozen, runUF, S, isRep) where
+module UnionFind(UF, Replacement((:>)), newSym, (=:=), rep, evalUF, execUF, runUF, S, isRep, initial) where
 
 import Prelude hiding (min)
 import Control.Monad.State.Strict
@@ -14,8 +13,17 @@ data S = S {
 type UF = State S
 data Replacement = Int :> Int
 
-runUF :: Int -> UF a -> a
-runUF numSyms m = fst (runState m (S IntMap.empty numSyms))
+runUF :: S -> UF a -> (a, S)
+runUF s m = runState m s
+
+evalUF :: S -> UF a -> a
+evalUF s m = fst (runUF s m)
+
+execUF :: S -> UF a -> S
+execUF s m = snd (runUF s m)
+
+initial :: Int -> S
+initial n = S IntMap.empty n
 
 modifyLinks f = modify (\s -> s { links = f (links s) })
 modifySym f = modify (\s -> s { sym = f (sym s) })
@@ -49,8 +57,5 @@ rep t = do
 
 isRep :: Int -> UF Bool
 isRep t = do
-  t' <- frozen (rep t)
+  t' <- rep t
   return (t == t')
-
-frozen :: UF a -> UF a
-frozen x = fmap (evalState x) get
