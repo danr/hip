@@ -1,9 +1,12 @@
-{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies, CPP #-}
 module Main where
 
 import Data.Typeable
+
 import Hip.HipSpec
+
 import Test.QuickCheck
+
 import Prelude hiding ((+),(*))
 
 data Nat = Z | S Nat deriving (Show,Eq,Ord,Typeable)
