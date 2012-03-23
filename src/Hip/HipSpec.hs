@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards,PatternGuards #-}
 module Hip.HipSpec (hipSpec, module Test.QuickSpec.Term) where
 
 import Test.QuickSpec.Term
@@ -67,12 +67,15 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
     loop ps@(_,cc) [] failed proved False = return (reverse proved,failed)
     loop ps@(_,cc) eqs failed proved retry = do
 
-      let discard eq failedacc = any (isomorphicTo eq) failedacc || evalCC cc (uncurry canDerive eq)
+      let discard eq = \failedacc -> any (isomorphicTo eq) failedacc
+                                  || evalCC cc (uncurry canDerive eq)
 
           (renamings,tryEqs,nextEqs) = getUpTo chunks discard eqs failed
 
       unless (null renamings) $ putStrLn $
-         "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
+         let n = length renamings
+         in if (n > 5) then "Discarding " ++ show n ++ " renamings and subsumptions."
+                       else "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
 
       res <- tryProve params (map (uncurry termsToProp) tryEqs) theory proved
 
@@ -135,26 +138,29 @@ termToExpr t = case t of
 
 -- So far only works on arguments with monomorphic, non-exponential types
 termsToProp :: Term Symbol -> Term Symbol -> Prop
-termsToProp lhs rhs = Prop { proplhs  = termToExpr lhs
-                           , proprhs  = termToExpr rhs
-                           , propVars = map (name . fst) typedArgs
-                           , propName = repr
-                           , propType = TyApp (map snd typedArgs ++ [error $ "res on qs prop " ++ repr])
-                           , propRepr = repr ++ " (from quickSpec)"
-                           , propQSTerms = (lhs,rhs)
-                           }
+termsToProp e1 e2 = Prop { proplhs  = lhs'
+                         , proprhs  = rhs'
+                         , propVars = args'
+                         , propName = repr
+                         , propType = ty'
+                         , propRepr = repr ++ " (from quickSpec)"
+                         , propQSTerms = (e1,e2)
+                         }
   where
-    typedArgs = map (id &&& typeableType . symbTypeRep) (nub (vars lhs ++ vars rhs))
-    repr = show lhs ++ " = " ++ show rhs
+    lhs = termToExpr e1
+    rhs = termToExpr e2
+    args = map (name . fst) typedArgs
+    ty   = TyApp (map snd typedArgs ++ [TyCon "Prop" [typeableType (termType e1)]])
+    (lhs',rhs',args',ty') = etaExpand lhs rhs args ty
+    typedArgs = map (id &&& typeableType . symbolType) (nub (vars e1 ++ vars e2))
+    repr = showEq (e1,e2)
 
 typeableType :: TypeRep -> Type
 typeableType tr
+  | [(ta,tb)] <- funTypes [tr] = typeableType ta `tapp` typeableType tb
   | tyConName (typeRepTyCon tr) == "Int" = TyVar "a"
   | otherwise = TyCon (tyConName . typeRepTyCon $ tr)
-                        (map typeableType (typeRepArgs tr))
-     -- where
-     --   fixTyConString = reverse . takeWhile (/= '.') . reverse
-
+                      (map typeableType (typeRepArgs tr))
 
 hipSpec :: FilePath -> [Symbol] -> Int -> IO ()
 hipSpec file ctxt depth = do

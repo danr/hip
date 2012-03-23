@@ -46,6 +46,20 @@ processDecls ds = ProcessedDecls{..}
               : filter (\d -> declName d `notElem` proofDatatypes) dataDecls'
 
 
+etaExpand :: Expr -> Expr -> [Name] -> Type
+          -> (Expr,Expr,[Name],Type)
+etaExpand lhs rhs args ty =
+  case unProp (resType ty) of
+         -- Prop (a -> b) ~= a -> Prop b
+         TyApp ts -> let extraTyVars = zip [ "x." ++ show x | x <- [0..] ]
+                                           (init ts)
+                     in (foldl app lhs (map (Var . fst) extraTyVars)
+                        ,foldl app rhs (map (Var . fst) extraTyVars)
+                        ,args ++ map fst extraTyVars
+                        ,foldr tapp (TyCon "Prop" [last ts]) (argsTypes ty ++ init ts)
+                        )
+         _        -> (lhs,rhs,args,ty)
+
 makeTheory :: Params -> [Decl] -> (Theory,[Prop],[Msg])
 makeTheory params ds =
   let ProcessedDecls{..} = processDecls ds
@@ -101,17 +115,7 @@ makeTheory params ds =
                                   Expr (App "=:=" [lhs,rhs])               -> Just (lhs,rhs)
                                   _ -> Nothing
                              ty <- lookup prop_name types
-                             let resTy       = unProp (resType ty)
-                                 (lhs',rhs',args',ty') = case resTy of
-                                    -- Prop (a -> b) ~= a -> Prop b
-                                    TyApp ts -> let extraTyVars = zip [ "x." ++ show x | x <- [0..] ]
-                                                                      (init ts)
-                                                in (foldl app lhs (map (Var . fst) extraTyVars)
-                                                   ,foldl app rhs (map (Var . fst) extraTyVars)
-                                                   ,args ++ map fst extraTyVars
-                                                   ,foldr tapp (TyCon "Prop" [last ts]) (argsTypes ty ++ init ts)
-                                                   )
-                                    _        -> (lhs,rhs,args,ty)
+                             let (lhs',rhs',args',ty') = etaExpand lhs rhs args ty
                              return (Prop { proplhs  = lhs'
                                           , proprhs  = rhs'
                                           , propVars = args'

@@ -70,7 +70,7 @@ prove :: TyEnv
       -- ^ Resulting instructions how to do proof declarations for this
 prove env params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
     let indargs :: [(Name,Type)]
-        indargs = filter (\(_,t) -> not (finiteTy env t) && concreteType t) typedVars
+        indargs = filter (\(_,t) -> {- not (finiteTy env t) && -} concreteType t) typedVars
         powset :: [[(Name,Type)]]
         powset = powerset indargs
    in  concat $ [ plainProof                                  | 'p' `elem` methods ]
