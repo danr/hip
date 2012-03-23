@@ -10,25 +10,46 @@ cabal-version:      >= 1.6
 build-type:         Simple
 homepage:           github.com/danr/hip
 
-executable          hipspec
-    ghc-options:    -threaded -O2 -rtsopts
-    hs-source-dirs: src
-    main-is:        Hip/SpecMain.hs
+Library
+  hs-source-dirs: src
 
-    build-depends: base                          >= 4    && < 5
-                 , process                       >= 1.0.1.1
-                 , uniplate                      >= 1.6
-                 , Grempa                        >= 0.2
-                 , haskell-src-exts              >= 1.11.1
-                 , mtl                           >= 2.0
-                 , pretty                        >= 1.0
-                 , QuickCheck                    >= 2.0
-                 , th-lift                       >= 0.5
-                 , fclabels                      >= 1.0
-                 , containers                    >= 0.3
-                 , cmdargs                       >= 0.9
-                 , stm                           >= 2.0
-                 , directory                     >= 1.0
+  Exposed-modules:
+    Hip.HipSpec
 
-executable          FixLADR
-    main-is: testsuite/Util/FixLADR.hs
+  Build-depends: base                          >= 4    && < 5
+               , process                       >= 1.0.1.1
+               , uniplate                      >= 1.6
+               -- , Grempa                        >= 0.2
+               , haskell-src-exts              >= 1.11.1
+               , mtl                           >= 2.0
+               , pretty                        >= 1.1.1.0
+               , QuickCheck                    >= 2.0
+               , fclabels                      >= 1.0
+               , containers                    >= 0.3
+               , cmdargs                       >= 0.9
+               , stm                           >= 2.0
+               , directory                     >= 1.0
+
+
+-- executable          hipspec
+--     ghc-options:    -threaded -O2 -rtsopts
+--     hs-source-dirs: src
+--     main-is:        Hip/SpecMain.hs
+--
+--     build-depends: base                          >= 4    && < 5
+--                  , process                       >= 1.0.1.1
+--                  , uniplate                      >= 1.6
+--                  , Grempa                        >= 0.2
+--                  , haskell-src-exts              >= 1.11.1
+--                  , mtl                           >= 2.0
+--                  , pretty                        >= 1.0
+--                  , QuickCheck                    >= 2.0
+--                  , th-lift                       >= 0.5
+--                  , fclabels                      >= 1.0
+--                  , containers                    >= 0.3
+--                  , cmdargs                       >= 0.9
+--                  , stm                           >= 2.0
+--                  , directory                     >= 1.0
+--
+-- executable          FixLADR
+--     main-is: testsuite/Util/FixLADR.hs
