@@ -86,7 +86,7 @@ evaluate :: Ord b => (() -> [(a -> b)]) -> Classes a -> Classes a
 evaluate ss (Classes rss) = Classes [ TestResults xs (vss ++ map (evaluate1 xs) (ss ()))
                                     | TestResults xs vss <- rss ]
   where evaluate1 xs eval = collate (map eval xs)
-        collate vs = [ Map.findWithDefault undefined v m | v <- vs ]-- `using` seqList rwhnf
+        collate vs = [ Map.findWithDefault undefined v m | v <- vs ] `using` seqList rwhnf
           where m = Map.fromList (zip (nubSort vs) [0..])
 
 -- restrict :: Condition -> Classes a -> Classes a
