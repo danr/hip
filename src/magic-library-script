@@ -1,0 +1,4 @@
+#!/bin/bash
+
+find -name *.hs | ghc -e 'interact (unlines . map (reverse . drop 3 . reverse . drop 2) . lines)' | sed 's!/!.!g'
+
