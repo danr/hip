@@ -59,11 +59,11 @@ termsToProp lhs rhs = Prop { proplhs  = termToExpr lhs
 
 typeableType :: TypeRep -> Type
 typeableType tr
-  | tyConString (typeRepTyCon tr) == "Int" = TyVar "a"
-  | otherwise = TyCon (fixTyConString . tyConString . typeRepTyCon $ tr)
+  | tyConName (typeRepTyCon tr) == "Int" = TyVar "a"
+  | otherwise = TyCon (tyConName . typeRepTyCon $ tr)
                         (map typeableType (typeRepArgs tr))
-     where
-       fixTyConString = reverse . takeWhile (/= '.') . reverse
+     -- where
+     --   fixTyConString = reverse . takeWhile (/= '.') . reverse
 
 
 hipSpec :: FilePath -> [Symbol] -> Int -> IO ()

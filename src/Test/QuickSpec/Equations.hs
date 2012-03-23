@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs,ScopedTypeVariables #-}
-module Equations where
+module Test.QuickSpec.Equations where
 
 import Control.Arrow
 import Control.Monad.Writer
@@ -13,8 +13,8 @@ import Data.Map(Map)
 import System.IO
 import System.Random
 import Text.Printf
-import Term hiding (evaluate)
-import CongruenceClosure
+import Test.QuickSpec.Term hiding (evaluate)
+import Test.QuickSpec.CongruenceClosure
 import Debug.Trace
 
 -- HACK GHC bug

@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs,TypeFamilies,FlexibleInstances,FlexibleContexts,DeriveDataTypeable,ScopedTypeVariables,StandaloneDeriving #-}
-module Term where
+module Test.QuickSpec.Term where
 
-import CatchExceptions
+import Test.QuickSpec.CatchExceptions
 import Control.Monad
 import Data.Ord
 import Data.Char
