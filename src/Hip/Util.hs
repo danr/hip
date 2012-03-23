@@ -1,7 +1,7 @@
 module Hip.Util
        (unlist,avgList,selections,inspect,withPrevious,concatMapM,concatMaybe
        ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted,forFind
-       ,color,Color(..))
+       ,bold,color,Color(..))
        where
 
 import Data.Maybe
