@@ -194,7 +194,7 @@ hipSpec file ctxt depth = do
     putStrLn "Translation complete. Generating equivalence classes."
 
     let classToEqs :: [[Term Symbol]] -> [(Term Symbol,Term Symbol)]
-        classToEqs = sortBy (comparing equationOrder)
+        classToEqs = sortBy (comparing (equationOrder . swap))
                    . concatMap ((\(x:xs) -> zip (repeat x) xs) . sort)
 
     quickSpecClasses <- packLaws depth ctxt True (const True) (const True)
