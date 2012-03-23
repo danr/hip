@@ -10,6 +10,7 @@ data Params = Params { files       :: [FilePath]
                      , statistics  :: Bool
 
                      , processes   :: Int
+                     , batchsize   :: Int
                      , timeout     :: Int
                      , provers     :: String
                      , methods     :: String
@@ -50,6 +51,7 @@ defParams = Params
   , statistics  = False   &= help "Generate statistics files (run with --reprove)"
 
   , processes   = 2       &= help "Number of prover processes (default 2)" &= name "p" &= groupname "\nProving settings"
+  , batchsize   = 0       &= ignore
   , timeout     = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
   , provers     = "e"     &= help "Provers to use (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
   , methods     = "pisfa" &= help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"
@@ -83,6 +85,7 @@ hipSpecParams file = Params
   , statistics  = False   &= ignore -- help "Generate statistics files (run with --reprove)"
 
   , processes   = 2       &= help "Number of prover processes (default 2)" &= name "p" &= groupname "\nProving settings"
+  , batchsize   = 2       &= help "Number of equations to process from QuickSpec simultaneously (default 2)" &= name "b"
   , timeout     = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
   , provers     = "e"     &= help "Provers to use (e)prover (v)ampire (p)rover9 (s)pass equino(x)"
   , methods     = "pisfa" &= ignore -- help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"

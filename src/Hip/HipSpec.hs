@@ -60,7 +60,7 @@ getUpTo n p (x:xs) ys | p x ys    = let (s,u,r) = getUpTo n     p xs (x:ys) in (
 deep :: Params -> Theory -> [Symbol] -> Int -> [Term Symbol] -> [QSEq] -> IO ([Prop],[QSEq])
 deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] False
   where
-    chunks = P.processes params
+    chunks = batchsize params
 
     loop :: PruneState -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
     loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
@@ -71,7 +71,8 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
 
           (renamings,tryEqs,nextEqs) = getUpTo chunks discard eqs failed
 
-      putStrLn $ "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
+      unless (null renamings) $ putStrLn $
+         "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
 
       res <- tryProve params (map (uncurry termsToProp) tryEqs) theory proved
 
@@ -81,18 +82,19 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
 
       if null successes
           then loop ps nextEqs (failed ++ failureEqs) proved retry
-          else do let (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
-                      failed' = failed ++ failureEqs
-                      (cand,failedWoCand) = first (sortBy (comparing equationOrder) . nub . concat)
-                                          $ flip runState failed'
-                                          $ forM successes
-                                          $ \prop -> do failed <- get
-                                                        let eq = propQSTerms prop
-                                                            (cand,failed') = instancesOf ps eq failed
-                                                        put failed'
-                                                        return cand
-                  putStrLn $ "Interesting candidates: " ++ csv (map showEq cand)
-                  loop ps' (cand ++ nextEqs) failedWoCand (proved ++ successes) True
+          else do
+              let (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
+                  failed' = failed ++ failureEqs
+                  (cand,failedWoCand) = first (sortBy (comparing equationOrder) . nub . concat)
+                                      $ flip runState failed'
+                                      $ forM successes
+                                      $ \prop -> do failed <- get
+                                                    let eq = propQSTerms prop
+                                                        (cand,failed') = instancesOf ps eq failed
+                                                    put failed'
+                                                    return cand
+              unless (null cand) $ putStrLn $ "Interesting candidates: " ++ csv (map showEq cand)
+              loop ps' (cand ++ nextEqs) failedWoCand (proved ++ successes) True
 
     isomorphicTo :: QSEq -> QSEq -> Bool
     e1 `isomorphicTo` e2 =
