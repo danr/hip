@@ -1,13 +1,13 @@
 -- Based on the paper "Proof-producing Congruence Closure".
 
-module CongruenceClosure(CC, newSym, (=:=), (=?=), rep, evalCC, execCC, runCC, ($$), S, funUse, argUse, lookup, initial, frozen) where
+module Test.QuickSpec.CongruenceClosure(CC, newSym, (=:=), (=?=), rep, evalCC, execCC, runCC, ($$), S, funUse, argUse, lookup, initial, frozen) where
 
 import Prelude hiding (lookup)
 import Control.Monad.State.Strict
 import Data.IntMap(IntMap)
 import qualified Data.IntMap as IntMap
-import UnionFind(UF, Replacement((:>)))
-import qualified UnionFind as UF
+import Test.QuickSpec.UnionFind(UF, Replacement((:>)))
+import qualified Test.QuickSpec.UnionFind as UF
 import Data.Maybe
 import Data.List(foldl')
 import Test.QuickCheck
