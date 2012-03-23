@@ -55,6 +55,8 @@ Library
     Test.QuickSpec.CongruenceClosure
     Test.QuickSpec.CatchExceptions
     Test.QuickSpec.Term
+    Test.QuickSpec.Utils
+    Test.QuickSpec.TestTree
     Test.QuickSpec
     Language.TPTP.Pretty
     Language.TPTP
