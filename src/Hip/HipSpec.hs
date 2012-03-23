@@ -199,13 +199,6 @@ hipSpec file ctxt depth = do
 
     quickSpecClasses <- packLaws depth ctxt True (const True) (const True)
 
-    putStrLn "Equivalence classes:"
-    forM_ quickSpecClasses $ \cl -> putStrLn $ intercalate " = " (map show cl)
-
-    putStrLn "With representatives:"
-    putStrLn $ unlines (map (\(l,r) -> show l ++ " = " ++ show r)
-                            (classToEqs quickSpecClasses))
-
     let univ = concat quickSpecClasses
 
     putStrLn "Starting to prove..."
