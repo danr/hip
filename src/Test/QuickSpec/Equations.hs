@@ -382,8 +382,8 @@ congruenceCheck d ctx0 p = do
 
 -- For Hipspec
 packLaws :: Int -> [Symbol] -> t -> (Term Symbol -> Bool) -> (Term Symbol -> Bool)
-         -> IO [(Term Symbol,Term Symbol)]
-     --  -> IO [[Term Symbol]]
+     --     -> IO [(Term Symbol,Term Symbol)]
+       -> IO [[Term Symbol]]
 packLaws depth ctx0 cond p p' = do
 
   let ctx = zipWith relabel [0..] (ctx0 ++ undefinedSyms ctx0)
@@ -391,6 +391,10 @@ packLaws depth ctx0 cond p p' = do
   seeds <- genSeeds
 
   cs <- tests p (take 1) depth ctx seeds
+
+  return (unpack cs)
+
+  {-
 
   let eqs :: Condition -> [(Term Symbol,Term Symbol)]
       eqs cond = map head
@@ -426,9 +430,11 @@ packLaws depth ctx0 cond p p' = do
        | (i, (cond, l,r)) <- zip [1..] pruned
        ]
 
-  return $ [ {- getClassFromEq cond -} (l,r)
+  return $ [ getClassFromEq cond (l,r)
            | (i, (cond, l,r)) <- zip [1..] pruned
            ]
+
+           -}
 
   -- Missing terms?
   {-

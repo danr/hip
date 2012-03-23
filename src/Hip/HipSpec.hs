@@ -4,6 +4,7 @@ module Hip.HipSpec (hipSpec, module Test.QuickSpec.Term) where
 import Test.QuickSpec.Term
 import qualified Test.QuickSpec.Term as T
 import Test.QuickSpec.Equations
+import Test.QuickSpec.CongruenceClosure
 
 import Hip.Util
 import Hip.Trans.MakeTheory
@@ -27,6 +28,7 @@ import Data.List
 import Data.Maybe
 import Data.Typeable
 import Data.Char
+import Data.Ord
 
 import Control.Monad
 import Control.Applicative
@@ -36,6 +38,45 @@ import System.IO
 import System.Console.CmdArgs hiding (summary,name)
 import System.Exit (exitFailure,exitSuccess)
 
+type QSEq = (Term Symbol,Term Symbol)
+
+deep :: Params -> Theory -> [QSEq] -> IO ([Prop],[QSEq])
+deep params theory eqs = loop (initial initialN) eqs []
+  where
+    initialN = maximum (concatMap (map label . symbols) terms) + 1
+    terms = uncurry (++) (unzip eqs)
+
+    loop :: S -> [QSEq] -> [Prop] -> IO ([Prop],[QSEq])
+    loop cc eqs proved = do
+      let (skip,eqs') = partition (\(lhs,rhs) -> evalCC cc (canDerive lhs rhs)) eqs
+      forM_ skip $ \(lhs,rhs) -> putStrLn $ "No need to prove " ++ show lhs ++ " = "
+                                                                ++ show rhs ++ ", skipping."
+      res <- tryProve params (map (uncurry termsToProp) eqs') theory proved
+      let (successes,failures) = (map fst *** map fst) (partition snd res)
+          cc' = execCC cc $ forM_ successes $ \prop ->
+                     let (lhs,rhs) = propQSTerms prop
+                     in  unify (killSymbols lhs,killSymbols rhs)
+          failureQSEqs = map propQSTerms failures
+      if null successes
+          then return (proved,failureQSEqs)
+          else loop cc' (map propQSTerms failures) (successes ++ proved)
+
+
+{-
+        loop :: S -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
+        loop cc [] unproved proved True      = loop cc (reverse unproved) [] proved False
+        loop cc [] unproved proved False     = return (proved,unproved)
+        loop cc (eq@(lhs,rhs):es) unproved proved retry
+          | evalCC cc (canDerive lhs rhs) = do
+               putStrLn $ "No need to prove " ++ show lhs ++ " = " ++ show rhs ++ ", skipping."
+               loop cc es unproved proved retry
+          | otherwise = do
+               [(prop,success)] <- tryProve params [termsToProp lhs rhs] theory proved
+               if success
+                   then let cc' = execCC cc (unify (killSymbols lhs,killSymbols rhs))
+                        in  loop cc' es unproved (prop:proved) True
+                   else loop cc es (eq:unproved) proved retry
+-}
 
 termToExpr :: Term Symbol -> Expr
 termToExpr t = case t of
@@ -52,6 +93,7 @@ termsToProp lhs rhs = Prop { proplhs  = termToExpr lhs
                            , propName = repr
                            , propType = TyApp (map snd typedArgs ++ [error $ "res on qs prop " ++ repr])
                            , propRepr = repr ++ " (from quickSpec)"
+                           , propQSTerms = (lhs,rhs)
                            }
   where
     typedArgs = map (id &&& typeableType . symbTypeRep) (vars lhs ++ vars rhs)
@@ -103,14 +145,17 @@ hipSpec file conf depth = do
 
     putStrLn "Translation complete. Generating equivalence classes."
 
-    -- eqclasses :: [(Term Symbol,Term Symbol)]
-    eqclasses <- packLaws depth conf True (const True) (const True)
+    let classToEqs :: [[Term Symbol]] -> [(Term Symbol,Term Symbol)]
+        classToEqs = sortBy (comparing equationOrder)
+                   . concatMap (\(x:xs) -> zip (repeat x) xs)
+
+    quickSpecClasses <- packLaws depth conf True (const True) (const True)
 
     putStrLn "Starting to prove..."
 
-    let quickSpecProps = map (uncurry termsToProp) eqclasses
+    (qslemmas,qsunproved) <- deep params theory (classToEqs quickSpecClasses)
 
-    (unproved,proved) <- parLoop params theory (quickSpecProps ++ props') []
+    (unproved,proved) <- parLoop params theory props' qslemmas
 
     printInfo unproved proved
 
@@ -150,7 +195,8 @@ tryProve params@(Params{..}) props thy lemmas = do
 
     forM res $ \property -> do
         let proved = fst (propMatter property) /= None
-        when proved (putStrLn $ "Proved " ++ PD.propName property ++ ".")
+        when   proved (putStrLn $ "Proved " ++ PD.propName property ++ ".")
+        unless proved (putStrLn $ "Didn't prove " ++ PD.propName property ++ ".")
         return (fromMaybe (error "tryProve: lost")
                           (find ((PD.propName property ==) . propName) props)
                ,proved)

@@ -6,6 +6,8 @@ import Hip.Trans.Pretty
 import Hip.Trans.TyEnv
 import Hip.Util
 
+import qualified Test.QuickSpec.Term as QST
+
 import qualified Language.TPTP as T
 
 import Control.Arrow ((&&&))
@@ -44,6 +46,7 @@ data Prop = Prop { proplhs  :: Expr
                  , propName :: Name
                  , propType :: Type
                  , propRepr :: String
+                 , propQSTerms :: (QST.Term QST.Symbol,QST.Term QST.Symbol)
                  }
   deriving (Eq,Ord,Show)
 
