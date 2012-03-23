@@ -30,6 +30,9 @@ Library
                , cmdargs                       >= 0.9
                , stm                           >= 2.0
                , directory                     >= 1.0
+               , random                        >= 1.0
+               , array                         >= 0.4
+               , parallel                      >= 3.0
 
 
 -- executable          hipspec

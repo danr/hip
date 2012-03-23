@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 module Hip.Trans.Pretty (prettyCore) where
 
 import Hip.Trans.Core
