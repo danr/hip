@@ -93,8 +93,9 @@ termToExpr :: Term Symbol -> Expr
 termToExpr t = case t of
   T.App e1 e2 -> termToExpr e1 `app` termToExpr e2
   T.Var s     -> C.Var (name s)
-  T.Const s | isUpper . head . name $ s -> Con (name s) []
-            | otherwise                 -> C.Var (name s)
+  T.Const s | (isUpper . head . name $ s) || name s == ":"
+                                          || name s == "[]" -> Con (name s) []
+            | otherwise                                     -> C.Var (name s)
 
 -- So far only works on arguments with monomorphic, non-exponential types
 termsToProp :: Term Symbol -> Term Symbol -> Prop
@@ -184,7 +185,7 @@ hipSpec file ctxt depth = do
 printInfo :: [Prop] -> [Prop] -> IO ()
 printInfo unproved proved = do
     let pr xs | null xs   = "(none)"
-              | otherwise = intercalate ", " (map propName xs)
+              | otherwise = intercalate ",\n\t" (map propName xs)
     putStrLn ("Proved: " ++ pr proved)
     putStrLn ("Unproved: " ++ pr unproved)
     putStrLn (show (length proved) ++ "/" ++ show (length (proved ++ unproved)))
