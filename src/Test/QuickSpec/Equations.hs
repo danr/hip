@@ -200,7 +200,7 @@ condVars (a :/= b) = [a, b]
 condVars Always = []
 
 runCCctx :: Context -> CC a -> a
-runCCctx ctx x = runCC (length ctx) x
+runCCctx ctx x = evalCC (initial (length ctx)) x
 
 canDerive :: Term Symbol -> Term Symbol -> CC Bool
 canDerive t u = do
