@@ -206,9 +206,9 @@ doPrune p ctx d es ess ((univ, univMap), s) = (r, ((univ, univMap), s'))
           return ([ (Always, t, u) | (t, u) <- es'' ] ++ concat ess')
 
 prune :: (Term Symbol -> Bool) -> Context -> Int -> [Term Symbol] -> [(Term Symbol, Term Symbol)] -> [(Condition, [(Term Symbol, Term Symbol)])] -> [(Condition, Term Symbol, Term Symbol)]
-prune p ctx d univ0 es ess = 
+prune p ctx d univ0 es ess =
   fst (doPrune p ctx d es ess (initPrune ctx univ0))
-  
+
 condVars (a :/= b) = [a, b]
 condVars Always = []
 
@@ -315,7 +315,7 @@ laws depth ctx0 cond p p' = do
 test :: (Term Symbol -> Bool) -> Int -> Context -> [(StdGen, Int)] -> (TypeRep -> [Term Symbol]) -> IO (Classes (Term Symbol))
 test p depth ctx seeds base = do
   printf "Depth %d: " depth
-  let cs0 = filter (not . null) [ filter p (terms ctx base ty) | ty <- allTypes ctx ]
+  let cs0 = filter (not . null) [ filter p (terms ctx base ty) | ty <- allTypes ctx, isn'tFunction ty ]
   printf "%d terms, " (length (concat cs0))
   let evals = [ toValue . eval (memoSym ctx ctxFun) | (ctxFun, toValue) <- map useSeed seeds ]
       cs1 = evaluate (\() -> take 200 evals) (pack cs0)

@@ -209,6 +209,9 @@ termType (App t u) = fromJust (funResultTy (termType t) (termType u))
 resultTypes :: TypeRep -> [TypeRep]
 resultTypes ty = ty:concat [ resultTypes ty' | (_, ty') <- funTypes [ty] ]
 
+isn'tFunction :: TypeRep -> Bool
+isn'tFunction = null . funTypes . (:[])
+
 allTypes :: [Symbol] -> [TypeRep]
 allTypes ctx = nub (concatMap (resultTypes . symbolType) ctx)
 

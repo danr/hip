@@ -40,42 +40,53 @@ import System.Exit (exitFailure,exitSuccess)
 
 type QSEq = (Term Symbol,Term Symbol)
 
-deep :: Params -> Theory -> [QSEq] -> IO ([Prop],[QSEq])
-deep params theory eqs = loop (initial initialN) eqs []
+deep :: Params -> Theory -> [Symbol] -> Int -> [Term Symbol] -> [QSEq] -> IO ([Prop],[QSEq])
+deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] False
   where
-    initialN = maximum (concatMap (map label . symbols) terms) + 1
-    terms = uncurry (++) (unzip eqs)
+    loop :: PruneState -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
+    loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
+    loop ps@(_,cc) [] failed proved False = return (proved,failed)
+    loop ps@(_,cc) (eq@(lhs,rhs):eqs) failed proved retry
+      | evalCC cc (canDerive lhs rhs) = do
 
-    loop :: S -> [QSEq] -> [Prop] -> IO ([Prop],[QSEq])
-    loop cc eqs proved = do
+           putStrLn $ "No need to prove " ++ show lhs ++ " = " ++ show rhs ++ ", skipping."
+           loop ps eqs failed proved retry
+
+      | otherwise = do
+
+           [(prop,success)] <- tryProve params [termsToProp lhs rhs] theory proved
+           if success then let (cand,failed') = instancesOf ps eq failed
+                               (_,ps') = doPrune (const True) ctxt depth [eq] [] ps
+                           in do putStrLn $ "Interesting candidates: " ++
+                                            intercalate ", " (map (\(u,v) -> show u ++ " = " ++ show v) cand)
+                                 loop ps' (cand ++ eqs) failed' (prop:proved) True
+                      else loop ps eqs (failed ++ [eq]) proved retry
+
+    instancesOf :: PruneState -> QSEq -> [QSEq] -> ([QSEq],[QSEq])
+    instancesOf ps new = partition (instanceOf ps new)
+
+    instanceOf :: PruneState -> QSEq -> QSEq -> Bool
+    instanceOf ps new cand =
+       let (_,(_,cc)) = doPrune (const True) ctxt depth [cand] [] ps
+       in  evalCC cc (uncurry canDerive new)
+
+  {-
+    loop :: PruneState -> [QSEq] -> [Prop] -> IO ([Prop],[QSEq])
+    loop ps@(_,cc) eqs proved = do
       let (skip,eqs') = partition (\(lhs,rhs) -> evalCC cc (canDerive lhs rhs)) eqs
       forM_ skip $ \(lhs,rhs) -> putStrLn $ "No need to prove " ++ show lhs ++ " = "
                                                                 ++ show rhs ++ ", skipping."
       res <- tryProve params (map (uncurry termsToProp) eqs') theory proved
       let (successes,failures) = (map fst *** map fst) (partition snd res)
-          cc' = execCC cc $ forM_ successes $ \prop ->
-                     let (lhs,rhs) = propQSTerms prop
-                     in  unify (killSymbols lhs,killSymbols rhs)
+          (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
           failureQSEqs = map propQSTerms failures
       if null successes
           then return (proved,failureQSEqs)
-          else loop cc' (map propQSTerms failures) (successes ++ proved)
+          else loop ps' (map propQSTerms failures) (successes ++ proved)
 
+          -}
 
 {-
-        loop :: S -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
-        loop cc [] unproved proved True      = loop cc (reverse unproved) [] proved False
-        loop cc [] unproved proved False     = return (proved,unproved)
-        loop cc (eq@(lhs,rhs):es) unproved proved retry
-          | evalCC cc (canDerive lhs rhs) = do
-               putStrLn $ "No need to prove " ++ show lhs ++ " = " ++ show rhs ++ ", skipping."
-               loop cc es unproved proved retry
-          | otherwise = do
-               [(prop,success)] <- tryProve params [termsToProp lhs rhs] theory proved
-               if success
-                   then let cc' = execCC cc (unify (killSymbols lhs,killSymbols rhs))
-                        in  loop cc' es unproved (prop:proved) True
-                   else loop cc es (eq:unproved) proved retry
 -}
 
 termToExpr :: Term Symbol -> Expr
@@ -96,7 +107,7 @@ termsToProp lhs rhs = Prop { proplhs  = termToExpr lhs
                            , propQSTerms = (lhs,rhs)
                            }
   where
-    typedArgs = map (id &&& typeableType . symbTypeRep) (vars lhs ++ vars rhs)
+    typedArgs = map (id &&& typeableType . symbTypeRep) (nub (vars lhs ++ vars rhs))
     repr = show lhs ++ " = " ++ show rhs
 
 typeableType :: TypeRep -> Type
@@ -109,7 +120,7 @@ typeableType tr
 
 
 hipSpec :: FilePath -> [Symbol] -> Int -> IO ()
-hipSpec file conf depth = do
+hipSpec file ctxt depth = do
   hSetBuffering stdin LineBuffering
 
   params@Params{..} <- cmdArgs (hipSpecParams file)
@@ -147,13 +158,22 @@ hipSpec file conf depth = do
 
     let classToEqs :: [[Term Symbol]] -> [(Term Symbol,Term Symbol)]
         classToEqs = sortBy (comparing equationOrder)
-                   . concatMap (\(x:xs) -> zip (repeat x) xs)
+                   . concatMap ((\(x:xs) -> zip (repeat x) xs) . sort)
 
-    quickSpecClasses <- packLaws depth conf True (const True) (const True)
+    quickSpecClasses <- packLaws depth ctxt True (const True) (const True)
+
+    putStrLn "Equivalence classes:"
+    forM_ quickSpecClasses $ \cl -> putStrLn $ intercalate " = " (map show cl)
+
+    putStrLn "With representatives:"
+    putStrLn $ unlines (map (\(l,r) -> show l ++ " = " ++ show r)
+                            (classToEqs quickSpecClasses))
+
+    let univ = concat quickSpecClasses
 
     putStrLn "Starting to prove..."
 
-    (qslemmas,qsunproved) <- deep params theory (classToEqs quickSpecClasses)
+    (qslemmas,qsunproved) <- deep params theory ctxt depth univ (classToEqs quickSpecClasses)
 
     (unproved,proved) <- parLoop params theory props' qslemmas
 
@@ -164,7 +184,7 @@ hipSpec file conf depth = do
 printInfo :: [Prop] -> [Prop] -> IO ()
 printInfo unproved proved = do
     let pr xs | null xs   = "(none)"
-              | otherwise = unwords (map propName xs)
+              | otherwise = intercalate ", " (map propName xs)
     putStrLn ("Proved: " ++ pr proved)
     putStrLn ("Unproved: " ++ pr unproved)
     putStrLn (show (length proved) ++ "/" ++ show (length (proved ++ unproved)))
@@ -196,7 +216,7 @@ tryProve params@(Params{..}) props thy lemmas = do
     forM res $ \property -> do
         let proved = fst (propMatter property) /= None
         when   proved (putStrLn $ "Proved " ++ PD.propName property ++ ".")
-        unless proved (putStrLn $ "Didn't prove " ++ PD.propName property ++ ".")
+        unless proved (putStrLn $ "Failed to prove " ++ PD.propName property ++ ".")
         return (fromMaybe (error "tryProve: lost")
                           (find ((PD.propName property ==) . propName) props)
                ,proved)
@@ -216,7 +236,7 @@ parLoop params thy props lemmas = do
     (proved,unproved) <-  (map fst *** map fst) . partition snd
                       <$> tryProve params props thy lemmas
     if null proved then return (props,lemmas)
-                   else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ unwords (map propName proved)
+                   else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ intercalate ", " (map propName proved)
                            parLoop params thy unproved (proved ++ lemmas)
 
 
