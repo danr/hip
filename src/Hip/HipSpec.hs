@@ -64,7 +64,7 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
 
     loop :: PruneState -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
     loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
-    loop ps@(_,cc) [] failed proved False = return (reverse proved,failed)
+    loop ps@(_,cc) [] failed proved False = return (proved,failed)
     loop ps@(_,cc) eqs failed proved retry = do
 
       let discard eq = \failedacc -> any (isomorphicTo eq) failedacc
