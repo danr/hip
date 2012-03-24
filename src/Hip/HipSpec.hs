@@ -203,13 +203,14 @@ hipSpec file ctxt depth = do
         classToEqs = sortBy (comparing (equationOrder . swap))
                    . concatMap ((\(x:xs) -> zip (repeat x) xs) . sort)
 
-    quickSpecClasses <- packLaws depth ctxt True (const True) (const True)
+    (quickSpecClasses,prunedEqs) <- packLaws depth ctxt True (const True) (const True)
 
     let univ = concat quickSpecClasses
 
     putStrLn "Starting to prove..."
 
-    (qslemmas,qsunproved) <- deep params theory ctxt depth univ (classToEqs quickSpecClasses)
+    (qslemmas,qsunproved) <- deep params theory ctxt depth univ
+                                  (prunedEqs ++ classToEqs quickSpecClasses)
 
     (unproved,proved) <- parLoop params theory props' qslemmas
 

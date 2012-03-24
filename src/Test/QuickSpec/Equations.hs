@@ -345,28 +345,27 @@ congruenceCheck d ctx0 p = do
 
 -- For Hipspec
 packLaws :: Int -> [Symbol] -> t -> (Term Symbol -> Bool) -> (Term Symbol -> Bool)
-     --     -> IO [(Term Symbol,Term Symbol)]
-       -> IO [[Term Symbol]]
+         -> IO ([[Term Symbol]],[(Term Symbol,Term Symbol)])
 packLaws depth ctx0 cond p p' = do
 
   let ctx = zipWith relabel [0..] (ctx0 ++ undefinedSyms ctx0)
 
   seeds <- genSeeds
 
-  tests p (take 1) depth ctx seeds
-
-  {-
+  classes <- tests p (take 1) depth ctx seeds
 
   let eqs :: Condition -> [(Term Symbol,Term Symbol)]
       eqs cond = map head
                $ partitionBy equationOrder
-               $ [ (y,x) | x:xs <- map sort (unpack cs), funTypes [termType x] == [], y <- xs ]
+               $ [ (y,x) | x:xs <- map sort classes, funTypes [termType x] == [], y <- xs ]
 
   -- printf "%d raw equations.\n\n" (length (eqs Always))
 
-  let univ = filter (not . termIsUndefined) (concat (unpack cs))
+  let univ = filter (not . termIsUndefined) (concat classes)
 
   printf "Universe has %d terms.\n" (length univ)
+
+  {-
   putStrLn "== definitions =="
 
   sequence_
@@ -374,6 +373,7 @@ packLaws depth ctx0 cond p p' = do
        | (i, (y,x)) <- zip [1..] (definitions (eqs Always))
        ]
   putStrLn "== equations =="
+  -}
 
   let interesting (_, x, y) = p' x || p' y
       conds = []
@@ -381,31 +381,4 @@ packLaws depth ctx0 cond p p' = do
       pruned = filter interesting (prune p ctx depth univ (eqs Always)
                                          [ (cond, eqs cond) | cond <- conds ])
 
-      getClassFromEq cond (l,r) = nubSort $ concat [ [l',r'] | (l',r') <- eqs cond, l' == l || l' == r || r' == r || r' == l ]
-
-  sequence_
-       [ putStrLn (show i ++ ": " ++ concat [ show x ++ "/=" ++ show y ++ " => "
-                                            | x :/= y <- [cond] ]
-                                  ++ show l ++ " == " ++ show r)
-                                  -- ++ intercalate " == " (map show (getClassFromEq cond (l,r))))
-       | (i, (cond, l,r)) <- zip [1..] pruned
-       ]
-
-  return $ [ getClassFromEq cond (l,r)
-           | (i, (cond, l,r)) <- zip [1..] pruned
-           ]
-
-           -}
-
-  -- Missing terms?
-  {-
-  forM_ pruned $ \(cond, y, x) -> do
-    let c = head (filter (\(x':_) -> x == x') (map sort (unpack cs)))
-        commonVars = foldr1 intersect (map vars c)
-        subsumes t = sort (vars t) == sort commonVars
-    when (cond == Always && not (any subsumes c)) $
-         printf "*** missing term: %s = ???\n"
-                (show (mapVars (\s -> if s `elem` commonVars then s else s { name = "_" ++ name s }) x))
-  -}
-
-
+  return (classes,[ (r,l) | (_,l,r) <- pruned ])
