@@ -4,23 +4,54 @@ import Hip.Trans.Core
 import Hip.Trans.ProofDatatypes hiding (propName)
 import Hip.Trans.Pretty
 import Hip.Trans.TyEnv
+import Hip.Trans.NecessaryDefinitions
 import Hip.Util
 
 import qualified Test.QuickSpec.Term as QST
 
 import qualified Language.TPTP as T
 
-import Control.Arrow ((&&&))
+import Control.Arrow ((&&&),first)
 
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Map (Map)
+import qualified Data.Map as M
 
+import Data.Graph
+import Data.Tree
+import Data.Maybe
 
 data Theory = Theory { thyFuns  :: [ThyFun]
                      , thyDatas :: [Decl]
                      -- ^ Invariant: all are data declarations
+                     , thyGraph :: CallGraph
                      }
-  deriving (Eq,Ord,Show)
+
+theoryTopSort :: Theory -> Name -> Int
+theoryTopSort (Theory _ _ (CallGraph (g,getName,getVertex))) =
+    \ name -> fromMaybe (error $ "top: cannot find " ++ name)
+                        (M.lookup name level_map)
+
+  where rg     = transposeG g
+        [tree] = dfs rg [fromMaybe (error $ "top: cannot find root") (getVertex Root)]
+        level_map = M.fromList $ map (first (content . nodeContent . getName)) $ concat $ concat
+                      [ [ zip l (repeat n) | (l,n) <- levels t `zip` [0..] ]
+                      | t <- subForest tree
+                      ]
+
+
+theoryGraph :: Theory -> Graph
+theoryGraph (Theory _ _ (CallGraph (g,_,_))) = g
+
+theorySCC :: Theory -> Forest Name
+theorySCC (Theory _ _ (CallGraph (g,getName,_)))
+  = map (fmap (content . nodeContent . getName)) (scc g)
+
+--  theoryTopSort :: Theory -> [Name]
+--  theoryTopSort (Theory _ _ (CallGraph (g,getName,_)))
+--    = fmap (content . nodeContent . getName) (topSort g)
+
 
 data ThyFun = ThyFun { funcName       :: Name
                      -- ^ The name of this function
@@ -37,6 +68,7 @@ data ThyFun = ThyFun { funcName       :: Name
                      , funcRecursive  :: Bool
                      -- ^ Is this function recursive?
                      , funcType       :: Maybe Type
+                     -- ^ What is the type of this function?
                      }
   deriving (Eq,Ord,Show)
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 module Hip.Trans.NecessaryDefinitions where
 
 import Hip.Trans.ParserInternals
@@ -13,18 +14,80 @@ import Data.Set (Set)
 import qualified Data.Map as M
 import Data.Map (Map)
 
-import Debug.Trace
-
 import Data.Generics.Uniplate.Operations
 
--- | Given a list of used functions, returns all relevant declarations.
-declsWith :: [Name] -> [Decl] -> [Decl]
-declsWith ns ds = undefined
+import Data.Graph
+import Data.Array
 
--- | Is this function is self-recursive?
-selfRecursive :: Decl -> Bool
-selfRecursive (Func name args body) = name `S.member` usedFs body
-selfRecursive _ = error "selfRecursive: on non-function declaration"
+data Content a = Root                -- Root node. All constructors point to it.
+               | F { content :: a }  -- Functions
+               | C { content :: a }  -- Constructors
+  deriving (Eq,Ord,Show,Functor)
+
+isF :: Content a -> Bool
+isF F{} = True
+isF _   = False
+
+type Node = (Name,Content Name,[Content Name])
+
+newtype CallGraph =
+  CallGraph { getCallGraph :: (Graph, Vertex -> Node, Content Name -> Maybe Vertex) }
+
+nodeContent :: Node -> Content Name
+nodeContent (_,c,_) = c
+
+getEdges :: Node -> [Content Name]
+getEdges (_,_,es) = es
+
+declsToGraph :: [Decl] -> CallGraph
+declsToGraph ds = CallGraph (graphFromEdges (("",Root,[]) : fun_nodes ++ con_nodes))
+  where
+    (fun_decls,data_decls,_) = partitionDecls ds
+
+    setsToContent :: (Set Name,Set Name) -> [Content Name]
+    setsToContent (fs,cs) = map F (S.toList fs) ++ map C (S.toList cs)
+
+    fun_nodes :: [Node]
+    fun_nodes = [ (declName d,F (declName d),setsToContent (usedFC d)) | d <- fun_decls ]
+
+    con_nodes :: [Node]
+    con_nodes = [ (con_name,C (con_name),Root:setsToContent (usedSets))
+                | d <- data_decls
+                , let usedSets@(_,cons) = usedFC d
+                , con_name <- S.toList cons
+                ]
+
+{-
+getNode :: CallGraph -> Name -> Node
+getNode (CallGraph (_,vertexToNode,nameToVertex)) name
+  = vertexToNode
+  . fromMaybe (error $ "getNode: " ++ n)
+  . nameToVertex
+-}
+
+-- | Is this function recursive, by itself, or mutually?
+recursive :: CallGraph -> Name -> Bool
+recursive (CallGraph (g,_,getVertex)) n = any (\via -> path g via v) (g ! v)
+  where
+    v :: Vertex
+    v = fromMaybe (error $ "recursive: " ++ n) (getVertex (F n))
+
+-- | Which functions do this set of functions call, transitively?
+iterateFCs :: CallGraph -> Set Name -> (Set Name,Set Name)
+iterateFCs (CallGraph (g,getNode,getVertex)) fun_set = res
+  where
+    vertices :: [Vertex]
+    vertices = map (\n -> fromMaybe (error $ "iterateFCs: " ++ n)
+                        . getVertex . F $ n) (S.toList fun_set)
+
+    reachables :: [Content Name]
+    reachables = map (nodeContent . getNode)
+               $ concatMap (reachable g) vertices
+
+    res :: (Set Name,Set Name)
+    res = (S.fromList . map content *** S.fromList . map content)
+          (partition isF reachables)
+
 
 -- Funs and Cons
 class FC a where
@@ -33,9 +96,8 @@ class FC a where
 usedFs :: FC a => a -> Set Name
 usedFs = fst . usedFC
 
--- Wow, these two functions should use some graph library, really
-
--- | Which functions call this functions, transitively?
+-- | Which functions call these functions, transitively?
+--   TODO: Rewrite with the graph
 callers :: [Decl] -> Set Name -> Set Name
 callers funDecls = go
   where
@@ -59,24 +121,6 @@ callers funDecls = go
       -- Get the new functions from here
       where fs' :: Set Name
             fs' = S.unions (map safeLookup (S.toList fs))
-            newfs = fs' S.\\ fs
-
--- | Which functions do this set of functions call, transitively?
-iterateFCs :: [Decl] -> Set Name -> (Set Name,Set Name)
-iterateFCs funDecls = go
-  where
-    usedFCmap :: Map Name (Set Name,Set Name)
-    usedFCmap = M.fromList [ (declName d,usedFC d) | d <- funDecls ]
-
-    safeLookup :: Name -> (Set Name,Set Name)
-    safeLookup f = fromMaybe (S.empty,S.empty) (M.lookup f usedFCmap)
-
-    go fs | S.null newfs = (fs,cs)
-          | otherwise    = trace "go" $ go (fs `S.union` fs')
-      -- Get the new functions from here
-      where fs',cs :: Set Name
-            (fs',cs) = (S.unions *** S.unions)
-                       (unzip (map safeLookup (S.toList fs)))
             newfs = fs' S.\\ fs
 
 instance FC Pattern where
@@ -112,6 +156,8 @@ instance FC Body where
 instance FC Decl where
    usedFC (Func name args body) =
       let (fs,cs) = usedFC body
-      in  (S.delete name (fs S.\\ S.fromList args),cs)
+      in  ((fs S.\\ S.fromList args),cs)
+   usedFC d@Data{} = (S.empty,S.fromList . map fst . conNameArity $ d)
    usedFC _ = (S.empty,S.empty)
+
 

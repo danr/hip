@@ -12,7 +12,7 @@ import Hip.Trans.Theory
 import Hip.Messages
 import Hip.Params as P
 import Hip.Trans.Parser
-import Hip.Trans.Core as C
+import Hip.Trans.Core as C hiding (subst)
 import Hip.Trans.Pretty
 import Hip.FromHaskell.FromHaskell
 import Hip.Trans.MakeProofs
@@ -31,6 +31,9 @@ import Data.Char
 import Data.Ord
 import Data.Tuple
 import Data.Function
+import Data.Tree
+import qualified Data.Map as M
+import Data.Map (Map)
 
 import Control.Monad.State
 import Control.Monad
@@ -38,7 +41,7 @@ import Control.Applicative
 import Control.Arrow ((***),(&&&),second,first)
 
 import System.IO
-import System.Console.CmdArgs hiding (summary,name)
+import System.Console.CmdArgs hiding (summary,name,typ)
 import System.Exit (exitFailure,exitSuccess)
 
 type QSEq = (Term Symbol,Term Symbol)
@@ -63,11 +66,11 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
     chunks = batchsize params
 
     loop :: PruneState -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
-    loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
-    loop ps@(_,cc) [] failed proved False = return (proved,failed)
+    loop ps@(_,cc) []  failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
+    loop ps@(_,cc) []  failed proved False = return (proved,failed)
     loop ps@(_,cc) eqs failed proved retry = do
 
-      let discard eq = \failedacc -> any (isomorphicTo eq) failedacc
+      let discard eq = \failedacc -> any (isomorphicTo ps eq) failedacc
                                   || evalCC cc (uncurry canDerive eq)
 
           (renamings,tryEqs,nextEqs) = getUpTo chunks discard eqs failed
@@ -75,7 +78,7 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
       unless (null renamings) $ putStrLn $
          let n = length renamings
          in if (n > 5) then "Discarding " ++ show n ++ " renamings and subsumptions."
-                       else "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
+                       else "Discarding renamings and subsumptions: " ++ csv (map showEq renamings) ++ "."
 
       res <- tryProve params (map (uncurry termsToProp) tryEqs) theory proved
 
@@ -88,7 +91,7 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
           else do
               let (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
                   failed' = failed ++ failureEqs
-                  (cand,failedWoCand) = first (sortBy (comparing equationOrder) . nub . concat)
+                  (cand,failedWoCand) = {- ([],failed') -} first (sortBy (comparing equationOrder) . nub . concat)
                                       $ flip runState failed'
                                       $ forM successes
                                       $ \prop -> do failed <- get
@@ -99,26 +102,31 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
               unless (null cand) $ putStrLn $ "Interesting candidates: " ++ csv (map showEq cand)
               loop ps' (cand ++ nextEqs) failedWoCand (proved ++ successes) True
 
-    isomorphicTo :: QSEq -> QSEq -> Bool
-    e1 `isomorphicTo` e2 =
-      case matchEqSkeleton e1 e2 of
-        Nothing -> False
-        Just xs -> function xs && function (map swap xs)
+    varCtxt :: [Symbol]
+    varCtxt = filter ((TVar ==) . typ) (zipWith relabel [0..] ctxt)
 
-    matchEqSkeleton :: QSEq -> QSEq -> Maybe [(Symbol, Symbol)]
-    matchEqSkeleton (t, u) (t', u') =
-      liftM2 (++) (matchSkeleton t t') (matchSkeleton u u')
+    equivalent :: PruneState -> QSEq -> QSEq -> Bool
+    equivalent ps e1 e2 = implies ps e1 e2 && implies ps e2 e1
 
-    matchSkeleton :: Term Symbol -> Term Symbol -> Maybe [(Symbol, Symbol)]
-    matchSkeleton (T.Const f) (T.Const g) | f == g = return []
-    matchSkeleton (T.Var x) (T.Var y) = return [(x, y)]
-    matchSkeleton (T.App t u) (T.App t' u') =
-      liftM2 (++) (matchSkeleton t t') (matchSkeleton u u')
-    matchSkeleton _ _ = Nothing
+    implies :: PruneState -> QSEq -> QSEq -> Bool
+    implies ps@(_,cc) (t,u) (s,r) = evalCC cc $
+        do unify (killSymbols t,killSymbols u)
+           canDerive s r
 
-    function :: (Ord a, Eq b) => [(a, b)] -> Bool
-    function = all singleton . groupBy ((==) `on` fst) . nub . sortBy (comparing fst)
-      where singleton xs = length xs == 1
+    isomorphicTo :: PruneState -> QSEq -> QSEq -> Bool
+    isomorphicTo ps (t,u) e2 = any (\s -> equivalent ps (subst s t,subst s u) e2) substs
+      where
+        tuvars  = nub (vars t ++ vars u)
+        -- ^ Variables in t and u
+
+        substs :: [[(Symbol,Term Symbol)]]
+        substs = map (map (second T.Var))
+               $ filter (\xs -> ((==) <*> nub) (map snd xs))
+                 -- ^ Filter away non-injective substitutions
+               $ mapM (\(x,ys) -> repeat x `zip` ys)
+                 -- ^ Make all substitutions from this
+               $ [ (x,filter ((symbolType x ==) . symbolType) varCtxt) | x <- tuvars ]
+                 -- ^ Map each variable to candidates with the same type
 
     instancesOf :: PruneState -> QSEq -> [QSEq] -> ([QSEq],[QSEq])
     instancesOf ps new = partition (instanceOf ps new)
@@ -188,7 +196,7 @@ hipSpec file ctxt depth = do
 
     let (theory,props,msgs) = makeTheory params ds
 
-     -- Verbose output
+    -- Verbose output
     when dbfol $ mapM_ print (filter (sourceIs Trans) msgs)
 
     -- Warnings
@@ -197,10 +205,26 @@ hipSpec file ctxt depth = do
     let props' | consistency = inconsistentProp : props
                | otherwise   = props
 
+
+    {-
+    putStrLn "Strongly Connected Components"
+    putStrLn $ drawForest (theorySCC theory)
+
+    putStrLn "Topological Sort"
+    putStrLn $ unwords (theoryTopSort theory)
+
+    putStrLn "The graph"
+    putStrLn $ show (theoryGraph theory)
+    -}
+
+    let top_lookup = theoryTopSort theory
+        eq_val :: QSEq -> Int
+        eq_val (u,v) = maximum $ map (top_lookup . name) (constants u ++ constants v)
+
     putStrLn "Translation complete. Generating equivalence classes."
 
     let classToEqs :: [[Term Symbol]] -> [(Term Symbol,Term Symbol)]
-        classToEqs = sortBy (comparing (equationOrder . swap))
+        classToEqs = sortBy (comparing equationOrder )
                    . concatMap ((\(x:xs) -> zip (repeat x) xs) . sort)
 
     (quickSpecClasses,prunedEqs) <- packLaws depth ctxt True (const True) (const True)
@@ -210,7 +234,10 @@ hipSpec file ctxt depth = do
     putStrLn "Starting to prove..."
 
     (qslemmas,qsunproved) <- deep params theory ctxt depth univ
-                                  (prunedEqs ++ classToEqs quickSpecClasses)
+                                  ({- prunedEqs ++ -} sortBy (comparing eq_val)
+                                                       (classToEqs quickSpecClasses))
+
+    putStrLn $ "Unproved equations from QuickSpec: " ++ show (length qsunproved) ++ "."
 
     (unproved,proved) <- parLoop params theory props' qslemmas
 
@@ -252,7 +279,7 @@ tryProve params@(Params{..}) props thy lemmas = do
 
     forM res $ \property -> do
         let proved = fst (propMatter property) /= None
-        when   proved (putStrLn $ bold (color Green ("Proved " ++ PD.propName property ++ "!!")))
+        when   proved (putStrLn $ bold (color Green ("Proved " ++ PD.propName property ++ ".")))
         unless proved (putStrLn $ "Failed to prove " ++ PD.propName property ++ ".")
         return (fromMaybe (error "tryProve: lost")
                           (find ((PD.propName property ==) . propName) props)

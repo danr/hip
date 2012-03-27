@@ -22,7 +22,6 @@ data Symbol
            , isUndefined :: Bool
            , typ :: SymbolType
            , range :: Gen Data
-           , symbTypeRep :: TypeRep
            }
   deriving Typeable
 
@@ -53,7 +52,6 @@ var name _ = Symbol { name = name
                     , isUndefined = False
                     , typ = TVar
                     , range = fmap Data (arbitrary :: Gen a)
-                    , symbTypeRep = typeOf (undefined :: a)
                     }
 
 con :: Classify a => String -> a -> Symbol
@@ -63,7 +61,6 @@ con name impl = Symbol { name = name
                        , isUndefined = False
                        , typ = TConst
                        , range = fmap Data (return impl)
-                       , symbTypeRep = typeOf impl
                        }
 
 sym :: Symbol -> Term Symbol
@@ -94,6 +91,11 @@ symbols :: Term Symbol -> [Symbol]
 symbols (App s t) = nub (symbols s ++ symbols t)
 symbols (Var s)   = [s]
 symbols (Const s) = [s]
+
+constants :: Term Symbol -> [Symbol]
+constants (App s t) = nub (constants s ++ constants t)
+constants (Var s)   = []
+constants (Const s) = [s]
 
 mapConsts :: (a -> b) -> Term a -> Term b
 mapConsts f (Var v) = Var v

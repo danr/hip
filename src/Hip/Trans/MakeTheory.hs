@@ -66,28 +66,18 @@ makeTheory params ds =
       funs          = map (declName &&& length . declArgs) funDecls
       types         = map (declName &&& declType) typeDecls
 
-      compIterateFCs :: Set Name -> (Set Name,Set Name)
-      compIterateFCs = iterateFCs funDecls
-
-      usedFCmap :: Map Name (Set Name,Set Name)
-      usedFCmap = M.fromList [ (declName d,usedFC d) | d <- funDecls ]
+      call_graph = declsToGraph ds
 
       recursiveFuns :: Set Name
-      recursiveFuns = S.fromList
-          [ name
-          | d@(Func name args body) <- funDecls
-          , let namecalls = fst (usedFCmap M.! name)
-                -- ^ Which functions this function calls
-                theycall  = fst (compIterateFCs namecalls)
-                -- ^ All functions they call. If name is member
-                --   there then there is a mutual recursion
-          , selfRecursive d || name `S.member` theycall
-          ]
+      recursiveFuns = S.fromList [ name
+                                 | d@(Func name args body) <- funDecls
+                                 , recursive call_graph name
+                                 ]
 
       (thy_functions,thy_msgs) = unzip $ flip map funDecls $ \fun_decl -> runTM params $ do
                                      let name = declName fun_decl
                                          (used_funs,used_datas)
-                                            = compIterateFCs (S.singleton name)
+                                            = iterateFCs call_graph (S.singleton name)
                                      addFuns funs
                                      addCons dataDecls
                                      addTypes types
@@ -123,7 +113,9 @@ makeTheory params ds =
                                           , propType = ty'
                                           , propRepr = prettyCore e
                                           })
-  in  (Theory thy_functions dataDecls,properties,concat thy_msgs)
+  in  (Theory thy_functions dataDecls (declsToGraph ds)
+      ,properties
+      ,concat thy_msgs)
 
 partitionProofDecls :: [Decl] -> ([Decl],[Decl])
 partitionProofDecls = partition isProofDecl
