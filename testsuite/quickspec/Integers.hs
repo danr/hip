@@ -23,14 +23,14 @@ data Integ = P Nat | N Nat deriving (Show,Eq,Typeable,Ord)
 instance Arbitrary Integ where
   arbitrary = oneof [P `fmap` arbitrary,N `fmap` arbitrary]
 
-eqnat Z Z = True
-eqnat (S m) (S n) = True
-eqnat _ _ = False
-
-(==) :: Integ -> Integ -> Bool
-N x == N y = eqnat x y
-P x == P y = eqnat x y
-_   == _   = False
+-- eqnat Z Z = True
+-- eqnat (S m) (S n) = True
+-- eqnat _ _ = False
+--
+-- (==) :: Integ -> Integ -> Bool
+-- N x == N y = eqnat x y
+-- P x == P y = eqnat x y
+-- _   == _   = False
 
 neg :: Integ -> Integ
 neg (P (S n)) = N n

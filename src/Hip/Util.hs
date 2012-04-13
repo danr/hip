@@ -1,5 +1,5 @@
 module Hip.Util
-       (unlist,avgList,selections,inspect,withPrevious,concatMapM,concatMaybe
+       ((?),unlist,avgList,selections,inspect,uniqueCartesian,withPrevious,concatMapM,concatMaybe
        ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted,forFind
        ,bold,color,Color(..))
        where
@@ -10,6 +10,13 @@ import Data.Function
 import Data.Ord
 import Test.QuickCheck
 import Control.Monad
+
+infix 1 ?
+
+-- | Apply the function if true, otherwise propagate
+(?) :: Bool -> (a -> a) -> a -> a
+True  ? f = f
+False ? _ = id
 
 unlist :: a -> ([b] -> a) -> [b] -> a
 unlist d f [] = d
@@ -31,6 +38,10 @@ selections xs = map (fromSplit . (`splitAt` xs)) [0..length xs-1]
 -- > inspect "abc" = [('a',"bc"),('b',"ac"),('c',"ab")]
 inspect :: [a] -> [(a,[a])]
 inspect = map (\(i,x,r) -> (x,i++r)) . selections
+
+
+uniqueCartesian :: [a] -> [(a,a)]
+uniqueCartesian as = concat [ zip (repeat x) xs | (x,xs) <- inspect as ]
 
 -- | Pair up a list with its previous elements
 --

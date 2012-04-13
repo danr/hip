@@ -263,7 +263,7 @@ removeEmptyParts (Property n c parts)
 -- | Takes a theory, and prepares the invocations
 --   for a property and adds the lemmas
 theoryToInvocations :: Params -> Theory -> Prop -> [Prop] -> (Property,[Msg])
-theoryToInvocations params theory prop@(Prop{..}) lemmas =
+theoryToInvocations params@(Params{..}) theory prop@(Prop{..}) lemmas =
     let tyEnv  = theoryTyEnv theory
         partsm = makeProofDecls tyEnv params theory prop lemmas
         (parts,dbg) = unzip $ flip map partsm $ \partm -> runTM params $ do
@@ -272,12 +272,16 @@ theoryToInvocations params theory prop@(Prop{..}) lemmas =
                         let funs = map (declName &&& length . declArgs) (theoryFunDecls theory)
                         addFuns funs
                         part <- partm
-                        lemmaTPTP <- mapM translateLemma lemmas
+                        lemmaTPTP <- zipWithM translateLemma [0..] lemmas
                         mapM_ (uncurry registerFunPtr) (theoryUsedPtrs theory)
                         extra    <- envStDecls
-                        let tyaxioms = map (genTypePred tyEnv)         (theoryDataTypes theory)
-                                    ++ mapMaybe (infDomainAxiom tyEnv) (theoryDataTypes theory)
-                                    ++ [anyTypeAxiom]
+                        let tyaxioms = concat [ mapMaybe (infDomainAxiom tyEnv)
+                                                         (theoryDataTypes theory)
+                                              | not thy_no_infdom ]
+                                    ++ concat [ anyTypeAxiom :
+                                                map (genTypePred tyEnv)
+                                                    (theoryDataTypes theory)
+                                              | not thy_no_typreds ]
                         db    <- popMsgs
                         return (extendPart (extra ++ tyaxioms ++ theoryFunTPTP theory ++ lemmaTPTP) part,db)
         property = Property { propName   = propName

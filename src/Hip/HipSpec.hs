@@ -12,7 +12,7 @@ import Hip.Trans.Theory
 import Hip.Messages
 import Hip.Params as P
 import Hip.Trans.Parser
-import Hip.Trans.Core as C hiding (subst)
+import Hip.Trans.Core as C
 import Hip.Trans.Pretty
 import Hip.FromHaskell.FromHaskell
 import Hip.Trans.MakeProofs
@@ -31,9 +31,6 @@ import Data.Char
 import Data.Ord
 import Data.Tuple
 import Data.Function
-import Data.Tree
-import qualified Data.Map as M
-import Data.Map (Map)
 
 import Control.Monad.State
 import Control.Monad
@@ -41,7 +38,7 @@ import Control.Applicative
 import Control.Arrow ((***),(&&&),second,first)
 
 import System.IO
-import System.Console.CmdArgs hiding (summary,name,typ)
+import System.Console.CmdArgs hiding (summary,name)
 import System.Exit (exitFailure,exitSuccess)
 
 type QSEq = (Term Symbol,Term Symbol)
@@ -66,11 +63,11 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
     chunks = batchsize params
 
     loop :: PruneState -> [QSEq] -> [QSEq] -> [Prop] -> Bool -> IO ([Prop],[QSEq])
-    loop ps@(_,cc) []  failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
-    loop ps@(_,cc) []  failed proved False = return (proved,failed)
+    loop ps@(_,cc) [] failed proved True  = putStrLn "Loop!" >> loop ps failed [] proved False
+    loop ps@(_,cc) [] failed proved False = return (proved,failed)
     loop ps@(_,cc) eqs failed proved retry = do
 
-      let discard eq = \failedacc -> any (isomorphicTo ps eq) failedacc
+      let discard eq = \failedacc -> any (isomorphicTo eq) failedacc
                                   || evalCC cc (uncurry canDerive eq)
 
           (renamings,tryEqs,nextEqs) = getUpTo chunks discard eqs failed
@@ -78,22 +75,23 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
       unless (null renamings) $ putStrLn $
          let n = length renamings
          in if (n > 5) then "Discarding " ++ show n ++ " renamings and subsumptions."
-                       else "Discarding renamings and subsumptions: " ++ csv (map showEq renamings) ++ "."
+                       else "Discarding renamings and subsumptions: " ++ csv (map showEq renamings)
 
       res <- tryProve params (map (uncurry termsToProp) tryEqs) theory proved
 
-      let (successes,failures) = (map fst *** map fst) (partition snd res)
+      let (successes,without_induction,failures) = partitionInvRes res
           (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
           failureEqs = map propQSTerms failures
+          prunable = successes ++ without_induction
 
-      if null successes
+      if null prunable
           then loop ps nextEqs (failed ++ failureEqs) proved retry
           else do
-              let (_,ps') = doPrune (const True) ctxt depth (map propQSTerms successes) [] ps
+              let (_,ps') = doPrune (const True) ctxt depth (map propQSTerms prunable) [] ps
                   failed' = failed ++ failureEqs
-                  (cand,failedWoCand) = {- ([],failed') -} first (sortBy (comparing equationOrder) . nub . concat)
+                  (cand,failedWoCand) = first (sortBy (comparing equationOrder) . nub . concat)
                                       $ flip runState failed'
-                                      $ forM successes
+                                      $ forM prunable
                                       $ \prop -> do failed <- get
                                                     let eq = propQSTerms prop
                                                         (cand,failed') = instancesOf ps eq failed
@@ -102,31 +100,26 @@ deep params theory ctxt depth univ eqs = loop (initPrune ctxt univ) eqs [] [] Fa
               unless (null cand) $ putStrLn $ "Interesting candidates: " ++ csv (map showEq cand)
               loop ps' (cand ++ nextEqs) failedWoCand (proved ++ successes) True
 
-    varCtxt :: [Symbol]
-    varCtxt = filter ((TVar ==) . typ) (zipWith relabel [0..] ctxt)
+    isomorphicTo :: QSEq -> QSEq -> Bool
+    e1 `isomorphicTo` e2 =
+      case matchEqSkeleton e1 e2 of
+        Nothing -> False
+        Just xs -> function xs && function (map swap xs)
 
-    equivalent :: PruneState -> QSEq -> QSEq -> Bool
-    equivalent ps e1 e2 = implies ps e1 e2 && implies ps e2 e1
+    matchEqSkeleton :: QSEq -> QSEq -> Maybe [(Symbol, Symbol)]
+    matchEqSkeleton (t, u) (t', u') =
+      liftM2 (++) (matchSkeleton t t') (matchSkeleton u u')
 
-    implies :: PruneState -> QSEq -> QSEq -> Bool
-    implies ps@(_,cc) (t,u) (s,r) = evalCC cc $
-        do unify (killSymbols t,killSymbols u)
-           canDerive s r
+    matchSkeleton :: Term Symbol -> Term Symbol -> Maybe [(Symbol, Symbol)]
+    matchSkeleton (T.Const f) (T.Const g) | f == g = return []
+    matchSkeleton (T.Var x) (T.Var y) = return [(x, y)]
+    matchSkeleton (T.App t u) (T.App t' u') =
+      liftM2 (++) (matchSkeleton t t') (matchSkeleton u u')
+    matchSkeleton _ _ = Nothing
 
-    isomorphicTo :: PruneState -> QSEq -> QSEq -> Bool
-    isomorphicTo ps (t,u) e2 = any (\s -> equivalent ps (subst s t,subst s u) e2) substs
-      where
-        tuvars  = nub (vars t ++ vars u)
-        -- ^ Variables in t and u
-
-        substs :: [[(Symbol,Term Symbol)]]
-        substs = map (map (second T.Var))
-               $ filter (\xs -> ((==) <*> nub) (map snd xs))
-                 -- ^ Filter away non-injective substitutions
-               $ mapM (\(x,ys) -> repeat x `zip` ys)
-                 -- ^ Make all substitutions from this
-               $ [ (x,filter ((symbolType x ==) . symbolType) varCtxt) | x <- tuvars ]
-                 -- ^ Map each variable to candidates with the same type
+    function :: (Ord a, Eq b) => [(a, b)] -> Bool
+    function = all singleton . groupBy ((==) `on` fst) . nub . sortBy (comparing fst)
+      where singleton xs = length xs == 1
 
     instancesOf :: PruneState -> QSEq -> [QSEq] -> ([QSEq],[QSEq])
     instancesOf ps new = partition (instanceOf ps new)
@@ -196,7 +189,7 @@ hipSpec file ctxt depth = do
 
     let (theory,props,msgs) = makeTheory params ds
 
-    -- Verbose output
+     -- Verbose output
     when dbfol $ mapM_ print (filter (sourceIs Trans) msgs)
 
     -- Warnings
@@ -205,27 +198,13 @@ hipSpec file ctxt depth = do
     let props' | consistency = inconsistentProp : props
                | otherwise   = props
 
-
-    {-
-    putStrLn "Strongly Connected Components"
-    putStrLn $ drawForest (theorySCC theory)
-
-    putStrLn "Topological Sort"
-    putStrLn $ unwords (theoryTopSort theory)
-
-    putStrLn "The graph"
-    putStrLn $ show (theoryGraph theory)
-    -}
-
-    let top_lookup = theoryTopSort theory
-        eq_val :: QSEq -> Int
-        eq_val (u,v) = maximum $ map (top_lookup . name) (constants u ++ constants v)
-
     putStrLn "Translation complete. Generating equivalence classes."
 
     let classToEqs :: [[Term Symbol]] -> [(Term Symbol,Term Symbol)]
-        classToEqs = sortBy (comparing equationOrder )
-                   . concatMap ((\(x:xs) -> zip (repeat x) xs) . sort)
+        classToEqs = sortBy (comparing (equationOrder . (ord_swap ? swap)))
+                   . if ord_quadratic
+                         then sort . concatMap uniqueCartesian
+                         else concatMap ((\(x:xs) -> zip (repeat x) xs) . sort)
 
     (quickSpecClasses,prunedEqs) <- packLaws depth ctxt True (const True) (const True)
 
@@ -234,10 +213,7 @@ hipSpec file ctxt depth = do
     putStrLn "Starting to prove..."
 
     (qslemmas,qsunproved) <- deep params theory ctxt depth univ
-                                  ({- prunedEqs ++ -} sortBy (comparing eq_val)
-                                                       (classToEqs quickSpecClasses))
-
-    putStrLn $ "Unproved equations from QuickSpec: " ++ show (length qsunproved) ++ "."
+                                  (ord_prep_pruned ? (prunedEqs ++) $ classToEqs quickSpecClasses)
 
     (unproved,proved) <- parLoop params theory props' qslemmas
 
@@ -254,8 +230,23 @@ printInfo unproved proved = do
     putStrLn (show (length proved) ++ "/" ++ show (length (proved ++ unproved)))
 
 
+data InvokeResult = ByInduction | ByPlain | NoProof deriving (Eq,Ord,Show)
+
+toInvokeResult :: PropResult -> InvokeResult
+toInvokeResult p | plainProof p               = ByPlain
+                 | fst (propMatter p) /= None = ByInduction
+                 | otherwise                  = NoProof
+
+partitionInvRes :: [(a,InvokeResult)] -> ([a],[a],[a])
+partitionInvRes ((x,ir):xs) =
+   let (a,b,c) = partitionInvRes xs
+   in case ir of ByInduction -> (x:a,b,c)
+                 ByPlain     -> (a,x:b,c)
+                 NoProof     -> (a,b,x:c)
+partitionInvRes [] = ([],[],[])
+
 -- | Try to prove some properties in a theory, given some lemmas
-tryProve :: Params -> [Prop] -> Theory -> [Prop] -> IO [(Prop,Bool)]
+tryProve :: Params -> [Prop] -> Theory -> [Prop] -> IO [(Prop,InvokeResult)]
 tryProve params@(Params{..}) props thy lemmas = do
     let env = Env { reproveTheorems = reprove
                   , timeout         = timeout
@@ -278,16 +269,18 @@ tryProve params@(Params{..}) props thy lemmas = do
     res <- invokeATPs properties env
 
     forM res $ \property -> do
-        let proved = fst (propMatter property) /= None
-        when   proved (putStrLn $ bold (color Green ("Proved " ++ PD.propName property ++ ".")))
-        unless proved (putStrLn $ "Failed to prove " ++ PD.propName property ++ ".")
+        let invRes = toInvokeResult property
+        case invRes of
+           ByInduction -> putStrLn $ bold $ color Green $ "Proved " ++ PD.propName property ++ "!!"
+           ByPlain     -> putStrLn $        color Green $ "Proved " ++ PD.propName property ++ " without induction."
+           NoProof     -> putStrLn $ "Failed to prove " ++ PD.propName property ++ "."
         return (fromMaybe (error "tryProve: lost")
                           (find ((PD.propName property ==) . propName) props)
-               ,proved)
+               ,invRes)
 
 proveLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
 proveLoop params thy props lemmas = do
-   new <- forFind (inspect props) $ \(p,ps) -> snd . head <$> tryProve params [p] thy lemmas
+   new <- forFind (inspect props) $ \(p,ps) -> (/= NoProof) . snd . head <$> tryProve params [p] thy lemmas
    case new of
      -- Property p was proved and ps are still left to prove
      Just (p,ps) -> do putStrLn ("Proved " ++ propName p ++ ": " ++ propRepr p ++ ".")
@@ -297,10 +290,9 @@ proveLoop params thy props lemmas = do
 
 parLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
 parLoop params thy props lemmas = do
-    (proved,unproved) <-  (map fst *** map fst) . partition snd
-                      <$> tryProve params props thy lemmas
-    if null proved then return (props,lemmas)
+    (proved,without_induction,unproved) <- partitionInvRes <$> tryProve params props thy lemmas
+    unless (null without_induction) $ putStrLn $ csv (map propName without_induction) ++ " provable without induction"
+    if null proved then return (unproved,lemmas++without_induction)
                    else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ intercalate ", " (map propName proved)
-                           parLoop params thy unproved (proved ++ lemmas)
-
+                           parLoop params thy unproved (lemmas ++ proved ++ without_induction)
 

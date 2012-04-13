@@ -24,6 +24,12 @@ data Content a = Root                -- Root node. All constructors point to it.
                | C { content :: a }  -- Constructors
   deriving (Eq,Ord,Show,Functor)
 
+safeContent :: Content Name -> Name
+safeContent Root = "Root"
+safeContent c    = content c
+
+
+
 isF :: Content a -> Bool
 isF F{} = True
 isF _   = False

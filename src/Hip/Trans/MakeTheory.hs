@@ -41,8 +41,8 @@ processDecls ds = ProcessedDecls{..}
   where
     (funAndProofDecls,dataDecls',typeDecls) = partitionDecls ds
     (proofDecls,funDecls) = partitionProofDecls funAndProofDecls
-    dataDecls = {- Data "empty"  [] [Cons bottomName []]
-              : -} Data "Bool"   [] [Cons trueName [],Cons falseName []]
+    dataDecls = Data "Bool" []    [Cons trueName [],Cons falseName []]
+              : Data "[]"   ["a"] [Cons "[]" [],Cons ":" [TyVar "a",TyCon "[]" [TyVar "a"]]]
               : filter (\d -> declName d `notElem` proofDatatypes) dataDecls'
 
 
@@ -112,8 +112,9 @@ makeTheory params ds =
                                           , propName = prop_name
                                           , propType = ty'
                                           , propRepr = prettyCore e
+                                          , propQSTerms = error "MakeTheory.makeTheory.properties : propQSTerms does not exist for this property!"
                                           })
-  in  (Theory thy_functions dataDecls (declsToGraph ds)
+  in  (Theory thy_functions dataDecls (declsToGraph (funDecls ++ dataDecls))
       ,properties
       ,concat thy_msgs)
 

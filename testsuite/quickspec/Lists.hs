@@ -7,7 +7,7 @@ import qualified Prelude as P
 import Data.Typeable
 
 import Hip.HipSpec
-import Test.QuickCheck
+import Test.QuickCheck hiding (Prop)
 import Control.Applicative
 
 data ListP a = Cons a (ListP a) | Nil
@@ -25,7 +25,7 @@ reverse (Cons x xs) = reverse xs ++ point x
 reverse Nil         = Nil
 
 reverse2 :: ListP a -> ListP a
-reverse2 = revAcc Nil
+reverse2 xs = revAcc Nil xs
 
 revAcc :: ListP a -> ListP a -> ListP a
 revAcc acc Nil         = acc
@@ -33,42 +33,40 @@ revAcc acc (Cons x xs) = revAcc (Cons x acc) xs
 
 type List = ListP Int
 
-prop_revrev :: ListP a -> ListP a -> ListP a
+prop_revrev :: ListP a -> ListP a -> Prop (ListP a)
 prop_revrev xs ys = reverse xs ++ reverse ys =:= reverse (ys ++ xs)
 
-prop_revinv :: ListP a -> ListP a
+prop_revinv :: ListP a -> Prop (ListP a)
 prop_revinv xs = reverse (reverse xs) =:= xs
 
-prop_rev_rev2 :: ListP a -> ListP a
+prop_rev_rev2 :: ListP a -> Prop (ListP a)
 prop_rev_rev2 xs = reverse2 xs =:= reverse xs
 
-prop_rev2rev2 :: ListP a -> ListP a -> ListP a
+prop_rev2rev2 :: ListP a -> ListP a -> Prop (ListP a)
 prop_rev2rev2 xs ys = reverse2 xs ++ reverse2 ys =:= reverse2 (ys ++ xs)
 
-prop_rev2inv :: ListP a -> ListP a
+prop_rev2inv :: ListP a -> Prop (ListP a)
 prop_rev2inv xs = reverse2 (reverse2 xs) =:= xs
 
 main = hipSpec "Lists.hs" conf 3
   where conf = describe "Lists"
-                [ var "x"  intType
-                , var "y"  intType
-                , var "z"  intType
-                , var "xs" listType
-                , var "ys" listType
-                , var "zs" listType
-                , con "Nil"      (Nil :: List)
-                , con "Cons"     (Cons :: Int -> List -> List)
-                , con "point"    (point :: Int -> List)
-                , con "++"       ((++) :: List -> List -> List)
-                , con "reverse"  (reverse :: List -> List)
+                [ var "x"        intType
+                , var "y"        intType
+                , var "z"        intType
+                , var "xs"       listType
+                , var "ys"       listType
+                , var "zs"       listType
+                , con "Nil"      (Nil      :: List)
+                , con "Cons"     (Cons     :: Int -> List -> List)
+                , con "point"    (point    :: Int -> List)
+                , con "++"       ((++)     :: List -> List -> List)
+                , con "reverse"  (reverse  :: List -> List)
                 , con "reverse2" (reverse2 :: List -> List)
-                , con "revAcc"   (revAcc :: List ->  List -> List)
+                , con "revAcc"   (revAcc   :: List ->  List -> List)
                 ]
                    where
                      intType   = undefined :: Int
                      listType  = undefined :: List
-                     unOpType  = undefined :: Int -> Int
-                     binOpType = undefined :: Int -> Int -> Int
 
 instance Arbitrary List where
   arbitrary = sized arbList
@@ -84,3 +82,4 @@ instance Classify List where
 -- The tiny Hip Prelude
 (=:=) = (=:=)
 
+type Prop a = a

@@ -162,6 +162,7 @@ not False = True
 listEq :: [Nat] -> [Nat] -> Bool
 listEq []     []     = True
 listEq (x:xs) (y:ys) = x == y && (xs `listEq` ys)
+listEq _      _      = False
 
 Z     <= _     = True
 _     <= Z     = False
@@ -179,9 +180,9 @@ main = hipSpec "ProductiveUseOfFailure.hs" conf 3
                 [ var "x"  natType
                 , var "y"  natType
                 , var "z"  natType
---                , var "a"  boolType
---                , var "b"  boolType
---                , var "c"  boolType
+                , var "a"  boolType
+                , var "b"  boolType
+                , var "c"  boolType
                 , var "xs" listNatType
                 , var "ys" listNatType
                 , var "zs" listNatType
@@ -194,32 +195,32 @@ main = hipSpec "ProductiveUseOfFailure.hs" conf 3
 --                , con "not"       (not    :: Bool -> Bool)
 --                , con "&&"        ((&&)   :: Bool -> Bool -> Bool)
 --                , con "||"        ((&&)   :: Bool -> Bool -> Bool)
---                , con "<=>"       ((<=>)  :: Bool -> Bool -> Bool)
---                , con "-->"       ((-->)  :: Bool -> Bool -> Bool)
---                , con "length"    (length :: [Nat] -> Nat)
+                , con "<=>"       ((<=>)  :: Bool -> Bool -> Bool)
+                , con "-->"       ((-->)  :: Bool -> Bool -> Bool)
+                , con "length"    (length :: [Nat] -> Nat)
                 , con "++"        ((++)   :: [Nat] -> [Nat] -> [Nat])
 --                , con "drop"      (drop   :: Nat -> [Nat] -> [Nat])
 --                , con "rev"       (rev    :: [Nat] -> [Nat])
 --                , con "qrev"      (qrev   :: [Nat] -> [Nat] -> [Nat])
-                , con "double"    double
-                , con "half"      half
-                , con "even"      even
+--                , con "double"    double
+--                , con "half"      half
+--                , con "even"      even
 --                , con "mult"      mult
                 , con "+"         (+)
 --                , con "*"         (*)
                 , con "rotate"    (rotate :: Nat -> [Nat] -> [Nat])
                 , con "elem"      elem
-                , con "subset"    subset
-                , con "union"     union
-                , con "intersect" intersect
- --               , con "isort"     isort
- --               , con "insert"    insert
- --               , con "count"     count
- --               , con "sorted"    sorted
-               , con "=="        (==)
- --               , con "<="        (<=)
+--                , con "subset"    subset
+--                , con "union"     union
+--                , con "intersect" intersect
+                , con "isort"     isort
+                , con "insert"    insert
+                , con "count"     count
+                , con "sorted"    sorted
+                , con "=="        (==)
+                , con "<="        (<=)
  --               , con "/="        (/=)
-               , con "listEq"    listEq
+ --              , con "listEq"    listEq
                 ]
                    where
                      natType      = undefined :: Nat

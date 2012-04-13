@@ -2,6 +2,7 @@
              TemplateHaskell,
              TypeOperators,
              ParallelListComp,
+             RecordWildCards,
              FlexibleContexts #-}
 module Hip.Trans.Monad
        (TM()
@@ -389,7 +390,8 @@ appFold = foldl (\f x -> T.Fun ptrapp [f,x])
 envStDecls :: TM [T.Decl]
 envStDecls = TM $ do
   s <- get
-  return $ extEquality : {- appBottom : -}
+  let Params{..} = _params s
+  return $ [ extEquality | not thy_no_exteq ] ++
            projDecls (_conProj s) ++
            ptrDecls (_arities s) (_usedFunPtrs s) ++
            disjDecls (_datatypes s)

@@ -83,6 +83,10 @@ statusFromPart :: PartResult -> Status
 statusFromPart (Part _ coverage (map (fst . particleMatter) -> res))
   = statusFromResults coverage res
 
+plainProof :: PropResult -> Bool
+plainProof = any (\p -> partMethod p == Plain && statusFromPart p /= None)
+           . snd . propMatter
+
 data Env = Env { propStatuses    :: MVar (Map PropName Status)
                , propCodes       :: Map PropName String
                , reproveTheorems :: Bool

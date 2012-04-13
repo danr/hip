@@ -20,13 +20,14 @@ import Data.Maybe (catMaybes)
 
 import Hip.Trans.Theory
 
-translateLemma :: Prop -> TM T.Decl
-translateLemma (Prop{..}) = locally $ do
+translateLemma :: Int -> Prop -> TM T.Decl
+translateLemma n (Prop{..}) = locally $ do
     rhs <- translateExpr proprhs
     lhs <- translateExpr proplhs
     env <- getEnv False
     tytms <- (`zip` argsTypes propType) <$> mapM (translateExpr . Var) propVars
-    Lemma propName <$> forallUnbound (typeGuards env tytms (lhs === rhs))
+    let nam = ("lemma (" ++ show n ++ ") " ++ propName)
+    Lemma nam <$> forallUnbound (typeGuards env tytms (lhs === rhs))
 
 -- | Translate a function declaration to axioms,
 --   together with its original definition for latex output.
