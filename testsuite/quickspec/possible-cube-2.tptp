@@ -1,0 +1,26 @@
+fof(disj,axiom,! [X]: (zero != suc(X))).
+
+fof('+0',  definition,! [Y]   : (add(zero,Y)   = Y)).
+fof('+1',  definition,! [X,Y] : (add(suc(X),Y) = suc(add(X,Y)))).
+fof('*0',  definition,! [Y]   : (mul(zero,Y)   = zero)).
+fof('*1',  definition,! [X,Y] : (mul(suc(X),Y) = add(Y,mul(X,Y)))).
+fof(sum0,  definition,          sum(zero)      = zero).
+fof(sum1,  definition,! [X]   : (sum(suc(X))   = add(sum(X),suc(X)))).
+fof(cubes0,definition,          cubes(zero)    = zero).
+fof(cubes1,definition,! [X]   : (cubes(suc(X)) = add(cubes(X),mul(mul(suc(X),suc(X)),suc(X))))).
+
+fof(lemma,lemma,! [X]     : (X                      = add(X,zero))).
+fof(lemma,lemma,! [X,Y]   : (suc(add(X,Y))          = add(X,suc(Y)))).
+fof(lemma,lemma,! [X]     : (zero                   = mul(X,zero))).
+fof(lemma,lemma,! [X]     : (X                      = mul(X,suc(zero)))).
+fof(lemma,lemma,! [X,Y,Z] : (add(X,add(Y,Z))        = add(add(X,Y),Z))).
+fof(lemma,lemma,! [X,Y,Z] : (mul(X,mul(Y,Z))        = mul(mul(X,Y),Z))).
+fof(lemma,lemma,! [X,Y]   : (add(X,Y)               = add(Y,X))).
+fof(lemma,lemma,! [X,Y]   : (mul(X,Y)               = mul(Y,X))).
+fof(lemma,lemma,! [X,Y,Z] : (mul(X,add(Y,Z))        = add(mul(X,Z),mul(X,Y)))).
+fof(lemma,lemma,! [X,Y]   : (mul(mul(X,Y),suc(X))   = mul(add(Y,Y),sum(X)))).
+fof(lemma,lemma,! [X]     : (add(sum(X),sum(X))     = mul(suc(X),X))).
+fof(lemma,lemma,! [X,Y]   : (mul(add(X,Y),add(X,Y)) = add(add(mul(X,X),mul(Y,Y)),add(mul(X,Y),mul(X,Y))))).
+
+fof(ind,conjecture,cubes(suc(x)) = mul(sum(suc(x)),sum(suc(x)))).
+fof(ind,hypothesis,cubes(x)      = mul(sum(x),sum(x))).

@@ -1,0 +1,311 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{mathpartir}
+%\usepackage[margin=1.5in]{geometry}
+\usepackage{verbatim}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage{pgfplots}
+\usepackage{bold-extra}
+\usepackage{tikz}
+\usepackage{palatino}
+\usepackage[T1]{fontenc}
+\usepackage{inconsolata}
+\usepackage{natbib}
+\usepackage{longtable}
+\usepackage{tikz}
+\usepackage{array}
+\usepackage{tabularx}
+%\usepackage{graphicx}
+%\usepackage[table]{xcolor}
+\usepackage{colortbl}
+%\usepackage{url}
+\usepackage[pdfborder=0 0 0]{hyperref}
+\hypersetup{
+    colorlinks,
+    linkcolor=black,
+    citecolor=black,
+    filecolor=black,
+    urlcolor=black
+}
+\usepackage{xparse}
+\usepackage{enumitem}  % sensible enumerations
+\setlist{nolistsep}
+
+%\usepackage{parskip}
+%\setlength{\parindent}{-0.0cm}
+%\setlength{\parskip}{0.3\baselineskip}
+
+
+%\usepackage[compact]{titlesec}
+
+%\usepackage{titlesec}
+%\titleformat{\chapter}[hang]{\huge}{\thechapter}{1em}{}
+%\titlespacing{\chapter}{0pt}{0pt}{0cm}
+
+%\addtolength{\headwidth}{\marginparsep}
+%\addtolength{\headwidth}{\marginparwidth}
+
+\usepackage{listings}
+
+\lstnewenvironment{code}[1][]%
+  {
+   \noindent
+   \minipage{\linewidth}
+   \vspace{0.2\baselineskip}
+%   \vspace{-0.4\baselineskip}
+   \lstset{basicstyle=\ttfamily\footnotesize,
+           frame=single,
+           language=Haskell,
+           keywordstyle=\color{black},
+           #1}}
+  {%\vspace{-0.8\baselineskip}
+   \endminipage}
+
+\makeatletter
+\newcommand*{\rom}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@.}}
+\newcommand*{\romnodot}[1]{\text{\footnotesize\expandafter\@slowromancap\romannumeral #1@}}
+\makeatother
+
+%\newcommand\note[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\emph{#1}}}
+\newcommand\note[1]{}
+\newcommand\PA{\mathcal{P\!A}}
+\newcommand\hs[1]{\texttt{#1}}
+\newcommand\ts[1]{\texttt{#1}}
+\newcommand\fn[1]{\mathrm{#1}}
+\newcommand\ptr[1]{\fn{\operatorname{#1-ptr}}}
+%\newcommand\ptr[1]{\fn{#1.ptr}}
+\newcommand\appfn{@}
+\newcommand\app[2]{#1 \, \appfn \, #2}
+\newcommand\ex[1]{\exists \, #1 \, . \,}
+\newcommand\nexxx[3]{\nexists \, #1 , #2 , #3 . \,}
+\newcommand\fa[1]{\forall \, #1 . \,}
+\newcommand\faa[2]{\forall \, #1 , #2 . \,}
+\newcommand\faaa[3]{\forall \, #1 , #2 , #3 . \,}
+\newcommand\faaaaaa[6]{\forall \, #1 , #2 , #3 , #4 , #5 , #6 . \,}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}%\usetikzlibrary {\trees,positioning,arrows}
+
+\newcommand\tofix[1]{\fixb{#1}}
+\newcommand\unfix[1]{\fixw{#1}}
+
+\newcommand\fixb[1]{#1^{\bullet}}
+\newcommand\fixw[1]{#1^{\circ}}
+
+\newcommand\fixhsb[1]{\hs{#1}^{\bullet}}
+\newcommand\fixhsw[1]{\hs{#1}^{\circ}}
+
+%\newcommand\append[0]{\texttt{\small{++}}}
+
+\newcommand{\xsys}[2]{#1 \, xs \, #2 & = #1 \, ys #2}
+\newcommand{\desca}[1]{  & \hspace{48.5mm}                            \{ \text{#1} \}}
+\newcommand{\descra}[1]{ & \hspace{39mm} \Rightarrow     \hspace{4mm} \{ \text{#1} \}}
+\newcommand{\descla}[1]{ & \hspace{39mm} \Leftarrow      \hspace{4mm} \{ \text{#1} \}}
+\newcommand{\desclra}[1]{& \hspace{39mm} \Leftrightarrow \hspace{4mm} \{ \text{#1} \}}
+
+\newcommand\lub[1]{\sqcup_{#1}}
+\newcommand\defof[1]{definition of #1}
+
+\newcommand\w[0]{\,\,}
+\newcommand\eq[0]{ = }
+
+\newcommand{\defBNF}[4] {\text{#1}\quad&#2&::=&\;#3&\text{#4}}
+\newcommand{\defaltBNF}[2] {&&|&\;#1&\text{#2}}
+
+\newcommand{\hstup}[2]{\hs{(} #1 \hs{,} #2 \hs{)}}
+
+\newcommand{\nsqsubseteq}{\,\,\, /\!\!\!\!\!\!\sqsubseteq}
+
+\begin{document}
+
+\section*{Translation Plan}
+
+My plan is to keep the bottomless translation and only reason about
+``nice'' Haskell functions when integrating \hs{QuickSpec}. This
+document describes what needs to be done and why.
+
+\subsection*{Lemmas over finite types}
+
+These needs to be equipped with a type predicate or function. This is
+to ensure soundness. Consider these two definitions of \hs{and}:
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}[b]{5cm}
+\begin{code}
+and :: Bool -> Bool -> Bool
+and True  y = y
+and False y = False
+\end{code}
+\end{minipage}
+\hspace{10pt}
+\begin{minipage}[b]{5cm}
+\begin{code}
+and' :: Bool -> Bool -> Bool
+and' True True = True
+and' x    y    = False
+\end{code}
+\end{minipage}
+%\caption{Two definitions of boolean and, \texttt{and} and \texttt{and'}
+%\label{code:and}
+%}
+\end{figure}
+
+\noindent
+With cases on Bool, we can prove $\faa{x : \hs{Bool}}{y :
+  \hs{Bool}} \hs{and}(x,y) = \hs{and'}(x,y)$. Doing type erasure here
+is unsound since these generated axioms will conflict:
+
+\begin{align*}
+& \hs{or}(\hs{True},y) = y   \vee x = \hs{False} \\
+& \hs{or'}(x,y) = \hs{False} \vee x = \hs{True} \wedge y = \hs{True} \\
+& \hs{or}(x,y) = \hs{or'}(x,y)
+\end{align*}
+
+\noindent
+Since these axioms should hold in an infinite model, we get
+$\hs{or}(\hs{True},\diamond) = \diamond$, but
+$\hs{or'}(\hs{True},\diamond) = \hs{False}$, which is a contradiction.
+
+As lemmas will come from either properties in the file or from
+QuickSpec, the types of the quantified variables are known. Either
+type predicates or type functions can be used.
+
+With a predicate:
+
+\begin{align*}
+  Ty(\hs{Bool},x) \leftrightarrow x = \hs{True} \vee x = \hs{False}
+\end{align*}
+
+With a function:
+
+\begin{align*}
+& ty(\hs{Bool},\hs{True})  = \hs{True} \\
+& ty(\hs{Bool},\hs{False}) = \hs{False} \\
+& ty(\hs{Bool},x) = \hs{True} \vee ty(\hs{Bool},x) = \hs{False}
+\end{align*}
+
+The property can then get its type erasured but with guards inserted.
+With type functions it looks like this:
+
+$$\faa{x}{y} \hs{and}(ty(\hs{Bool},x),ty(\hs{Bool},y)) = \hs{and'}(ty(\hs{Bool},x),ty(\hs{Bool},y))$$
+
+With predicates:
+
+$$\faa{x}{y} Ty(\hs{Bool},x) \wedge Ty(\hs{Bool},y) \rightarrow \hs{and}(x,y) = \hs{and'}(x,y)$$
+
+Match-any patterns can be used without getting any inconsistencies
+when type arguments are used for lemmas regarding finite types.
+
+\subsection*{Functions returning a finite type}
+
+As finite types are finite, it is deducible from the theory which
+if a function returns in a certain type on well-typed arguments.
+Functions returning a finite type should get an appropriate type.
+For instance, this does not need to be an axiom, as it can be deduced
+from the theory:
+
+$$\faa{x}{y} Ty(\hs{Bool},x) \wedge Ty(\hs{Bool},y) \rightarrow Ty(\hs{Bool},\hs{and}(x,y))$$
+
+\subsection*{Infinite types get domain axioms}
+
+When using the translation that inserts bottoms, we always get
+``upward axioms'', which describes the domain a function operates
+on. This is not the case any more. Consider the equality function on
+natural numbers:
+
+\begin{code}
+Zero  == Zero  = True
+Suc m == Zero  = False
+Zero  == Suc n = False
+Suc m == Suc n = m == n
+\end{code}
+
+\noindent
+This code is translated as-is, and no upward axioms are generated as
+there are no match-any patterns. If we knew that there were elements
+in the theory that were not natural numbers, \hs{==} would be
+unspecified on such arguments. This means that if it is known that
+$m \, \hs{==} \, n = \hs{True}$, no conclusion can be drawn about $m$ and
+$n$. A simple and way to fix this is to add an axiom for every
+infinite data type that expresses its domain. It looks like this for
+the natural numbers:
+
+$$\fa{x} x = \hs{Zero} \vee x = \hs{Succ}(\pi_0(x))$$
+
+With this axiom added to the theory this is deducible:
+\begin{align*}
+\faa{m}{n} m \w \hs{==} \w n \rightarrow ( & (m = \hs{Zero} \wedge n = \hs{Zero}) \, \vee \\
+                                           & (m = \hs{Succ}(\pi_0(m)) \wedge n = \hs{Succ}(\pi_0(n)) \wedge \pi_0(m) \w \hs{==} \w \pi_0(n)) )
+\end{align*}
+
+\subsection*{Finite results axioms}
+
+\emph{New as of 16 Apr}
+
+Termination functions with at least some infinite input returning
+finite values should get an axiom expressing what they return.
+
+Example: equality as above. State that
+$\faa{m}{n} m \hs{==} n = \hs{True} \vee m \hs{==} n = \hs{False}$
+
+\subsection*{Typed translation}
+
+\subsection*{Terminating functions only}
+
+Koen and Nick gave a nice example of deriving a contradiction in the
+bottomless UEQ translation setting, when this non-terminating \hs{Bool} is allowed:
+
+\begin{code}
+a :: Bool
+a = not a
+\end{code}
+
+We then prove $x \w \hs{==} \w x = \hs{True}$ and $x \w \hs{==} \w \hs{not} \w x = \hs{False}$, and
+then the contradiction is from $\hs{True} = \hs{a == a} = \hs{a == not a} = \hs{False}$.
+
+It is not immediate that this should be a problem when guarding the
+universal quantifiers with type guards, but let's rule out non-terminating functions.
+
+\section*{The full translation}
+
+For the real translation working on full Haskell, there are a lot of
+interesting things to add. Notably is a $Nice$ predicate which says
+that a value is finite and bottomless. The reason why I do not want to
+use this right away is that $Nice$ will probably give a significant
+overhead to the theorem provers. For natural numbers, the $Nice$
+predicate could be axiomatised like this:
+
+\begin{align*}
+& Nice(\hs{Nat},\hs{Zero}) \\
+& Nice(\hs{Nat},x) \rightarrow Nice(\hs{Nat},\hs{Succ}(x)) \\
+& \neg Nice(\hs{Nat},\bot)
+\end{align*}
+
+Then we can express properties like the commutativity of plus:
+
+$$\faa{x}{y} Nice(\hs{Nat},x) \wedge Nice(\hs{Nat},y) \rightarrow x + y = y + x$$
+
+The expressibility of properties should be extended to handle $Nice$,
+as well as propositional connectives. The admissibility can be checked syntactically.
+
+To instantiate the + commutative lemma with for instance $m + n$, properties like this
+needs to be proved:
+
+$$\faa{x}{y} Nice(\hs{Nat},x) \wedge Nice(\hs{Nat},y) \rightarrow Nice(\hs{Nat},x + y)$$
+
+For this we need some way to infer the type of expressions. I started
+working on a translation from GHC Core, and there arbitrary type
+information is extractible.
+
+Finite type predicates needs to be kept, but it might not be necessary
+to keep the infinite domain axioms.
+
+A question is if $Nice$ is expressible as a function instead, which is
+the identity on total values, and maps elements with bottom to
+something bottomless.
+
+\end{document}
