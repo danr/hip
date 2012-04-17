@@ -8,6 +8,7 @@ import Data.Typeable
 
 import Test.QuickCheck 
 import Test.QuickSpec hiding (size)
+import Hip.HipSpec hiding (size)
 
 -- Invariant : front is never empty unless back also is
 data Queue = Queue { front :: [Int] , back :: [Int] }
@@ -150,4 +151,5 @@ queueSpec = describe "Queue"
     intType   = undefined :: Int
     listType  = undefined :: [Int]
 
-main = quickSpecDepth queueSpec 3
+-- main = quickSpecDepth queueSpec 3
+main = hipSpec "Queue.hs" queueSpec 3

@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable, FlexibleContexts, FlexibleInstances, TypeSynonymInstances #-}
 module Main where
 
-import Prelude (Int,undefined,Eq,Show,Ord,return,div)
+import Prelude (Int,Eq,Show,undefined,Ord,return,div)
 import qualified Prelude as P
 
 import Data.Typeable
@@ -9,6 +9,8 @@ import Data.Typeable
 import Hip.HipSpec
 import Test.QuickCheck hiding (Prop)
 import Control.Applicative
+
+myUndefined = undefined 
 
 data ListP a = Cons a (ListP a) | Nil
   deriving (Show,Eq,Ord,Typeable)
@@ -24,6 +26,14 @@ reverse :: ListP a -> ListP a
 reverse (Cons x xs) = reverse xs ++ point x
 reverse Nil         = Nil
 
+head :: ListP a -> a
+head (Cons x xs) = x
+head _ = myUndefined
+
+tail :: ListP a -> ListP a
+tail (Cons x xs) = xs
+tail _ = myUndefined
+
 type List = ListP Int
 
 prop_revrev :: ListP a -> ListP a -> Prop (ListP a)
@@ -32,55 +42,54 @@ prop_revrev xs ys = reverse xs ++ reverse ys =:= reverse (ys ++ xs)
 prop_revinv :: ListP a -> Prop (ListP a)
 prop_revinv xs = reverse (reverse xs) =:= xs
 
-data SeqP a = NilS | NonNilS (NonNilSeqP a) deriving (Eq, Ord, Typeable)
+data SeqP a = NilS | Unit a | Append (SeqP a) (SeqP a) deriving (Eq, Ord, Typeable)
 
 (+++) :: SeqP a -> SeqP a -> SeqP a
 NilS +++ x = x
 x +++ NilS = x
-NonNilS x +++ NonNilS y = NonNilS (x `Append` y)
+x +++ y = x `Append` y
 
 prop_app :: SeqP a -> SeqP a -> Prop (ListP a)
 prop_app x y = toList x ++ toList y =:= toList (x +++ y)
 
-pointS :: a -> SeqP a
-pointS x = NonNilS (Unit x)
+prop_nil :: Prop (ListP a)
+prop_nil = toList NilS =:= Nil
 
 prop_point :: a -> Prop (ListP a)
-prop_point x = toList (pointS x) =:= point x
+prop_point x = toList (Unit x) =:= point x
 
 reverseS :: SeqP a -> SeqP a
 reverseS NilS = NilS
-reverseS (NonNilS x) = NonNilS (reverseSS x)
+reverseS (Unit x) = Unit x
+reverseS (Append x y) = Append (reverseS y) (reverseS x)
 
 prop_reverse :: SeqP a -> Prop (ListP a)
 prop_reverse x = toList (reverseS x) =:= reverse (toList x)
 
 toList :: SeqP a -> ListP a
 toList NilS = Nil
-toList (NonNilS x) = toListS x
+toList (Unit x) = point x
+toList (Append x y) = toList x ++ toList y
 
-data NonNilSeqP a = Unit a | Append (NonNilSeqP a) (NonNilSeqP a) deriving (Eq, Ord, Typeable)
+headS :: SeqP a -> a
+headS (Unit x) = x
+headS (Append x y) = headS x
+headS _ = myUndefined
 
-prop_unit :: a -> Prop (ListP a)
-prop_unit x = toListS (Unit x) =:= point x
+tailS :: SeqP a -> SeqP a
+tailS (Unit x) = NilS
+tailS (Append x y) = tailS x +++ y
+tailS _ = myUndefined
 
-prop_appS :: NonNilSeqP a -> NonNilSeqP a -> Prop (ListP a)
-prop_appS x y = toListS (x `Append` y) =:= toListS x ++ toListS y
+prop_head :: SeqP a -> Prop a
+prop_head xs = headS xs =:= head (toList xs)
 
-reverseSS (Unit x) = Unit x
-reverseSS (Append x y) = Append (reverseSS y) (reverseSS x)
-
-prop_reverseSS :: NonNilSeqP a -> Prop (ListP a)
-prop_reverseSS x = toListS (reverseSS x) =:= reverse (toListS x)
-
-toListS :: NonNilSeqP a -> ListP a
-toListS (Unit x) = point x
-toListS (Append x y) = toListS x ++ toListS y
+prop_tail :: SeqP a -> Prop (ListP a)
+prop_tail xs = toList (tailS xs) =:= tail (toList xs)
 
 type Seq = SeqP Int
-type NonNilSeq = NonNilSeqP Int
 
-main = hipSpec "Lists.hs" conf 3
+main = hipSpec "Lists2.hs" conf 3
   where conf = describe "Lists"
                 [ var "x"        intType
                 , var "y"        intType
@@ -88,9 +97,6 @@ main = hipSpec "Lists.hs" conf 3
                 , var "xs"       seqType
                 , var "ys"       seqType
                 , var "zs"       seqType
-                , var "xs"       seqSType
-                , var "ys"       seqSType
-                , var "zs"       seqSType
                 , var "xs"       listType
                 , var "ys"       listType
                 , var "zs"       listType
@@ -100,19 +106,18 @@ main = hipSpec "Lists.hs" conf 3
                 , con "++"       ((++)     :: List -> List -> List)
                 , con "reverse"  (reverse  :: List -> List)
                 , con "+++"      ((+++) :: Seq -> Seq -> Seq)
-                , con "pointS"   (pointS :: Int -> Seq)
                 , con "reverseS" (reverseS :: Seq -> Seq)
-                , con "Unit"     (Unit :: Int -> NonNilSeq)
-                , con "Append"   (Append :: NonNilSeq -> NonNilSeq -> NonNilSeq)
-                , con "reverseSS" (reverseSS :: NonNilSeq -> NonNilSeq)
+                , con "Unit"     (Unit :: Int -> Seq)
                 , con "toList" (toList :: Seq -> List)
-                , con "toListS" (toListS :: NonNilSeq -> List)
+                , con "head" (head :: List -> Int)
+                , con "tail" (tail :: List -> List)
+                , con "headS" (headS :: Seq -> Int)
+                , con "tailS" (tailS :: Seq -> Seq)
                 ]
                    where
                      intType   = undefined :: Int
                      listType  = undefined :: List
                      seqType = undefined :: Seq
-                     seqSType = undefined :: NonNilSeq
 
 instance Arbitrary List where
   arbitrary = sized arbList
@@ -129,20 +134,11 @@ instance Arbitrary Seq where
   arbitrary = sized arbSeqP
     where
       arbSeqP s = frequency [(1, return NilS),
-                            (s, NonNilS <$> arbitrary)]
+                             (1, Unit <$> arbitrary),
+                             (s, (+++) <$> arbSeqP (s `div` 2) <*> arbSeqP (s `div` 2))]
 
 instance Classify Seq where
   type Value Seq = Seq
-  evaluate = return
-
-instance Arbitrary NonNilSeq where
-  arbitrary = sized arbSeqP
-    where
-      arbSeqP s = frequency [(1, Unit <$> arbitrary)
-                           ,(s, Append <$> arbSeqP (s `div` 2) <*> arbSeqP (s `div` 2))]
-
-instance Classify NonNilSeq where
-  type Value NonNilSeq = NonNilSeq
   evaluate = return
 
 -- The tiny Hip Prelude

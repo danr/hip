@@ -42,7 +42,7 @@ describe str ss = map (\s -> s { description = Just str }) ss
 
 isOp :: Symbol -> Bool
 isOp s | typ s == TConst && name s == "[]" = False
-isOp s | typ s == TConst = not (all isAlphaNum (name s))
+isOp s | typ s == TConst = not (all (\x -> isAlphaNum x || x == '\'') (name s))
 isOp _ = False
 
 var :: forall a . (Classify a, Arbitrary a, Typeable a) => String -> a -> Symbol
