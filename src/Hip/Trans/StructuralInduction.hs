@@ -125,11 +125,11 @@ testVars' = [("x",parseType "Nat"),("y",parseType "Nat")]
 
 natType = parseType "Nat"
 
-testType = parseType "List Nat"
+listNatType = parseType "List Nat"
 
-testType' = parseType "Z"
+intType = parseType "Z"
 
-testPartition = partition testEnv testVars testType
+-- testPartition = partition testEnv testVars testType
 
 constructors :: Expr -> Int
 constructors e = sum $ [ 1 | Con{}  <- universe e ]

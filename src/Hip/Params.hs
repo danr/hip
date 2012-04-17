@@ -9,6 +9,8 @@ data Params = Params { files           :: [FilePath]
                      , warnings        :: Bool
                      , statistics      :: Bool
 
+                     , isolate_user_props :: Bool
+
                      , processes       :: Int
                      , batchsize       :: Int
                      , timeout         :: Int
@@ -59,6 +61,8 @@ defParams = Params
   , output      = Nothing &= opt  "proving/" &= typDir &= help "Output all tptp files in a directory (default proving/)"
   , statistics  = False   &= help "Generate statistics files (run with --reprove)"
 
+  , isolate_user_props = False &= help "Isolate user props, i.e. do not use user stated properties as lemmas"
+
   , processes   = 2       &= help "Number of prover processes (default 2)" &= name "p" &= groupname "\nProving settings"
   , batchsize   = 0       &= ignore
   , timeout     = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
@@ -101,6 +105,8 @@ hipSpecParams file = Params
   , warnings    = False   &= help "Show warnings from translation"
   , output      = Nothing &= opt  "proving/" &= typDir &= help "Output all tptp files in a directory (default proving/)" &= name "o"
   , statistics  = False   &= ignore -- help "Generate statistics files (run with --reprove)"
+
+  , isolate_user_props = False &= help "Isolate user props, i.e. do not use user stated properties as lemmas" &= name "isolate" &= name "i"
 
   , processes   = 2       &= help "Number of prover processes (default 2)" &= name "p" &= groupname "\nProving settings"
   , batchsize   = 2       &= help "Number of equations to process simultaneously (default 2)" &= name "b"

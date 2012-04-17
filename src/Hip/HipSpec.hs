@@ -292,7 +292,8 @@ parLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
 parLoop params thy props lemmas = do
     (proved,without_induction,unproved) <- partitionInvRes <$> tryProve params props thy lemmas
     unless (null without_induction) $ putStrLn $ csv (map propName without_induction) ++ " provable without induction"
-    if null proved then return (unproved,lemmas++without_induction)
-                   else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ intercalate ", " (map propName proved)
-                           parLoop params thy unproved (lemmas ++ proved ++ without_induction)
+    if null proved || isolate_user_props params
+         then return (unproved,lemmas++proved++without_induction)
+         else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ intercalate ", " (map propName proved)
+                 parLoop params thy unproved (lemmas ++ proved ++ without_induction)
 
