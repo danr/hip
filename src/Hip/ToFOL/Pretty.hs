@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 module Hip.ToFOL.Pretty (prettyCore) where
 
 import Hip.ToFOL.Core
