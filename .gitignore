@@ -30,3 +30,14 @@ tmp/
 *sty
 testsuite/prover9/*\.xml
 testsuite/prover9/*\.out
+testsuite/quickspec/*
+!testsuite/quickspec/*hs
+comparison/*
+!comparison/*.hs
+experiments/*
+scratch/*
+ciaopresentation/*
+*nav
+*snm
+*vrb
+report/old
