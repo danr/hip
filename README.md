@@ -41,7 +41,7 @@ You will need to install at least one or more of the following theorem provers:
 
   * [prover9](http://www.cs.unm.edu/~mccune/prover9/)
 
-  * [equivox](https://github.com/nick8325/equinox)
+  * [equinox](https://github.com/nick8325/equinox)
 
 Running Hip
 ===========
