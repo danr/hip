@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# pdf in tmp/ folder
-cd tmp || (mkdir tmp && cd tmp)
-FILE=`basename $1 .hs`
-autospec ../$1 -q -f -l > $FILE.tex && pdflatex $FILE.tex
-mv $FILE.pdf ..
-

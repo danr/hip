@@ -1,9 +1,0 @@
-#!/bin/bash
-if [ -z "$1" ]
-then
-        # No max time specified
-        cat - | tptp_to_ladr | FixLADR | prover9 -x
-else
-        # Max time specified in first argument
-        cat - | tptp_to_ladr | FixLADR | prover9 -x -t $1
-fi
