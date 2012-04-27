@@ -26,9 +26,7 @@ In the main directory, run
 Supported theorem provers
 -------------------------
 
-You will need to install at least one theorem provers
-
-Then install one or more of the following theorem provers:
+You will need to install at least one or more of the following theorem provers:
 
   * [E
     prover](http://www4.informatik.tu-muenchen.de/~schulz/E/E.html),
@@ -43,7 +41,7 @@ Then install one or more of the following theorem provers:
 
   * [prover9](http://www.cs.unm.edu/~mccune/prover9/)
 
-  * [equivox](https://github.com/nick8325/equinox)
+  * [equinox](https://github.com/nick8325/equinox)
 
 Running Hip
 ===========
