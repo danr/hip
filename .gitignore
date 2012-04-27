@@ -36,7 +36,7 @@ comparison/*
 !comparison/*.hs
 experiments/*
 scratch/*
-ciaopresentation/*
+talks/*
 *nav
 *snm
 *vrb
