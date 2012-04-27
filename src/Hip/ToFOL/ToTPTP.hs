@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards,NamedFieldPuns #-}
 module Hip.ToFOL.ToTPTP where
 
 import Hip.ToFOL.Core
@@ -33,17 +33,26 @@ data ProcessedDecls = ProcessedDecls { proofDecls :: [Decl]
                                      , typeDecls  :: [Decl]
                                      }
 
-processDecls :: [Decl] -> ProcessedDecls
-processDecls ds = ProcessedDecls{..}
+processDecls :: Bool -> [Decl] -> ProcessedDecls
+processDecls add_seq ds = ProcessedDecls{..}
   where
     (funAndProofDecls,dataDecls',typeDecls) = partitionDecls ds
-    (proofDecls,funDecls) = partitionProofDecls funAndProofDecls
+    (proofDecls,funDecls') = partitionProofDecls funAndProofDecls
     dataDecls = Data "empty"  [] [Cons bottomName []]
               : Data "Bool"   [] [Cons trueName [],Cons falseName []]
               : filter (\d -> declName d `notElem` proofDatatypes) dataDecls'
+    funDecls | add_seq   = seqDecl : funDecls'
+             | otherwise = funDecls'
+
+seqDecl :: Decl
+seqDecl = Func "seq" ["x","y"] $
+            Case (Var "x") $
+              [ NoGuard (PCon bottomName []) :-> Con bottomName []
+              , NoGuard PWild                :-> Var "y"
+              ]
 
 dumpTPTP :: Params -> [Decl] -> ([(Decl,[T.Decl])],[T.Decl],[Msg])
-dumpTPTP params ds = runTM params $ do
+dumpTPTP params@Params{enable_seq} ds = runTM params $ do
     addFuns funs
     addCons dataDecls
     addTypes types
@@ -52,7 +61,7 @@ dumpTPTP params ds = runTM params $ do
     db      <- popDebug
     return (faxioms,extra,db)
   where
-    ProcessedDecls{..} = processDecls ds
+    ProcessedDecls{..} = processDecls enable_seq ds
     funs  = map (declName &&& length . declArgs) funDecls
     types = map (declName &&& declType) typeDecls
 
@@ -89,9 +98,10 @@ removeEmptyParts (Property n c parts)
   = Property n c (filter (not . null . snd . partMatter) parts)
 
 prepareProofs :: Params -> [Decl] -> ([Property],[Msg])
-prepareProofs params ds = first (removeEmptyProperties . map removeEmptyParts)
-                        $ second ((extraDebug ++) . concat)
-                        $ unzip (concatMap processDecl proofDecls)
+prepareProofs params@Params{enable_seq} ds
+    = first (removeEmptyProperties . map removeEmptyParts)
+    $ second ((extraDebug ++) . concat)
+    $ unzip (concatMap processDecl proofDecls)
   where
     extraDebug = [dbproofMsg $ "Recursive functions: " ++ show recursiveFuns]
 
@@ -124,7 +134,7 @@ prepareProofs params ds = first (removeEmptyProperties . map removeEmptyParts)
                                    , propMatter = parts
                                    },concat dbg)
 
-    ProcessedDecls{..} = processDecls ds
+    ProcessedDecls{..} = processDecls enable_seq ds
     types = map (declName &&& declType) typeDecls
 
     compIterateFCs :: Set Name -> (Set Name,Set Name)

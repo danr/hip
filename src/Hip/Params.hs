@@ -15,11 +15,13 @@ data Params = Params { files       :: [FilePath]
                      , methods     :: String
                      , reprove     :: Bool
                      , consistency :: Bool
+                     , enable_seq  :: Bool
 
                      , inddepth    :: Int
                      , indvars     :: Int
                      , indhyps     :: Int
-                     , indsteps     :: Int
+                     , indsteps    :: Int
+
 
                      , fpimax      :: Int
 
@@ -39,7 +41,8 @@ showParams Params{..} = " timeout: " ++ show timeout ++
                         " inddepth: " ++ show inddepth ++
                         " indvars: " ++ show indvars ++
                         " indsteps: " ++ show indsteps ++
-                        " fpimax: " ++ show fpimax
+                        " fpimax: " ++ show fpimax ++
+                        " enable-seq: " ++ show enable_seq
 
 defParams :: Params
 defParams = Params
@@ -55,6 +58,7 @@ defParams = Params
   , methods     = "pisfa" &= help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"
   , reprove     = False   &= help "Reprove theorems already known to be true"
   , consistency = False   &= help "Try to prove the consistency a file's generated theory"
+  , enable_seq  = False   &= help "Put seq into scope and weaken extensional equality accordingly" &= name "seq" &= name "enable-seq"
 
   , inddepth    = 1       &= help "Max depth to do structural induction (default 1)" &= groupname "\nStructural induction"
   , indvars     = 1       &= help "Number of variables to do structural induction on (default 1)"

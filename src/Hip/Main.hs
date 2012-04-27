@@ -76,7 +76,7 @@ main = do
       when (length files > 1) $ outputSection latex file
       -- Parse either Haskell or Core
       (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
-                                then parseHaskell <$> readFile file
+                                then parseHaskell params <$> readFile file
                                 else flip (,) []  <$> parseFile file
       (err,ds) <- case eitherds of
                         Left  estr -> putStrLn estr >> return (True,error estr)

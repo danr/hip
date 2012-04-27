@@ -379,7 +379,7 @@ appFold = foldl (\f x -> T.Fun ptrapp [f,x])
 envStDecls :: TM [T.Decl]
 envStDecls = TM $ do
   s <- get
-  return $ extEquality : appBottom :
+  return $ extEquality (enable_seq (_params s)) : appBottom :
            projDecls (_conProj s) ++
            ptrDecls (_arities s) (_usedFunPtrs s) ++
            disjDecls (_datatypes s)
@@ -440,13 +440,15 @@ ptrDecls as = map (uncurry mkDecl) . S.toList
       where xs    = makeVarNames arity
 
 -- | Extensional equality
-extEquality :: T.Decl
-extEquality = Axiom "exteq"
+extEquality :: Bool -> T.Decl
+extEquality weaken = Axiom "exteq"
    $ forall' [fv,gv]
       $ (forall' [xv] $ appFold f [x] === appFold g [x])
-        ==> (f === g)
+        ==> if weaken then f === g \/ f === bottom \/ g === bottom
+                      else f === g
   where vars@[fv,gv,xv] = map VarName ["F","G","X"]
         [f,g,x]         = map T.Var vars
+        bottom = Fun (FunName bottomName) []
 
 -- | Application with bottom gives bottom
 appBottom :: T.Decl

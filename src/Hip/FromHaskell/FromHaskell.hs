@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module Hip.FromHaskell.FromHaskell (parseHaskell,run) where
 
 import qualified Language.Haskell.Exts as H
@@ -13,6 +14,7 @@ import Hip.FromHaskell.Vars
 import Hip.Messages
 import Hip.Util (concatMapM)
 import Hip.ToFOL.Pretty
+import Hip.Params
 
 import Control.Applicative
 import Control.Monad
@@ -22,18 +24,19 @@ import Data.Function (on)
 import Data.Maybe (fromMaybe)
 import Data.Either
 
+
 fixs = infix_ 0 ["=:=","=/="]
 
 parseMode :: ParseMode
 parseMode = defaultParseMode { fixities = fmap (fixs ++)
                                                (fixities defaultParseMode) }
 
-run :: FilePath -> IO ()
-run f = do
+run :: Params -> FilePath -> IO ()
+run Params{enable_seq} f = do
   r <- parseFileWithMode parseMode f
   case r of
     ParseOk m -> do
-      let (res,msgs) = runFH (fromModule m)
+      let (res,msgs) = runFH enable_seq (fromModule m)
       mapM_ print msgs
       putStrLn ""
       case res of
@@ -41,11 +44,11 @@ run f = do
         Right ds -> mapM_ (putStrLn . prettyCore) ds
     ParseFailed loc s -> putStrLn $ show loc ++ ": " ++ s
 
-parseHaskell :: String -> (Either String [C.Decl],[Msg])
-parseHaskell s =
+parseHaskell :: Params -> String -> (Either String [C.Decl],[Msg])
+parseHaskell Params{enable_seq} s =
   let r = parseModuleWithMode parseMode s in
   case r of
-    ParseOk     m     -> runFH (fromModule m)
+    ParseOk     m     -> runFH enable_seq (fromModule m)
     ParseFailed loc s -> (Left ("Parse fail " ++ show loc ++ ": " ++ s),[])
 
 indented :: String -> String

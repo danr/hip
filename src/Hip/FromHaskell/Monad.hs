@@ -33,12 +33,14 @@ $(mkLabels [''St])
 data Env = Env { _scopeName :: [String] }
 $(mkLabels [''Env])
 
-initSt :: St
-initSt = St { _namesupply = [0..]
-            , _binds      = M.fromList [("undefined",(bottomName,[]))]
-            , _scope      = S.fromList ["prove","proveBool","=:=","=/="]
-            , _datatypes  = S.empty
-            }
+initSt :: Bool -> St
+initSt enable_seq = St
+  { _namesupply = [0..]
+  , _binds      = M.fromList [("undefined",(bottomName,[]))]
+  , _scope      = S.fromList $ ["prove","proveBool","=:=","=/="] ++
+                               [ "seq" | enable_seq ]
+  , _datatypes  = S.empty
+  }
 
 regData :: Name -> FH ()
 regData = modify datatypes . S.insert
@@ -56,8 +58,8 @@ newtype FH a = FH (ErrorT String (RWS Env [Either Msg Decl] St) a)
           ,MonadState St
           ,MonadError String)
 
-runFH :: FH () -> (Either String [Decl],[Msg])
-runFH (FH m) = case evalRWS (runErrorT m) initEnv initSt of
+runFH :: Bool -> FH () -> (Either String [Decl],[Msg])
+runFH enable_seq (FH m) = case evalRWS (runErrorT m) initEnv (initSt enable_seq) of
   (r,w) -> let (msgs,decls) = partitionEithers w
            in  (case r of
                    Right () -> Right decls
