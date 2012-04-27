@@ -1,3 +1,7 @@
+module Case where
+
+import Prelude (Bool(..))
+
 data Nat = Succ Nat | Zero
 data List a = Nil | Cons a (List a)
 

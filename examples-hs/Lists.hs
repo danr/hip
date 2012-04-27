@@ -1,3 +1,6 @@
+module Lists where
+
+import Prelude (Bool(..))
 
 otherwise = True
 

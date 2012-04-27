@@ -1,3 +1,6 @@
+module StateBug where
+
+import Prelude ()
 
 type State s a = s -> (a,s)
 

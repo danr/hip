@@ -1,3 +1,5 @@
+module DavidsAttempt2 where
+
 d p = case p of
   p -> d p
   _ -> p
@@ -18,4 +20,4 @@ predhead x = case x of
     x : xs -> case x of
        Succ x -> x : xs
        Zero   -> x : xs
-    []     -> []   
+    []     -> []

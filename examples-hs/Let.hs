@@ -1,12 +1,8 @@
-data Nat  = Zero | Succ Nat
-  deriving (Show,Eq)
+module Let where
 
-{-
-foo x | let isZero Zero     = True
-            isZero (Succ x) = False
-        in  isZero x        = Succ Zero
-      | otherwise           = Zero
--}
+import Prelude ()
+
+data Nat  = Zero | Succ Nat
 
 f x = let z = Succ x in z
 

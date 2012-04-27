@@ -1,12 +1,4 @@
-
-{-
--- k3 x y z = x
--- i x = x
-
-r x y = k (m x) (m y)
-  where m z = k3 n n z
-            where n = i x
--}
+module Where where
 
 k x y = x
 
