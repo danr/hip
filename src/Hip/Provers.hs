@@ -3,15 +3,17 @@ module Hip.Provers where
 import Hip.ResultDatatypes
 import Data.List
 
-data ProverName = E | Vampire | Prover9 | SPASS | Equinox
+data ProverName = E | Vampire | Vampire64 | Prover9 | SPASS | Equinox | Z3
   deriving (Eq,Ord)
 
 instance Show ProverName where
-  show E       = "eprover"
-  show Vampire = "vampire"
-  show Prover9 = "prover9"
-  show SPASS   = "spass"
-  show Equinox = "equinox"
+  show Z3        = "z3"
+  show E         = "eprover"
+  show Vampire   = "vampire"
+  show Vampire64 = "vampire (64)"
+  show Prover9   = "prover9"
+  show SPASS     = "spass"
+  show Equinox   = "equinox"
 
 data Prover = Prover { proverName          :: ProverName
                      -- ^ Name of the prover in the prover datatype
@@ -38,7 +40,7 @@ statusSZS = [("Theorem",Success),("Unsatisfiable",Success)
             ,("CounterSatisfiable",const Failure),("Timeout",const Failure)]
 
 allProvers :: [Prover]
-allProvers = [vampire,prover9,spass,eprover,equinox]
+allProvers = [vampire,vampire64,prover9,spass,eprover,equinox,z3]
 
 proversFromString :: String -> [Prover]
 proversFromString str = filter ((`elem` str) . proverShort) allProvers
@@ -52,13 +54,29 @@ eprover = Prover
   , proverShort         = 'e'
   }
 
+z3 :: Prover
+z3 = Prover
+  { proverName          = Z3
+  , proverCmd           = "z3"
+  , proverArgs          = \_ -> words "-tptp -nw /dev/stdin"
+  , proverProcessOutput = searchOutput statusSZS
+  , proverShort         = 'z'
+  }
+
 vampire :: Prover
 vampire = Prover
   { proverName          = Vampire
-  , proverCmd           = "vampire_lin64"
+  , proverCmd           = "vampire_lin32"
   , proverArgs          = \t -> words ("--proof tptp --mode casc -t " ++ show t)
   , proverProcessOutput = searchOutput statusSZS
   , proverShort         = 'v'
+  }
+
+vampire64 :: Prover
+vampire64 = vampire
+  { proverName          = Vampire64
+  , proverCmd           = "vampire_lin64"
+  , proverShort         = 'V'
   }
 
 prover9 :: Prover
@@ -83,7 +101,7 @@ equinox :: Prover
 equinox = Prover
   { proverName          = Equinox
   , proverCmd           = "equinox"
-  , proverArgs          = \t -> words ("--tstp --split -")
+  , proverArgs          = \t -> words ("--tstp --split /dev/stdin")
   , proverProcessOutput = searchOutput statusSZS
   , proverShort         = 'x'
   }
