@@ -1,0 +1,27 @@
+
+Hip - the Haskell Inductive Prover - is a new tool developed to
+automatically prove properties about Haskell programs by using
+induction or coinduction. The approach taken is to compile Haskell
+programs to first order theories. Induction is applied on the meta
+level, and proof search is carried out by automated theorem provers
+for first order logic with equality.
+
+On top of Hip we built HipSpec, which automatically tries to find
+appropriate background lemmas for properties where only doing
+induction is too weak. It uses the translation and structural
+induction from Hip. The background lemmas are from the equational
+theories built by QuickSpec[1], a tool which enumerates terms up to a
+given size and determines which are equal by testing.  Both the
+user-stated properties and those from QuickSpec are now tried to be
+proven with induction. Conjectures proved to be theorems are added to
+the theory as lemmas, to aid proving later properties which may
+require them.
+
+More information and examples in the paper submitted to ATX available at:
+web.student.chalmers.se/~danr/hipspec-atx.pdf
+
+[1] : http://www.cse.chalmers.se/~nicsma/quickspec.pdf
+
+
+
+
