@@ -52,7 +52,7 @@ defParams = Params
   , output      = Nothing &= opt  "proving/" &= typDir &= help "Output all tptp files in a directory (default proving/)"
   , statistics  = False   &= help "Generate statistics files (run with --reprove)"
 
-  , processes   = 4       &= help "Number of prover processes (default 4)" &= name "p" &= groupname "\nProving settings"
+  , processes   = 2       &= help "Number of prover processes (default 4)" &= name "p" &= groupname "\nProving settings"
   , timeout     = 1       &= help "Timout of provers in seconds (default 1)" &= name "t"
   , provers     = "e"     &= help "Provers to use (e)prover (v)ampire (V)ampire64-bit (p)rover9 (s)pass equino(x) (z)3"
   , methods     = "pisfa" &= help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"
@@ -73,6 +73,6 @@ defParams = Params
   , dbfol       = False   &= help "Print debug output of Core -> FOL"
   , dbproof     = False   &= help "Print debug output when making proofs"
   }
-  &= summary "autospec v0.1 Dan Rosén danr@student.gu.se"
-  &= program "autospec"
+  &= summary "hip v0.1 Dan Rosén danr@student.gu.se"
+  &= program "hip"
   &= verbosity
