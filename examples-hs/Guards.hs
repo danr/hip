@@ -1,11 +1,10 @@
+module Guards where
+
+import Prelude(Bool(..),otherwise)
 
 data Nat  = Zero | Succ Nat
 
-data Bool = True | False
-
 data K = A | B | C
-
-otherwise = True
 
 even (Succ (Succ n)) = even n
 even (Succ Zero)     = False

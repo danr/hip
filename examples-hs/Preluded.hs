@@ -1,8 +1,8 @@
+module Preluded where
 
+import Prelude(Bool(..),Eq(..),Ord(..),Read(..),Show(..))
 
 f . g = \x -> f (g x)
-
-data  Bool  =  False | True     deriving (Eq, Ord, Enum, Read, Show, Bounded)
 
 -- Boolean functions
 
@@ -68,9 +68,9 @@ until p f x
 undefined = undefined
 
 
-infixl 9  !!
+-- infixl 9  !!
 infixr 5  ++
-infix  4  `elem`, `notElem`
+-- infix  4  `elem`, `notElem`
 
 -- Map and append
 

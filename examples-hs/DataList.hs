@@ -1,6 +1,7 @@
+module DataList where
 
+import Prelude(undefined,Bool(..))
 
-data  Bool  =  False | True     deriving (Eq, Ord, Enum, Read, Show, Bounded)
 
 iff True  a b = a
 iff False a b = b
@@ -88,9 +89,6 @@ insertBy cmp x (y:ys')
  = case cmp x y of
      GT -> y : insertBy cmp x ys'
      _  -> x : y : ys'
-
-undefined :: a -> b
-undefined = undefined
 
 foldl1           :: (a -> a -> a) -> [a] -> a
 foldl1 f (x:xs)  =  foldl f x xs

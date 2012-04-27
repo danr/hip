@@ -1,3 +1,6 @@
+module Lambda where
+
+import Prelude ()
 
 f . g = \x -> f (g x)
 

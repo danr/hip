@@ -1,3 +1,6 @@
+module Mutual where
+
+import Prelude ()
 
 data Nat = Succ Nat | Zero
 data Bool = True | False
