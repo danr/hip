@@ -26,17 +26,15 @@ Inductive Prover, can help. Write down the equations in a similar
 style as properties in QuickCheck \citep{quickcheck}. Run the tool on
 the source file which reports this after a few seconds:
 
-
 \begin{code}
-Theorems (3/3):
-  prop_return_right: t >>= return = t
-    by structural induction on t and by approximation lemma
+Theorem: prop_return_right, t >>= return = t
+  by structural induction on t and by approximation lemma
 
-  prop_return_left: return x >>= f = f x
-    by definitional equality and by approximation lemma
+Theorem: prop_return_left, return x >>= f = f x
+  by approximation lemma and by definitional equality
 
-  prop_assoc: (t >>= f) >>= g = t >>= (\x -> f x >>= g)
-    by structural induction on t and by fixed point induction on (>>=)
+Theorem: prop_assoc, (t >>= f) >>= g = t >>= (\ x -> f x >>= g)
+  by structural induction on t and by fixed point induction on >>=
 \end{code}
 
 \noindent

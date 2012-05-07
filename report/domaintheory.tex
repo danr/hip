@@ -89,7 +89,7 @@ monotone with respect to this ordering.
 \faa{x}{y} \quad x \sqsubseteq y \quad \Rightarrow \quad f(x) \sqsubseteq f(y).
 \end{equation*}
 
-This can be understood in many ways. One way to see it is if you have
+Monotonicity can be understood in many ways. One way to see it is if you have
 two inputs to a function, one containing \emph{less} information that
 the other, it is impossible to return \emph{more} information from the
 input with less information.
@@ -134,6 +134,8 @@ At the top we have the infinite value \hs{inf}, defined in Haskell as
 \hs{inf = Succ inf}. Here \hs{inf} is the \emph{limit} of a sequence
 of $\sqsubseteq$ inclusions. We will consider $\omega$-chains, chains with the same number of elements as
 $\omega$, the natural numbers.
+
+\newpage
 
 An example of a chain which has the infinite natural number \hs{inf}
 as its limit is:
