@@ -1,5 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
-module Hip.FromHaskell.FromHaskell (parseHaskell,run) where
+module Hip.FromHaskell.FromHaskell (parseHaskell,prettyDefn,run) where
 
 import qualified Language.Haskell.Exts as H
 import Language.Haskell.Exts hiding (Name,app)
@@ -18,10 +18,11 @@ import Hip.Params
 
 import Control.Applicative
 import Control.Monad
+import Control.Arrow (first)
 
 import Data.List (groupBy,(\\),intercalate)
 import Data.Function (on)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe,listToMaybe)
 import Data.Either
 
 
@@ -44,11 +45,11 @@ run Params{enable_seq} f = do
         Right ds -> mapM_ (putStrLn . prettyCore) ds
     ParseFailed loc s -> putStrLn $ show loc ++ ": " ++ s
 
-parseHaskell :: Params -> String -> (Either String [C.Decl],[Msg])
+parseHaskell :: Params -> String -> (Either String ([C.Decl],Module),[Msg])
 parseHaskell Params{enable_seq} s =
   let r = parseModuleWithMode parseMode s in
   case r of
-    ParseOk     m     -> runFH enable_seq (fromModule m)
+    ParseOk     m     -> first (fmap (flip (,) m)) (runFH enable_seq (fromModule m))
     ParseFailed loc s -> (Left ("Parse fail " ++ show loc ++ ": " ++ s),[])
 
 indented :: String -> String
@@ -58,6 +59,19 @@ indented = intercalate "\n" . map ("    " ++) . lines . dropWhitestuff
        | length (filter (== '\n') s) <= 1 = dropWhile (`elem` " \n\t") s
        | otherwise = s
 
+prettyDefn :: Module -> String -> Maybe String
+prettyDefn (Module _ _ _ _ _ _ ds) s = listToMaybe $
+    [ pretty e | FunBind ms <- ds
+               , Match _ (Ident s') _ _ (UnGuardedRhs e) _ <- ms
+               , s == s' ] ++
+    [ pretty e | PatBind _ (H.PVar (Ident s')) _ (UnGuardedRhs e) _ <- ds
+               , s == s' ]
+  where
+    pretty = rep . prettyPrintStyleMode style { mode = OneLineMode } defaultMode
+
+    rep ('=':':':'=':s) = '=':s
+    rep (c:s) = c:rep s
+    rep ""     = ""
 
 fromModule :: Module -> FH ()
 fromModule (Module _loc _name _pragmas _warns _ex _im decls) = do

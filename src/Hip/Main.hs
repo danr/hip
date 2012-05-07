@@ -74,13 +74,10 @@ main = do
   totalRes <- forM files $ \file -> (,) file <$> do
       when (file /= head files) $ putStrLn ""
       when (length files > 1) $ outputSection latex file
-      -- Parse either Haskell or Core
-      (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
-                                then parseHaskell params <$> readFile file
-                                else flip (,) []  <$> parseFile file
-      (err,ds) <- case eitherds of
+      (eitherds,hsdebug) <- parseHaskell params <$> readFile file
+      (err,(ds,modul)) <- case eitherds of
                         Left  estr -> putStrLn estr >> return (True,error estr)
-                        Right ds'   -> return (False,ds')
+                        Right dsm  -> return (False,dsm)
       if err then return [] else do
         -- Output debug of translation
         when dbfh $ do
@@ -118,7 +115,7 @@ main = do
           else do
             -- Prove everything
             whenLoud $ putStrLn "Preparing proofs..."
-            let (proofs,debug) = prepareProofs params ds
+            let (proofs,debug) = prepareProofs (prettyDefn modul) params ds
             -- Verbose output
             when dbfol   $ mapM_ print (filter (sourceIs ToFOL) debug)
             when dbproof $ mapM_ print (filter (sourceIs MakeProof) debug)
@@ -167,12 +164,15 @@ proveAll latex processes timeout output reprove provers file properties = do
     propRes <- invokeATPs properties env
 
     forM_ propRes $ \(Property propName propCode (status,parts)) -> do
-         putStrLn $ propName ++ ": " ++ show status
-         putStrLn propCode
-         forM_ parts $ \part@(Part partMethod partCoverage particles) ->
-              when (statusFromPart part > None) $ do
-                  putStrLn $ "  " ++ show partMethod ++ ": " ++ show (statusFromPart part) ++
-                             " (" ++ intercalate ", " (map (\(Particle _ (result,_)) -> show (successTime result `div` 1000) ++ "ms") particles) ++ ")"
+         putStrLn $ show status ++ ": " ++ propName ++ ", " ++ propCode
+         let scss = nub [ show partMethod
+                        | part@(Part partMethod partCoverage particles) <- parts
+                        , statusFromPart part == status
+                        ]
+                    -- " (" ++ intercalate ", " (map (\(Particle _
+                    -- (result,_)) -> show (successTime result `div`
+                    -- 1000) ++ "ms") particles) ++ ")"
+         unless (status == None) (putStrLn ("  by " ++ intercalate " and by " scss))
          putStrLn ""
 
     putStrLn $ stringSummary propRes
@@ -199,9 +199,9 @@ stringSummary res = unlines
   where
     n = length res
     methSummary :: Int -> MethSum -> String
-    methSummary i (MethSum{..}) = pad 23 (liberalShow method ++ ":") ++ " " ++ pad 7 (show quantity ++ "/" ++ show i ++ ",") ++
-                                  "avg:" ++ pad 8 (takeWhile (/= '.') (show average) ++ "ms,") ++
-                                  "max:" ++ show maxima ++ "ms"
+    methSummary i (MethSum{..}) = pad 23 (liberalShow method ++ ":") ++ " " ++ pad 7 (show quantity ++ "/" ++ show i ++ ",")
+                            -- ++ "avg:" ++ pad 8 (takeWhile (/= '.') (show average) ++ "ms,")
+                            -- ++ "max:" ++ show maxima ++ "ms"
 
 tableMethods :: [(Status,[ProofMethod])]
 tableMethods = [(Theorem,[Plain

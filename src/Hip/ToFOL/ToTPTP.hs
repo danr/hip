@@ -97,8 +97,8 @@ removeEmptyParts :: Property -> Property
 removeEmptyParts (Property n c parts)
   = Property n c (filter (not . null . snd . partMatter) parts)
 
-prepareProofs :: Params -> [Decl] -> ([Property],[Msg])
-prepareProofs params@Params{enable_seq} ds
+prepareProofs :: (String -> Maybe String) -> Params -> [Decl] -> ([Property],[Msg])
+prepareProofs prettyCode params@Params{enable_seq} ds
     = first (removeEmptyProperties . map removeEmptyParts)
     $ second ((extraDebug ++) . concat)
     $ unzip (concatMap processDecl proofDecls)
@@ -130,7 +130,8 @@ prepareProofs params@Params{enable_seq} ds
                         db    <- popDebug
                         return (extendPart extra part,db)
                 return $ (Property { propName   = propName
-                                   , propCode   = prettyCore (funcBody d)
+                                   , propCode   = fromMaybe (prettyCore (funcBody d))
+                                                            (prettyCode propName)
                                    , propMatter = parts
                                    },concat dbg)
 

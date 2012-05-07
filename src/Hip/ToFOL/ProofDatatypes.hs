@@ -31,12 +31,12 @@ data Coverage = Infinite
   deriving (Eq,Ord,Show)
 
 instance Show ProofMethod where
-  show Plain                       = "plain"
+  show Plain                       = "definitional equality"
   show (SimpleInduction v)         = "simple induction on " ++ v
   show ApproxLemma                 = "approximation lemma"
-  show (FixpointInduction f)       = "fixed point induction on " ++ unwords f
+  show (FixpointInduction f)       = "fixed point induction on " ++ unwords (drop 1 f)
   show (StructuralInduction vs b d) = concat [ "finite " | not b ] ++ "structural induction on " ++
-                                      unwords vs ++ " depth " ++ show d
+                                      unwords vs {- ++ " depth " ++ show d -}
 
 proofMethodFile :: ProofMethod -> String
 proofMethodFile pt = case pt of
