@@ -1,23 +1,22 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards,ViewPatterns #-}
 module Main where
 
 import Hip.Util
+
 import Hip.Trans.MakeTheory
 import Hip.Trans.Theory
 import Hip.Messages
 import Hip.Params
-import Hip.Trans.Parser
+
 import Hip.Trans.Core
-import Hip.Trans.Pretty
-import Hip.FromHaskell.FromHaskell
+
 import Hip.Trans.MakeProofs
+
 import Hip.InvokeATPs
 import Hip.Trans.ProofDatatypes (propMatter)
 import qualified Hip.Trans.ProofDatatypes as PD
 import Hip.ResultDatatypes
 import Hip.Provers
-
-import Language.TPTP.Pretty
 
 import Data.List
 import Data.Maybe
@@ -29,6 +28,16 @@ import Control.Arrow ((***),(&&&),second)
 import System.Console.CmdArgs hiding (summary)
 import System.Exit (exitFailure,exitSuccess)
 
+removeMain :: [CoreBind] > [CoreBind]
+removeMain = filter (not . remove)
+  where
+    remove b = case b of
+       NonRec x e | "main" `isInfixOf` show x -> True
+       _ -> False
+
+isPropType :: Var -> Bool
+isPropType = ("Prop" `isInfixOf`) . showSDoc . ppr . varType
+
 main :: IO ()
 main = do
   params@Params{..} <- cmdArgs defParams
@@ -39,61 +48,65 @@ main = do
   whenLoud $ do putStrLn $ "Verbose output, files: " ++ unwords files
                 putStrLn $ "Param: " ++ showParams params
 
-  forM_ files $ \file -> do
+  forM_ files $ \(dropExtension -> file) -> do
       when (file /= head files) $ putStrLn ""
       unless (null files) $ putStrLn $ file ++ ":"
       -- Parse either Haskell or Core
-      (eitherds,hsdebug) <- if "hs" `isSuffixOf` file
-                                then parseHaskell <$> readFile file
-                                else flip (,) []  <$> parseFile file
-      (err,ds) <- case eitherds of
-                        Left  estr -> putStrLn estr >> return (True,error estr)
-                        Right ds'  -> return (False,ds')
-      unless err $ do
-        -- Output debug of translation
-        when dbfh $ do
-          putStrLn "Translating from Haskell..."
-          mapM_ print (filter (sourceIs FromHaskell) hsdebug)
-          putStrLn "Translation from Haskell translation complete."
-        -- Output warnings of translation
-        when warnings $ mapM_ print (filter isWarning hsdebug)
-        -- Output Core and terminate
-        when core $ do mapM_ (putStrLn . prettyCore) ds
-                       exitSuccess
-        let (theory,props,msgs) = makeTheory params ds
 
-         -- Verbose output
-        when dbfol $ mapM_ print (filter (sourceIs Trans) msgs)
+      (modguts,dflags) <- desugar (False {- debug_float_out -}) file
 
-        -- Warnings
-        when warnings $ mapM_ print (filter isWarning msgs)
+      -- Output debug of translation
+      when dbfh (return ())
 
-{-
-        forM props $ \(Prop{..}) -> do putStrLn propName
-                                       putStrLn (show proplhs ++ " = " ++ show proprhs)
-                                       putStrLn (intercalate "," (zipWith (\v t -> v ++ " :: " ++ show t) propVars (argsTypes propType)))
-                                       putStrLn (show propVars)
-                                       putStrLn (show propType)
-                                       putStrLn propRepr
-                                       putStrLn ""
--}
+      -- Output Core and terminate
+      when core exitSuccess
 
-        let props' = inconsistentProp : props
+      let (core_props,unlifted_program) = filter removeMain
+                                        . mg_binds
+                                        $ modguts
 
-        (unproved,proved) <- parLoop params theory props' []
-                          {- proveLoop -}
+      us <- mkSplitUniqSupply 'f'
+      ((lifted_program,_msgs_lift),_us) <- (`caseLetLift` us) <$> lambdaLift dflags program
 
-        printInfo unproved proved
+      (core_props,core_defns)  = partition isPropType lifted_program
+                                        .
 
-        return ()
+      let ty_cons :: [TyCon]
+          ty_cons = mg_tcs modguts
 
---        print theory
---
---        print props
---
---        putStrLn "--[TPTP]--"
---
---        mapM_ (putStrLn . prettyTPTP . funcTPTP) (thyFuns theory)
+          ty_cons_with_builtin :: [TyCon]
+          ty_cons_with_builtin = listTyCon : boolTyCon : unitTyCon
+                               : map (tupleTyCon BoxedTuple) [2..2]
+                                 -- ^ choice: only tuples of size 2 supported!!
+                               ++ ty_cons
+
+          cnf = "-cnf" `elem` opts
+
+          halt_conf :: HaltConf
+          halt_conf  = sanitizeConf $ HaltConf
+                          { use_cnf      = False
+                          , inline_projs = True
+                          , use_min      = False
+                          , common_min   = False
+                          , unr_and_bad  = False
+                          }
+
+          halt_env = mkEnv halt_conf ty_cons_with_builtin core_defns
+
+          (data_axioms,def_axioms,msgs_trans)
+              = translate halt_env ty_cons_with_builtin core_defns
+
+          let theory = Theory data_axioms def_axioms
+
+          (theory,props,msgs) = makeTheory params
+
+      let props' = inconsistentProp : props
+
+      (unproved,proved) <- parLoop params theory props' []
+
+      printInfo unproved proved
+
+      return ()
 
   return ()
 
@@ -135,16 +148,6 @@ tryProve params@(Params{..}) props thy lemmas = do
         return (fromMaybe (error "tryProve: lost")
                           (find ((PD.propName property ==) . propName) props)
                ,proved)
-
-proveLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
-proveLoop params thy props lemmas = do
-   new <- forFind (inspect props) $ \(p,ps) -> snd . head <$> tryProve params [p] thy lemmas
-   case new of
-     -- Property p was proved and ps are still left to prove
-     Just (p,ps) -> do putStrLn ("Proved " ++ propName p ++ ": " ++ propRepr p ++ ".")
-                       proveLoop params thy ps (p:lemmas)
-     -- No property was proved, return the unproved properties and the proved ones
-     Nothing     -> return (props,lemmas)
 
 parLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
 parLoop params thy props lemmas = do

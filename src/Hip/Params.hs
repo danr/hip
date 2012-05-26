@@ -24,6 +24,8 @@ data Params = Params { files           :: [FilePath]
                      , ord_quadratic   :: Bool
                      , ord_dep_sort    :: Bool
 
+                     , dont_print_unproved  :: Bool
+
                      , inddepth        :: Int
                      , indvars         :: Int
                      , indhyps         :: Int
@@ -76,6 +78,8 @@ defParams = Params
   , ord_quadratic   = False &= ignore
   , ord_dep_sort    = False &= ignore
 
+  , dont_print_unproved  = False &= ignore
+
   , thy_no_exteq    = False &= help "Extensional equality of pointers (completness)"            &= name "ne" &= groupname "Theory properties"
   , thy_no_typreds  = False &= help "Typing predicates of potentially finite types (soundness)" &= name "nt"
   , thy_no_infdom   = False &= help "Domain axioms for infinite types (completeness)"           &= name "ni"
@@ -120,6 +124,8 @@ hipSpecParams file = Params
   , ord_prep_pruned = False &= help "Add nice pruned equations from QuickSpec in front of all equations" &= name "prepend-pruned"
   , ord_quadratic   = False &= help "Add quadratic number of equations instead of linear" &= name "quadratic"
   , ord_dep_sort    = False &= help "Sort equations by function dependency ordering" &= name "dep-sort"
+
+  , dont_print_unproved  = False &= help "Don't print unproved equations from QuickSpec"
 
   , thy_no_exteq    = False &= help "Extensional equality of pointers (completness)"            &= name "ne" &= groupname "Theory properties"
   , thy_no_typreds  = False &= help "Typing predicates of potentially finite types (soundness)" &= name "nt"

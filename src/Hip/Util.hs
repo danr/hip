@@ -1,5 +1,5 @@
 module Hip.Util
-       ((?),unlist,avgList,selections,inspect,uniqueCartesian,withPrevious,concatMapM,concatMaybe
+       ((?),(.:),unlist,avgList,selections,inspect,uniqueCartesian,withPrevious,concatMapM,concatMaybe
        ,isOp,putEither,mif,countBy,groupSortedOn,nubSorted,forFind
        ,bold,color,Color(..))
        where
@@ -10,6 +10,10 @@ import Data.Function
 import Data.Ord
 import Test.QuickCheck
 import Control.Monad
+
+infixl 9 .:
+
+(.:) = (.) . (.)
 
 infix 1 ?
 
@@ -61,8 +65,8 @@ isOp = all (`elem` opsyms)
         opsyms = "!#$%*+./<=>?\\^|:-~@"
 
 -- | concatMapM
-concatMapM :: (Functor m,Monad m) => (a -> m [b]) -> [a] -> m [b]
-concatMapM f = fmap concat . mapM f
+concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
+concatMapM f = liftM concat . mapM f
 
 -- | If any is nothing (unreachable branch etc), return nothing,
 --   otherwise return just the catMaybes.
@@ -123,5 +127,4 @@ col2num c = case c of
   Blue      -> 4
   Pink      -> 5
   Turquoise -> 7
-
 
