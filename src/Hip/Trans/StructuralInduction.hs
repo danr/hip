@@ -222,8 +222,8 @@
 -}
 module Hip.Trans.StructuralInduction where
 
-import Control.Arrow
-import Control.Applicative
+import Control.Arrow hiding ((<+>))
+import Control.Applicative hiding (empty)
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Identity
@@ -236,6 +236,8 @@ import Data.Maybe
 
 import Hip.Util (concatMapM,(.:))
 
+import Text.PrettyPrint hiding (Style)
+
 import Safe
 
 data Formula c v t = Forall [(v,t)] (Formula c v t)
@@ -243,6 +245,21 @@ data Formula c v t = Forall [(v,t)] (Formula c v t)
                    | P [Term c v]
                    -- ^ The actual predicate that we are doing induction on
   deriving (Eq,Ord,Show,Data,Typeable)
+
+(==>) :: [Formula c v t] -> Formula c v t -> Formula c v t
+xs ==> (ys :=> x) = (xs ++ ys) ==> x
+xs ==> x          = case tidy xs of
+                         [] -> x
+                         ts -> ts :=> x
+
+tidy :: [Formula c v t] -> [Formula c v t]
+tidy = filter (not . isAtom)
+  where
+    isAtom (P tm) = all isAtomTm tm
+    isAtom _      = False
+
+    isAtomTm (Con x xs) = all isAtomTm xs
+    isAtomTm _          = False
 
 -- An argument to a constructor can be recursive or non-recursive.
 --
@@ -332,7 +349,6 @@ type FormulaV c v t = Formula c (V v) t
 -- | Terms with fresh-tagged variables
 type TermV c v = Term c (V v)
 
-
 -- | Flattens out fresh variable names, in a monad
 unVM :: Monad m => (v -> Integer -> m v) -> FormulaV c v t -> m (Formula c v t)
 unVM f = go
@@ -400,7 +416,22 @@ indCon (Forall qs phi) x con arg_types = do
    let consequent = subst [(x,Con con (map Var x1xn))] phi
 
    return (forall' (map (second argRepr) x1xn_typed ++ xs)
-                   (antecedents :=> consequent))
+                   (antecedents ==> consequent))
+{- Note:
+
+   There are cases where this is not correct... Consider
+
+     ∀ x . P(x) => P(succ(x))
+
+   And we do induction on x, then we end up with
+
+     ∀ x . (P(x) => P(succ(x))) => (P(succ(x)) => P(succ(succ(x))))
+
+   When we really would want to see
+
+     ∀ x . P(x) & P(succ(x)) => P(succ(succ(x))))
+
+-}
 
 -- | Induction on a variable, given all its constructors and their types
 --   Returns a number of clauses to be proved, one for each constructor.
@@ -482,38 +513,97 @@ structuralInduction ty_env args coordinates = flip evalState 0 $ do
     concatFoldM (inductionNth ty_env) phi coordinates
 
 testEnv :: TyEnv String String
-testEnv "Ord" = Just [("Zero",[])
-                     ,("Succ",[Rec "Nat"])
-                     ,("Lim",[Exp "Nat -> Ord" ["Nat"]])
+testEnv "Ord" = Just [("zero",[])
+                     ,("succ",[Rec "Nat"])
+                     ,("lim",[Exp "Nat -> Ord" ["Nat"]])
                      ]
-testEnv "Nat" = Just [("Zero",[])
-                     ,("Succ",[Rec "Nat"])
+testEnv "Nat" = Just [("zero",[])
+                     ,("succ",[Rec "Nat"])
                      ]
 testEnv list@('L':'i':'s':'t':' ':a) =
-    Just [("Nil",[])
-         ,("Cons",[NonRec a,Rec list])
+    Just [("nil",[])
+         ,("cons",[NonRec a,Rec list])
          ]
 testEnv tree@('T':'r':'e':'e':' ':a) =
-    Just [("Leaf",[NonRec a])
-    ,("Fork",[Rec tree,Rec tree])
-    ]
+    Just [("leaf",[NonRec a])
+         ,("fork",[Rec tree,Rec tree])
+         ]
 testEnv xs = Nothing
 
-testStrInd :: [(String,String)] -> [Int] -> [Formula String String String]
-testStrInd vars coords = map (unV (\x i -> x ++ "_" ++ show i))
-                             (structuralInduction testEnv vars coords)
+testStrInd :: [(String,String)] -> [Int] -> IO ()
+testStrInd vars coords = putStr
+                       $ unlines
+                       $ map ((++ ".") . render . linFormula strStyle)
+                       $ map (unV (\x i -> x ++ show i))
+                       $ structuralInduction testEnv vars coords
 
-natInd :: [Formula String String String]
-natInd = testStrInd [("x","Nat")] [0]
+natInd = testStrInd [("X","Nat")] [0]
 
-natInd2 :: [Formula String String String]
-natInd2 = testStrInd [("x","Nat"),("y","Nat")] [0,1]
+natIndTwice = testStrInd [("X","Nat")] [0,0]
 
-natListInd :: [Formula String String String]
-natListInd = testStrInd [("xs","List Nat")] [0,0,0]
+natIndThrice = testStrInd [("X","Nat")] [0,0,0]
 
-ordInd :: [Formula String String String]
-ordInd = testStrInd [("x","Ord")] [0,0]
+natInd2 = testStrInd [("X","Nat"),("Y","Nat")] [0,1]
 
-treeInd :: [Formula String String String]
-treeInd = testStrInd [("t","Tree a")] [0,0]
+natListInd = testStrInd [("Xs","List Nat")] [0,0,0]
+
+ordInd = testStrInd [("X","Ord")] [0]
+
+treeInd = testStrInd [("T","Tree a")] [0,0]
+
+data Style c v t = Style { linc :: c -> Doc
+                         , linv :: v -> Doc
+                         , lint :: t -> Doc
+                         }
+
+strStyle :: Style String String String
+strStyle = Style { linc = text
+                 , linv = text
+                 , lint = text
+                 }
+
+linTerm :: Style c v t -> Term c v -> Doc
+linTerm st tm = case tm of
+    Var v    -> linv st v
+    Con c [] -> linc st c
+    Con c ts -> linc st c <> parens (csv (map (linTerm st) ts))
+    Fun v ts -> linv st v <> parens (csv (map (linTerm st) ts))
+
+linTypedVar :: Style c v t -> v -> t -> Doc
+linTypedVar st v t = linv st v <+> colon <+> lint st t
+
+linForm :: Style c v t -> (Doc -> Doc) -> Formula c v t -> Doc
+linForm st par form = case form of
+    Forall qs f -> par $ hang (bang <+> brackets (csv (map (uncurry (linTypedVar st)) qs)) <+> colon)
+                              4
+                              (linForm st parens f)
+    xs :=> f -> par $ cat $ (parList $ punctuate (fluff ampersand)
+                                                 (map (linForm st parens) xs))
+                          ++ [darrow <+> linForm st parens f]
+    P xs -> char 'P' <> parens (csv (map (linTerm st) xs))
+
+linFormula :: Style c v t -> Formula c v t -> Doc
+linFormula st = linForm st id
+
+csv :: [Doc] -> Doc
+csv = hcat . punctuate comma
+
+parList :: [Doc] -> [Doc]
+parList []     = [parens empty]
+parList [x]    = [x]
+parList (x:xs) = (lparen <> x) : init xs ++ [last xs <> rparen]
+
+ampersand :: Doc
+ampersand = char '&'
+
+pipe :: Doc
+pipe = char '|'
+
+bang :: Doc
+bang = char '!'
+
+fluff :: Doc -> Doc
+fluff d = space <> d <> space
+
+darrow :: Doc
+darrow = text "=>"
