@@ -1,158 +1,519 @@
-{-# LANGUAGE FlexibleContexts, PatternGuards, ViewPatterns #-}
+{-# LANGUAGE PatternGuards, DeriveDataTypeable, ParallelListComp #-}
+{-
+
+   Structural Induction - the heart of HipSpec
+
+     Example 1:
+
+       data Nat = Succ Nat | Zero
+
+       ∀ (x : Nat) (y : Nat) . P x y
+
+       Induction on x:
+
+       I.   ∀ (y : Nat) . P Zero y
+       II.  ∀ (x : Nat) (y : Nat) . (∀ y₀ . P x y₀) → P (Succ x) y
+
+       Induction on y on II:
+
+       III. ∀ (x : Nat) (y : Nat) . (∀ y₀ . P x y₀) → P (Succ x) Zero
+       IV.  ∀ (x : Nat) (y : Nat) . (∀ y₀ . P x y₀) ∧ (∀ x₀ . P x₀ y → P (Succ x₀ y)) → P (Succ x) (Succ y)
+
+     Example 2:
+
+       data Ord = ... | Lim (Nat -> Ord)
+
+       Lim step case:
+
+       ∀ f . (∀ x . P (f x)) → P (Lim f)
+
+     Example 3:
+
+       data Tree a = Leaf a | Fork (Tree a) (Tree a)
+
+       ∀ (t : Tree a) . P x
+
+       Induction on t:
+
+       I.  ∀ (x : a) . P (Leaf a)
+       II. ∀ (l r : Tree a) . P l ∧ P r → P (Fork l r)
+
+       Induction on l:
+
+       Base case, instantiate l with Leaf
+       II′. ∀ (x : a, r : Tree a) . P (Leaf x) ∧ P r → P (Fork (Leaf x) r)
+                           --   P on only constructors is never reallyneeded
+
+       Step case, instantiate l with Fork ll lr, hypotheses ll and lr:
+
+       P′ l = ∀ r : Tree a . P l ∧ P r → P (Fork l r)
+
+       ∀ ll lr . P′(ll) ∧ P′(lr) → P (Fork ll lr)
+
+       ~> Inline P′
+
+       ∀ ll lr . (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+               ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+               → (∀ r  . P (Fork ll lr) ∧ P r → P (Fork (Fork ll lr) r))
+
+       ~> Shuffle ∀ r
+
+       ∀ ll lr r . (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+                 ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+                 → P (Fork ll lr) ∧ P r → P (Fork (Fork ll lr) r)
+
+       ~> exponentials
+
+       ∀ ll lr r . (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+                 ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+                 ∧ P (Fork ll lr)
+                 ∧ P r
+                 → P (Fork (Fork ll lr) r)
+
+       Done!
+
+       Now, induction on r:
+
+       P′ r = ∀ ll lr . (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+                      ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+                      ∧ P (Fork ll lr)
+                      ∧ P r
+                      → P (Fork (Fork ll lr) r)
+
+       Base:
+
+       ∀ x . P′ (Leaf x)
+
+       ~>
+
+       ∀ x ll lr . (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+                 ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+                 ∧ P (Fork ll lr)
+                 ∧ P (Leaf x)
+                 → P (Fork (Fork ll lr) (Leaf x))
+
+       Step:
+
+       ∀ rl rr . P′ rl ∧ P′ rr → P′ (Fork rl rr)
+
+       ~> Inline P′
+
+       ∀ rl rr . (∀ ll₀ lr₀ . (∀ r₀ . P ll₀ ∧ P r₀ → P (Fork ll₀ r₀))
+                            ∧ (∀ r₀ . P lr₀ ∧ P r₀ → P (Fork lr₀ r₀))
+                            ∧ P (Fork ll₀ lr₀)
+                            ∧ P rl
+                            → P (Fork (Fork ll₀ lr₀) rl)
+               ∧ (∀ ll₀ lr₀ . (∀ r₀ . P ll₀ ∧ P r₀ → P (Fork ll₀ r₀))
+                            ∧ (∀ r₀ . P lr₀ ∧ P r₀ → P (Fork lr₀ r₀))
+                            ∧ P (Fork ll₀ lr₀)
+                            ∧ P rr
+                            → P (Fork (Fork ll₀ lr₀) rr)
+               → (∀ ll lr . (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+                            ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+                            ∧ P (Fork ll lr)
+                            ∧ P (Fork rr rl)
+                            → P (Fork (Fork ll lr) (Fork rr rl))
+
+       ~> quantifiers, exponentials
+
+       ∀ rl rr ll lr . (∀ ll₀ lr₀ . (∀ r₀ . P ll₀ ∧ P r₀ → P (Fork ll₀ r₀))
+                                  ∧ (∀ r₀ . P lr₀ ∧ P r₀ → P (Fork lr₀ r₀))
+                                  ∧ P (Fork ll₀ lr₀)
+                                  ∧ P rl
+                                  → P (Fork (Fork ll₀ lr₀) rl)
+                     ∧ (∀ ll₀ lr₀ . (∀ r₀ . P ll₀ ∧ P r₀ → P (Fork ll₀ r₀))
+                                  ∧ (∀ r₀ . P lr₀ ∧ P r₀ → P (Fork lr₀ r₀))
+                                  ∧ P (Fork ll₀ lr₀)
+                                  ∧ P rr
+                                  → P (Fork (Fork ll₀ lr₀) rr)
+                     ∧ (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+                     ∧ (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+                     ∧ P (Fork ll lr)
+                     ∧ P (Fork rr rl)
+                     → P (Fork (Fork ll lr) (Fork rr rl))
+
+       Skolemise, clauses
+
+       1. (∀ ll₀ lr₀ . (∀ r₀ . P ll₀ ∧ P r₀ → P (Fork ll₀ r₀))
+                     ∧ (∀ r₀ . P lr₀ ∧ P r₀ → P (Fork lr₀ r₀))
+                     ∧ P (Fork ll₀ lr₀)
+                     ∧ P rl
+                     → P (Fork (Fork ll₀ lr₀) rl)
+       2. (∀ ll₀ lr₀ . (∀ r₀ . P ll₀ ∧ P r₀ → P (Fork ll₀ r₀))
+                     ∧ (∀ r₀ . P lr₀ ∧ P r₀ → P (Fork lr₀ r₀))
+                     ∧ P (Fork ll₀ lr₀)
+                     ∧ P rr
+                     → P (Fork (Fork ll₀ lr₀) rr)
+       3. (∀ r₀ . P ll ∧ P r₀ → P (Fork ll r₀))
+       4. (∀ r₀ . P lr ∧ P r₀ → P (Fork lr r₀))
+       5. P (Fork ll lr)
+       6. P (Fork rr rl)
+       7. ~ P (Fork (Fork ll lr) (Fork rr rl))
+
+       Eprover cnfs this to
+
+       # Unprocessed positive unit clauses:
+       cnf(i_0_22,plain,(p(fork(rr,rl)))).
+       cnf(i_0_21,plain,(p(fork(ll,lr)))).
+
+       # Unprocessed negative unit clauses:
+       cnf(i_0_23,negated_conjecture,(~p(fork(fork(ll,lr),fork(rr,rl))))).
+
+       # Unprocessed non-unit clauses:
+       cnf(i_0_19,plain,(p(fork(ll,X1))|~p(ll)|~p(X1))).
+       cnf(i_0_20,plain,(p(fork(lr,X1))|~p(lr)|~p(X1))).
+       cnf(i_0_9,plain,(p(fork(fork(X1,X2),rl))|p(X1)|p(X2)|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_18,plain,(p(fork(fork(X1,X2),rr))|p(X1)|p(X2)|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_6,plain,(p(fork(fork(X1,X2),rl))|p(esk1_2(X1,X2))|p(X2)|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_15,plain,(p(fork(fork(X1,X2),rr))|p(esk3_2(X1,X2))|p(X2)|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_8,plain,(p(fork(fork(X1,X2),rl))|p(esk2_2(X1,X2))|p(X1)|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_17,plain,(p(fork(fork(X1,X2),rr))|p(esk4_2(X1,X2))|p(X1)|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_3,plain,(p(fork(fork(X1,X2),rl))|p(X2)|~p(fork(X1,esk1_2(X1,X2)))|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_12,plain,(p(fork(fork(X1,X2),rr))|p(X2)|~p(fork(X1,esk3_2(X1,X2)))|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_7,plain,(p(fork(fork(X1,X2),rl))|p(X1)|~p(fork(X2,esk2_2(X1,X2)))|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_16,plain,(p(fork(fork(X1,X2),rr))|p(X1)|~p(fork(X2,esk4_2(X1,X2)))|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_5,plain,(p(fork(fork(X1,X2),rl))|p(esk2_2(X1,X2))|p(esk1_2(X1,X2))|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_14,plain,(p(fork(fork(X1,X2),rr))|p(esk4_2(X1,X2))|p(esk3_2(X1,X2))|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_4,plain,(p(fork(fork(X1,X2),rl))|p(esk1_2(X1,X2))|~p(fork(X2,esk2_2(X1,X2)))|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_2,plain,(p(fork(fork(X1,X2),rl))|p(esk2_2(X1,X2))|~p(fork(X1,esk1_2(X1,X2)))|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_13,plain,(p(fork(fork(X1,X2),rr))|p(esk3_2(X1,X2))|~p(fork(X2,esk4_2(X1,X2)))|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_11,plain,(p(fork(fork(X1,X2),rr))|p(esk4_2(X1,X2))|~p(fork(X1,esk3_2(X1,X2)))|~p(fork(X1,X2))|~p(rr))).
+       cnf(i_0_1,plain,(p(fork(fork(X1,X2),rl))|~p(fork(X2,esk2_2(X1,X2)))|~p(fork(X1,esk1_2(X1,X2)))|~p(fork(X1,X2))|~p(rl))).
+       cnf(i_0_10,plain,(p(fork(fork(X1,X2),rr))|~p(fork(X2,esk4_2(X1,X2)))|~p(fork(X1,esk3_2(X1,X2)))|~p(fork(X1,X2))|~p(rr))).
+
+       Which is pretty sweet
+
+   What we want to do:
+
+   We have
+
+       ∀ (x : R) (y : S) (z : T) . P x y z
+
+   Say we want to do induction on y. S has two constructors:
+
+       data S = C Bool | D S S
+
+   Then make this formula:
+
+       phi = ∀ (x : R) (z : T) . P x y z
+
+   Where y is free. We want:
+
+       ∀ (b : Bool) . phi(C b/y),    and
+
+       ∀ (u v : S) . phi(u/y) ∧ phi(v/y) ==> phi(D u v/y)
+
+   We want to do the instantiations with fresh x and z in the antecedent.
+   We get some dangling quantifiers in the consequent above,
+   so we move them back to the top level, getting something like this:
+
+      ∀ (x : R) (b : Bool) (z : T) . P x (C b) z,
+
+    and
+
+      ∀ (x : R) (u v : S) (z : T) . (∀ (x₀ : R) (z₀ : T) . P x₀ u z₀)
+                                  ∧ (∀ (x₀ : R) (z₀ : T) . P x₀ v z₀)
+                                  → P x (D u v) z
+
+   Done, and ready to return or do induction on any of the variables.
+   We can also locate which variables are of relevance corresponding to
+   the initial variables, namely or [x, u and v, z].
+
+-}
 module Hip.Trans.StructuralInduction where
 
-import Hip.Trans.Core
-import Hip.Trans.ParserInternals
-import Hip.Trans.Pretty
-import Hip.Trans.Constructors
-import Hip.Trans.TyEnv
-import Hip.Util
-
-import Data.List hiding (partition)
-import Data.Maybe (fromMaybe)
-import Data.Generics.Uniplate.Data
-
 import Control.Arrow
+import Control.Applicative
 import Control.Monad
 import Control.Monad.State
+import Control.Monad.Identity
 
-import Test.QuickCheck
+import Data.Generics.Uniplate.Data
 
-data IndPart = IndPart { hypotheses :: [[Expr]]
-                       , conjecture :: [Expr]
-                       , vars       :: [Name]
-                       }
-  deriving (Eq,Ord)
+import Data.Data
+import Data.List
+import Data.Maybe
 
-instance Show IndPart where
-  show (IndPart hyps conj vars) = case hyps of
-     []   -> p conj ++ " [" ++ intercalate "," vars ++ "]"
-     hyps -> foldr1 (\xs ys -> xs ++ " & " ++ ys) (map p hyps)
-             ++ " => " ++ p conj ++ " [" ++ intercalate "," vars ++ "]"
-    where p es = "P(" ++ intercalate "," (map prettyCore es) ++ ")"
+import Hip.Util (concatMapM,(.:))
 
-prints :: Show a => [a] -> IO ()
-prints = mapM_ print
+import Safe
 
-simpleInduction :: VarName -> TypeName -> TyEnv -> [IndPart]
-simpleInduction var ty env = do
-    let cons = fromMaybe (error $ "unknown datatype " ++ show ty)
-                         (lookup ty env)
-    (con,conTy) <- cons
-    let recs = recursiveArgs conTy
-        vars = map (Var . (var ++) . show) [0..length recs-1]
-        hyps = [ [v] | (v,r) <- zip vars recs, r ]
-        step = [Con con vars]
-    return (IndPart hyps step [var])
+data Formula c v t = Forall [(v,t)] (Formula c v t)
+                   | [Formula c v t] :=> Formula c v t
+                   | P [Term c v]
+                   -- ^ The actual predicate that we are doing induction on
+  deriving (Eq,Ord,Show,Data,Typeable)
 
-newVar :: (MonadState Int m,Monad m) => m Int
-newVar = do
+-- An argument to a constructor can be recursive or non-recursive.
+--
+-- For instance, when doing induction on [a], then (:) has two arguments,
+-- NonRec a and Rec [a].
+--
+-- If doing induction on [Nat], then (:) has NonRec Nat and Rec [Nat]
+--
+-- So Rec signals that there should be emitted an induction hypothesis here.
+--
+-- Data types can also be exponential. Consider
+--
+-- @
+--     data Ord = Zero | Succ Ord | Lim (Nat -> Ord)
+-- @
+--
+-- Here, the Lim constructor is exponential, create it with
+--
+-- @
+--     Exp (Nat -> Ord) [Nat]
+-- @
+--
+-- The first argument is the type of the function, and the second
+-- argument are the arguments to the function. The apparent duplication
+-- is there because the type is kept entirely abstract in this module.
+data Arg t = Rec t
+           | NonRec t
+           | Exp t [t]
+  deriving (Eq,Ord,Show)
+
+-- | Get the representation of the argument
+argRepr :: Arg t -> t
+argRepr (Rec t)    = t
+argRepr (NonRec t) = t
+argRepr (Exp t _)  = t
+
+forall' :: [(v,t)] -> Formula c v t -> Formula c v t
+forall' xs (Forall ys phi) = Forall (xs ++ ys) phi
+forall' [] phi             = phi
+forall' xs phi             = Forall xs phi
+
+
+mdelete :: Eq a => a -> [(a,b)] -> [(a,b)]
+mdelete x = filter (\(y,_) -> x /= y)
+
+data Term c v = Var v
+              | Con c [Term c v]
+              | Fun v [Term c v]
+              -- ^ Exponentials yield function application
+  deriving (Eq,Ord,Show,Data,Typeable)
+
+-- | Substitution. The rhs of the substitutions must be only fresh variables.
+subst :: (Data c,Data v,Data t,Eq v)
+      => [(v,Term c v)] -> Formula c v t -> Formula c v t
+subst subs = transformBi $ \ tm ->
+    case tm of
+        Var x | Just tm' <- lookup x subs -> tm'
+        _                                 -> tm
+
+type Fresh = State Integer
+
+-- Cheap way of book-keeping fresh variables
+type V v = (v,Integer)
+
+-- | Create a new fresh variable
+newFresh :: v -> Fresh (V v)
+newFresh v = do
     x <- get
     modify succ
-    return x
+    return (v,x)
 
-iterateM :: Monad m => Int -> (a -> m a) -> a -> m a
-iterateM 0 f x = return x
-iterateM n f x = do y <- f x
-                    iterateM (n - 1) f y
+-- | Create a fresh variable that has a type
+newTyped :: v -> t -> Fresh (V v,t)
+newTyped v t = flip (,) t <$> newFresh v
 
--- | For each constructor, unroll each typed variable to all its
---   constructors.
-unroll :: [Expr] -> TyEnv -> Int -> [[Expr]]
-unroll es env i = evalStateT (iterateM i (mapM (transformM go)) es) 0
+-- | Refresh variable
+newFreshV :: V v -> Fresh (V v)
+newFreshV (v,_) = newFresh v
+
+-- | Refresh a variable that has a type
+newTypedV :: V v -> t -> Fresh (V v,t)
+newTypedV v t = flip (,) t <$> newFreshV v
+
+-- | Formulas with fresh-tagged variables
+type FormulaV c v t = Formula c (V v) t
+
+-- | Terms with fresh-tagged variables
+type TermV c v = Term c (V v)
+
+
+-- | Flattens out fresh variable names, in a monad
+unVM :: Monad m => (v -> Integer -> m v) -> FormulaV c v t -> m (Formula c v t)
+unVM f = go
   where
-    go :: Expr -> StateT Int [] Expr
-    go (Var v ::: t) =
-       case instantiate t env of
-          Nothing   -> return (Var v ::: t)
-          Just cons -> do
-              (con,conTy) <- lift cons
-              let conList = case conTy of
-                                TyApp xs -> init xs
-                                _        -> []
-              args <- forM conList $ \t' -> do
-                          n <- newVar
-                          return (Var (v ++ '.':show n) ::: t')
-              return (Con con args)
-    go e = return e
+    go phi = case phi of
+        Forall xs psi -> liftM2 Forall (forM xs $ \(x,t) -> liftM (flip (,) t)
+                                                                  (uncurry f x))
+                                       (go psi)
+        xs :=> x      -> liftM2 (:=>) (mapM go xs) (go x)
+        P xs          -> liftM P (mapM go' xs)
 
--- partInts n k parts n into k elements
-partInts :: Int -> Int -> [[Int]]
-partInts 0 0 = [[]]
-partInts n k | k < 0 = []
-partInts n k = [ m : k | m <- [1..n], k <- partInts (n - m) (k - 1) ]
+    go' tm = case tm of
+        Var x     -> liftM Var (uncurry f x)
+        Con c tms -> liftM (Con c) (mapM go' tms)
+        Fun x tms -> liftM2 Fun (uncurry f x) (mapM go' tms)
 
-prop_partInts_sum :: Int -> Int -> Bool
-prop_partInts_sum n k = all ((n ==) . sum) (partInts n k)
+-- | Flattens out fresh variable names
+unV :: (v -> Integer -> v) -> FormulaV c v t -> Formula c v t
+unV f = runIdentity . unVM (return .: f)
 
-prop_partInts_length :: Int -> Int -> Bool
-prop_partInts_length n k = all ((k ==) . length) (partInts n k)
+-- | Induction on a variable, given one constructor and the type of
+--   its arguments.
+--
+--   Specifically, given the constructor C t1 .. tn and formula
+--
+--     ∀ (x,xs) . φ
+--
+--   yields
+--
+--     ∀ (x1 : t1..xn : tn,xs) .
+--
+--         ∧ (forall i . if     ti nonrec    : []
+--                       elseif ti recursive : (∀ xs' . φ′(xi/x))
+--                       elseif ti exp ts    : (∀ xs' . ∀ (ys : ts) . φ′(xi(ys)/x))
+--                                 as a function call)
+--
+--         → φ(C x1 .. xn/x)
+--
+--    where φ′ = φ(xs'/xs)
+indCon :: (Data c,Data v,Data t,Eq v)
+       => FormulaV c v t -> V v -> c -> [Arg t] -> Fresh (FormulaV c v t)
+indCon (Forall qs phi) x con arg_types = do
 
-partitionTo :: TyEnv -> [(Name,Type)] -> Type -> Int -> [Expr]
-partitionTo env vs t = concatMap (partition env vs t) . enumFromTo 1
+   let xs = mdelete x qs
 
-partition :: TyEnv -> [(Name,Type)] -> Type -> Int -> [Expr]
-partition env vs t n
-  | n <= 0 = []
-  | n == 1 = [ Var n | (n,t') <- vs, t' == t {- warning: List a /= List Nat -}]
-          ++ [ Con con [] | Just cons <- [instantiate t env]
-                          , (con,conTy) <- cons
-                          , conTy == t
-                          ]
-  | Just cons <- instantiate t env = do
-      (con,conTy) <- cons
-      case conTy of
-         TyApp xs -> do
-           part <- partInts (n - 1) (length xs - 1)
-           args <- zipWithM (partition env vs) (init xs) part
-           return (Con con args)
-         _  -> []
-  | otherwise = []
+   xs' <- mapM (uncurry newTypedV) (mdelete x qs)
 
-subdiag :: [Int] -> [[Int]]
-subdiag [] = []
-subdiag (x:xs) = (if x > 1 then ((x-1:xs) :) else id)
-                 [ x : ys | ys <- subdiag xs ]
+   let phi' = subst [(v,Var v') | (v,_) <- xs | (v',_) <- xs' ] phi
 
-partitionListTo :: TyEnv -> [[(Name,Type)]] -> [Type] -> [Int] -> [[Expr]]
-partitionListTo env vs ts ps = do
-    part <- subdiag ps
-    sequence (zipWith3 (partitionTo env) vs ts part)
+   x1xn_typed <- mapM (newTypedV x) arg_types
 
-testVars = [("x",parseType "Nat"),("y",parseType "Nat"),("xs",parseType "List Nat")]
+   let x1xn = map fst x1xn_typed
 
-testVars' = [("x",parseType "Nat"),("y",parseType "Nat")]
+       hypothesis xi r = case r of
+           NonRec _ -> return Nothing
+           Rec t    -> return (Just $ forall' xs' (subst [(x,Var xi)] phi'))
+           Exp _ exp_arg_types -> do
+               args_typed <- mapM (newTypedV x) exp_arg_types
+               return $ Just
+                      $ forall' (xs' ++ args_typed)
+                      $ subst [(x,Fun xi (map (Var . fst) args_typed))] phi'
 
-natType = parseType "Nat"
+   antecedents <- catMaybes <$> mapM (uncurry hypothesis) x1xn_typed
 
-listNatType = parseType "List Nat"
+   let consequent = subst [(x,Con con (map Var x1xn))] phi
 
-intType = parseType "Z"
+   return (forall' (map (second argRepr) x1xn_typed ++ xs)
+                   (antecedents :=> consequent))
 
--- testPartition = partition testEnv testVars testType
-
-constructors :: Expr -> Int
-constructors e = sum $ [ 1 | Con{}  <- universe e ]
-                    ++ [ 1 | Var{} <- universe e ]
+-- | Induction on a variable, given all its constructors and their types
+--   Returns a number of clauses to be proved, one for each constructor.
+induction :: (Data c,Data v,Data t,Eq v)
+          => FormulaV c v t -> V v -> [(c,[Arg t])] -> Fresh [FormulaV c v t]
+induction phi x cons = sequence [ indCon phi x con arg_types
+                                | (con,arg_types) <- cons ]
 
 
-typedVars :: Expr -> [(Name,Type)]
-typedVars e = [ (v,t) | Var v ::: t <- universe e ]
+-- Given a type, returns the constructors and the types of their arguments,
+-- and also if the arguments are recursive, non-recursive or exponential (see Arg).
+--
+-- The function should instantiate type variables.
+-- For instance, looking up the type List Nat, should return the constructors
+-- Nil with args [], and Cons with args [NonRec Nat,Rec (List Nat)].
+--
+-- If it is not possible to do induction on this type, return Nothing.
+-- Examples are function spaces and type variables.
+type TyEnv c t = t -> Maybe [(c,[Arg t])]
 
--- | Leads to combinatorial explosion (Tree a with depth 2)
-structuralInduction :: [(VarName,Type)] -> TyEnv -> Int -> [IndPart]
-structuralInduction vts env depth = map mkPart ess
-   where
-     ess :: [[Expr]]
-     ess = unroll (map (uncurry ((:::) . Var)) vts) env depth
+-- | Folds and concats in a monad
+concatFoldM :: Monad m => (a -> i -> m [a]) -> a -> [i] -> m [a]
+concatFoldM k a []     = return [a]
+concatFoldM k a (x:xs) = do rs <- k a x
+                            concatMapM (\r -> concatFoldM k r xs) rs
 
-     mkPart :: [Expr] -> IndPart
-     mkPart es = IndPart (nub {- sorted -} (partitionListTo env vs ts ps)) -- shit this is so ineffective
-                         (map stripTypes es)
-                         (concatMap (map fst) vs)
-       where
-          vs :: [[(Name,Type)]]
-          vs = map typedVars es
-          ts = map snd vts
-          ps = map (constructors) es
+-- Induction on a term. When we have picked out an argument to the
+-- predicate P, it may just as well be a constructor x : xs, and then
+-- we can do induction on x and xs (possibly).
+inductionTm :: (Data c,Data v,Data t,Eq v)
+            => TyEnv c t -> FormulaV c v t -> TermV c v -> Fresh [FormulaV c v t]
+inductionTm ty_env phi tm = case tm of
+    Var x -> case phi of
+                 Forall xs _ -> case lookup x xs of
+                                   Just ty -> case ty_env ty of
+                                                  Just cons -> induction phi x cons
+                                                  Nothing   -> return [phi]
+                                   _  -> error "inductionTm: x not in quantifier list xs"
+                 _ -> error "inductionTm: x not in non-existent quantifier list"
+    Con c tms -> concatFoldM (inductionTm ty_env) phi tms
+    Fun _ _   -> error "inductionTm: cannot do induction on a function"
 
+-- | Gets the n:th argument of P, in the consequent
+getNthArg :: Int -> Formula c v t -> Term c v
+getNthArg i = go
+  where
+    go (Forall _ phi) = go phi
+    go (_ :=> phi)    = go phi
+    go (P xs)         = atNote "StructuralInduction.getNthArg" xs i
+
+-- Induction on the term on the n:th coordinate of the predicate.
+inductionNth :: (Data c,Data v,Data t,Eq v)
+             => TyEnv c t -> FormulaV c v t -> Int -> Fresh [FormulaV c v t]
+inductionNth ty_env phi i = inductionTm ty_env phi (getNthArg i phi)
+
+
+-- | Performs repeated lexicographic induction, given the typing environment
+--
+--     * the constructors and their Arg types, for any type
+--
+--     * arguments and their types
+--
+--     * which coordinates to do induction on, in order
+structuralInduction :: (Data c,Data v,Data t,Eq v)
+                    => TyEnv c t
+                    -- ^ Constructor typed environment
+                    -> [(v,t)]
+                    -- ^ The initial arguments and types to P
+                    -> [Int]
+                    -- ^ The coordinates to do induction on in P, in order
+                    -> [FormulaV c v t]
+                    -- ^ The set of clauses to prove
+structuralInduction ty_env args coordinates = flip evalState 0 $ do
+
+    args_fresh <- mapM (uncurry newTyped) args
+
+    let phi = forall' args_fresh (P (map (Var . fst) args_fresh))
+
+    concatFoldM (inductionNth ty_env) phi coordinates
+
+testEnv :: TyEnv String String
+testEnv "Ord" = Just [("Zero",[])
+                     ,("Succ",[Rec "Nat"])
+                     ,("Lim",[Exp "Nat -> Ord" ["Nat"]])
+                     ]
+testEnv "Nat" = Just [("Zero",[])
+                     ,("Succ",[Rec "Nat"])
+                     ]
+testEnv list@('L':'i':'s':'t':' ':a) =
+    Just [("Nil",[])
+         ,("Cons",[NonRec a,Rec list])
+         ]
+testEnv tree@('T':'r':'e':'e':' ':a) =
+    Just [("Leaf",[NonRec a])
+    ,("Fork",[Rec tree,Rec tree])
+    ]
+testEnv xs = Nothing
+
+testStrInd :: [(String,String)] -> [Int] -> [Formula String String String]
+testStrInd vars coords = map (unV (\x i -> x ++ "_" ++ show i))
+                             (structuralInduction testEnv vars coords)
+
+natInd :: [Formula String String String]
+natInd = testStrInd [("x","Nat")] [0]
+
+natInd2 :: [Formula String String String]
+natInd2 = testStrInd [("x","Nat"),("y","Nat")] [0,1]
+
+natListInd :: [Formula String String String]
+natListInd = testStrInd [("xs","List Nat")] [0,0,0]
+
+ordInd :: [Formula String String String]
+ordInd = testStrInd [("x","Ord")] [0,0]
+
+treeInd :: [Formula String String String]
+treeInd = testStrInd [("t","Tree a")] [0,0]
