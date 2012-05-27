@@ -5,7 +5,17 @@
    Structural Induction - the heart of HipSpec
 
 -}
-module Hip.Trans.StructuralInduction where
+module Hip.StructuralInduction
+       (Term(..)
+       ,Formula(..)
+       ,TermV
+       ,FormulaV
+       ,unV
+       ,unVM
+       ,Arg(..)
+       ,TyEnv
+       ,structuralInduction
+       ) where
 
 import Control.Arrow hiding ((<+>))
 import Control.Applicative hiding (empty)
@@ -21,13 +31,19 @@ import Data.Maybe
 
 import Hip.Util (concatMapM,(.:),nubSorted)
 
-import Text.PrettyPrint hiding (Style)
-
 import Safe
 
-import Debug.Trace
+type DataOrds c v t = (Ord c,Ord v,Ord t,Data c,Data v,Data t)
 
-type DataOrds c v t = (Show c,Show v,Show t,Ord c,Ord v,Ord t,Data c,Data v,Data t)
+-- Terms ----------------------------------------------------------------------
+
+data Term c v = Var v
+              | Con c [Term c v]
+              | Fun v [Term c v]
+              -- ^ Exponentials yield function application
+  deriving (Eq,Ord,Show,Data,Typeable)
+
+-- Formulae -------------------------------------------------------------------
 
 data Formula c v t = Forall [(v,t)] (Formula c v t)
                    | [Formula c v t] :=> Formula c v t
@@ -35,28 +51,57 @@ data Formula c v t = Forall [(v,t)] (Formula c v t)
                    -- ^ The actual predicate that we are doing induction on
   deriving (Eq,Ord,Show,Data,Typeable)
 
+-- | Implication, but with some tidying and simplification
 (==>) :: DataOrds c v t => [Formula c v t] -> Formula c v t -> Formula c v t
 xs ==> (ys :=> x) = (xs ++ ys) ==> x
 xs ==> x          = case tidy xs of
                          [] -> x
                          ts -> ts :=> x
-
-tidy :: DataOrds c v t => [Formula c v t] -> [Formula c v t]
-tidy = nubSorted . filter (not . isAtom)
   where
+    tidy = nubSorted . filter (not . isAtom)
+
     isAtom (P tm) = all isAtomTm tm
     isAtom _      = False
 
-    isAtomTm (Con x xs) = all isAtomTm xs
-    isAtomTm _          = False
+    isAtomTm (Con _ tms) = all isAtomTm tms
+    isAtomTm _           = False
 
-isQuant :: Formula c v t -> Bool
-isQuant Forall{} = True
-isQuant _        = False
+-- | Tears apart (φs :=> ψ) to (φs,ψ).
+unImpl :: Formula c v t -> ([Formula c v t],Formula c v t)
+unImpl (phis :=> psi) = (phis,psi)
+unImpl psi            = ([],  psi)
 
+-- | Smart creation of foralls
+forall' :: DataOrds c v t => [(v,t)] -> Formula c v t -> Formula c v t
+forall' xs (Forall ys phi) = forall' (xs ++ ys) phi
+forall' xs phi             = case [ (x,t) | (x,t) <- xs, x `varFree` phi ] of
+                                []  -> phi
+                                xs' -> Forall xs' phi
+
+-- | Does this variable occur in this formula?
 varFree :: forall c v t . DataOrds c v t => v -> Formula c v t -> Bool
 varFree v phi = or $ [ v == v' | Var v' :: Term c v <- universeBi phi ]
                   ++ [ v == v' | Fun v' _ :: Term c v <- universeBi phi ]
+
+-- | Delete a varibal efrom a type environment
+mdelete :: Eq a => a -> [(a,b)] -> [(a,b)]
+mdelete x = filter (\(y,_) -> x /= y)
+
+-- Substitution ---------------------------------------------------------------
+
+-- | Substitution on many variables.
+--   The rhs of the substitution must be only fresh variables.
+substList :: DataOrds c v t => [(v,Term c v)] -> Formula c v t -> Formula c v t
+substList subs = transformBi $ \ tm ->
+    case tm of
+        Var x | Just tm' <- lookup x subs -> tm'
+        _                                 -> tm
+
+-- | Substitution. The rhs of the substitution must be only fresh variables.
+subst :: DataOrds c v t => v -> Term c v -> Formula c v t -> Formula c v t
+subst x t = substList [(x,t)]
+
+-- Arguments ------------------------------------------------------------------
 
 {-| An argument to a constructor can be recursive or non-recursive.
 
@@ -94,39 +139,21 @@ argRepr (Rec t)    = t
 argRepr (NonRec t) = t
 argRepr (Exp t _)  = t
 
-forall' :: DataOrds c v t => [(v,t)] -> Formula c v t -> Formula c v t
-forall' xs (Forall ys phi) = forall' (xs ++ ys) phi
-forall' xs phi             = case [ (x,t) | (x,t) <- xs, x `varFree` phi ] of
-                                []  -> phi
-                                xs' -> Forall xs' phi
+-- Fresh variables ------------------------------------------------------------
 
-mdelete :: Eq a => a -> [(a,b)] -> [(a,b)]
-mdelete x = filter (\(y,_) -> x /= y)
-
-data Term c v = Var v
-              | Con c [Term c v]
-              | Fun v [Term c v]
-              -- ^ Exponentials yield function application
-  deriving (Eq,Ord,Show,Data,Typeable)
-
--- | Substitution on many variables.
---   The rhs of the substitution must be only fresh variables.
-substList :: DataOrds c v t => [(v,Term c v)] -> Formula c v t -> Formula c v t
-substList subs = transformBi $ \ tm ->
-    case tm of
-        Var x | Just tm' <- lookup x subs -> tm'
-        _                                 -> tm
-
--- | Substitution. The rhs of the substitution must be only fresh variables.
-subst :: DataOrds c v t => v -> Term c v -> Formula c v t -> Formula c v t
-subst x t = substList [(x,t)]
-
+-- | A monad of fresh Integers
 type Fresh = State Integer
 
--- Cheap way of book-keeping fresh variables
+-- | Cheap way of book-keeping fresh variables
 type V v = (v,Integer)
 
+-- | Formulas with fresh-tagged variables
+type FormulaV c v t = Formula c (V v) t
+
+-- | Terms with fresh-tagged variables
+type TermV c v = Term c (V v)
 -- | Create a new fresh variable
+
 newFresh :: v -> Fresh (V v)
 newFresh v = do
     x <- get
@@ -144,12 +171,6 @@ newFreshV (v,_) = newFresh v
 -- | Refresh a variable that has a type
 newTypedV :: V v -> t -> Fresh (V v,t)
 newTypedV v t = flip (,) t <$> newFreshV v
-
--- | Formulas with fresh-tagged variables
-type FormulaV c v t = Formula c (V v) t
-
--- | Terms with fresh-tagged variables
-type TermV c v = Term c (V v)
 
 -- | Flattens out fresh variable names, in a monad
 unVM :: Monad m => (v -> Integer -> m v) -> FormulaV c v t -> m (Formula c v t)
@@ -170,6 +191,8 @@ unVM f = go
 -- | Flattens out fresh variable names
 unV :: (v -> Integer -> v) -> FormulaV c v t -> Formula c v t
 unV f = runIdentity . unVM (return .: f)
+
+-- Induction ------------------------------------------------------------------
 
 {-| Induction on a variable, given one constructor and the type of
     its arguments. We need to make some special care when
@@ -250,13 +273,11 @@ unV f = runIdentity . unVM (return .: f)
                     → ψ(C x₁ .. xₙ,xs)
     @
 -}
-
 indCon :: DataOrds c v t
        => FormulaV c v t -> V v -> c -> [Arg t] -> Fresh (FormulaV c v t)
-indCon fm@(Forall qs formula) x con arg_types = do
+indCon (Forall qs formula) x con arg_types = do
 
-   let (phis_tmp,psi) = case formula of fs :=> f -> (fs,f)
-                                        f        -> ([],f)
+   let (phis_tmp,psi) = unImpl formula
 
        (phis,gamma) = partition (varFree x) phis_tmp
 
@@ -347,7 +368,7 @@ hypothesis :: DataOrds c v t
            -> Fresh (Maybe (FormulaV c v t))
 hypothesis phi_slash xi arg = case arg of
    NonRec _        -> return Nothing
-   Rec t           -> return (Just (phi_slash (Var xi)))
+   Rec _           -> return (Just (phi_slash (Var xi)))
    Exp _ arg_types -> do
        args_typed <- mapM (newTypedV xi) arg_types
        let phi = phi_slash (Fun xi (map (Var . fst) args_typed))
@@ -374,13 +395,13 @@ type TyEnv c t = t -> Maybe [(c,[Arg t])]
 
 -- | Folds and concats in a monad
 concatFoldM :: Monad m => (a -> i -> m [a]) -> a -> [i] -> m [a]
-concatFoldM k a []     = return [a]
+concatFoldM _ a []     = return [a]
 concatFoldM k a (x:xs) = do rs <- k a x
                             concatMapM (\r -> concatFoldM k r xs) rs
 
--- Induction on a term. When we have picked out an argument to the
--- predicate P, it may just as well be a constructor x : xs, and then
--- we can do induction on x and xs (possibly).
+-- | Induction on a term. When we have picked out an argument to the
+--   predicate P, it may just as well be a constructor x : xs, and then
+--   we can do induction on x and xs (possibly).
 inductionTm :: DataOrds c v t
             => TyEnv c t -> FormulaV c v t -> TermV c v -> Fresh [FormulaV c v t]
 inductionTm ty_env phi tm = case tm of
@@ -391,7 +412,7 @@ inductionTm ty_env phi tm = case tm of
                                                   Nothing   -> return [phi]
                                    _  -> error "inductionTm: x not in quantifier list xs"
                  _ -> error "inductionTm: x not in non-existent quantifier list"
-    Con c tms -> concatFoldM (inductionTm ty_env) phi tms
+    Con _ tms -> concatFoldM (inductionTm ty_env) phi tms
     Fun _ _   -> error "inductionTm: cannot do induction on a function"
 
 -- | Gets the n:th argument of P, in the consequent
@@ -402,11 +423,10 @@ getNthArg i = go
     go (_ :=> phi)    = go phi
     go (P xs)         = atNote "StructuralInduction.getNthArg" xs i
 
--- Induction on the term on the n:th coordinate of the predicate.
+-- | Induction on the term on the n:th coordinate of the predicate.
 inductionNth :: DataOrds c v t
              => TyEnv c t -> FormulaV c v t -> Int -> Fresh [FormulaV c v t]
 inductionNth ty_env phi i = inductionTm ty_env phi (getNthArg i phi)
-
 
 -- | Performs repeated lexicographic induction, given the typing environment
 --
@@ -432,127 +452,3 @@ structuralInduction ty_env args coordinates = flip evalState 0 $ do
 
     concatFoldM (inductionNth ty_env) phi coordinates
 
-testEnv :: TyEnv String String
-testEnv "Ord" = Just [("zero",[])
-                     ,("succ",[Rec "Nat"])
-                     ,("lim",[Exp "Nat -> Ord" ["Nat"]])
-                     ]
-testEnv "Nat" = Just [("zero",[])
-                     ,("succ",[Rec "Nat"])
-                     ]
-testEnv "Int" = Just [("pos",[NonRec "Nat"])
-                     ,("neg",[NonRec "Nat"])
-                     ]
-testEnv list@('L':'i':'s':'t':' ':a) =
-    Just [("nil",[])
-         ,("cons",[NonRec a,Rec list])
-         ]
-testEnv tree@('T':'r':'e':'e':' ':a) =
-    Just [("leaf",[NonRec a])
-         ,("fork",[Rec tree,Rec tree])
-         ]
-testEnv tree@('T':'r':'e':'e':'\'':' ':a) =
-    Just [("empty",[])
-         ,("branch",[Rec tree,NonRec a,Rec tree])
-         ]
-testEnv expr@('E':'x':'p':'r':' ':v) =
-    Just [("var",[NonRec v])
-         ,("lit",[NonRec "Int"])
-         ,("add",[Rec expr,Rec expr])
-         ,("mul",[Rec expr,Rec expr])
-         ,("neg",[Rec expr,Rec expr])
-         ]
-testEnv xs = Nothing
-
-testStrInd :: [(String,String)] -> [Int] -> IO ()
-testStrInd vars coords = do putStr $ unlines
-                                   $ map ((++ ".") . render . linFormula strStyle)
-                                   $ map (unV (\x i -> x ++ show i))
-                                   $ structuralInduction testEnv vars coords
-
-intInd = testStrInd [("X","Int")]
-
-intInd3 = testStrInd [("X","Int"),("Y","Int"),("Z","Int")]
-
-natInd = testStrInd [("X","Nat")]
-
-natInd2 = testStrInd [("X","Nat"),("Y","Nat")]
-
-listInd = testStrInd [("Xs","List a")]
-
-natListInd = testStrInd [("Xs","List Nat")]
-
-ordListInd = testStrInd [("Xs","List Ord")]
-
-ordInd = testStrInd [("X","Ord")]
-
-treeInd = testStrInd [("T","Tree a")]
-
-exprInd = testStrInd [("E","Expr a")]
-
-tree'Ind = testStrInd [("T","Tree' a")]
-
-treeTreeInd = testStrInd [("T","Tree Tree a")]
-
-data Style c v t = Style { linc :: c -> Doc
-                         , linv :: v -> Doc
-                         , lint :: t -> Doc
-                         }
-
-strStyle :: Style String String String
-strStyle = Style { linc = text
-                 , linv = text
-                 , lint = text
-                 }
-
-showStyle :: (Show a,Show b,Show c) => Style a b c
-showStyle = Style { linc = text . show
-                  , linv = text . show
-                  , lint = text . show
-                  }
-
-linTerm :: Style c v t -> Term c v -> Doc
-linTerm st tm = case tm of
-    Var v    -> linv st v
-    Con c [] -> linc st c
-    Con c ts -> linc st c <> parens (csv (map (linTerm st) ts))
-    Fun v ts -> linv st v <> parens (csv (map (linTerm st) ts))
-
-linTypedVar :: Style c v t -> v -> t -> Doc
-linTypedVar st v t = linv st v <+> colon <+> lint st t
-
-linForm :: Style c v t -> (Doc -> Doc) -> Formula c v t -> Doc
-linForm st par form = case form of
-    Forall qs f -> par $ hang (bang <+> brackets (csv (map (uncurry (linTypedVar st)) qs)) <+> colon)
-                              4
-                              (linForm st parens f)
-    xs :=> f -> par $ cat $ (parList $ punctuate (fluff ampersand)
-                                                 (map (linForm st parens) xs))
-                          ++ [darrow <+> linForm st parens f]
-    P xs -> char 'P' <> parens (csv (map (linTerm st) xs))
-
-linFormula :: Style c v t -> Formula c v t -> Doc
-linFormula st = linForm st id
-
-csv :: [Doc] -> Doc
-csv = hcat . punctuate comma
-
-parList :: [Doc] -> [Doc]
-parList []     = [parens empty]
-parList [x]    = [x]
-parList (x:xs) = (lparen <> x) : init xs ++ [last xs <> rparen]
-
-ampersand :: Doc
-ampersand = char '&'
-
-pipe :: Doc
-pipe = char '|'
-
-bang :: Doc
-bang = char '!'
-
-fluff :: Doc -> Doc
-fluff d = space <> d <> space
-
-darrow :: Doc
-darrow = text "=>"
