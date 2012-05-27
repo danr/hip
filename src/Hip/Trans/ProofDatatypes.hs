@@ -44,7 +44,7 @@ proofMethodFile pt = case pt of
   SimpleInduction v          -> "simpleind" ++ v
   ApproxLemma                -> "approx"
   FixpointInduction f        -> "fix" ++ concat f
-  StructuralInduction vs b d -> concat [ "fin" | not b ] ++ "strind" ++ concat vs ++ show d
+  StructuralInduction vs b d -> concat vs ++ show d
 
 
 proofMethods :: [ProofMethod]

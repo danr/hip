@@ -110,8 +110,7 @@ prove env params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
         if length parts > 0 && (length parts <= indsteps || indsteps == 0)
           then forM parts $ \part -> locally $ do
                   let part' = S.unV (\s i -> s ++ "_" ++ show i) part
-                  tr_conj <- trFormula part'
-                  let tr_hyps = []
+                  (tr_hyps,tr_conj) <- skFormula part'
                   popQuantified -- ugh
                   return $ Particle { particleDesc   = intercalate "_" (map ppTerm (S.consequent part))
                                     , particleMatter = Conjecture "conj" tr_conj
@@ -128,16 +127,16 @@ prove env params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
             forallUnbound (typeGuards env tytms (lhs' === rhs'))
 
         skFormula :: S.Formula Name Name Type -> TM ([T.Formula],T.Formula)
-        skFormula f = locally $ case f of
+        skFormula f = case f of
             S.Forall xts phi -> do
-                     mapM_ (skolemize . fst) xts
+                     addFuns (zip (map fst xts) (repeat 0))
                      skFormula phi
             phis S.:=> psi -> liftM2 (,) (mapM trFormula phis) (trFormula psi)
             S.P tms -> liftM ([],) (trFormula f)
 
 
         trFormula :: S.Formula Name Name Type -> TM T.Formula
-        trFormula f = locally $ case f of
+        trFormula f = case f of
             S.Forall xts phi -> do
                      xs <- forM xts $ \(x,_) -> bindMeQuantPlease x
                      phi' <- trFormula phi
