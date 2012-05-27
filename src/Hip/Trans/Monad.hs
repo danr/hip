@@ -17,7 +17,9 @@ module Hip.Trans.Monad
        ,returnWithDebug
        ,locally
        ,Bound(..)
+       ,popQuantified
        ,boundCon
+       ,bindMeQuantPlease
        ,lookupName
        ,lookupArity
        ,lookupProj
@@ -231,26 +233,34 @@ getName = TM $ do
   modify namesupply tail
   return n
 
+bindMeQuantPlease :: Name -> TM VarName
+bindMeQuantPlease n = TM $ do
+    q@(QuantVar n') <- newQName n
+    modify boundNames (M.insert n q)
+    return n'
+
+newQName n@(x:xs) = do
+    let ok c = isAlphaNum c || c == '_'
+    q <- VarName <$>
+            if isAlpha x && all ok n
+                  then return (toUpper x:xs)
+                  else do v <- unTM getName
+                          return ("Q_" ++ v)
+    return (QuantVar q)
+
 -- | Looks up if a name is a variable or a function/constructor
 lookupName :: Name -> TM Bound
-lookupName n@(x:xs) = TM $ do
+lookupName n = TM $ do
     mn <- M.lookup n <$> gets boundNames
     case mn of
       Just b  -> return b
       Nothing -> do -- Variable is unbound, quantify over it
-        let ok c = isAlphaNum c || c == '_'
-        q <- VarName <$>
-                if isAlpha x && all ok n
-                      then return (toUpper x:xs)
-                      else do v <- unTM getName
-                              return ("Q_" ++ v)
-        let qv = QuantVar q
+        qv@(QuantVar q) <- newQName n
         write' $ "New quantified variable " ++ show q ++ " for " ++ n
         modify boundNames (M.insert n qv)
         let existsQual = anySuf `isSuffixOf` n
         modify quantified (S.insert (putEither (not existsQual) q))
         return qv
-lookupName "" = error "lookupName on empty name"
 
 -- | Pop and return the quantified variables
 popQuantified :: TM [Either VarName VarName]

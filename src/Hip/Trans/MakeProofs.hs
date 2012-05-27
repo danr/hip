@@ -10,10 +10,12 @@ import Hip.Trans.Pretty
 import Hip.Trans.ProofDatatypes
 import Hip.Trans.NecessaryDefinitions
 import Hip.Trans.FixpointInduction
-import Hip.Trans.StructuralInduction
 import Hip.Trans.Types
-import Hip.Trans.TyEnv
 import Hip.Trans.Theory
+import Hip.Trans.TyEnv
+import Hip.Trans.TranslateExpr
+import qualified Hip.StructuralInduction as S
+import Hip.StructuralInduction.Linearise
 import Hip.Util (putEither,concatMapM)
 import Hip.Messages
 import Hip.Params
@@ -25,8 +27,9 @@ import qualified Language.TPTP as T
 import Control.Applicative
 import Control.Monad
 
+import Data.List
 import Data.Maybe (fromMaybe,mapMaybe)
-import Control.Arrow ((&&&))
+import Control.Arrow ((&&&),first)
 
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -70,187 +73,85 @@ prove :: TyEnv
       -- ^ Resulting instructions how to do proof declarations for this
 prove env params@(Params{..}) fundecls recfuns resTy fname typedVars lhs rhs =
     let indargs :: [(Name,Type)]
-        indargs = filter (\(_,t) -> {- not (finiteTy env t) && -} concreteType t) typedVars
+        indargs = filter (\(_,t) -> concreteType t) typedVars
         powset :: [[(Name,Type)]]
         powset = powerset indargs
-   in  concat $ [ plainProof                                  | 'p' `elem` methods ]
-
-   -- When adding back fpi and approx, remember to type guard finite types!
---              ++ [ proofByFixpointInduction                    | 'f' `elem` methods ]
---              ++ [ proofByApproxLemma                          | 'a' `elem` methods ]
---              ++ [ map (proofByStructInd True  d)
---                       (filter ((<=indargs) .  length) powset) | d <- [1..inddepth], 's' `elem` methods ]
-              ++ [ map (proofByStructInd False d)
-                       (filter ((<=indvars) .  length) powset)
-                 | d <- [1..inddepth], 'i' `elem` methods ]
+   in  concat $ [ plainProof | 'p' `elem` methods ]
+             ++ [ map (proofByStructInd False d)
+                      (filter ((<=indvars) .  length) powset)
+                | d <- [1..inddepth], 'i' `elem` methods ]
 
   where
     accompanyParts :: ProofMethod -> Coverage -> TM [Particle] -> TM Part
     accompanyParts prooftype coverage partsm = do
         let funs = map (declName &&& length . declArgs) fundecls
---        addFuns funs
---        theory <- concatMapM (fmap snd . translate) fundecls
         parts  <- partsm
         return $ Part { partMethod     = prooftype
                       , partCoverage   = coverage
                       , partMatter     = ([],parts)
                       }
 
-
-    accompanyPartsWithDecls :: ProofMethod
-                            -> Coverage
-                            -> [([Decl],TM [Particle])]
-                            -> TM Part
-    accompanyPartsWithDecls prooftype coverage tup = do
-         parts <- flip concatMapM tup $ \(fundecls',partm) -> do
-            let funs = map (declName &&& length . declArgs) fundecls'
-            addFuns funs
-            locally $ do
-                part   <- partm
-                theory <- concatMapM (fmap snd . translate) fundecls'
-                return $ map (extendParticle theory) part
-         return $ Part { partMethod     = prooftype
-                       , partCoverage   = coverage
-                       , partMatter     = ([],parts)
-                       }
+    plainProof :: [TM Part]
+    plainProof = return $ accompanyParts Plain Infinite $ locally $ do
+                     lhs' <- translateExpr lhs
+                     rhs' <- translateExpr rhs
+                     tytms <- mapM (\(n,t) -> (,t) <$> translateExpr (Var n)) typedVars
+                     p <- forallUnbound (typeGuards env tytms (lhs' === rhs'))
+                     return $ [ Particle "plain" [Conjecture "plain" p] ]
 
     proofByStructInd :: Bool -> Int -> [(Name,Type)] -> TM Part
     proofByStructInd addBottom d ns = accompanyParts
       (StructuralInduction (map fst ns) addBottom d)
       (if addBottom then Infinite else Finite) $ do
-        env <- getEnv addBottom
-        let parts = structuralInduction ns env d
+        env <- translateEnv <$> getEnv addBottom
+
+        let parts = S.structuralInduction env ns (concat (replicate d [0..length ns-1]))
+
         if length parts > 0 && (length parts <= indsteps || indsteps == 0)
-          then forM parts $ \(IndPart hyps conj vars) -> locally $ do
---                  forM vars $ \v -> addIndirection v (Var v)
-                  addFuns (zip vars (repeat 0))
-                  let hyps' | indhyps == 0 = hyps
-                            | otherwise    = take indhyps hyps
-                  phyps <- mapM instP hyps'
-                  pconj <- instP conj
-                  return $ Particle { particleDesc   = unwords vars
-                                    , particleMatter = Conjecture "conj" pconj :
-                                                       [ Hypothesis "hyp" phyp | phyp <- phyps ]
+          then forM parts $ \part -> locally $ do
+                  let part' = S.unV (\s i -> s ++ "_" ++ show i) part
+                  tr_conj <- trFormula part'
+                  let tr_hyps = []
+                  popQuantified -- ugh
+                  return $ Particle { particleDesc   = intercalate "_" (map ppTerm (S.consequent part))
+                                    , particleMatter = Conjecture "conj" tr_conj
+                                                     : map (Hypothesis "hyp") tr_hyps
                                     }
           else return []
       where
         instP :: [Expr] -> TM T.Formula
         instP es = locally $ do
-            zipWithM addIndirection (map fst ns) es
-            instantiateP []
+            zipWithM_ addIndirection (map fst ns) es
+            lhs' <- translateExpr lhs
+            rhs' <- translateExpr rhs
+            tytms <- mapM (\(n,t) -> (,t) <$> translateExpr (Var n)) typedVars
+            forallUnbound (typeGuards env tytms (lhs' === rhs'))
+
+        skFormula :: S.Formula Name Name Type -> TM ([T.Formula],T.Formula)
+        skFormula f = locally $ case f of
+            S.Forall xts phi -> do
+                     mapM_ (skolemize . fst) xts
+                     skFormula phi
+            phis S.:=> psi -> liftM2 (,) (mapM trFormula phis) (trFormula psi)
+            S.P tms -> liftM ([],) (trFormula f)
 
 
-    approxSteps :: TM (Formula,Formula,[T.Decl])
-    approxSteps = do
-        let f = "a.f"
-        addFuns [(f,1)]
-        (approx,approxTheory) <- approximate f resTy
-        hyp <- locally $ do
-                  lhs' <- translateExpr (App f [lhs])
-                  rhs' <- translateExpr (App f [rhs])
-                  forallUnbound (lhs' === rhs')
-        step <- locally $ do
-                  lhs' <- translateExpr (App approx [lhs])
-                  rhs' <- translateExpr (App approx [rhs])
-                  forallUnbound (lhs' === rhs')
-        return (hyp,step,approxTheory)
+        trFormula :: S.Formula Name Name Type -> TM T.Formula
+        trFormula f = locally $ case f of
+            S.Forall xts phi -> do
+                     xs <- forM xts $ \(x,_) -> bindMeQuantPlease x
+                     phi' <- trFormula phi
+                     tytms <- mapM (\(n,t) -> (,t) <$> translateExpr (Var n)) xts
+                     return $ forall' xs (typeGuards env tytms phi')
+            phis S.:=> psi   -> liftM2 (===>) (mapM trFormula phis) (trFormula psi)
+            S.P tms          -> instP (map trTerm tms)
 
-    -- Returns in the List monad instead of the Maybe monad
-    proofByApproxLemma :: [TM Part]
-    proofByApproxLemma
-       | concreteType resTy =
-             [accompanyParts ApproxLemma Infinite $ do
-                   (hyp,step,approxAxioms) <- approxSteps
-                   return $ [Particle { particleDesc   = "step"
-                                      , particleMatter = Hypothesis "approxhyp" hyp
-                                                       : Conjecture "approxstep" step
-                                                       : approxAxioms
-                                      }]
-             ]
-       | otherwise = []
+        trTerm :: S.Term Name Name -> Expr
+        trTerm tm = case tm of
+             S.Var x     -> Var x
+             S.Con c tms -> Con c (map trTerm tms)
+             S.Fun f tms -> App f (map trTerm tms)
 
-    plainProof :: [TM Part]
-    plainProof = return $ accompanyParts Plain Infinite $ do
-                     p <- instantiateP []
-                     return $ [ Particle "plain" [Conjecture "plain" p] ]
-
-
-    instantiateP :: [(VarName,VarName)] -> TM T.Formula
-    instantiateP binds = locally $ do
-        lhs' <- translateExpr (substVars binds lhs)
-        rhs' <- translateExpr (substVars binds rhs)
-        tytms <- mapM (\(n,t) -> (,t) <$> translateExpr (Var n)) typedVars
-        forallUnbound (typeGuards env tytms (lhs' === rhs'))
-
-    proofByFixpointInduction :: [TM Part]
-    proofByFixpointInduction = concatMap
-                                   instantiateFixProof
-                                   ((if fpimax /= 0 then take fpimax else id)
-                                    (proofByFixpoint fundecls recfuns lhs rhs))
-      where
-        instantiateEq :: (Expr,Expr) -> TM T.Formula
-        instantiateEq (l,r) = locally $ do
-            l' <- translateExpr l
-            r' <- translateExpr r
-            forallUnbound (l' === r')
-
-        addFunsFromDecls ds = sequence_
-           [ addFuns [(f,length as)] |Func f  as _ <- ds ]
-
-        addUnrecFunsFromDecls ds fixedFuns = sequence_
-           [ addFuns [(f ++ unRec,length as)]
-           | Func f as _ <- ds
-           , f `elem` fixedFuns ]
-
-        instantiateFixProof :: FixProof -> [TM Part]
-        instantiateFixProof fp@(FixProof {..}) =
-            [ accompanyPartsWithDecls (FixpointInduction fixedFuns) Infinite
-                 [(baseDecls,baseAxioms)
-                 ,(stepDecls,stepAxioms)]
-            ]
-          where
-             baseAxioms = do
-                 wdproof $ show fp
-                 addFunsFromDecls baseDecls
-                 pbottom <- instantiateEq base
-                 return $ [Particle "base" [Conjecture "fixbase" pbottom]]
-
-             stepAxioms = do
-                 addFunsFromDecls stepDecls
-                 addUnrecFunsFromDecls fundecls fixedFuns
-                 phyp  <- instantiateEq hyp
-                 pstep <- instantiateEq step
-                 return $ [Particle "step"
-                                 [Hypothesis "fixhyp" phyp
-                                 ,Conjecture "fixstep" pstep]]
-
-
-approximate :: Name -> Type -> TM (Name,[T.Decl])
-approximate f ty = do
-    let tyname = case ty of TyCon n _ -> n
-                            TyVar{}   -> error "approximate on tyvar"
-                            TyApp{}   -> error "approximate on tyapp"
-    let n = "approx."
-    wdproof "Lookup constructors from approximate"
-    cons <- lookupConstructors tyname
-    matrix <- forM cons $ \c -> do
-                 Just ct <- lookupType c
-                 let recs = recursiveArgs ct
-                     vars = [ 'a':show i | (i,_) <- zip [(0 :: Int)..] recs ]
-                 return ([PCon c (map PVar vars)] -- f (C x1 .. xn)
-                        ,Nothing                  -- no guard
-                        ,Con c [ if rec then App f [Var arg] else Var arg
-                               | (rec,arg) <- zip recs vars ])
-    addFuns [(n,1)]
-    let decl = funcMatrix n matrix
-    wdproof $ prettyCore decl
-    (_,theory) <- translate decl
-    return (n,theory)
-
-
--- | Is a type finite in a theory?
-finiteType :: Theory -> Type -> Bool
-finiteType thy n = undefined
 
 -- These were added since StructuralInduction sometimes returns empty
 -- parts because it overflowed the number allowed hyps or steps, and

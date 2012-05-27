@@ -37,7 +37,6 @@ Library
     Hip.Trans.Theory
     Hip.Trans.ProofDatatypes
     Hip.Trans.Pretty
-    Hip.Trans.StructuralInduction
     Hip.Trans.Parser
     Hip.Trans.Core
     Hip.Trans.Lexer
@@ -51,6 +50,8 @@ Library
     Hip.Trans.FixpointInduction
     Hip.Trans.Constructors
     Hip.Trans.Types
+    Hip.StructuralInduction
+    Hip.StructuralInduction.Linearise
     Test.QuickSpec.Equations
     Test.QuickSpec.UnionFind
     Test.QuickSpec.CongruenceClosure
@@ -78,6 +79,7 @@ Library
                , random                        >= 1.0
                , array                         >= 0.4
                , parallel                      >= 3.0
+               , safe                          >= 0.3
 
 
 -- executable          hipspec

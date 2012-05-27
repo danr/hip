@@ -54,10 +54,10 @@ main = hipSpec "Nat.hs" conf 3
                , con "Z" Z
                , con "S" S
                , con "+" (+)
-               , con "*" (*)
+--               , con "*" (*)
                -- , con "id" (id :: Nat -> Nat)
-               , con "sum" sum
-               , con "cubes" cubes
+ --              , con "sum" sum
+  --             , con "cubes" cubes
                -- , con "sigma" sigma
                -- , con "sq" sq
                -- , con "two" two
@@ -80,7 +80,7 @@ instance Enum Nat where
 
 instance Arbitrary Nat where
   arbitrary = sized $ \s -> do
-    x <- choose (0,round (sqrt (toEnum s)))
+    x <- choose (0,1) -- round (sqrt (toEnum s)))
     return (toEnum x)
 
 instance CoArbitrary Nat where

@@ -47,6 +47,12 @@ infix  1 <=>
 (\/)  = mkBinOp (:|)
 (<=>) = mkBinOp (:<=>)
 
+(===>) :: [Formula] -> Formula -> Formula
+[]  ===> phi = phi
+[x] ===> phi = x ==> phi
+xs  ===> phi = foldr1 (/\) xs ==> phi
+
+
 (===),(!=) :: Term -> Term -> Formula
 (===) = \f g -> EqOp f (:==) g
 (!=)  = \f g -> EqOp f (:!=) g

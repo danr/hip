@@ -3,7 +3,6 @@ module Hip.Trans.Theory where
 import Hip.Trans.Core
 import Hip.Trans.ProofDatatypes hiding (propName)
 import Hip.Trans.Pretty
-import Hip.Trans.TyEnv
 import Hip.Trans.NecessaryDefinitions
 import Hip.Util
 
@@ -109,5 +108,5 @@ theoryFiniteType = undefined
 theoryDataTypes :: Theory -> [Type]
 theoryDataTypes = map (\d -> TyCon (declName d) (map TyVar (declArgs d))) . thyDatas
 
-theoryTyEnv :: Theory -> TyEnv
+theoryTyEnv :: Theory -> [(Name,[(Name,Type)])]
 theoryTyEnv = map (declName &&& conTypes) . thyDatas
