@@ -1,4 +1,5 @@
-{-# LANGUAGE PatternGuards, DeriveDataTypeable, ParallelListComp, ConstraintKinds #-}
+{-# LANGUAGE PatternGuards, DeriveDataTypeable, ParallelListComp,
+             ConstraintKinds, ScopedTypeVariables #-}
 {-
 
    Structural Induction - the heart of HipSpec
@@ -53,6 +54,10 @@ isQuant :: Formula c v t -> Bool
 isQuant Forall{} = True
 isQuant _        = False
 
+varFree :: forall c v t . DataOrds c v t => v -> Formula c v t -> Bool
+varFree v phi = or $ [ v == v' | Var v' :: Term c v <- universeBi phi ]
+                  ++ [ v == v' | Fun v' _ :: Term c v <- universeBi phi ]
+
 {-| An argument to a constructor can be recursive or non-recursive.
 
     For instance, when doing induction on [a], then (:) has two arguments,
@@ -89,11 +94,11 @@ argRepr (Rec t)    = t
 argRepr (NonRec t) = t
 argRepr (Exp t _)  = t
 
-forall' :: [(v,t)] -> Formula c v t -> Formula c v t
-forall' xs (Forall ys phi) = Forall (xs ++ ys) phi
-forall' [] phi             = phi
-forall' xs phi             = Forall xs phi
-
+forall' :: DataOrds c v t => [(v,t)] -> Formula c v t -> Formula c v t
+forall' xs (Forall ys phi) = forall' (xs ++ ys) phi
+forall' xs phi             = case [ (x,t) | (x,t) <- xs, x `varFree` phi ] of
+                                []  -> phi
+                                xs' -> Forall xs' phi
 
 mdelete :: Eq a => a -> [(a,b)] -> [(a,b)]
 mdelete x = filter (\(y,_) -> x /= y)
@@ -171,9 +176,10 @@ unV f = runIdentity . unVM (return .: f)
     we are doing induction on an implication. Say we have
 
     @
-      ∀ (x,xs) . φ(x,xs) → ψ(x,xs)
+      ∀ (x,xs) . γ(xs) ∧ φ(x,xs) → ψ(x,xs)
     @
 
+    The γ are properties unrelated to x. These are put away for now.
     We're doing induction on x, it has a constructor C with n
     arguments, let's for simplicitity say that they are all recursive.
     Now, define a temporary P:
@@ -231,8 +237,62 @@ unV f = runIdentity . unVM (return .: f)
                     → ψ(C x₁ .. xₙ,xs)
     @
 
-    Above we assumed that all arguments were recurisive. This is not
-    necessarily so, consider
+    Now, we knew from the start that ∀ xs . γ(xs), se we bring that back:
+
+    @
+      ∀ (x1..xn) xs . γ(xs)
+                    ∧ (∀ xs′ . φ(x₁,xs′))
+                    ∧ ...
+                    ∧ (∀ xs′ . φ(xₙ,xs′))
+                    ∧ (∀ xs′ . ψ(x₁,xs′))
+                    ∧ ...
+                    ∧ (∀ xs′ . ψ(xₙ,xs′))
+                    → ψ(C x₁ .. xₙ,xs)
+    @
+-}
+
+indCon :: DataOrds c v t
+       => FormulaV c v t -> V v -> c -> [Arg t] -> Fresh (FormulaV c v t)
+indCon fm@(Forall qs formula) x con arg_types = do
+
+   let (phis_tmp,psi) = case formula of fs :=> f -> (fs,f)
+                                        f        -> ([],f)
+
+       (phis,gamma) = partition (varFree x) phis_tmp
+
+       xs = mdelete x qs
+
+   xs' <- mapM (uncurry newTypedV) (mdelete x qs)
+
+   let (psi':phis') = [ substList [(v,Var v') | (v,_) <- xs | (v',_) <- xs' ] f
+                      | f <- psi:phis
+                      ]
+
+   x1xn_args <- mapM (newTypedV x) arg_types
+
+   let x1xn = map fst x1xn_args
+
+   antecedents <- catMaybes <$> sequence
+                      [ fmap (forall' xs') <$> hypothesis (\t -> subst x t f) xi arg
+                      | (xi,arg) <- x1xn_args
+                      , f <- psi':phis'
+                      ]
+
+   let consequent = substList [(x,Con con (map Var x1xn))] psi
+
+       x1xn_typed = map (second argRepr) x1xn_args
+
+   return (forall' (x1xn_typed ++ xs)
+                   ((gamma ++ antecedents) ==> consequent))
+
+
+indCon _ _ _ _ = error "indCon not on a forall quantifier"
+
+
+{-
+
+    In the commentary about indCon we assumed that all arguments were
+    recurisive. This is not necessarily so, consider
 
     @
        (:) : a -> [a] -> [a]
@@ -278,6 +338,9 @@ unV f = runIdentity . unVM (return .: f)
          → ψ(C x₁..xₙ,xs)
     @
 
+    This function returns the hypothesis, given a φ(/x), i.e a formula
+    waiting for a substiution
+
 -}
 hypothesis :: DataOrds c v t
            => (TermV c v -> FormulaV c v t) -> V v -> Arg t
@@ -289,40 +352,6 @@ hypothesis phi_slash xi arg = case arg of
        args_typed <- mapM (newTypedV xi) arg_types
        let phi = phi_slash (Fun xi (map (Var . fst) args_typed))
        return (Just (forall' args_typed phi))
-
-indCon :: DataOrds c v t
-       => FormulaV c v t -> V v -> c -> [Arg t] -> Fresh (FormulaV c v t)
-indCon (Forall qs formula) x con arg_types = do
-
-   let (phis,psi) = case formula of fs :=> f -> (fs,f)
-                                    f        -> ([],f)
-
-       xs = mdelete x qs
-
-   xs' <- mapM (uncurry newTypedV) (mdelete x qs)
-
-   let (psi':phis') = [ substList [(v,Var v') | (v,_) <- xs | (v',_) <- xs' ] f
-                      | f <- psi:phis
-                      ]
-
-   x1xn_args <- mapM (newTypedV x) arg_types
-
-   let x1xn = map fst x1xn_args
-
-   antecedents <- catMaybes <$> sequence
-                      [ fmap (forall' xs') <$> hypothesis (\t -> subst x t f) xi arg
-                      | (xi,arg) <- x1xn_args
-                      , f <- psi':phis'
-                      ]
-
-   let consequent = substList [(x,Con con (map Var x1xn))] psi
-
-       x1xn_typed = map (second argRepr) x1xn_args
-
-   return (forall' (x1xn_typed ++ xs)
-                   (antecedents ==> consequent))
-
-indCon _ _ _ _ = error "indCon not on a forall quantifier"
 
 -- | Induction on a variable, given all its constructors and their types
 --   Returns a number of clauses to be proved, one for each constructor.
@@ -426,16 +455,24 @@ testEnv tree@('T':'r':'e':'e':'\'':' ':a) =
     Just [("empty",[])
          ,("branch",[Rec tree,NonRec a,Rec tree])
          ]
+testEnv expr@('E':'x':'p':'r':' ':v) =
+    Just [("var",[NonRec v])
+         ,("lit",[NonRec "Int"])
+         ,("add",[Rec expr,Rec expr])
+         ,("mul",[Rec expr,Rec expr])
+         ,("neg",[Rec expr,Rec expr])
+         ]
 testEnv xs = Nothing
 
 testStrInd :: [(String,String)] -> [Int] -> IO ()
-testStrInd vars coords = putStr
-                       $ unlines
-                       $ map ((++ ".") . render . linFormula strStyle)
-                       $ map (unV (\x i -> x ++ show i))
-                       $ structuralInduction testEnv vars coords
+testStrInd vars coords = do putStr $ unlines
+                                   $ map ((++ ".") . render . linFormula strStyle)
+                                   $ map (unV (\x i -> x ++ show i))
+                                   $ structuralInduction testEnv vars coords
 
 intInd = testStrInd [("X","Int")]
+
+intInd3 = testStrInd [("X","Int"),("Y","Int"),("Z","Int")]
 
 natInd = testStrInd [("X","Nat")]
 
@@ -451,7 +488,11 @@ ordInd = testStrInd [("X","Ord")]
 
 treeInd = testStrInd [("T","Tree a")]
 
+exprInd = testStrInd [("E","Expr a")]
+
 tree'Ind = testStrInd [("T","Tree' a")]
+
+treeTreeInd = testStrInd [("T","Tree Tree a")]
 
 data Style c v t = Style { linc :: c -> Doc
                          , linv :: v -> Doc
@@ -463,6 +504,12 @@ strStyle = Style { linc = text
                  , linv = text
                  , lint = text
                  }
+
+showStyle :: (Show a,Show b,Show c) => Style a b c
+showStyle = Style { linc = text . show
+                  , linv = text . show
+                  , lint = text . show
+                  }
 
 linTerm :: Style c v t -> Term c v -> Doc
 linTerm st tm = case tm of
