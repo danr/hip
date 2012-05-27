@@ -41,6 +41,21 @@ prop_right_identity_mul x = x ** Suc Zero =:= x
 prop_left_identity_mul :: Ord -> Prop Ord
 prop_left_identity_mul x = Suc Zero ** x =:= x
 
+prop_add_comm :: Nat -> Nat -> Prop Nat
+prop_add_comm x y = x ++ y =:= y ++ x
+
+prop_mul_lemma :: Nat -> Nat -> Prop Nat
+prop_mul_lemma m n = m ** S n =:= m ++ m ** n
+
+prop_mul_comm :: Nat -> Nat -> Prop Nat
+prop_mul_comm x y = x ** y =:= y ** x
+
+prop_left_distrib :: Nat -> Nat -> Nat -> Prop Nat
+prop_left_distrib x y z = x ** (y ++ z) =:= (x ** y) ++ (x ** z)
+
+prop_right_distrib :: Nat -> Nat -> Nat -> Prop Nat
+prop_right_distrib x y z = (x ++ y) ** z =:= (x ** z) ++ (y ** z)
+
 
 {-
 finite :: Nat -> Ord
