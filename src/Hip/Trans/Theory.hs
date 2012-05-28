@@ -9,9 +9,13 @@ import Hip.Util
 
 import Halt.FOL.Abstract
 
-import qualified Test.QuickSpec.Term as QST
+import Hip.StructuralInduction
 
-import qualified Language.TPTP as T
+import CoreSyn
+import Var
+import TysWiredIn
+
+import qualified Test.QuickSpec.Term as QST
 
 import Control.Arrow ((&&&),first)
 
@@ -27,45 +31,29 @@ import Data.Maybe
 
 data Theory = Theory { thyDataAxioms :: [AxClause]
                      , thyDefAxioms  :: [VarClause]
+                     , thyTyEnv      :: TyEnv Var Type
                      }
 
 
-data Prop = Prop { proplhs  :: Expr
-                 , proprhs  :: Expr
-                 , propVars :: [Name]
-                 , propName :: Name
-                 , propType :: Type
+data Prop = Prop { proplhs  :: CoreExpr
+                 , proprhs  :: CoreExpr
+                 , propVars :: [(Var,Type)]
+                 , propName :: Var
                  , propRepr :: String
-                 , propQSTerms :: (QST.Term QST.Symbol,QST.Term QST.Symbol)
+                 , propQSTerms :: {- Maybe -} (QST.Term QST.Symbol,QST.Term QST.Symbol)
                  }
   deriving (Eq,Ord,Show)
 
 inconsistentProp :: Prop
-inconsistentProp = Prop { proplhs  = Con "True" []
-                        , proprhs  = Con "False" []
+inconsistentProp = Prop { proplhs  = con trueDataConId
+                        , proprhs  = con falseDataConId
                         , propVars = []
                         , propName = color Red "inconsistencyCheck"
-                        , propType = TyCon "Prop" [TyCon "Bool" []]
+                        , propType = boolTy
                         , propRepr = "inconsistecy check: this should never be provable"
+                        , propQSTerms = error "propQSTerms: inconsistentProp"
                         }
 
-theoryFunDecls :: Theory -> [Decl]
-theoryFunDecls = map funcDefinition . thyFuns
+thyFiniteType :: Theory -> Type -> Bool
+thyFiniteType = error "thyFiniteType: unimplemented"
 
-theoryRecFuns :: Theory -> Set Name
-theoryRecFuns = S.fromList . map funcName . filter funcRecursive . thyFuns
-
-theoryFunTPTP :: Theory -> [T.Decl]
-theoryFunTPTP = concatMap funcTPTP . thyFuns
-
-theoryUsedPtrs :: Theory -> [(Name,Int)]
-theoryUsedPtrs = nubSorted . concatMap funcPtrs . thyFuns
-
-theoryFiniteType :: Theory -> Type -> Bool
-theoryFiniteType = undefined
-
-theoryDataTypes :: Theory -> [Type]
-theoryDataTypes = map (\d -> TyCon (declName d) (map TyVar (declArgs d))) . thyDatas
-
-theoryTyEnv :: Theory -> TyEnv
-theoryTyEnv = map (declName &&& conTypes) . thyDatas

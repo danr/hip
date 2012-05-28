@@ -68,7 +68,6 @@ import Hip.ResultDatatypes
 import Hip.Provers
 import Hip.RunProver
 import Hip.Util
-import Language.TPTP.Pretty
 
 import System.IO.Unsafe (unsafeInterleaveIO)
 import System.Directory (createDirectoryIfMissing)
@@ -81,7 +80,7 @@ type ParticleResult = ParticleMatter (ProverResult,Maybe ProverName)
 
 statusFromPart :: PartResult -> Status
 statusFromPart (Part _ coverage (map (fst . particleMatter) -> res))
-  = statusFromResults coverage res
+    = statusFromResults coverage res
 
 plainProof :: PropResult -> Bool
 plainProof = any (\p -> partMethod p == Plain && statusFromPart p /= None)
@@ -212,8 +211,10 @@ listener intermediateChan resChan propParts workers doneTVar = do
 -- fails, or if the property is proved elsewhere.
 worker :: Chan (PropName,Part) -> Chan (PropName,PartResult) -> ProveM ()
 worker partChan resChan = forever $ do
-    (propName,Part partMethod partCoverage (partTheory,particles))  <- liftIO (readChan partChan)
-    let theoryStr = prettyTPTP partTheory
+    (propName
+    ,Part partMethod
+          partCoverage
+          (data_axioms,def_axioms,particles)) <- liftIO (readChan partChan)
 
     env@(Env{..}) <- ask
 
@@ -222,21 +223,24 @@ worker partChan resChan = forever $ do
         unnecessary _             = False
 
     let processParticle :: Particle -> StateT Bool ProveM ParticleResult
-        processParticle (Particle particleDesc particleAxioms) = do
+        processParticle (Particle particleDesc particle_axioms) = do
             stop <- get
             if stop then return (Particle particleDesc (Failure,Nothing)) else do
                 resvar <- liftIO newEmptyMVar
-                let axiomsStr = theoryStr ++ "\n" ++ prettyTPTP particleAxioms
 
-                length axiomsStr `seq`
-                    (liftIO $ forkIO $ runProveM env $ runProvers axiomsStr resvar)
+                let tptp = linTPTP (strStyle cnf)
+                                   (renameClauses data_axioms
+                                                  (def_axioms ++ particle_axioms))
+
+                length tptp `seq`
+                    (liftIO $ forkIO $ runProveM env $ runProvers tptp resvar)
 
                 case store of
                    Nothing  -> return ()
                    Just dir -> let filename = dir ++ propName ++ "/" ++
                                               intercalate "-" [proofMethodFile partMethod,particleDesc] ++ ".tptp"
                                in  liftIO (do createDirectoryIfMissing True (dir ++ propName)
-                                              writeFile filename axiomsStr)
+                                              writeFile filename tptp)
 
                 (res,maybeProver) <- liftIO (takeMVar resvar)
                 provedElsewhere <- unnecessary <$> lift (propStatus propName)

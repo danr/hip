@@ -31,12 +31,8 @@ import System.Exit (exitFailure,exitSuccess)
 removeMain :: [CoreBind] > [CoreBind]
 removeMain = filter (not . remove)
   where
-    remove b = case b of
-       NonRec x e | "main" `isInfixOf` show x -> True
-       _ -> False
-
-isPropType :: Var -> Bool
-isPropType = ("Prop" `isInfixOf`) . showSDoc . ppr . varType
+    remove (NonRec x e) | isMain x = True
+    remove _ = False
 
 main :: IO ()
 main = do
@@ -68,8 +64,10 @@ main = do
       us <- mkSplitUniqSupply 'f'
       ((lifted_program,_msgs_lift),_us) <- (`caseLetLift` us) <$> lambdaLift dflags program
 
-      (core_props,core_defns)  = partition isPropType lifted_program
-                                        .
+      let isPropBinder (NonRec x _) | isPropType x = True
+          isPropBinder _ = False
+
+      (core_props,core_defns) = partition isPropBinder lifted_program
 
       let ty_cons :: [TyCon]
           ty_cons = mg_tcs modguts
@@ -96,11 +94,9 @@ main = do
           (data_axioms,def_axioms,msgs_trans)
               = translate halt_env ty_cons_with_builtin core_defns
 
-          let theory = Theory data_axioms def_axioms
+          theory = Theory data_axioms def_axioms (error "Theory.thyTyEnv")
 
-          (theory,props,msgs) = makeTheory params
-
-      let props' = inconsistentProp : props
+          props' = inconsistentProp : map trProperty props
 
       (unproved,proved) <- parLoop params theory props' []
 
