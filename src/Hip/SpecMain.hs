@@ -3,20 +3,24 @@ module Main where
 
 import Hip.Util
 
-import Hip.Trans.MakeTheory
-import Hip.Trans.Theory
-import Hip.Messages
-import Hip.Params
-
-import Hip.Trans.Core
-
 import Hip.Trans.MakeProofs
+import Hip.Trans.Theory
+import Hip.Trans.Property
+
+import Hip.Params
+import Hip.Trans.SrcRep
 
 import Hip.InvokeATPs
 import Hip.Trans.ProofDatatypes (propMatter)
 import qualified Hip.Trans.ProofDatatypes as PD
 import Hip.ResultDatatypes
 import Hip.Provers
+
+import Halt.Lift
+import Halt.Conf
+import Halt.Monad
+import Halt.Trans
+import Halt.Entry
 
 import Data.List
 import Data.Maybe
@@ -27,8 +31,23 @@ import Control.Arrow ((***),(&&&),second)
 
 import System.Console.CmdArgs hiding (summary)
 import System.Exit (exitFailure,exitSuccess)
+import System.FilePath
 
-removeMain :: [CoreBind] > [CoreBind]
+import BasicTypes
+import CoreMonad
+import CoreSyn
+import DynFlags
+import FloatOut
+import GHC
+import GHC.Paths
+import HscTypes
+import TysWiredIn
+import Outputable
+import UniqSupply
+
+import TysWiredIn
+
+removeMain :: [CoreBind] -> [CoreBind]
 removeMain = filter (not . remove)
   where
     remove (NonRec x e) | isMain x = True
@@ -51,25 +70,18 @@ main = do
 
       (modguts,dflags) <- desugar (False {- debug_float_out -}) file
 
-      -- Output debug of translation
-      when dbfh (return ())
-
-      -- Output Core and terminate
-      when core exitSuccess
-
-      let (core_props,unlifted_program) = filter removeMain
-                                        . mg_binds
-                                        $ modguts
+      let unlifted_program = removeMain . mg_binds $ modguts
 
       us <- mkSplitUniqSupply 'f'
-      ((lifted_program,_msgs_lift),_us) <- (`caseLetLift` us) <$> lambdaLift dflags program
+      ((lifted_program,_msgs_lift),_us) <- (`caseLetLift` us)
+                                       <$> lambdaLift dflags unlifted_program
 
       let isPropBinder (NonRec x _) | isPropType x = True
           isPropBinder _ = False
 
-      (core_props,core_defns) = partition isPropBinder lifted_program
+          (core_props,core_defns) = partition isPropBinder lifted_program
 
-      let ty_cons :: [TyCon]
+          ty_cons :: [TyCon]
           ty_cons = mg_tcs modguts
 
           ty_cons_with_builtin :: [TyCon]
@@ -78,11 +90,9 @@ main = do
                                  -- ^ choice: only tuples of size 2 supported!!
                                ++ ty_cons
 
-          cnf = "-cnf" `elem` opts
-
           halt_conf :: HaltConf
           halt_conf  = sanitizeConf $ HaltConf
-                          { use_cnf      = False
+                          { use_cnf      = cnf
                           , inline_projs = True
                           , use_min      = False
                           , common_min   = False
@@ -96,9 +106,9 @@ main = do
 
           theory = Theory data_axioms def_axioms (error "Theory.thyTyEnv")
 
-          props' = inconsistentProp : map trProperty props
+          props = inconsistentProp : mapMaybe trProperty core_props
 
-      (unproved,proved) <- parLoop params theory props' []
+      (unproved,proved) <- parLoop halt_env params theory props []
 
       printInfo unproved proved
 
@@ -116,8 +126,8 @@ printInfo unproved proved = do
 
 
 -- | Try to prove some properties in a theory, given some lemmas
-tryProve :: Params -> [Prop] -> Theory -> [Prop] -> IO [(Prop,Bool)]
-tryProve params@(Params{..}) props thy lemmas = do
+tryProve :: HaltEnv -> Params -> [Prop] -> Theory -> [Prop] -> IO [(Prop,Bool)]
+tryProve halt_env params@(Params{..}) props thy lemmas = do
     let env = Env { reproveTheorems = reprove
                   , timeout         = timeout
                   , store           = output
@@ -127,14 +137,9 @@ tryProve params@(Params{..}) props thy lemmas = do
                   , propCodes       = error "main env propCodes"
                   }
 
-        (properties,msgs) = second concat
-                          . unzip
-                          . map (\prop -> theoryToInvocations params thy prop lemmas)
+        (properties,msgs) = runHaltM halt_env
+                          . mapM (\prop -> theoryToInvocations params thy prop lemmas)
                           $ props
-
-    when dbproof $ mapM_ print (filter (sourceIs MakeProof) msgs)
-
-    when warnings $ mapM_ print (filter isWarning msgs)
 
     res <- invokeATPs properties env
 
@@ -145,11 +150,11 @@ tryProve params@(Params{..}) props thy lemmas = do
                           (find ((PD.propName property ==) . propName) props)
                ,proved)
 
-parLoop :: Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
-parLoop params thy props lemmas = do
+parLoop :: HaltEnv -> Params -> Theory -> [Prop] -> [Prop] -> IO ([Prop],[Prop])
+parLoop halt_env params thy props lemmas = do
     (proved,unproved) <-  (map fst *** map fst) . partition snd
-                      <$> tryProve params props thy lemmas
+                      <$> tryProve halt_env params props thy lemmas
     if null proved then return (props,lemmas)
                    else do putStrLn $ "Adding " ++ show (length proved) ++ " lemmas: " ++ unwords (map propName proved)
-                           parLoop params thy unproved (proved ++ lemmas)
+                           parLoop halt_env params thy unproved (proved ++ lemmas)
 

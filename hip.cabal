@@ -105,3 +105,5 @@ executable          hipspec-halt
                  , parallel                      >= 3.0
                  , halt                          == 0.1
                  , safe                          >= 0.3
+                 , ghc-paths                     >= 0.1
+                 , filepath                      >= 1.0

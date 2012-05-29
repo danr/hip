@@ -38,22 +38,12 @@ instance Show ProverResult where
 
 -- Status (result) for an entire property or a proof part ------------------------------
 
-data Status = None | FiniteTheorem | Theorem
+data Status = None | Theorem
   deriving (Eq,Ord,Show,Enum,Bounded)
 
-latexStatus :: Status -> String
-latexStatus Theorem       = "$\\checkmark_{\\infty}$"
-latexStatus FiniteTheorem = "$\\checkmark_{\\mathrm{fin}}$"
-latexStatus None          = ""
-
-statuses :: [Status]
-statuses = [minBound..maxBound]
-
-statusFromResults :: Coverage -> [ProverResult] -> Status
-statusFromResults coverage [] = None
-statusFromResults coverage res
-    | all success res = case coverage of
-                           Infinite -> Theorem
-                           Finite   -> FiniteTheorem
+statusFromResults :: [ProverResult] -> Status
+statusFromResults [] = None
+statusFromResults res
+    | all success res = Theorem
     | otherwise = None
 

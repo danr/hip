@@ -69,6 +69,11 @@ import Hip.Provers
 import Hip.RunProver
 import Hip.Util
 
+import Halt.FOL.Linearise
+import Halt.FOL.Style
+import Halt.FOL.Rename
+import Halt.Monad
+
 import System.IO.Unsafe (unsafeInterleaveIO)
 import System.Directory (createDirectoryIfMissing)
 
@@ -79,8 +84,8 @@ type PartResult = PartMatter [ParticleResult]
 type ParticleResult = ParticleMatter (ProverResult,Maybe ProverName)
 
 statusFromPart :: PartResult -> Status
-statusFromPart (Part _ coverage (map (fst . particleMatter) -> res))
-    = statusFromResults coverage res
+statusFromPart (Part _ (map (fst . particleMatter) -> res))
+    = statusFromResults res
 
 plainProof :: PropResult -> Bool
 plainProof = any (\p -> partMethod p == Plain && statusFromPart p /= None)
@@ -167,7 +172,7 @@ listener intermediateChan resChan propParts workers doneTVar = do
 
         process :: StateT ListenerSt ProveM ()
         process = fix $ \loop -> do
-            res@(propName,part@(Part _ _ resParticles)) <- liftIO (readChan intermediateChan)
+            res@(propName,part@(Part _ resParticles)) <- liftIO (readChan intermediateChan)
             let status = statusFromPart part
             lift $ updatePropStatus propName status
 
@@ -211,24 +216,21 @@ listener intermediateChan resChan propParts workers doneTVar = do
 -- fails, or if the property is proved elsewhere.
 worker :: Chan (PropName,Part) -> Chan (PropName,PartResult) -> ProveM ()
 worker partChan resChan = forever $ do
-    (propName
-    ,Part partMethod
-          partCoverage
-          (data_axioms,def_axioms,particles)) <- liftIO (readChan partChan)
+    (propName,Part partMethod
+                   (data_axioms,def_axioms,particles)) <- liftIO (readChan partChan)
 
     env@(Env{..}) <- ask
 
     let unnecessary Theorem       = True
-        unnecessary FiniteTheorem = partCoverage == Finite
         unnecessary _             = False
 
-    let processParticle :: Particle -> StateT Bool ProveM ParticleResult
+        processParticle :: Particle -> StateT Bool ProveM ParticleResult
         processParticle (Particle particleDesc particle_axioms) = do
             stop <- get
             if stop then return (Particle particleDesc (Failure,Nothing)) else do
                 resvar <- liftIO newEmptyMVar
 
-                let tptp = linTPTP (strStyle cnf)
+                let tptp = linTPTP (strStyle True)
                                    (renameClauses data_axioms
                                                   (def_axioms ++ particle_axioms))
 
@@ -252,7 +254,7 @@ worker partChan resChan = forever $ do
 
     res <- evalStateT (mapM processParticle particles) provedElsewhere
 
-    liftIO (writeChan resChan (propName,Part partMethod partCoverage res))
+    liftIO (writeChan resChan (propName,Part partMethod res))
 
 runProvers :: String -> MVar (ProverResult,Maybe ProverName) -> ProveM ()
 runProvers str res = do

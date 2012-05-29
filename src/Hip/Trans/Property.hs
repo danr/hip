@@ -5,22 +5,25 @@ import Hip.Trans.SrcRep
 
 import CoreSyn
 import Var
+import TysWiredIn
 
 import Halt.Utils
 
-trProperty :: CoreBind -> Prop
-trProperty (NonRec prop_name e) =
+import Control.Arrow (second)
+
+trProperty :: CoreBind -> Maybe Prop
+trProperty (NonRec prop_name e) = do
     let (_,vars,e') = collectTyAndValBinders e
 
-        (lhs,rhs) = case collectArgs e' of
-                       (Var x,[l,r]) | isEquals x    -> (l,r)
-                       (Var x,[l])   | isProveBool x -> (l,Var trueDataConId)
-                       _  -> error "trProperty, not a prooperty!"
+    (lhs,rhs) <- case second trimTyArgs (collectArgs e') of
+                       (Var x,[l,r]) | isEquals x    -> Just (l,r)
+                       (Var x,[l])   | isProveBool x -> Just (l,Var trueDataConId)
+                       _  -> Nothing
 
-    in  Prop { propName = idToStr prop_name
-             , proplhs  = lhs
-             , proprhs  = rhs
-             , propVars = [ (x,varType x) | x <- vars ]
-             , propRepr = showExpr lhs ++ " = " ++ showExpr rhs
-             , propQSTerms = error "trProperty : propQSTerms"
-             }
+    return $ Prop { propName = idToStr prop_name
+                  , proplhs  = lhs
+                  , proprhs  = rhs
+                  , propVars = [ (x,varType x) | x <- vars ]
+                  , propRepr = showExpr lhs ++ " = " ++ showExpr rhs
+                  , propQSTerms = error "trProperty : propQSTerms"
+                  }

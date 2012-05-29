@@ -2,16 +2,10 @@
 -- Many of these examples come from Zeno
 module Nat where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
 data Nat = Z | S Nat
-  deriving (Eq,Ord,Show)
-
-instance Arbitrary Nat where
-  arbitrary =
-    let nats = iterate S Z
-    in  (nats !!) `fmap` choose (0,25)
 
 Z     == Z     = True
 Z     == _     = False
@@ -158,40 +152,3 @@ prop_lt_suc i m = proveBool (i < S (m + i))
 prop_succ_minus_3 :: Nat -> Nat -> Nat -> Prop Nat
 prop_succ_minus_3 m n k = (S m - n) - S k =:= (m - n) - k
 
-main = do
-  quickCheck (printTestCase "prop_zero_is_one" prop_zero_is_one)
-  quickCheck (printTestCase "prop_refl" prop_refl)
-  quickCheck (printTestCase "prop_assoc_plus" prop_assoc_plus)
-  quickCheck (printTestCase "prop_assoc_mul" prop_assoc_mul)
-  quickCheck (printTestCase "prop_right_identity_plus" prop_right_identity_plus)
-  quickCheck (printTestCase "prop_left_identity_plus" prop_left_identity_plus)
-  quickCheck (printTestCase "prop_right_identity_mul" prop_right_identity_mul)
-  quickCheck (printTestCase "prop_left_identity_mul" prop_left_identity_mul)
-  quickCheck (printTestCase "prop_add_comm" prop_add_comm)
-  quickCheck (printTestCase "prop_mul_comm" prop_mul_comm)
-  quickCheck (printTestCase "prop_left_distrib" prop_left_distrib)
-  quickCheck (printTestCase "prop_right_distrib" prop_right_distrib)
-  quickCheck (printTestCase "prop_min_absorb" prop_min_absorb)
-  quickCheck (printTestCase "prop_max_absorb" prop_max_absorb)
-  quickCheck (printTestCase "prop_idem_plus" prop_idem_plus)
-  quickCheck (printTestCase "prop_idem_mul" prop_idem_mul)
-  quickCheck (printTestCase "prop_minus_zeroish" prop_minus_zeroish)
-  quickCheck (printTestCase "prop_minus_absorbish" prop_minus_absorbish)
-  quickCheck (printTestCase "prop_minus_distribish" prop_minus_distribish)
-  quickCheck (printTestCase "prop_minus_assocish" prop_minus_assocish)
-  quickCheck (printTestCase "prop_minus_zero" prop_minus_zero)
-  quickCheck (printTestCase "prop_lt_zero_eq_zero" prop_lt_zero_eq_zero)
-  quickCheck (printTestCase "prop_le_succ_plus" prop_le_succ_plus)
-  quickCheck (printTestCase "prop_le_plus" prop_le_plus)
-  quickCheck (printTestCase "prop_le_plus_sym" prop_le_plus_sym)
-  quickCheck (printTestCase "prop_max_assoc" prop_max_assoc)
-  quickCheck (printTestCase "prop_max_sym" prop_max_sym)
-  quickCheck (printTestCase "prop_max_le" prop_max_le)
-  quickCheck (printTestCase "prop_max_le_sym" prop_max_le_sym)
-  quickCheck (printTestCase "prop_min_assoc" prop_min_assoc)
-  quickCheck (printTestCase "prop_min_sym" prop_min_sym)
-  quickCheck (printTestCase "prop_min_le" prop_min_le)
-  quickCheck (printTestCase "prop_min_le_sym" prop_min_le_sym)
-  quickCheck (printTestCase "prop_minus_plus" prop_minus_plus)
-  quickCheck (printTestCase "prop_lt_suc" prop_lt_suc)
-  quickCheck (printTestCase "prop_succ_minus_3" prop_succ_minus_3)

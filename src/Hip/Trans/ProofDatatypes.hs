@@ -12,29 +12,14 @@ data ProofMethod
   deriving (Eq,Ord)
 
 instance Show ProofMethod where
-  show Plain                      = "plain"
-  show (StructuralInduction vs d) = "structural induction on " ++
-                                      unwords vs ++ " depth " ++ show d
+    show Plain                      = "plain"
+    show (StructuralInduction vs d) = "structural induction on "
+                                    ++ unwords vs ++ " depth " ++ show d
 
 proofMethodFile :: ProofMethod -> String
 proofMethodFile pt = case pt of
-  Plain                    -> "plain"
-  StructuralInduction vs d -> concat vs ++ show d
-
-
-proofMethods :: [ProofMethod]
-proofMethods = [Plain
-               ,StructuralInduction [] True 0
-               ]
-
-liberalEq :: ProofMethod -> ProofMethod -> Bool
-liberalEq Plain                        Plain                       = True
-liberalEq (StructuralInduction _ b' _) (StructuralInduction _ b _) = b == b'
-liberalEq _ _                                                      = False
-
-liberalShow :: ProofMethod -> String
-liberalShow Plain                     = "plain"
-liberalShow SimpleInduction{}         = "simple induction"
+    Plain                    -> "plain"
+    StructuralInduction vs d -> concat vs ++ show d
 
 type Property  = PropertyMatter [Part]
 type Part      = PartMatter     ([AxClause],[VarClause],[Particle])

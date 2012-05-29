@@ -19,6 +19,8 @@ data Params = Params { files           :: [FilePath]
                      , reprove         :: Bool
                      , consistency     :: Bool
 
+                     , cnf             :: Bool
+
                      , ord_swap        :: Bool
                      , ord_prep_pruned :: Bool
                      , ord_quadratic   :: Bool
@@ -73,6 +75,8 @@ defParams = Params
   , reprove     = False   &= help "Reprove theorems already known to be true"
   , consistency = False   &= help "Try to prove the consistency a file's generated theory"
 
+  , cnf         = False   &= help "Output in cnf"
+
   , ord_swap        = False &= ignore
   , ord_prep_pruned = False &= ignore
   , ord_quadratic   = False &= ignore
@@ -119,6 +123,8 @@ hipSpecParams file = Params
   , methods     = "pisfa" &= ignore -- help "Methods to use (p)lain (i)nduction (s)tructural (f)ixpoint (a)pprox"
   , reprove     = False   &= help "Reprove theorems already known to be true"
   , consistency = False   &= help "Add a consistency check (default: off)" &= name "c"
+
+  , cnf         = False   &= help "Output in cnf"
 
   , ord_swap        = False &= help "Swap equations with their representative" &= name "swap" &= groupname "\nQuickSpec equation ordering"
   , ord_prep_pruned = False &= help "Add nice pruned equations from QuickSpec in front of all equations" &= name "prepend-pruned"

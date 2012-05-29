@@ -1,18 +1,14 @@
 module Hip.Trans.Theory where
 
-import Hip.Trans.Core
 import Hip.Trans.ProofDatatypes hiding (propName)
-import Hip.Trans.Pretty
-import Hip.Trans.TyEnv
-import Hip.Trans.NecessaryDefinitions
 import Hip.Util
-
+import Hip.StructuralInduction (TyEnv)
 import Halt.FOL.Abstract
 
-import Hip.StructuralInduction
 
 import CoreSyn
 import Var
+import Type
 import TysWiredIn
 
 import qualified Test.QuickSpec.Term as QST
@@ -34,22 +30,19 @@ data Theory = Theory { thyDataAxioms :: [AxClause]
                      , thyTyEnv      :: TyEnv Var Type
                      }
 
-
 data Prop = Prop { proplhs  :: CoreExpr
                  , proprhs  :: CoreExpr
                  , propVars :: [(Var,Type)]
-                 , propName :: Var
+                 , propName :: String
                  , propRepr :: String
                  , propQSTerms :: {- Maybe -} (QST.Term QST.Symbol,QST.Term QST.Symbol)
                  }
-  deriving (Eq,Ord,Show)
 
 inconsistentProp :: Prop
-inconsistentProp = Prop { proplhs  = con trueDataConId
-                        , proprhs  = con falseDataConId
+inconsistentProp = Prop { proplhs  = Var trueDataConId
+                        , proprhs  = Var falseDataConId
                         , propVars = []
                         , propName = color Red "inconsistencyCheck"
-                        , propType = boolTy
                         , propRepr = "inconsistecy check: this should never be provable"
                         , propQSTerms = error "propQSTerms: inconsistentProp"
                         }
