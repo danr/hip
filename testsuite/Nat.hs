@@ -41,6 +41,9 @@ max (S x) (S y) = S (max x y)
 --prop_zero_is_one :: Prop Nat
 --prop_zero_is_one = Z =/= S Z
 
+prop_stuff :: Prop Nat
+prop_stuff = S Z * S (S Z) =:= S (S (S Z)) - S Z
+
 prop_refl :: Nat -> Prop Bool
 prop_refl x = proveBool (x == x)
 

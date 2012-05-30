@@ -2,7 +2,7 @@
 -- second argument
 module Nat2ndArg where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
 data Nat = Z | S Nat

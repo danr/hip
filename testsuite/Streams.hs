@@ -2,7 +2,7 @@
 -- only the first few pages.
 module Streams where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Show,show,take,(.),succ)
 
 data Stream a = a :< Stream a

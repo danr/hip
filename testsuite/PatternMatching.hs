@@ -1,6 +1,6 @@
 module PatternMatching where
 
-import AutoPrelude
+import HipPrelude
 
 -- Some different definitions of boolean or
 or1 True  b = True

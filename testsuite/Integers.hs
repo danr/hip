@@ -2,20 +2,20 @@
 -- Agda standard library, which is proved to be a commutative ring
 module Integers where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
-data Nat = Z | S Nat deriving (Eq,Show)
+data Nat = Z | S Nat deriving (Eq)
 
-instance Arbitrary Nat where
-  arbitrary =
-    let nats = iterate S Z
-    in  (nats !!) `fmap` choose (0,50)
+-- instance Arbitrary Nat where
+--   arbitrary =
+--     let nats = iterate S Z
+--     in  (nats !!) `fmap` choose (0,50)
 
-data Integ = P Nat | N Nat deriving (Show,Eq)
+data Integ = P Nat | N Nat deriving (Eq)
 
-instance Arbitrary Integ where
-  arbitrary = oneof [P `fmap` arbitrary,N `fmap` arbitrary]
+-- instance Arbitrary Integ where
+--   arbitrary = oneof [P `fmap` arbitrary,N `fmap` arbitrary]
 
 eqnat Z Z = True
 eqnat (S m) (S n) = True
@@ -82,7 +82,7 @@ P m -! P n = m -. n
 abs' (P n) = n
 abs' (N n) = S n
 
-data Sign = Pos | Neg deriving (Eq,Show)
+data Sign = Pos | Neg deriving (Eq)
 
 instance Arbitrary Sign where
   arbitrary = elements [Pos,Neg]
@@ -138,6 +138,7 @@ prop_left_distrib x y z = x *! (y +! z) =:= (x *! y) +! (x *! z)
 prop_right_distrib :: Integ -> Integ -> Integ -> Prop Integ
 prop_right_distrib x y z = (x +! y) *! z =:= (x *! z) +! (y *! z)
 
+{-
 main = do
   quickCheck (printTestCase "prop_neg_involutive" prop_neg_involutive)
   quickCheck (printTestCase "prop_add_ident_left" prop_add_ident_left)
@@ -155,4 +156,4 @@ main = do
   quickCheck (printTestCase "prop_mul_assoc" prop_mul_assoc)
   quickCheck (printTestCase "prop_mul_comm" prop_mul_comm)
 
-
+-}

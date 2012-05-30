@@ -1,6 +1,6 @@
 module InsertionSort where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
 data Nat = Z | S Nat

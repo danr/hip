@@ -1,6 +1,6 @@
 module Fix where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (fmap,(!!),Eq,Show,Bool(..),(.),iterate)
 
 data Nat = S Nat | Z deriving (Eq,Show)

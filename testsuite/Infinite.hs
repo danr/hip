@@ -1,7 +1,7 @@
 -- Properties of infinite objects
 module Infinity where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Bool(..),(&&),(==),div,Eq,Show,return,Int,pred)
 import Control.Monad (liftM3)
 

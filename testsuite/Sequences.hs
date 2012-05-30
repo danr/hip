@@ -1,6 +1,6 @@
 module Sequences where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..),take)
 
 data Nat = Z | S Nat

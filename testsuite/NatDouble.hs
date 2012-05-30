@@ -1,7 +1,7 @@
 -- Properties of Natural numbers, with recursion at "double speed"
 module NatDouble where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq,Ord,Show,iterate,(!!),fmap,Bool(..))
 
 data Nat = Z | S Nat

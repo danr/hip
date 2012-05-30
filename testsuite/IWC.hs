@@ -3,7 +3,7 @@
 
 module IWC where
 
-import AutoPrelude
+import HipPrelude
 data Nat = S Nat | Z
 
 

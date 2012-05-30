@@ -1,6 +1,6 @@
 module Queues where
 
-import AutoPrelude
+import HipPrelude
 import Prelude (Eq((==)),Ord,Show,iterate,(!!),fmap,Bool(..),Int,return)
 
 -- Invariant : front is never empty unless back also is

@@ -1,6 +1,6 @@
 module Ordinals where
 
-import AutoPrelude
+import HipPrelude
 import qualified Prelude as P
 
 data Nat = Z | S Nat deriving (P.Show)
