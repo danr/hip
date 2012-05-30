@@ -30,12 +30,13 @@ data Prover = Prover { proverName          :: ProverName
 
 -- Should really use something more efficient than isInfixOf
 searchOutput :: [(String,time -> ProverResult)] -> String -> time -> ProverResult
-searchOutput []         output time = Unknown output
+searchOutput []         output _ = Unknown output
 searchOutput ((s,r):xs) output time
     | s `isInfixOf` output = r time
     | otherwise            = searchOutput xs output time
 
 
+statusSZS :: [(String,Integer -> ProverResult)]
 statusSZS = [("Theorem",Success),("Unsatisfiable",Success)
             ,("CounterSatisfiable",const Failure),("Timeout",const Failure)]
 
@@ -101,7 +102,7 @@ equinox :: Prover
 equinox = Prover
   { proverName          = Equinox
   , proverCmd           = "equinox"
-  , proverArgs          = \t -> words ("--tstp --split /dev/stdin")
+  , proverArgs          = \_ -> words ("--tstp --split /dev/stdin")
   , proverProcessOutput = searchOutput statusSZS
   , proverShort         = 'x'
   }

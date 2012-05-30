@@ -3,7 +3,6 @@ module Hip.Trans.MakeProofs where
 
 import Hip.Trans.ProofDatatypes
 import Hip.Trans.Theory as Thy
-import Hip.Util (putEither,concatMapM)
 
 import Hip.StructuralInduction
 import Hip.Params
@@ -13,17 +12,11 @@ import Halt.ExprTrans
 import Halt.Monad
 
 import Control.Applicative
-import Control.Monad
 import Control.Monad.Reader
-
-import Data.Maybe (fromMaybe,mapMaybe)
-import Control.Arrow ((&&&))
-
-import Data.Set (Set)
-import qualified Data.Set as S
 
 type MakerM = HaltM
 
+runMakerM :: HaltEnv -> HaltM a -> (a,[String])
 runMakerM = runHaltM
 
 -- | Takes a theory, and prepares the invocations
@@ -46,7 +39,7 @@ equals Prop{proplhs,proprhs,propVars} = local (pushQuant (map fst propVars)) $ d
     return (forall' vars (lhs === rhs))
 
 prove :: Params -> Theory -> Prop -> MakerM [Part]
-prove Params{methods} thy@Theory{..} prop =
+prove Params{methods} Theory{..} prop =
     sequence [ plainProof | 'p' `elem` methods ]
   where
     plainProof :: MakerM Part

@@ -1,10 +1,9 @@
 module Hip.Trans.Theory where
 
-import Hip.Trans.ProofDatatypes hiding (propName)
 import Hip.Util
 import Hip.StructuralInduction (TyEnv)
-import Halt.FOL.Abstract
 
+import Halt.FOL.Abstract
 
 import CoreSyn
 import Var
@@ -12,18 +11,6 @@ import Type
 import TysWiredIn
 
 import qualified Test.QuickSpec.Term as QST
-
-import Control.Arrow ((&&&),first)
-
-import Data.Set (Set)
-import qualified Data.Set as S
-import Data.Map (Map)
-import qualified Data.Map as M
-
-import Data.Graph
-import Data.Tree
-import Data.Maybe
-
 
 data Theory = Theory { thyDataAxioms :: [AxClause]
                      , thyDefAxioms  :: [VarClause]

@@ -27,3 +27,4 @@ trProperty (NonRec prop_name e) = do
                   , propRepr = showExpr lhs ++ " = " ++ showExpr rhs
                   , propQSTerms = error "trProperty : propQSTerms"
                   }
+trProperty _ = Nothing

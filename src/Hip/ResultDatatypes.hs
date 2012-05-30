@@ -1,8 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 module Hip.ResultDatatypes where
 
-import Hip.Trans.ProofDatatypes
 import Hip.Util
+
 import Data.Maybe
 import Data.Function
 
@@ -11,7 +11,7 @@ import Data.Function
 data ProverResult = Success { successTime :: Integer }
                   -- ^ Success: Theorem or Countersatisfiable
                   | Failure
-                  -- ^ Fialure: Satisfiable etc, and timeouts or skipped
+                  -- ^ Failure: Satisfiable etc, and timeouts or skipped
                   | Unknown String
                   -- ^ Unreckognized output. For debugging
 

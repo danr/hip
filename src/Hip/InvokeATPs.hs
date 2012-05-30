@@ -38,11 +38,7 @@ module Hip.InvokeATPs where
 -- time on successes. histogram maybe?! :D
 
 
-import System.CPUTime
-
 import Control.Concurrent
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM.TVar
 import Control.Monad.STM
@@ -53,26 +49,20 @@ import Control.Monad.State
 
 import Control.Arrow ((***),first,second)
 
-import Data.Function
 import Data.List
 import Data.Maybe
 
 import qualified Data.Map as M
 import Data.Map (Map)
 
---import qualified Data.Set as S
---import Data.Set (Set)
-
 import Hip.Trans.ProofDatatypes
 import Hip.ResultDatatypes
 import Hip.Provers
 import Hip.RunProver
-import Hip.Util
 
 import Halt.FOL.Linearise
 import Halt.FOL.Style
 import Halt.FOL.Rename
-import Halt.Monad
 
 import System.IO.Unsafe (unsafeInterleaveIO)
 import System.Directory (createDirectoryIfMissing)
@@ -123,17 +113,17 @@ invokeATPs properties env@(Env{..}) = do
 
     workers <- replicateM processes $ forkIO (runProveM env' (worker probChan intermediateChan))
 
-    res <- forkIO $ runProveM env' (listener intermediateChan resChan propParts workers doneMVar)
+    void $ forkIO $ runProveM env' (listener intermediateChan resChan propParts workers doneMVar)
 
     consume resChan doneMVar
   where
     consume :: TChan PropResult -> TVar Bool -> IO [PropResult]
     consume resChan doneTVar = fix $ \loop -> unsafeInterleaveIO $ do
---        putStrLn "consuming..."
-        element <- atomically $ do empty <- isEmptyTChan resChan
+--      putStrLn "consuming..."
+        element <- atomically $ do is_empty <- isEmptyTChan resChan
                                    done  <- readTVar doneTVar
-                                   if empty then (if done then return Nothing else retry)
-                                            else Just <$> readTChan resChan
+                                   if is_empty then (if done then return Nothing else retry)
+                                               else Just <$> readTChan resChan
         case element of
                 Nothing -> return []
                 Just e  -> (e:) <$> loop
@@ -172,7 +162,7 @@ listener intermediateChan resChan propParts workers doneTVar = do
 
         process :: StateT ListenerSt ProveM ()
         process = fix $ \loop -> do
-            res@(propName,part@(Part _ resParticles)) <- liftIO (readChan intermediateChan)
+            res@(propName,part) <- liftIO (readChan intermediateChan)
             let status = statusFromPart part
             lift $ updatePropStatus propName status
 
@@ -208,8 +198,8 @@ listener intermediateChan resChan propParts workers doneTVar = do
         alterer :: Maybe PropResult -> PropResult
         alterer m = case m of
            Nothing -> Property name (propCodeMap M.! name) (statusFromPart partRes,[partRes])
-           Just (Property name code (status,parts)) ->
-                      Property name code (statusFromPart partRes `max` status,partRes:parts)
+           Just (Property name' code (status,parts)) ->
+                      Property name' code (statusFromPart partRes `max` status,partRes:parts)
 
 -- | A worker. Reads the channel of parts to process, and writes to
 -- the result channel. Skips doing the rest of the particles if one
@@ -235,7 +225,7 @@ worker partChan resChan = forever $ do
                                                   (def_axioms ++ particle_axioms))
 
                 length tptp `seq`
-                    (liftIO $ forkIO $ runProveM env $ runProvers tptp resvar)
+                    (void . liftIO . forkIO . runProveM env . runProvers tptp $ resvar)
 
                 case store of
                    Nothing  -> return ()

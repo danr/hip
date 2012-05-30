@@ -1,8 +1,6 @@
 {-# LANGUAGE RecordWildCards,ViewPatterns #-}
 module Main where
 
-import Hip.Util
-
 import Hip.Trans.MakeProofs
 import Hip.Trans.Theory
 import Hip.Trans.Property
@@ -27,22 +25,16 @@ import Data.Maybe
 
 import Control.Monad
 import Control.Applicative
-import Control.Arrow ((***),(&&&),second)
+import Control.Arrow ((***))
 
 import System.Console.CmdArgs hiding (summary)
-import System.Exit (exitFailure,exitSuccess)
+import System.Exit
 import System.FilePath
 
 import BasicTypes
-import CoreMonad
 import CoreSyn
-import DynFlags
-import FloatOut
 import GHC
-import GHC.Paths
 import HscTypes
-import TysWiredIn
-import Outputable
 import UniqSupply
 
 import TysWiredIn
@@ -50,7 +42,7 @@ import TysWiredIn
 removeMain :: [CoreBind] -> [CoreBind]
 removeMain = filter (not . remove)
   where
-    remove (NonRec x e) | isMain x = True
+    remove (NonRec x _) | isMain x = True
     remove _ = False
 
 main :: IO ()
@@ -68,11 +60,14 @@ main = do
       unless (null files) $ putStrLn $ file ++ ":"
       -- Parse either Haskell or Core
 
-      (modguts,dflags) <- desugar (False {- debug_float_out -}) file
+      (modguts,dflags) <- desugar (DesugarConf { debug_float_out = False
+                                               , core2core_pass  = True
+                                               }) file
 
       let unlifted_program = removeMain . mg_binds $ modguts
 
       us <- mkSplitUniqSupply 'f'
+
       ((lifted_program,_msgs_lift),_us) <- (`caseLetLift` us)
                                        <$> lambdaLift dflags unlifted_program
 
@@ -92,21 +87,26 @@ main = do
 
           halt_conf :: HaltConf
           halt_conf  = sanitizeConf $ HaltConf
-                          { use_cnf      = cnf
-                          , inline_projs = True
-                          , use_min      = False
-                          , common_min   = False
+                          { use_min      = False
+                          , use_cf       = False
                           , unr_and_bad  = False
                           }
 
           halt_env = mkEnv halt_conf ty_cons_with_builtin core_defns
 
-          (data_axioms,def_axioms,msgs_trans)
+          (data_axioms,def_axioms,_msgs_trans)
               = translate halt_env ty_cons_with_builtin core_defns
 
           theory = Theory data_axioms def_axioms (error "Theory.thyTyEnv")
 
           props = inconsistentProp : mapMaybe trProperty core_props
+
+      {-
+      forM_ props $ \prop -> do let Prop{..} = prop
+                                putStrLn $ propName ++ ": "
+                                        ++ showExpr proplhs ++ " = "
+                                        ++ showExpr proprhs
+      -}
 
       (unproved,proved) <- parLoop halt_env params theory props []
 
@@ -137,9 +137,9 @@ tryProve halt_env params@(Params{..}) props thy lemmas = do
                   , propCodes       = error "main env propCodes"
                   }
 
-        (properties,msgs) = runHaltM halt_env
-                          . mapM (\prop -> theoryToInvocations params thy prop lemmas)
-                          $ props
+        (properties,_msgs) = runHaltM halt_env
+                           . mapM (\prop -> theoryToInvocations params thy prop lemmas)
+                           $ props
 
     res <- invokeATPs properties env
 
