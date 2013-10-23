@@ -1,0 +1,20 @@
+fof(x,axiom,! [X,Y]: (plus(X,Y) = plus(Y,X))).
+fof(x,axiom,! [X,Y]: (mul(X,Y) = mul(Y,X))).
+fof(x,axiom,! [X,Y,Z]: (plus(X,plus(Y,Z)) = plus(plus(X,Y),Z))).
+fof(x,axiom,! [X,Y,Z]: (mul(X,mul(Y,Z)) = mul(mul(X,Y),Z))).
+fof(x,axiom,! [X,Y,Z]: (mul(X,plus(Y,Z)) = plus(mul(X,Y),mul(X,Z)))).
+fof(x,axiom,! [X]: (plus(X,zero) = X)).
+fof(x,axiom,! [X]: (mul(X,one) = X)).
+fof(x,axiom,! [X]: (plus(X,neg(X)) = zero)).
+fof(x,axiom,! [X]: (mul(X,zero) = zero)).
+fof(x,axiom,! [X,Y]: ((mul(X,Y) = zero) => ((X = zero) 
+	| (Y = zero)))).
+fof(x,axiom,! [X,Y]: ((divides(X,Y)) <=> (? [Z]: (Y = mul(Z,X))))).
+fof(x,axiom,! [X,Y,Z]: ((divides(Z,gcd(X,Y))) <=> ((divides(Z,X)) & (divides(Z,Y))))).
+fof(x,axiom,! [X]: (divides(X,X))).
+fof(x,axiom,! [X,Y,Z]: (((divides(X,Y)) & (divides(Y,Z))) => (divides(X,Z)))).
+fof(x,axiom,! [X,Y,Z]: (((divides(X,Y)) & (divides(X,Z))) => (divides(X,plus(Y,Z))))).
+fof(x,axiom,! [X,Y,Z]: ((divides(gcd(X,gcd(Y,Z)),gcd(gcd(X,Y),Z))) & (divides(gcd(gcd(X,Y),Z),gcd(X,gcd(Y,Z)))))).
+fof(x,axiom,! [X,Y]: ((divides(gcd(X,Y),gcd(Y,X))) & (divides(gcd(Y,X),gcd(X,Y))))).
+fof(x,axiom,! [X,Y]: (? [Z,U]: ((divides(plus(mul(X,Z),mul(Y,U)),gcd(X,Y))) & (divides(gcd(X,Y),plus(mul(X,Z),mul(Y,U))))))).
+fof(x,conjecture,! [X,Y,Z]: ((? [U,V,W]: ((divides(plus(plus(mul(X,U),mul(Y,V)),mul(Z,W)),one)) & (divides(one,plus(plus(mul(X,U),mul(Y,V)),mul(Z,W)))))) => (? [XX,XY,XZ,XU]: ((divides(plus(mul(mul(XX,X),XZ),mul(plus(mul(XX,Y),mul(XY,Z)),XU)),one)) & (divides(one,plus(mul(mul(XX,X),XZ),mul(plus(mul(XX,Y),mul(XY,Z)),XU)))))))).
