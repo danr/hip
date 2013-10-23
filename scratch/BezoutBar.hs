@@ -1,6 +1,7 @@
 module Main where
 
 import Language.TPTP.Monad hiding (neg)
+import qualified Language.TPTP.Monad as L
 import Language.TPTP.Pretty
 
 import Prelude hiding (succ,(+),pred,(*),gcd)
@@ -12,25 +13,11 @@ one  = constant "one"
 neg  = unary    "neg"
 gcd  = binary   "gcd"
 
-divides = relation "divides"
+infixl 5 +
+infixl 6 *
+infix 4 %=
 
-{-
-primZero = constant "primzero"
-primSucc = unary    "primsucc"
-
-primNat = predicate "primnat"
-
-p = predicate "p"
-
-ih = trinaryRel "ih"
--- is = binary "is"
-
-($$)    = binary "app"
-succPtr = constant "succptr"
-predPtr = constant "predptr"
-
-d = constant "d"
--}
+(%|) = relation "divides"
 
 commutative' (~~) (#) x y = (x # y) ~~ (y # x)
 commutative = commutative' (===)
@@ -38,12 +25,14 @@ commutative = commutative' (===)
 associative' (~~) (#) x y z = (x # (y # z)) ~~ ((x # y) # z)
 associative = associative' (===)
 
-associates = (\ a b -> a `divides` b /\ b `divides` a)
+-- associates:
+(%=) = (\ a b -> a %| b /\ b %| a)
 
 identity (#) c x = x # c === x
 isZero (#) c x = x # c === c
 
 ax = axiom "x"
+conj = conjecture "x"
 
 decls :: [Decl]
 decls =
@@ -55,33 +44,49 @@ decls =
     , ax $ forall' $ \ x y z -> x * (y + z) === (x * y) + (x * z)
     , ax $ forall' $ identity (+) zero
     , ax $ forall' $ identity (*) one
-    , ax $ forall' $ \ x -> x + neg x === zero
---    , ax $ forall' $ isZero (*) zero
+    , ax $ forall' $ \ x -> x + (neg x) === zero
+    , ax $ forall' $ isZero (*) zero
 --    -- follows from the other
 
     -- Integral domain
     , ax $ forall' $ \ x y -> x * y === zero ==> (x === zero \/ y === zero)
 
     -- Division ring
-    , ax $ forall' $ \ a b -> a `divides` b <=> (exists' $ \ x -> b === x * a)
-    -- axioms?
+    , ax $ forall' $ \ a b -> a %| b <=> (exists' $ \ x -> b === x * a)
+    -- ok:
+    -- , conj $ forall' $ \ a b -> L.neg (a %| b) <=> (forall' $ \ x -> b != x * a)
 
     -- GCD ring
-    , ax $ forall' $ \ a b c -> c `divides` gcd a b <=> c `divides` a /\ c `divides` b
+    , ax $ forall' $ \ a b c -> c %| gcd a b <=> c %| a /\ c %| b
 
     -- ok:
-    -- , conjecture "x" $ forall' $ \ x -> x `divides` x
+    , ax $ forall' $ \ x -> x %| x
     -- ok:
-    -- , conjecture "x" $ forall' $ \ x y z -> x `divides` y /\ y `divides` z ==> x `divides` z
+    , ax $ forall' $ \ x y z -> x %| y /\ y %| z ==> x %| z
     -- ok:
-    -- , conjecture "x" $ forall' $ \ a b c -> a `divides` b /\ a `divides` c ==> a `divides` (b + c)
+    , ax $ forall' $ \ a b c -> a %| b /\ a %| c ==> a %| (b + c)
     -- counterexample found, ok:
-    -- , conjecture "x" $ forall' $ \ a b -> a `divides` b ==> b `divides` a
+--   , ax $ forall' $ \ a b -> a %| b ==> b %| a
 
     -- ok:
-    -- , conjecture "x" $ forall' $ associative' associates gcd
+    , ax $ forall' $ associative' (%=) gcd
     -- ok:
-    -- , conjecture "x" $ forall' $ commutative' associates gcd
+    , ax $ forall' $ commutative' (%=) gcd
+
+    -- Bézout ring
+    , ax $ forall' $ \ a b -> exists' $ \ x y -> a * x + b * y %= gcd a b
+
+-- Lorenzini:
+    , conj $ forall' $ \ a b c ->
+         (exists' $ \ x y z -> a * x + b * y + c * z %= one) ==>
+         (exists' $ \ p q x' y' -> p * a * x' + (p * b + q * c) * y' %= one)
+
+-- Lombardi:
+{-
+    , conj $ forall' $ \ a b c ->
+        (exists' $ \ x y z -> a * x + b * y + c * z %= one) ==>
+        (exists' $ \ p q x' y' -> p * x' * a + q * x' * b + q * y' * c %= one)
+-}
     ]
 
 main :: IO ()
